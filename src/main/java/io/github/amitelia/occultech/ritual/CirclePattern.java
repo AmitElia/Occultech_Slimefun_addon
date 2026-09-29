@@ -92,6 +92,50 @@ public final class CirclePattern {
         return wrong;
     }
 
+    /**
+     * Rotation with the fewest wrong glyphs, used to point players at what is missing.
+     */
+    public int closestRotation(@Nonnull BiFunction<Integer, Integer, String> lookup) {
+        int best = 0;
+        int bestMissing = Integer.MAX_VALUE;
+        for (int rotation = 0; rotation < 4; rotation++) {
+            int count = missing(lookup, rotation).size();
+            if (count < bestMissing) {
+                best = rotation;
+                bestMissing = count;
+            }
+        }
+        return best;
+    }
+
+    /** World offsets {dx, dz} of every cell holding the given glyph, for a rotation. */
+    @Nonnull
+    public List<int[]> positionsOf(@Nonnull String glyph, int rotation) {
+        List<int[]> out = new ArrayList<>();
+        for (int row = 0; row < grid.length; row++) {
+            for (int col = 0; col < grid.length; col++) {
+                if (grid[row][col] != ANY && glyph.equals(legend.get(grid[row][col]))) {
+                    out.add(rotate(col - radius, row - radius, rotation));
+                }
+            }
+        }
+        return out;
+    }
+
+    @Nonnull
+    public List<String> rows() {
+        List<String> out = new ArrayList<>();
+        for (char[] row : grid) {
+            out.add(new String(row));
+        }
+        return out;
+    }
+
+    @Nonnull
+    public Map<Character, String> legend() {
+        return legend;
+    }
+
     @Nullable
     public String glyphAt(int dx, int dz) {
         if (Math.abs(dx) > radius || Math.abs(dz) > radius) {

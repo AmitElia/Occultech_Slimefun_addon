@@ -5,3 +5,15 @@ api-version: '1.21'
 author: AmitElia
 description: '${project.description}'
 depend: [Slimefun]
+
+commands:
+  occultech:
+    description: Occultech admin commands
+    aliases: [oc]
+    permission: occultech.admin
+    usage: /<command> selftest
+
+permissions:
+  occultech.admin:
+    description: Access to /occultech admin commands
+    default: op

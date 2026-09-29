@@ -16,6 +16,7 @@
 #
 # Weapons use item durability (never Slimefun energy); they stop working at 1 durability instead of breaking,
 # and are repaired in an anvil with the listed boss drop. Mending is disabled. See docs/mechanics.md.
+#   material : vanilla item used for the look (required for tiers that are implemented in code)
 #   alt_recipes : optional extra routes to the same item (e.g. a machine that automates it). Costs use `recipe`.
 #
 # Progression rules used here
@@ -62,60 +63,66 @@ bosses:
   CORRUPTED_COLOSSUS:   {tier: 3, kind: lesser, base: IRON_GOLEM, drop: CORRUPTED_CIRCUIT, drops: 3, offerings: {mc:IRON_BLOCK: 8, sf:ADVANCED_CIRCUIT_BOARD: 2, HOLLOW_ESSENCE: 16, CHOIR_EMBER: 2}}
   HOLLOW_WITHER:        {tier: 3, kind: major,  base: WITHER,     drop: HOLLOW_HEART,    drops: 2, catalyst: HOLLOW_EFFIGY, offerings: {mc:SOUL_SOIL: 16, HOLLOW_ESSENCE: 32, CHOIR_EMBER: 4}}
 
+# Slimefun researches. `id` is added to research base id 262000 and must NEVER change once released.
+researches:
+  CHALK_AND_CIRCLES: {id: 0, name: "Chalk and Circles", cost: 8,  items: [RITUAL_CHALK, GRAVE_SALT, TALLOW_CANDLE, SOUL_ASH, OCCULT_INK, CHALK_GLYPH, OCCULT_CODEX]}
+  WARDED_RITES:      {id: 1, name: "Warded Rites",      cost: 12, items: [WARDED_SILVER, INITIATES_SIGIL, OFFERING_BOWL, INITIATE_ALTAR]}
+  TROPHY_CRAFT:      {id: 2, name: "Trophy Craft",      cost: 15, items: [BINDING_THREAD, QUILLSHOT_BOW, WARDING_CHARM, SOVEREIGN_CATALYST]}
+
 items:
   # =====================================================================
   # TIER 0 - INITIATE (iron gear)
   # =====================================================================
   RITUAL_CHALK:
-    {tier: 0, cat: material, name: Ritual Chalk, purpose: "Draws Chalk Glyphs; the base of every circle",
+    {tier: 0, material: BONE_MEAL, cat: material, name: Ritual Chalk, purpose: "Draws Chalk Glyphs; the base of every circle",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 4, in: {mc:BONE_MEAL: 4, mc:CLAY_BALL: 4, sf:MAGIC_LUMP_1: 1}}}
   GRAVE_SALT:
-    {tier: 0, cat: material, name: Grave Salt, purpose: "Standard summon offering for every ritual (cheap, bulk)",
+    {tier: 0, material: SUGAR, cat: material, name: Grave Salt, purpose: "Standard summon offering for every ritual (cheap, bulk)",
      recipe: {type: MAGIC_WORKBENCH, out: 8, in: {sf:SALT: 6, mc:BONE_MEAL: 2, sf:MAGIC_LUMP_2: 1}}}
   TALLOW_CANDLE:
-    {tier: 0, cat: infrastructure, name: Tallow Candle, purpose: "Placed at circle anchor points; ritual offering",
+    {tier: 0, material: WHITE_CANDLE, cat: infrastructure, name: Tallow Candle, purpose: "Placed at circle anchor points; ritual offering",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 4, in: {mc:CANDLE: 4, mc:HONEYCOMB: 2, sf:MAGIC_LUMP_1: 1}}}
   SOUL_ASH:
-    {tier: 0, cat: material, name: Soul Ash, purpose: "Binding agent for altars, ink and silver",
+    {tier: 0, material: GUNPOWDER, cat: material, name: Soul Ash, purpose: "Binding agent for altars, ink and silver",
      recipe: {type: MAGIC_WORKBENCH, out: 8, in: {mc:SOUL_SAND: 6, sf:ESSENCE_OF_AFTERLIFE: 1, sf:ENDER_LUMP_2: 1}}}
   OCCULT_INK:
-    {tier: 0, cat: material, name: Occult Ink, purpose: "Writing glyphs, codex pages and sigils",
+    {tier: 0, material: INK_SAC, cat: material, name: Occult Ink, purpose: "Writing glyphs, codex pages and sigils",
      recipe: {type: MAGIC_WORKBENCH, out: 4, in: {mc:INK_SAC: 2, mc:GLOW_INK_SAC: 1, SOUL_ASH: 1, sf:MAGIC_LUMP_2: 1}}}
   WARDED_SILVER:
-    {tier: 0, cat: material, name: Warded Silver, purpose: "Metal for bowls, tier-0 gear and the first sigil",
+    {tier: 0, material: IRON_INGOT, cat: material, name: Warded Silver, purpose: "Metal for bowls, tier-0 gear and the first sigil",
      recipe: {type: SMELTERY, out: 4, in: {sf:SILVER_INGOT: 4, SOUL_ASH: 1, sf:SALT: 2}}}
   INITIATES_SIGIL:
-    {tier: 0, cat: component, name: Initiate's Sigil, purpose: "Tier-0 core component (like Infinity's Machine Circuit)",
+    {tier: 0, material: FIREWORK_STAR, cat: component, name: Initiate's Sigil, purpose: "Tier-0 core component (like Infinity's Machine Circuit)",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {WARDED_SILVER: 2, OCCULT_INK: 2, sf:BLANK_RUNE: 1, sf:ANCIENT_RUNE_EARTH: 1, RITUAL_CHALK: 2, sf:MAGICAL_BOOK_COVER: 1}}}
   CHALK_GLYPH:
-    {tier: 0, cat: infrastructure, name: Chalk Glyph, purpose: "Placeable tier-0 circle mark",
+    {tier: 0, material: WHITE_CARPET, cat: infrastructure, name: Chalk Glyph, purpose: "Placeable tier-0 circle mark",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 8, in: {RITUAL_CHALK: 4, OCCULT_INK: 1}}}
   OFFERING_BOWL:
-    {tier: 0, cat: infrastructure, name: Offering Bowl, purpose: "Holds ritual offerings around the circle",
+    {tier: 0, material: CHISELED_POLISHED_BLACKSTONE, cat: infrastructure, name: Offering Bowl, purpose: "Holds ritual offerings around the circle",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 1, in: {WARDED_SILVER: 3, mc:POLISHED_BLACKSTONE_SLAB: 2, SOUL_ASH: 1}}}
   INITIATE_ALTAR:
-    {tier: 0, cat: infrastructure, name: Initiate's Altar, purpose: "Center of the 5x5 circle; checks the pattern and runs rituals",
+    {tier: 0, material: LODESTONE, cat: infrastructure, name: Initiate's Altar, purpose: "Center of the 5x5 circle; checks the pattern and runs rituals",
      recipe: {type: ANCIENT_ALTAR, out: 1, in: {INITIATES_SIGIL: 2, SOUL_ASH: 2, WARDED_SILVER: 2, sf:ESSENCE_OF_AFTERLIFE: 1, sf:MAGIC_LUMP_3: 2}}}
   OCCULT_CODEX:
-    {tier: 0, cat: utility, name: Occult Codex, purpose: "Shows circle patterns; right-click an altar to highlight missing glyphs with particles",
+    {tier: 0, material: BOOK, cat: utility, name: Occult Codex, purpose: "Shows circle patterns; right-click an altar to highlight missing glyphs with particles",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 1, in: {mc:BOOK: 1, OCCULT_INK: 2, RITUAL_CHALK: 1}}}
   # tier-0 boss drops
-  BROOD_SILK:      {tier: 0, cat: boss_drop, name: Brood Silk, purpose: "Binding Thread (charms, contracts, harnesses)", recipe: {type: BOSS_DROP, boss: BROOD_MOTHER}}
-  FLETCHERS_QUILL: {tier: 0, cat: boss_drop, name: Fletcher's Quill, purpose: "Ranged weapons", recipe: {type: BOSS_DROP, boss: VOLLEY}}
-  COVEN_BREW_BASE: {tier: 0, cat: boss_drop, name: Coven Brew Base, purpose: "Protective charms", recipe: {type: BOSS_DROP, boss: WITCH_COVEN}}
-  SOVEREIGN_GEL:   {tier: 0, cat: boss_drop, name: Sovereign Gel, purpose: "GATE -> tier 1 (Bound Altar, Servitor Shrine, tier-1 capstones)", recipe: {type: BOSS_DROP, boss: GELATINOUS_SOVEREIGN}}
+  BROOD_SILK:      {tier: 0, material: COBWEB, cat: boss_drop, name: Brood Silk, purpose: "Binding Thread (charms, contracts, harnesses)", recipe: {type: BOSS_DROP, boss: BROOD_MOTHER}}
+  FLETCHERS_QUILL: {tier: 0, material: FEATHER, cat: boss_drop, name: Fletcher's Quill, purpose: "Ranged weapons", recipe: {type: BOSS_DROP, boss: VOLLEY}}
+  COVEN_BREW_BASE: {tier: 0, material: GLOWSTONE_DUST, cat: boss_drop, name: Coven Brew Base, purpose: "Protective charms", recipe: {type: BOSS_DROP, boss: WITCH_COVEN}}
+  SOVEREIGN_GEL:   {tier: 0, material: SLIME_BALL, cat: boss_drop, name: Sovereign Gel, purpose: "GATE -> tier 1 (Bound Altar, Servitor Shrine, tier-1 capstones)", recipe: {type: BOSS_DROP, boss: GELATINOUS_SOVEREIGN}}
   SOVEREIGN_CATALYST:
-    {tier: 0, cat: catalyst, name: Sovereign's Catalyst, purpose: "Summons the Gelatinous Sovereign",
+    {tier: 0, material: SLIME_BLOCK, cat: catalyst, name: Sovereign's Catalyst, purpose: "Summons the Gelatinous Sovereign",
      recipe: {type: RITUAL, circle: 0, out: 1, center: mc:SLIME_BLOCK, in: {BROOD_SILK: 1, FLETCHERS_QUILL: 1, COVEN_BREW_BASE: 1, GRAVE_SALT: 4}}}
   # tier-0 rewards
   BINDING_THREAD:
-    {tier: 0, cat: material, name: Binding Thread, purpose: "Charms, contracts and harnesses",
+    {tier: 0, material: STRING, cat: material, name: Binding Thread, purpose: "Charms, contracts and harnesses",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 4, in: {BROOD_SILK: 2, mc:STRING: 4, OCCULT_INK: 1}}}
   QUILLSHOT_BOW:
-    {tier: 0, cat: weapon, name: Quillshot Bow, purpose: "Fires a 3-arrow burst on full draw (uses 1 arrow). Durability 600, repair: Fletcher's Quill",
+    {tier: 0, material: BOW, durability: 600, cat: weapon, name: Quillshot Bow, purpose: "Fires a 3-arrow burst on full draw (uses 1 arrow). Durability 600, repair: Fletcher's Quill",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:BOW: 1, FLETCHERS_QUILL: 3, WARDED_SILVER: 2, BINDING_THREAD: 2, INITIATES_SIGIL: 1}}}
   WARDING_CHARM:
-    {tier: 0, cat: charm, name: Warding Charm, purpose: "In inventory: -15% damage from summoned creatures",
+    {tier: 0, material: RABBIT_FOOT, cat: charm, name: Warding Charm, purpose: "In inventory: -15% damage from summoned creatures",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {COVEN_BREW_BASE: 3, BINDING_THREAD: 2, WARDED_SILVER: 2, sf:COMMON_TALISMAN: 1, OCCULT_INK: 1}}}
 
   # =====================================================================

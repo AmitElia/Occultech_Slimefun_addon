@@ -22,17 +22,24 @@ necromancy and held-use weapons.
 
 ## Architecture
 ```
-Occultech.java   plugin entry point, SlimefunAddon, key() helper
-setup/           ALL Slimefun registration: groups, stacks, items, researches, recipes
-ritual/          circle patterns + matching (pure Java, unit tested), ritual state machine
-boss/            (planned) BossDefinition: base mob, stat multipliers, HP-threshold phases, abilities
-ability/         (planned) reusable abilities shared by bosses and weapons
-items/           (planned) custom SlimefunItem subclasses: machines, circle blocks, weapons
+Occultech.java   plugin entry point: loads recipes.yml -> registrar, ritual service, listeners, command
+content/         ItemCatalog (parses recipes.yml), ItemKeys (item identity strings), GridLayout (counts -> 3x3) - pure Java
+setup/           ALL Slimefun registration: ContentRegistrar (catalog -> SlimefunItems), groups per tier, recipe types, researches
+items/           SlimefunItem subclasses + runtime: RitualAltar, OfferingBowl, RitualService, OccultCodex, WeaponListener
+ritual/          CirclePattern, Circles (layout per tier), RitualMatcher/RitualRecipe - pure Java, unit tested
+core/            Bukkit-only shared bits (PDC Keys, e.g. the SUMMONED tag)
+debug/           /occultech command, SelfTest (in-game integration test)
+boss/, ability/  (planned) boss definitions/engine and reusable abilities
 ```
 
+**Items come from data:** `docs/recipes.yml` is packaged into the jar and registered at startup by `ContentRegistrar`
+(only tiers <= `ContentRegistrar.IMPLEMENTED_TIER`). Adding a plain item = edit recipes.yml (give it a `material`).
+Items with behavior get a class in `items/` and a case in `ContentRegistrar.register`. Grid recipes list counts;
+`GridLayout` places them symmetrically.
+
 Rules:
-- Only `setup/` and `items/` import Slimefun API. `ritual/`, `boss/`, `ability/` should depend on Bukkit/Paper
-  at most, and on pure Java where possible, so they survive Slimefun ports and can be unit tested.
+- Only `setup/`, `items/` and `debug/` import Slimefun API. `content/`, `ritual/`, `boss/`, `ability/` depend on
+  Bukkit/Paper at most (pure Java where possible) so they survive Slimefun ports and can be unit tested.
 - Content should be data-like: adding a boss or ritual = new definition, not edits to core logic.
 - Slimefun item ids are prefixed `OCCULTECH_`. Research ids start at 262000 and must never change once released.
 - Track boss entities and ritual state with the PDC so they survive restarts and chunk unloads.
@@ -43,3 +50,6 @@ Rules:
 - `./mvnw.cmd test` - unit tests. The user's system JAVA_HOME is JDK 17, so dot-source
   `scripts/java-env.ps1` first (or in bash: `JAVA_HOME="$(cygpath -w "$PWD/.jdk/jdk-25.0.4.1+1")" ./mvnw.cmd ...`).
 - Server defaults live in `scripts/server-template/server.properties` (copied into `run/` on first start).
+- **In-game validation:** `occultech selftest` (console or op) checks registration, builds a circle near spawn, runs a
+  ritual end to end and cleans up. Headless run: pipe `occultech selftest` then `stop` into `scripts/run-server.ps1`
+  after "Done (" appears in `run/logs/latest.log`; look for "Self-test finished: N passed, 0 failed".

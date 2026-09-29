@@ -71,6 +71,14 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
+            <!-- The design data is the runtime data: items, recipes and researches are loaded from it -->
+            <resource>
+                <directory>docs</directory>
+                <includes>
+                    <include>recipes.yml</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
         </resources>
         <plugins>
             <plugin>
