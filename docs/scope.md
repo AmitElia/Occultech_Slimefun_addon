@@ -54,6 +54,7 @@ There are no shortcuts: boss drops cannot be crafted, bought or duplicated.
   raw-cost targets above; don't push players toward cobblestone-generator scale.
 - **Drops:** always a guaranteed minimum, with a small random bonus. Each player who contributed to the fight gets their own drops.
 - **Power:** hybrid. Tiers 0-1 are purely magical (offerings only). Tier 2 and up ritual engines and infusers use Slimefun energy.
+  **Weapons never use energy**: they use item durability, repaired with their themed boss drop (see mechanics.md).
 - **Balance:** each boss is beatable solo with that tier's gear. HP and extra spawned mobs scale with the number of players in the arena.
 - **Every resource has its own purpose:** each Occultech material (especially boss drops) has its own recipes and never substitutes
   for another resource, whether Occultech, Slimefun or another addon's. Bosses never drop their base mob's vanilla loot.
@@ -70,4 +71,4 @@ Special mechanics (servitor labor, necromancy, held-use weapons): [mechanics.md]
 - Bosses beyond the pools above, or boss variants and hard modes
 - Integrations with other addons (Networks storage, Infinity inputs)
 - Dimensions, custom structures, or natural world spawns of bosses
-- Custom models or resource packs (vanilla items and Slimefun heads only)
+- A *required* resource pack. v1.0 must look complete with heads, display entities and vanilla models; an optional pack is still undecided

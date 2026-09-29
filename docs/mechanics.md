@@ -40,10 +40,10 @@ Lich's Phylactery (tier 3: up to 4 Hollow Knights that stay until killed).
 - **Following:** minions follow the owner and teleport back if they fall behind (same world only, like tamed wolves).
 - **Despawning:** minions despawn on owner logout, death or world change, and on chunk unload or server stop. The Phylactery's knights are re-summoned after the owner
   logs back in; they are never saved into the world.
-- **Limits:** a per-player cap, and all minions count toward the server's entity budget. A cooldown and a cost (energy or Spirit Essence) apply.
+- **Limits:** a per-player cap, and all minions count toward the server's entity budget. A cooldown applies, and each summon uses durability
+  (see "Durability" below).
 - **Anti-farming:** mobs killed only by minions give no XP, and the short lifetime plus cooldown make AFK mob farming impractical.
-- **Boss fights:** minions do reduced damage to bosses (e.g. 30%), don't count toward loot eligibility, and boss attacks can hit them. The
-  fight's extra-mob cap includes player minions, so necromancy can't trivialize fights.
+- **Boss fights:** minions fight bosses at full strength. Their damage counts toward the owner's contribution, and boss attacks can hit them.
 
 ## 3. Custom weapons, e.g. Wyrmbreath (a dragon-fire stream)
 **Feasibility: yes, fully server-side:** particles, sounds and plugin-applied damage. The only tricky part is
@@ -63,7 +63,7 @@ detecting that the player is *holding* right-click.
   (a ray check, so it never hits through walls). Damage is applied as coming from the player, so PvP and claim plugins can cancel it. Targets are set on fire.
 - **Never ignites blocks.**
 
-**Cost and limits:** Slimefun rechargeable energy drains per tick. A heat bar on the action bar locks the weapon for 3s when it overheats.
+**Cost and limits:** uses durability (below). A heat bar on the action bar locks the weapon for 3s when it overheats.
 Main hand only, a per-player particle budget, and a damage cap per tick.
 
 **Other weapon mechanics that are realistic:**
@@ -73,7 +73,35 @@ Main hand only, a per-player particle budget, and a damage cap per tick.
 - Arrow burst (Quillshot), chain lightning (visual-only lightning plus damage), gravity pull, shockwave ring with knockback,
   homing projectiles (steering item-display entities), decoys (Mirror Ward).
 
-**Not realistic without a resource pack** (and v1.0 ships without one):
-- Custom 3D models and animations. Use item-display entities with vanilla items or heads instead.
-- Custom sounds (vanilla sounds only).
-- Screen effects beyond vanilla ones (darkness, nausea, glowing).
+## Durability (all Occultech weapons and charms with active abilities)
+No Slimefun energy on weapons. Every active weapon uses **item durability** instead.
+- **Per-item max durability:** any item can have its own max durability (Paper `Damageable#setMaxDamage`, available since 1.20.5).
+  Example: Wyrmbreath has 1200 durability and loses 1 per half-second of fire, so about 10 minutes of total fire per full repair.
+  Necromancy items lose durability per summon.
+- **Unbreaking:** handled through Slimefun's `DamageableItem` attribute, so Unbreaking works as players expect.
+- **Never breaks:** at 1 durability the item stops working ("depleted") instead of being destroyed. A 160k-cost item should never vanish.
+- **Repair:** in an anvil using that item's themed boss drop (e.g. Choir Ember for Wyrmbreath, Abyssal Lens for Guardian's Gaze). 26.2 has a
+  native `repairable` item component. Slimefun blocks its items from anvils by default, so Occultech explicitly allows its own items.
+- **Mending: disabled (recommended).** Repairing with boss drops gives mini-bosses lasting value after the gear is crafted, which fits
+  "cheap repeat summons". Mending would make that loop pointless.
+
+## Visuals: what needs a resource pack and what doesn't
+**Why some things need a pack:** the player's game can only draw models and textures and play sounds that exist in the vanilla game files.
+There is no way for a server to send new art to players except through a resource pack. So "not possible without a pack" means
+*brand-new* models, textures and sounds only.
+
+**What we can do without a pack:**
+- **Custom player-head textures:** Slimefun already uses these for many items and blocks. Any texture uploaded as a skin works, e.g. altars, bowls, charms.
+- **Display entities:** vanilla blocks and items that can be scaled, rotated and smoothly animated. They can build "models" such as floating
+  runes orbiting a boss, a spirit at a servitor shrine, glowing sigils over the altar, or a phylactery.
+- **Swapping to another vanilla model:** from 1.21.4 an item can use *any vanilla item's model*, e.g. a staff that looks like a blaze rod or trident.
+- **Coloured dust particles, text displays with symbol art, and vanilla sounds** with pitch and volume changes.
+
+**Adding a pack to a Slimefun addon:**
+1. Slimefun items are normal items. Give each one a model id when it's defined (`SlimefunItemStack` accepts an `ItemMeta` consumer;
+   on 26.x use the `item_model` / `custom_model_data` components).
+2. The pack (models made in Blockbench, textures, `sounds.json`) maps those ids to art. Bosses play custom sounds by key, e.g. `occultech:sovereign.roar`.
+3. Delivery: Paper can send **multiple packs** to a player (since 1.20.3), so Occultech's pack sits on top of the server's existing pack
+   without merging them. Host the zip anywhere (GitHub release or the server's web host).
+4. Keep it **optional**: everything falls back to vanilla or head visuals for players without the pack.
+- **Cost:** art time, hosting, and updating the pack when Minecraft changes the pack format.

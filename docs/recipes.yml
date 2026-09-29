@@ -13,6 +13,9 @@
 #   OCCULT_FORGE / SOUL_CONDENSER : Occultech electric machines (tier 2). Up to 4 inputs, stacks allowed.
 #   HOLLOW_ASSEMBLER : Occultech electric 6x6 workbench (tier 3), 1 item per slot (max 36)
 #   BOSS_DROP : only obtainable from the named boss.
+#
+# Weapons use item durability (never Slimefun energy); they stop working at 1 durability instead of breaking,
+# and are repaired in an anvil with the listed boss drop. Mending is disabled. See docs/mechanics.md.
 #   alt_recipes : optional extra routes to the same item (e.g. a machine that automates it). Costs use `recipe`.
 #
 # Progression rules used here
@@ -109,7 +112,7 @@ items:
     {tier: 0, cat: material, name: Binding Thread, purpose: "Charms, contracts and harnesses",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 4, in: {BROOD_SILK: 2, mc:STRING: 4, OCCULT_INK: 1}}}
   QUILLSHOT_BOW:
-    {tier: 0, cat: weapon, name: Quillshot Bow, purpose: "Fires a 3-arrow burst on full draw (uses 1 arrow)",
+    {tier: 0, cat: weapon, name: Quillshot Bow, purpose: "Fires a 3-arrow burst on full draw (uses 1 arrow). Durability 600, repair: Fletcher's Quill",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:BOW: 1, FLETCHERS_QUILL: 3, WARDED_SILVER: 2, BINDING_THREAD: 2, INITIATES_SIGIL: 1}}}
   WARDING_CHARM:
     {tier: 0, cat: charm, name: Warding Charm, purpose: "In inventory: -15% damage from summoned creatures",
@@ -150,7 +153,7 @@ items:
      recipe: {type: RITUAL, circle: 1, out: 1, center: mc:TOTEM_OF_UNDYING, in: {FRENZIED_EDGE: 1, DUSK_MEMBRANE: 1, MIRROR_DUST: 1, mc:EMERALD_BLOCK: 2, SPIRIT_ESSENCE: 4}}}
   # tier-1 rewards
   FRENZY_CLEAVER:
-    {tier: 1, cat: weapon, name: Frenzy Cleaver, purpose: "Each hit within 3s stacks attack speed (max 5 stacks)",
+    {tier: 1, cat: weapon, name: Frenzy Cleaver, purpose: "Each hit within 3s stacks attack speed (max 5 stacks). Durability 1500, repair: Frenzied Edge",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:DIAMOND_AXE: 1, FRENZIED_EDGE: 3, BOUND_STEEL: 2, BOUND_SIGIL: 1, SOVEREIGN_GEL: 1, RESONANT_CRYSTAL: 1}}}
   DUSKWING_CHARM:
     {tier: 1, cat: charm, name: Duskwing Charm, purpose: "Double jump, and no fall damage after it (cooldown)",
@@ -159,7 +162,7 @@ items:
     {tier: 1, cat: charm, name: Mirror Ward, purpose: "Below 30% HP: spawns a decoy that draws mob aggro for 5s (60s cooldown)",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {MIRROR_DUST: 4, WARDING_CHARM: 1, RESONANT_CRYSTAL: 2, BINDING_THREAD: 2}}}
   BONE_SCEPTER:
-    {tier: 1, cat: weapon, name: Bone Scepter, purpose: "Necromancy: raises 2 skeleton archers for 30s",
+    {tier: 1, cat: weapon, name: Bone Scepter, purpose: "Necromancy: raises 2 skeleton archers for 30s. Durability 64 summons, repair: Grave Salt",
      recipe: {type: RITUAL, circle: 1, out: 1, center: mc:BLAZE_ROD, in: {EVOKERS_SIGIL: 1, mc:BONE_BLOCK: 8, SPIRIT_ESSENCE: 4, BOUND_SIGIL: 1, mc:SKELETON_SKULL: 1, SOVEREIGN_GEL: 1}}}
   SERVITOR_SHRINE:
     {tier: 1, cat: labor, name: Servitor Shrine, purpose: "Houses one bound spirit that works a 7x7 area; uses Spirit Essence",
@@ -206,10 +209,10 @@ items:
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:HEART_OF_THE_SEA, in: {ABYSSAL_LENS: 1, NAUTILUS_CORE: 1, TEMPEST_CORE: 1, CHOIR_EMBER: 1, mc:WET_SPONGE: 4, SPIRIT_ESSENCE: 8}}}
   # tier-2 rewards
   WYRMBREATH:
-    {tier: 2, cat: weapon, name: Wyrmbreath, purpose: "Hold use: cone of dragon fire (particles) that burns and damages what's in front; uses energy, overheats",
-     recipe: {type: RITUAL, circle: 2, out: 1, center: ABYSSAL_SIGIL, in: {CHOIR_EMBER: 8, mc:DRAGON_BREATH: 4, ABYSSAL_ALLOY: 8, sf:LARGE_CAPACITOR: 1, sf:ANCIENT_RUNE_FIRE: 4, EVOKERS_SIGIL: 1}}}
+    {tier: 2, cat: weapon, name: Wyrmbreath, purpose: "Hold use: cone of dragon fire (particles) that burns and damages what's in front; overheats. Durability 1200, repair: Choir Ember",
+     recipe: {type: RITUAL, circle: 2, out: 1, center: ABYSSAL_SIGIL, in: {CHOIR_EMBER: 8, mc:DRAGON_BREATH: 4, ABYSSAL_ALLOY: 8, sf:LAVA_CRYSTAL: 4, sf:ANCIENT_RUNE_FIRE: 4, EVOKERS_SIGIL: 1}}}
   GUARDIANS_GAZE:
-    {tier: 2, cat: weapon, name: Guardian's Gaze, purpose: "Hold use: locks a beam on one target; damage ramps up while held",
+    {tier: 2, cat: weapon, name: Guardian's Gaze, purpose: "Hold use: locks a beam on one target; damage ramps up while held. Durability 1200, repair: Abyssal Lens",
      recipe: {type: RITUAL, circle: 2, out: 1, center: ABYSSAL_SIGIL, in: {ABYSSAL_LENS: 8, TIDE_GLASS: 8, ABYSSAL_ALLOY: 8, sf:POWER_CRYSTAL: 4, EVOKERS_SIGIL: 1}}}
   TEMPEST_TREADS:
     {tier: 2, cat: charm, name: Tempest Treads, purpose: "Boots: sneak + jump = wind dash (safe raytrace, no clipping)",
@@ -218,7 +221,7 @@ items:
     {tier: 2, cat: charm, name: Nautilus Harness, purpose: "Fast swimming, water breathing, no mining penalty underwater",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:HEART_OF_THE_SEA, in: {NAUTILUS_CORE: 6, ABYSSAL_ALLOY: 6, BINDING_THREAD: 4, ABYSSAL_SIGIL: 1}}}
   GRAVE_LANTERN:
-    {tier: 2, cat: weapon, name: Grave Lantern, purpose: "Necromancy: raises 3 wither-skeleton knights for 30s; uses energy",
+    {tier: 2, cat: weapon, name: Grave Lantern, purpose: "Necromancy: raises 3 wither-skeleton knights for 30s. Durability 128 summons, repair: Choir Ember",
      recipe: {type: RITUAL, circle: 2, out: 1, center: BONE_SCEPTER, in: {EVOKERS_SIGIL: 2, CHOIR_EMBER: 4, ABYSSAL_ALLOY: 8, mc:SOUL_LANTERN: 1, mc:WITHER_SKELETON_SKULL: 1, ABYSSAL_SIGIL: 1}}}
   ABYSSAL_HELMET:
     {tier: 2, cat: armor, name: Abyssal Helm, purpose: "Abyssal set (4/4: -20% damage from summoned creatures, Conduit Power)",
@@ -280,13 +283,13 @@ items:
     {tier: 3, cat: armor, name: Hollow Sabatons, purpose: "Hollow set",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {ABYSSAL_BOOTS: 1, HOLLOW_INGOT: 16, WARLORDS_BRAND: 4, HEARTWOOD_RESIN: 2, HOLLOW_CRYSTAL: 4, HOLLOW_SIGIL: 2}}}
   DREADLANCE:
-    {tier: 3, cat: weapon, name: Dreadlance, purpose: "Spear: charged lunge through enemies; damage scales with distance",
+    {tier: 3, cat: weapon, name: Dreadlance, purpose: "Spear: charged lunge through enemies; damage scales with distance. Durability 2000, repair: Lancer's Pennant",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {LANCERS_PENNANT: 8, HOLLOW_INGOT: 16, HOLLOW_CRYSTAL: 4, TEMPEST_CORE: 4, HOLLOW_HEART: 1, HOLLOW_SIGIL: 2}}}
   SOULFIRE_CENSER:
-    {tier: 3, cat: weapon, name: Soulfire Censer, purpose: "Upgraded Wyrmbreath: longer blue soul-fire cone, 5s bursts without overheating",
+    {tier: 3, cat: weapon, name: Soulfire Censer, purpose: "Upgraded Wyrmbreath: longer blue soul-fire cone, 5s bursts without overheating. Durability 3000, repair: Choir Ember",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {WYRMBREATH: 1, CHOIR_EMBER: 12, HOLLOW_INGOT: 14, HOLLOW_CRYSTAL: 4, HOLLOW_HEART: 1, HOLLOW_SIGIL: 2}}}
   LICHS_PHYLACTERY:
-    {tier: 3, cat: weapon, name: Lich's Phylactery, purpose: "Necromancy: commands up to 4 Hollow Knights that follow you until killed; uses energy",
+    {tier: 3, cat: weapon, name: Lich's Phylactery, purpose: "Necromancy: commands up to 4 Hollow Knights that follow you until killed. Durability 256 summons, repair: Warlord's Brand",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {GRAVE_LANTERN: 1, WARLORDS_BRAND: 8, HOLLOW_INGOT: 14, HOLLOW_ESSENCE: 6, HOLLOW_HEART: 2, HOLLOW_SIGIL: 2}}}
   HEARTWOOD_AEGIS:
     {tier: 3, cat: charm, name: Heartwood Aegis, purpose: "Shield: blocking heals you over time; regeneration aura for nearby allies",
