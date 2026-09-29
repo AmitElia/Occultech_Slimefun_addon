@@ -1,7 +1,6 @@
 # Boss and mini-boss ideas (brainstorm, not committed to scope)
 
-The **MC** column shows the Minecraft version that added the mob. The local test server is 1.21.1, so anything newer can only be
-tested after the 26.2 port.
+The **MC** column shows the Minecraft version that added the mob. The local test server runs 26.2, so all of them can be tested.
 
 ## Design rules (every idea must pass all of them)
 1. **No griefing.** Fights never place, break, burn or change world blocks. Every visual "object" in a fight

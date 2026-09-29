@@ -4,9 +4,13 @@ Slimefun addon: occult summoning circles, ritual machines, custom bosses, specia
 Maven project, Java release 21, package root `io.github.amitelia.occultech`.
 
 ## Target platform
-- Now: Paper 1.21.1 + Slimefun experimental `3ea21da` (from blob.build, installed into `./libs` by `scripts/setup-dev.ps1`).
-- Goal: MC 26.2 with a custom Slimefun port. Expect API drift; keep it contained (see below).
-- Experimental Slimefun API note: `SlimefunItemStack` does NOT extend `ItemStack`; use `.item()` for recipes/outputs.
+- Paper 26.2 + **Slimefun Legacy** 4.1.61 (github.com/wickidcow/Slimefun-Legacy; keeps the `io.github.thebusybiscuit.slimefun4` API).
+  Installed into `./libs` and `run/plugins` by `scripts/setup-dev.ps1`. The production server very likely runs Slimefun Legacy (its
+  maintained addons match the server: Supreme, InfinityExpansion2, Networks, FluffyMachines), but this isn't confirmed.
+- Java: JDK 25 runtime (project-local in `./.jdk`), compiled to Java 21 bytecode.
+- Use `SlimefunItemStack.item()` for recipe inputs/outputs (works on Legacy and on newer upstream Slimefun, where it's no longer an ItemStack).
+- Test server addons: Supreme, InfinityExpansion2, Networks, FluffyMachines (`setup-dev.ps1 -Addons`); 41 other bundled addons sit in
+  `run/addons-disabled`. The old 1.21.1 server is kept in `run-1.21.1/`.
 
 ## Scope
 `docs/scope.md` is the v1.0 scope: positioning, size, power and rules are locked; tiers/bosses/progression are still DRAFT.
@@ -37,5 +41,5 @@ Rules:
 - `./scripts/setup-dev.ps1` - fetch Slimefun + Paper
 - `./scripts/run-server.ps1` - build, deploy to `run/plugins`, start server (debug on 5005)
 - `./mvnw.cmd test` - unit tests. The user's system JAVA_HOME is JDK 17, so dot-source
-  `scripts/java-env.ps1` first (or in bash: `JAVA_HOME="C:\\Program Files\\Java\\jdk-24" ./mvnw.cmd ...`).
+  `scripts/java-env.ps1` first (or in bash: `JAVA_HOME="$(cygpath -w "$PWD/.jdk/jdk-25.0.4.1+1")" ./mvnw.cmd ...`).
 - Server defaults live in `scripts/server-template/server.properties` (copied into `run/` on first start).

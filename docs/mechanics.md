@@ -50,15 +50,16 @@ Lich's Phylactery (tier 3: up to 4 Hollow Knights that stay until killed).
 detecting that the player is *holding* right-click.
 
 **Detecting "hold to use":**
-- **MC 26.2 (the real target):** the `consumable` data component (in the game since 1.21.2) lets *any* item be held like food, with a
-  very long use time and no eating animation. Paper exposes this through its data-component API. While the player is using the item → fire.
-- **Current test server (1.21.1):** that component doesn't exist yet. The fallback is a press-to-toggle *3-second burst*. (Using a
-  trident or shield as the base item works too, but has side effects like blocking, and throws that have to be cancelled.)
-- Put this behind one small "use detector" class with two implementations, so the weapon logic stays the same.
+- The `consumable` data component (in the game since 1.21.2) lets *any* item be held like food, with a very long use time and no
+  eating animation. Paper exposes this through its data-component API. While the player is using the item → fire.
+  The local test server runs 26.2, so this can be tested directly.
+- Keep it behind one small "use detector" class, so a future API change only touches one place.
 
 **Each tick while firing:**
-- **Visuals:** particles along a cone (flame / dragon breath / soul fire for the tier-3 Soulfire Censer), about 20-40 per tick, drifting forward.
-  Plus a looping vanilla sound.
+- **Visuals:** built-in vanilla particles, the same ones cosmetic and particle-effect plugins use. No resource pack.
+  Wyrmbreath mixes `FLAME`, `SMALL_FLAME`, `LAVA` sparks and `LARGE_SMOKE` with a `DRAGON_BREATH` haze. The Soulfire Censer uses
+  `SOUL_FIRE_FLAME` and `SOUL`. Spawned along the cone with forward velocity (count 0 + direction as offset, so each particle
+  flies outward), about 20-40 per tick. Plus looping vanilla sounds (`ENTITY_BLAZE_SHOOT`, `BLOCK_FIRE_AMBIENT`).
 - **Hits, every 2-4 ticks:** living entities within about 6 blocks and within 25° of where the player is looking, *with line of sight*
   (a ray check, so it never hits through walls). Damage is applied as coming from the player, so PvP and claim plugins can cancel it. Targets are set on fire.
 - **Never ignites blocks.**

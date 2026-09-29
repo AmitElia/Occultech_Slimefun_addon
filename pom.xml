@@ -16,10 +16,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
 
-        <!-- Target platform. Swap these when moving to the custom 26.2 server build. -->
-        <paper.version>1.21.1-R0.1-SNAPSHOT</paper.version>
-        <!-- Slimefun jar installed into ./libs by scripts/setup-dev.ps1 (experimental branch, commit 3ea21da) -->
-        <slimefun.version>experimental-3ea21da</slimefun.version>
+        <!-- Target platform: Paper 26.2 + Slimefun Legacy (keeps the Slimefun4 API, targets Java 21 bytecode). -->
+        <paper.version>26.2.build.129-stable</paper.version>
+        <!-- Slimefun jar installed into ./libs by scripts/setup-dev.ps1 (github.com/wickidcow/Slimefun-Legacy) -->
+        <slimefun.version>legacy-4.1.61</slimefun.version>
 
         <junit.version>5.11.4</junit.version>
     </properties>
