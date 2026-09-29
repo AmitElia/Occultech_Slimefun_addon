@@ -1,5 +1,7 @@
 # Occultech - content design (living document)
 
+Must stay within [scope.md](scope.md) (tiers, gates, item budget, raw-cost targets).
+
 ## Core loop
 Slimefun resources -> occult materials -> ritual components -> circle glyph blocks + altar
 -> summon a boss -> boss drops -> higher-tier circles, machines and weapons.
@@ -9,13 +11,13 @@ Slimefun resources -> occult materials -> ritual components -> circle glyph bloc
 - Offerings are placed on the altar or in bowls (sacrificial-bowl analogue) and consumed over time.
 - Stages: activate -> charge -> consume offerings -> summon. Breaking the circle mid-ritual fails it (with a penalty).
 
-## Bosses (first pass)
-| Boss | Base mob | Idea |
-|------|----------|------|
-| Gelatinous Sovereign | Slime | splits into empowered minions, absorbs them to heal |
-| Abyssal Warden | Guardian | beam attacks, water-cage arena |
-| Drowned Elder | Elder Guardian | mining fatigue aura, summons guardians |
-| Hollow Wither | Wither | phase shift at 50% HP, skull barrages |
+## Bosses
+| Tier | Boss | Base mob | Idea |
+|------|------|----------|------|
+| 1 | Gelatinous Sovereign | Slime | splits into empowered minions, absorbs them to heal |
+| 2 | Abyssal Warden | Guardian | beam attacks, water-cage arena |
+| 2 | Drowned Elder | Elder Guardian | mining fatigue aura, summons guardians |
+| 3 | Hollow Wither | Wither | phase shift at 50% HP, skull barrages |
 
 ## First playable slice
 Two materials, one glyph block, one altar, one ritual pattern, one boss (slime), one drop, one weapon.

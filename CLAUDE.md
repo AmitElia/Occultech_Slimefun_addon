@@ -8,6 +8,10 @@ Maven project, Java release 21, package root `io.github.amitelia.occultech`.
 - Goal: MC 26.2 with a custom Slimefun port. Expect API drift; keep it contained (see below).
 - Experimental Slimefun API note: `SlimefunItemStack` does NOT extend `ItemStack`; use `.item()` for recipes/outputs.
 
+## Scope
+`docs/scope.md` is the locked v1.0 scope (tiers, boss gates, item budget, raw-cost targets). Check new content against it.
+`docs/server-analysis.md` + `tools/analyze_guide.py` analyze the target server's other addons (from the guide CSV export).
+
 ## Architecture
 ```
 Occultech.java   plugin entry point, SlimefunAddon, key() helper
