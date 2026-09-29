@@ -1,4 +1,8 @@
-# Occultech v1.0 - scope (locked 2026-09-29)
+# Occultech v1.0 - scope
+
+**Status:** positioning, size, power model and balance rules are locked (2026-09-29).
+**Tiers, the boss list and progression are still a draft.** Mini-boss ideas are being explored in
+[boss-ideas.md](boss-ideas.md) before these are finalized.
 
 This defines what v1.0 is. Individual item and boss designs go in `design.md` and must stay within these limits.
 Data behind these decisions: [server-analysis.md](server-analysis.md).
@@ -13,7 +17,7 @@ Data behind these decisions: [server-analysis.md](server-analysis.md).
   Infinity or Supreme gear.
 - **Size:** about **100 items**, 4 tiers, 4 bosses.
 
-## Tiers and gates
+## Tiers and gates (DRAFT, not locked)
 
 | Tier | Theme | Crafted from | Boss gate (unlocks the next tier) | Raw cost target |
 |---|---|---|---|---|
@@ -43,8 +47,13 @@ materials. There are no shortcuts: boss drops cannot be crafted, bought or dupli
 - **Drops:** always a guaranteed minimum, with a small random bonus. Each player who contributed to the fight gets their own drops.
 - **Power:** hybrid. Tiers 0-1 are purely magical (offerings only). Tier 2 and up ritual engines and infusers use Slimefun energy.
 - **Balance:** each boss is beatable solo with that tier's gear. HP and extra spawned mobs scale with the number of players in the arena.
-- **Protecting other addons' materials:** don't add demand for heavily used inputs (Nether Star in 285 recipes, Slime Ball in 177).
-  Turn them into Occultech-specific materials instead. Prefer the unused ocean drops, Echo Shard, Totem, Heavy Core and Breeze Rod.
+- **Every resource has its own purpose:** each Occultech material (especially boss drops) has its own recipes and never substitutes
+  for another resource, whether Occultech, Slimefun or another addon's. Bosses never drop their base mob's vanilla loot.
+- **Protecting other addons' materials:** avoid adding lots of demand for heavily used inputs (Nether Star in 285 recipes,
+  Slime Ball in 177). Prefer the unused ocean drops, Heavy Core and Breeze Rod as crafting inputs.
+- **No griefing, and built to resist abuse:** fights never change world blocks, and every fight follows the engine rules against abuse
+  in [boss-ideas.md](boss-ideas.md). Only use mechanics that plugins can do reliably in multiplayer.
+- **Fun first:** attacks are telegraphed, there are no unavoidable one-shots, and repeat summons are cheap relative to the player's progression.
 - **Only depend on base Slimefun.** Optional integrations with other addons can come after v1.0.
 
 ## Not in v1.0
