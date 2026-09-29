@@ -74,6 +74,38 @@ Main hand only, a per-player particle budget, and a damage cap per tick.
 - Arrow burst (Quillshot), chain lightning (visual-only lightning plus damage), gravity pull, shockwave ring with knockback,
   homing projectiles (steering item-display entities), decoys (Mirror Ward).
 
+## Particles and colors
+**Particles that take a color:**
+- `DUST`: any RGB color, size 0.01-4.
+- `DUST_COLOR_TRANSITION`: fades from one color to another over its lifetime. This is what cosmetic plugins use for "colored flames".
+- `ENTITY_EFFECT`: the potion swirl, any color.
+- `TINTED_LEAVES`: any color.
+- `ITEM`, `BLOCK` and `FALLING_DUST`: take their color from whatever item or block you pick, e.g. slime-ball crumbs or lime-concrete dust.
+
+**Fixed-color particles:** `FLAME`, `SOUL_FIRE_FLAME`, `LAVA`, `SMOKE` and campfire smoke use fixed textures. There's no orange soul fire and no green lava.
+A resource pack could only recolor them for *every* fire in the game, so that's out.
+
+**How to get custom-colored fire anyway:**
+- **Build the color from dust:** stack `DUST_COLOR_TRANSITION` particles (e.g. orange→dark red for fire, lime→dark green for "green fire",
+  with sizes shrinking along the cone), often mixed with a few real flames for texture.
+  - *Orange soul-fire:* a `SOUL_FIRE_FLAME` core with an orange/amber dust halo.
+  - *Green lava sparks:* small lime→green dust with a few `ITEM` crumbs from a lime dye or slime ball.
+  - *Green smoke:* large (size 2-4) grey-green dust, plus `ENTITY_EFFECT` in a dark green.
+- **Catch:** dust and potion-swirl particles **ignore velocity**; they drift in place. So a colored stream has to be *drawn* by spawning dust at points
+  along the cone each tick. Only the real flames can be launched with speed. A mix of both reads best.
+
+**Ground effects (e.g. Sovereign acid puddles, web zones, fire patches):**
+- **Recommended: the zone is a vanilla lingering-potion cloud** (`AreaEffectCloud`), colored per boss (lime for the Sovereign).
+  - Players already read a colored circle on the ground as a harmful area, and it has a clean, visible edge.
+  - Damage or effects come from the plugin, and the cloud is an entity, so no blocks change.
+  - Never use the `DRAGON_BREATH` particle on these clouds: players can bottle those clouds with glass bottles.
+- **Flavor on top:** `ITEM_SLIME` / slime-ball `ITEM` bubbles inside the puddle, and `BLOCK` (slime block) splashes on impact.
+- **Warnings that must always be visible** (e.g. where the Sovereign will land): add a flat **block display** on the ground (lime stained glass, very
+  thin) plus a sound. Players can turn particles down to "minimal" in their settings, but display entities still render.
+- **Accessibility:** never rely on color alone (red vs green). Pair each color with a distinct shape, particle or sound.
+
+All presets live in one place (an `ability/fx` helper), so colors and densities can be tuned in one spot.
+
 ## Durability (all Occultech weapons and charms with active abilities)
 No Slimefun energy on weapons. Every active weapon uses **item durability** instead.
 - **Per-item max durability:** any item can have its own max durability (Paper `Damageable#setMaxDamage`, available since 1.20.5).
