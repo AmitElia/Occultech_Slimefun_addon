@@ -15,19 +15,27 @@ Data behind these decisions: [server-analysis.md](server-analysis.md).
   Infinity or Networks. Top-tier raw cost is capped around **~1M**, comparable to Infinity's upper tiers.
 - **Power level:** top-tier rewards are *unique abilities* (mechanical or magical effects), not simply bigger stats than
   Infinity or Supreme gear.
-- **Size:** about **100 items**, 4 tiers, 4 bosses.
+- **Size:** about **100 items** (the current draft has 82), 4 tiers. Each tier has a pool of mini-bosses plus one gate boss.
 
 ## Tiers and gates (DRAFT, not locked)
+Full item and recipe list: [recipes.yml](recipes.yml) (source) → [items.md](items.md) (generated, with checked costs).
 
-| Tier | Theme | Crafted from | Boss gate (unlocks the next tier) | Raw cost target |
-|---|---|---|---|---|
-| 0 · Initiate | chalk, candles, salts, first circle and altar | base Slimefun magic items (Magical/Ender Lumps, Essence of Afterlife, Runes) | none (tier 0 enables the first summon) | 100 - 1k |
-| 1 · Bound | tier-1 glyphs, first ritual machine, starter weapon | tier 0 + slime-derived materials | **Gelatinous Sovereign** (Slime) | 1k - 10k |
-| 2 · Abyssal | ocean materials, powered ritual engine, armor | tier 1 + Sponge / Prismarine / Heart of the Sea | **Abyssal Warden** (Guardian), then **Drowned Elder** (Elder Guardian) | 10k - 100k |
-| 3 · Hollow | pinnacle circle, top weapons | tier 2 + Occultech wither materials (not raw Nether Stars) | **Hollow Wither** (Wither) | 100k - ~1M |
+| Tier | Balanced for (player gear) | Mini-bosses (lesser rituals) | Gate boss → unlocks next tier | Raw cost target | Circle |
+|---|---|---|---|---|---|
+| 0 · Initiate | iron gear, little or no enchanting | Brood Mother, Volley, Witch Coven | **Gelatinous Sovereign** → Sovereign Gel | 100 - 1k | 5×5 |
+| 1 · Bound | basic diamond gear | The Unbound, Night Matriarch, Mirrored Magus | **Archevoker** → Evoker's Sigil | 1k - 10k | 7×7 |
+| 2 · Abyssal | max-enchanted netherite | Abyssal Warden, Tidebreaker*, Blaze Choir, Tempest | **Drowned Elder** → Elder Scale | 10k - 100k | 9×9 |
+| 3 · Hollow | InfinityExpansion2 gear | Hollow Warlord, Heartwood Horror, Dread Lancer*, Corrupted Colossus | **Hollow Wither** → Hollow Heart | 100k - ~1M | 11×11 |
 
-**Gate rule:** the capstone items of tier N+1 require a drop from the tier N boss. Summoning the tier N boss requires tier N
-materials. There are no shortcuts: boss drops cannot be crafted, bought or duplicated.
+\* needs MC 1.21.11+ mobs, so it can only be tested after the 26.2 port. Still in the pool for later: Stormcaller, Warband Captain, Dune Caravan.
+
+**Gear benchmarks:** each tier's bosses are tuned so a solo player in that tier's benchmark gear wins, with fights of 1-3
+minutes (mini-bosses) or 4-8 minutes (gate bosses), and each boss hit costing roughly 15-25% of the player's HP. Tier 3 needs the real
+InfinityExpansion2 gear stats measured on a test server before tuning.
+
+**Gate rule:** the gate boss's catalyst uses one drop from each of the tier's mini-bosses. The gate drop unlocks the next tier's altar,
+machines and capstone items, but is never used in base materials, so later tiers don't require re-farming early bosses.
+There are no shortcuts: boss drops cannot be crafted, bought or duplicated.
 
 ## Item budget (~100)
 
@@ -56,8 +64,10 @@ materials. There are no shortcuts: boss drops cannot be crafted, bought or dupli
 - **Fun first:** attacks are telegraphed, there are no unavoidable one-shots, and repeat summons are cheap relative to the player's progression.
 - **Only depend on base Slimefun.** Optional integrations with other addons can come after v1.0.
 
+Special mechanics (servitor labor, necromancy, held-use weapons): [mechanics.md](mechanics.md).
+
 ## Not in v1.0
-- Bosses beyond the four above, or boss variants and hard modes
+- Bosses beyond the pools above, or boss variants and hard modes
 - Integrations with other addons (Networks storage, Infinity inputs)
 - Dimensions, custom structures, or natural world spawns of bosses
 - Custom models or resource packs (vanilla items and Slimefun heads only)

@@ -9,7 +9,11 @@ Maven project, Java release 21, package root `io.github.amitelia.occultech`.
 - Experimental Slimefun API note: `SlimefunItemStack` does NOT extend `ItemStack`; use `.item()` for recipes/outputs.
 
 ## Scope
-`docs/scope.md` is the locked v1.0 scope (tiers, boss gates, item budget, raw-cost targets). Check new content against it.
+`docs/scope.md` is the v1.0 scope: positioning, size, power and rules are locked; tiers/bosses/progression are still DRAFT.
+`docs/boss-ideas.md` holds the boss pool plus the design and anti-abuse rules every mechanic must pass. Check new content against both.
+`docs/recipes.yml` is the source of truth for items/recipes/bosses; after editing it run `python tools/cost_model.py`
+(regenerates `docs/items.md`, checks tier cost targets, slot limits, summon costs). `docs/mechanics.md` covers servitors,
+necromancy and held-use weapons.
 `docs/server-analysis.md` + `tools/analyze_guide.py` analyze the target server's other addons (from the guide CSV export).
 
 ## Architecture

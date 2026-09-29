@@ -41,7 +41,7 @@ tested after the 26.2 port.
 
 ## Repeat costs (rule 6)
 - **The circle and altar are built once and reused.** Each summon only consumes offerings and a catalyst.
-- **Lesser (mini-boss) summon cost** should be about 5-10% of what it costs to craft that tier's circle. Major summons cost about 3× a lesser summon.
+- **Lesser (mini-boss) summon cost** should be about 1-5% of what it costs to build that tier's circle. Major summons cost about 3-5× a lesser summon. Checked by `tools/cost_model.py`.
 - **Drops per win:** about 3-5 wins should be enough for one capstone item of the next tier, so progress feels steady.
 - **Fight length:** 1-3 minutes for a mini-boss, 4-8 minutes for a major boss.
 
