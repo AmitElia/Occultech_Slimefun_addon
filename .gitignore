@@ -1,0 +1,21 @@
+# Build output
+target/
+
+# Local Slimefun jar repository (populated by scripts/setup-dev.ps1)
+libs/
+
+# Test server
+run/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.class
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Local Claude Code settings
+.claude/settings.local.json
