@@ -11,7 +11,7 @@ commands:
     description: Occultech admin commands
     aliases: [oc]
     permission: occultech.admin
-    usage: /<command> selftest
+    usage: /<command> <selftest | showcase [clear]>
 
 permissions:
   occultech.admin:

@@ -1,27 +1,36 @@
 package io.github.amitelia.occultech.debug;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Slime;
 import org.bukkit.inventory.ItemStack;
 
 import io.github.amitelia.occultech.Occultech;
+import io.github.amitelia.occultech.boss.BossFight;
+import io.github.amitelia.occultech.boss.BossService;
+import io.github.amitelia.occultech.boss.BossSpec;
 import io.github.amitelia.occultech.content.ItemCatalog;
 import io.github.amitelia.occultech.content.ItemKeys;
+import io.github.amitelia.occultech.core.Keys;
 import io.github.amitelia.occultech.items.OfferingBowl;
 import io.github.amitelia.occultech.items.RitualAltar;
 import io.github.amitelia.occultech.items.RitualService;
-import io.github.amitelia.occultech.ritual.CirclePattern;
 import io.github.amitelia.occultech.ritual.Circles;
 import io.github.amitelia.occultech.ritual.RitualRecipe;
 import io.github.amitelia.occultech.setup.ContentRegistrar;
@@ -32,158 +41,263 @@ import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 /**
  * In-game integration test, runnable from the console: {@code occultech selftest}.
  * <p>
- * Checks registration, then builds a real Initiate's circle next to spawn, verifies circle detection (including a
- * missing piece), runs the Sovereign's Catalyst ritual end to end, and restores the area afterwards.
+ * Builds a real Initiate's circle next to spawn and checks: registration, circle detection, a crafting ritual, a
+ * summoning ritual, every tier-0 boss spawning / ticking / dying cleanly (no vanilla drops, no slime splits, no
+ * leftover entities), catalyst refunds and crash recovery. Restores the area afterwards.
  */
 final class SelfTest {
 
-    private static final String TEST_OUTPUT = ItemKeys.slimefunId("SOVEREIGN_CATALYST");
+    private static final String CATALYST = ItemKeys.slimefunId("SOVEREIGN_CATALYST");
+    private static final String ACTIVE_KEY = "occultech_active_fight";
+    private static final List<String> BOSSES = List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "GELATINOUS_SOVEREIGN");
+
+    private record Step(long delay, Runnable action) {}
 
     private final Occultech plugin;
+    private final RitualService rituals;
+    private final BossService bosses;
     private final CommandSender sender;
     private final Map<Block, BlockData> previous = new LinkedHashMap<>();
-    private final List<Block> placed = new ArrayList<>();
+    private final Deque<Step> steps = new ArrayDeque<>();
     private int passed;
     private int failed;
     private Block altar;
     private Chunk chunk;
+    private BossFight currentFight;
+    private java.util.Set<java.util.UUID> slimesBefore = java.util.Set.of();
 
     SelfTest(Occultech plugin, CommandSender sender) {
         this.plugin = plugin;
+        this.rituals = plugin.rituals();
+        this.bosses = rituals.bosses();
         this.sender = sender;
     }
 
     void run() {
         say("&5[Occultech] Self-test starting...");
+        then(0, this::registration);
+        then(0, this::buildCircle);
+        then(5, this::circleDetection);
+        then(0, this::craftingRitual);
+        then(RitualService.DURATION_TICKS + 20L, this::craftingResult);
+        then(0, this::summonRitual);
+        then(RitualService.DURATION_TICKS + 20L, this::summonResult);
+        then(0, this::killCurrentFight);
+        then(10, () -> checkFightEndedCleanly("Brood Mother (ritual)"));
+        for (String bossId : BOSSES) {
+            then(0, () -> summonDirect(bossId));
+            then(60, () -> checkFightRunning(bossId));
+            then(0, this::killCurrentFight);
+            then(10, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
+        }
+        then(0, this::refundOnInterruption);
+        then(5, this::crashRecovery);
+        next();
+    }
+
+    // ------------------------------------------------------------------ steps
+
+    private void registration() {
         ContentRegistrar registrar = plugin.registrar();
         ItemCatalog catalog = plugin.catalog();
-
         long expected = catalog.items().stream().filter(i -> i.tier() <= ContentRegistrar.IMPLEMENTED_TIER).count();
         long registered = catalog.items().stream().filter(i -> i.tier() <= ContentRegistrar.IMPLEMENTED_TIER)
             .filter(i -> SlimefunItem.getById(ItemKeys.slimefunId(i.id())) != null).count();
         check("all " + expected + " tier-0 items registered", registered == expected, registered + " registered");
         check("no content problems", registrar.problems().isEmpty(), String.join("; ", registrar.problems()));
         check("researches registered", registrar.researchCount() == catalog.researches().size(), registrar.researchCount() + " registered");
-        check("ritual recipes loaded", !plugin.rituals().recipes().isEmpty(), plugin.rituals().recipes().size() + " recipes");
+        long summons = rituals.recipes().stream().filter(RitualRecipe::isSummon).count();
+        check("4 summoning rituals registered", summons == BOSSES.size(), summons + " summons");
+    }
 
+    private void buildCircle() {
         World world = Bukkit.getWorlds().get(0);
         int x = world.getSpawnLocation().getBlockX() + 24;
         int z = world.getSpawnLocation().getBlockZ() + 24;
         chunk = world.getChunkAt(x >> 4, z >> 4);
         chunk.addPluginChunkTicket(plugin);
         altar = world.getBlockAt(x, world.getHighestBlockYAt(x, z) + 1, z);
-
-        CirclePattern pattern = Circles.forTier(0);
-        int r = pattern.radius();
-        for (int dz = -r; dz <= r; dz++) {
-            for (int dx = -r; dx <= r; dx++) {
-                String glyph = pattern.glyphAt(dx, dz);
-                if (glyph != null) {
-                    place(altar.getRelative(dx, 0, dz), glyph);
-                }
-            }
-        }
-        // give Slimefun a moment to create the block menus
-        Bukkit.getScheduler().runTaskLater(plugin, this::circleStage, 5L);
+        DebugWorld.buildCircle(altar, 0, block -> previous.putIfAbsent(block, block.getBlockData()));
     }
 
-    private void circleStage() {
-        RitualService rituals = plugin.rituals();
+    private void circleDetection() {
         Optional<RitualService.CircleCheck> check = rituals.checkCircle(altar);
-        check("altar recognised", check.isPresent(), "BlockStorage id " + BlockStorage.checkID(altar));
-        check("complete circle detected", check.isPresent() && check.get().complete(),
-            check.map(c -> c.missing().size() + " missing").orElse("no check"));
+        check("altar recognised", check.isPresent(), "id " + BlockStorage.checkID(altar));
+        check("complete circle detected", check.isPresent() && check.get().complete(), check.map(c -> c.missing().size() + " missing").orElse("-"));
 
         Block corner = altar.getRelative(-2, 0, -2);
-        String cornerId = BlockStorage.checkID(corner);
         BlockStorage.clearBlockInfo(corner);
         corner.setType(Material.AIR);
         Optional<RitualService.CircleCheck> broken = rituals.checkCircle(altar);
-        check("missing glyph detected", broken.isPresent() && broken.get().missing().size() == 1,
-            broken.map(c -> c.missing().size() + " missing").orElse("no check"));
-        place(corner, cornerId);
-
-        BlockMenu altarMenu = BlockStorage.getInventory(altar);
-        check("altar menu exists", altarMenu != null, "no menu");
-        Optional<RitualRecipe> recipe = rituals.recipes().stream().filter(rr -> rr.outputId().equals(TEST_OUTPUT)).findFirst();
-        check("catalyst ritual recipe exists", recipe.isPresent(), "not loaded");
-        if (altarMenu == null || recipe.isEmpty() || check.isEmpty()) {
-            finish();
-            return;
-        }
-
-        altarMenu.replaceExistingItem(RitualAltar.CENTER_SLOT, item(recipe.get().center(), 1));
-        List<int[]> bowlOffsets = check.get().pattern().positionsOf(Circles.OFFERING_BOWL, check.get().rotation());
-        List<BlockMenu> bowls = new ArrayList<>();
-        int i = 0;
-        for (Map.Entry<String, Integer> offering : recipe.get().offerings().entrySet()) {
-            int[] offset = bowlOffsets.get(i++);
-            BlockMenu bowl = BlockStorage.getInventory(altar.getRelative(offset[0], 0, offset[1]));
-            if (bowl != null) {
-                bowl.replaceExistingItem(OfferingBowl.SLOT, item(offering.getKey(), offering.getValue()));
-                bowls.add(bowl);
-            }
-        }
-        check("offering bowl menus exist", bowls.size() == recipe.get().offerings().size(), bowls.size() + " menus");
-
-        RitualService.Outcome outcome = rituals.begin(null, altar);
-        check("ritual starts", outcome == RitualService.Outcome.STARTED, outcome.name());
-        check("offerings consumed at start", bowls.stream().allMatch(b -> empty(b.getItemInSlot(OfferingBowl.SLOT))), "bowls not empty");
-        check("altar locked during ritual", rituals.isLocked(altar.getLocation()), "not locked");
-
-        Bukkit.getScheduler().runTaskLater(plugin, () -> resultStage(altarMenu), RitualService.DURATION_TICKS + 20L);
+        check("missing glyph detected", broken.isPresent() && broken.get().missing().size() == 1, broken.map(c -> c.missing().size() + " missing").orElse("-"));
+        DebugWorld.placeSlimefun(corner, Circles.CHALK_GLYPH, block -> {});
+        check("altar menu exists", BlockStorage.getInventory(altar) != null, "no menu");
     }
 
-    private void resultStage(BlockMenu altarMenu) {
-        ItemStack result = altarMenu.getItemInSlot(RitualAltar.CENTER_SLOT);
-        SlimefunItem resultItem = empty(result) ? null : SlimefunItem.getByItem(result);
-        check("ritual produced Sovereign's Catalyst", resultItem != null && resultItem.getId().equals(TEST_OUTPUT),
-            resultItem == null ? "nothing in the altar" : resultItem.getId());
-        check("altar unlocked afterwards", !plugin.rituals().isLocked(altar.getLocation()), "still locked");
-        finish();
+    private void craftingRitual() {
+        RitualRecipe recipe = rituals.recipes().stream().filter(r -> CATALYST.equals(r.outputId())).findFirst().orElse(null);
+        check("catalyst ritual recipe exists", recipe != null, "missing");
+        if (recipe == null) {
+            return;
+        }
+        fill(recipe);
+        check("crafting ritual starts", rituals.begin(null, altar) == RitualService.Outcome.STARTED, "did not start");
+        check("offerings consumed at start", bowlsEmpty(), "bowls not empty");
+        check("altar locked during ritual", rituals.isLocked(altar.getLocation()), "not locked");
+    }
+
+    private void craftingResult() {
+        check("ritual produced Sovereign's Catalyst", CATALYST.equals(idIn(RitualAltar.CENTER_SLOT)), String.valueOf(idIn(RitualAltar.CENTER_SLOT)));
+        check("altar unlocked afterwards", !rituals.isLocked(altar.getLocation()), "still locked");
+    }
+
+    private void summonRitual() {
+        DebugWorld.setAltarCenter(altar, null);
+        RitualRecipe recipe = rituals.recipes().stream().filter(r -> "BROOD_MOTHER".equals(r.bossId())).findFirst().orElseThrow();
+        fill(recipe);
+        snapshotSlimes();
+        check("summoning ritual starts with an empty altar", rituals.begin(null, altar) == RitualService.Outcome.STARTED, "did not start");
+    }
+
+    private void summonResult() {
+        currentFight = bosses.fightAt(altar).orElse(null);
+        check("summoning ritual spawned the Brood Mother", currentFight != null && !currentFight.bosses().isEmpty(), "no fight");
+        if (currentFight != null) {
+            check("boss is tagged as summoned", currentFight.bosses().stream().allMatch(Keys::isSummoned), "untagged");
+            check("second summon on a busy circle is refused", rituals.begin(null, altar) == RitualService.Outcome.BUSY, "not refused");
+        }
+    }
+
+    private void summonDirect(String bossId) {
+        snapshotSlimes();
+        BossSpec spec = rituals.spec(bossId).orElseThrow();
+        currentFight = bosses.summon(bossId, spec, altar, null);
+        check(ContentRegistrar.title(bossId) + " spawns", !currentFight.bosses().isEmpty(), "no entities");
+    }
+
+    private void checkFightRunning(String bossId) {
+        check(ContentRegistrar.title(bossId) + " runs 3s without errors", !currentFight.isOver(),
+            "ended early: " + currentFight.result());
+    }
+
+    private void killCurrentFight() {
+        if (currentFight != null) {
+            // copy: each death removes the boss from the fight's live list
+            for (LivingEntity boss : List.copyOf(currentFight.bosses())) {
+                boss.setHealth(0);
+            }
+        }
+    }
+
+    private void checkFightEndedCleanly(String name) {
+        if (currentFight == null) {
+            check(name + " fight existed", false, "no fight");
+            return;
+        }
+        check(name + " ends in victory", currentFight.isOver() && currentFight.result() == BossFight.Result.VICTORY,
+            String.valueOf(currentFight.result()));
+        long leftovers = nearby().stream().filter(Keys::isSummoned).count();
+        check(name + " leaves no summoned entities", leftovers == 0, leftovers + " left");
+        long drops = nearby().stream().filter(e -> e instanceof Item).count();
+        check(name + " drops no vanilla loot", drops == 0, drops + " items on the ground");
+        // superflat worlds spawn wild slimes, so only count slimes that appeared during the fight
+        long slimes = nearby().stream().filter(e -> e instanceof Slime && !slimesBefore.contains(e.getUniqueId()) && !Keys.isSummoned(e)).count();
+        check(name + " leaves no split slimes", slimes == 0, slimes + " new slimes");
+        nearby().stream().filter(e -> e instanceof Item).forEach(Entity::remove);
+        currentFight = null;
+    }
+
+    private void refundOnInterruption() {
+        DebugWorld.setAltarCenter(altar, null);
+        BossSpec spec = rituals.spec("GELATINOUS_SOVEREIGN").orElseThrow();
+        BossFight fight = bosses.summon("GELATINOUS_SOVEREIGN", spec, altar, DebugWorld.item(CATALYST, 1));
+        check("active-fight marker saved on the altar", BlockStorage.getLocationInfo(altar.getLocation(), ACTIVE_KEY) != null, "no marker");
+        bosses.abort(fight, BossFight.Result.SHUTDOWN);
+        check("interrupted gate fight refunds the catalyst", CATALYST.equals(idIn(RitualAltar.CENTER_SLOT)), String.valueOf(idIn(RitualAltar.CENTER_SLOT)));
+        check("marker cleared after the fight", BlockStorage.getLocationInfo(altar.getLocation(), ACTIVE_KEY) == null, "marker left");
+    }
+
+    private void crashRecovery() {
+        DebugWorld.setAltarCenter(altar, null);
+        // simulate a crash: the marker survived but the fight is gone
+        BlockStorage.addBlockInfo(altar, ACTIVE_KEY, CATALYST);
+        plugin.rituals().recoverAltar(altar);
+        check("crash recovery returns the catalyst", CATALYST.equals(idIn(RitualAltar.CENTER_SLOT)), String.valueOf(idIn(RitualAltar.CENTER_SLOT)));
+        check("crash marker cleared", BlockStorage.getLocationInfo(altar.getLocation(), ACTIVE_KEY) == null, "marker left");
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    private void snapshotSlimes() {
+        slimesBefore = nearby().stream().filter(e -> e instanceof Slime).map(Entity::getUniqueId).collect(java.util.stream.Collectors.toSet());
+    }
+
+    private void fill(RitualRecipe recipe) {
+        DebugWorld.setAltarCenter(altar, recipe.center() == null ? null : DebugWorld.item(recipe.center(), 1));
+        RitualService.CircleCheck check = rituals.checkCircle(altar).orElseThrow();
+        List<int[]> bowls = check.pattern().positionsOf(Circles.OFFERING_BOWL, check.rotation());
+        bowls.forEach(offset -> DebugWorld.setBowl(altar.getRelative(offset[0], 0, offset[1]), null));
+        int i = 0;
+        for (Map.Entry<String, Integer> offering : recipe.offerings().entrySet()) {
+            int[] offset = bowls.get(i++);
+            DebugWorld.setBowl(altar.getRelative(offset[0], 0, offset[1]), DebugWorld.item(offering.getKey(), offering.getValue()));
+        }
+    }
+
+    private boolean bowlsEmpty() {
+        RitualService.CircleCheck check = rituals.checkCircle(altar).orElseThrow();
+        for (int[] offset : check.pattern().positionsOf(Circles.OFFERING_BOWL, check.rotation())) {
+            BlockMenu menu = BlockStorage.getInventory(altar.getRelative(offset[0], 0, offset[1]));
+            ItemStack item = menu == null ? null : menu.getItemInSlot(OfferingBowl.SLOT);
+            if (item != null && !item.getType().isAir()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private String idIn(int slot) {
+        BlockMenu menu = BlockStorage.getInventory(altar);
+        ItemStack item = menu == null ? null : menu.getItemInSlot(slot);
+        SlimefunItem sfItem = item == null || item.getType().isAir() ? null : SlimefunItem.getByItem(item);
+        return sfItem == null ? null : sfItem.getId();
+    }
+
+    private List<Entity> nearby() {
+        return List.copyOf(altar.getWorld().getNearbyEntities(altar.getLocation(), 20, 12, 20));
     }
 
     private void finish() {
-        for (Block block : placed) {
-            BlockMenu menu = BlockStorage.getInventory(block);
-            if (menu != null) {
-                boolean bowl = Circles.OFFERING_BOWL.equals(BlockStorage.checkID(block));
-                menu.replaceExistingItem(bowl ? OfferingBowl.SLOT : RitualAltar.CENTER_SLOT, null);
-            }
+        for (Block block : previous.keySet()) {
+            DebugWorld.emptyMenu(block);
             BlockStorage.clearBlockInfo(block);
         }
-        previous.forEach(Block::setBlockData);
-        chunk.removePluginChunkTicket(plugin);
+        previous.forEach((block, data) -> block.setBlockData(data, false));
+        if (chunk != null) {
+            chunk.removePluginChunkTicket(plugin);
+        }
         say((failed == 0 ? "&a" : "&c") + "[Occultech] Self-test finished: " + passed + " passed, " + failed + " failed.");
     }
 
-    private void place(Block block, String id) {
-        SlimefunItem item = SlimefunItem.getById(id);
-        if (item == null) {
-            check("place " + id, false, "item not registered");
+    private void then(long delay, Runnable action) {
+        steps.add(new Step(delay, action));
+    }
+
+    private void next() {
+        Step step = steps.poll();
+        if (step == null) {
+            finish();
             return;
         }
-        previous.putIfAbsent(block, block.getBlockData());
-        if (!placed.contains(block)) {
-            placed.add(block);
-        }
-        block.setType(item.getItem().getType());
-        BlockStorage.store(block, id);
-    }
-
-    private static ItemStack item(String key, int amount) {
-        ItemStack stack;
-        if (ItemKeys.isVanilla(key)) {
-            stack = new ItemStack(Material.valueOf(key.substring(ItemKeys.VANILLA.length())));
-        } else {
-            stack = SlimefunItem.getById(key).getItem().clone();
-        }
-        stack.setAmount(amount);
-        return stack;
-    }
-
-    private static boolean empty(ItemStack item) {
-        return item == null || item.getType().isAir() || item.getAmount() <= 0;
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            try {
+                step.action().run();
+            } catch (RuntimeException e) {
+                check("step threw no exception", false, e.toString());
+                plugin.getLogger().log(java.util.logging.Level.WARNING, "Self-test step failed", e);
+            }
+            next();
+        }, Math.max(1, step.delay()));
     }
 
     private void check(String name, boolean ok, String detail) {
@@ -197,6 +311,6 @@ final class SelfTest {
     }
 
     private void say(String message) {
-        sender.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', message));
+        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
     }
 }

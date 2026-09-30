@@ -9,8 +9,11 @@ import javax.annotation.Nullable;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import io.github.amitelia.occultech.boss.BossService;
+import io.github.amitelia.occultech.boss.tier0.Tier0Bosses;
 import io.github.amitelia.occultech.content.ItemCatalog;
 import io.github.amitelia.occultech.debug.OccultechCommand;
+import io.github.amitelia.occultech.items.OccultechFightHooks;
 import io.github.amitelia.occultech.items.RitualService;
 import io.github.amitelia.occultech.items.WeaponListener;
 import io.github.amitelia.occultech.setup.ContentRegistrar;
@@ -21,6 +24,7 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     private static Occultech instance;
 
     private ItemCatalog catalog;
+    private BossService bosses;
     private RitualService rituals;
     private ContentRegistrar registrar;
 
@@ -38,22 +42,29 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
             throw new IllegalStateException("Could not read recipes.yml", e);
         }
 
-        rituals = new RitualService(this);
+        OccultechFightHooks hooks = new OccultechFightHooks();
+        bosses = new BossService(this, hooks);
+        Tier0Bosses.all().forEach(bosses::register);
+        rituals = new RitualService(this, bosses, hooks);
         registrar = new ContentRegistrar(this, catalog, rituals);
         registrar.registerAll();
         registrar.problems().forEach(problem -> getLogger().warning("Content problem: " + problem));
 
+        bosses.start();
         getServer().getPluginManager().registerEvents(new WeaponListener(this), this);
         getCommand("occultech").setExecutor(new OccultechCommand(this));
 
         getLogger().info("Occultech enabled: " + registrar.stacks().size() + " items, " + rituals.recipes().size()
-            + " ritual recipes, " + registrar.researchCount() + " researches - the circles are listening.");
+            + " rituals, " + registrar.researchCount() + " researches - the circles are listening.");
     }
 
     @Override
     public void onDisable() {
         if (rituals != null) {
             rituals.shutdown();
+        }
+        if (bosses != null) {
+            bosses.shutdown();
         }
         instance = null;
     }

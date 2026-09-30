@@ -2,12 +2,14 @@ package io.github.amitelia.occultech.items;
 
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 
+import io.github.amitelia.occultech.Occultech;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -66,6 +68,8 @@ public class RitualAltar extends SlimefunItem {
                 });
                 menu.addMenuClickHandler(CENTER_SLOT, (p, slot, stack, action) -> !rituals.isLocked(block.getLocation()));
                 menu.addPlayerInventoryClickHandler((p, slot, stack, action) -> !rituals.isLocked(block.getLocation()));
+                // a fight interrupted by a crash leaves a marker on the altar: return its catalyst
+                Bukkit.getScheduler().runTask(Occultech.instance(), () -> rituals.recoverAltar(block));
             }
         };
 

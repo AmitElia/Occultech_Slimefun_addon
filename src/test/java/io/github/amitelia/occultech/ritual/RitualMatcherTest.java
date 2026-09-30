@@ -12,8 +12,10 @@ import io.github.amitelia.occultech.ritual.RitualMatcher.Bowl;
 
 class RitualMatcherTest {
 
-    private static final RitualRecipe CATALYST = new RitualRecipe("OCCULTECH_SOVEREIGN_CATALYST", 1, "mc:SLIME_BLOCK",
+    private static final RitualRecipe CATALYST = RitualRecipe.crafting("OCCULTECH_SOVEREIGN_CATALYST", 1, "mc:SLIME_BLOCK",
         Map.of("OCCULTECH_BROOD_SILK", 1, "OCCULTECH_GRAVE_SALT", 4), 0);
+    private static final RitualRecipe BROOD_SUMMON = RitualRecipe.summoning("BROOD_MOTHER", null,
+        Map.of("mc:STRING", 8, "OCCULTECH_GRAVE_SALT", 2), 0);
 
     @Test
     void matchesAndTakesOnlyWhatIsNeeded() {
@@ -44,9 +46,18 @@ class RitualMatcherTest {
 
     @Test
     void circleTierMustBeHighEnough() {
-        RitualRecipe tierOne = new RitualRecipe("X", 1, "mc:SLIME_BLOCK", Map.of("OCCULTECH_GRAVE_SALT", 1), 1);
+        RitualRecipe tierOne = RitualRecipe.crafting("X", 1, "mc:SLIME_BLOCK", Map.of("OCCULTECH_GRAVE_SALT", 1), 1);
         List<Bowl> bowls = List.of(new Bowl("OCCULTECH_GRAVE_SALT", 1));
         assertTrue(RitualMatcher.match(List.of(tierOne), "mc:SLIME_BLOCK", bowls, 0).isEmpty());
         assertTrue(RitualMatcher.match(List.of(tierOne), "mc:SLIME_BLOCK", bowls, 1).isPresent());
+    }
+
+    @Test
+    void summonWithoutCenterNeedsAnEmptyAltar() {
+        List<Bowl> bowls = List.of(new Bowl("mc:STRING", 8), new Bowl("OCCULTECH_GRAVE_SALT", 2));
+        var match = RitualMatcher.match(List.of(CATALYST, BROOD_SUMMON), null, bowls, 0);
+        assertTrue(match.isPresent());
+        assertTrue(match.get().recipe().isSummon());
+        assertTrue(RitualMatcher.match(List.of(BROOD_SUMMON), "mc:DIRT", bowls, 0).isEmpty());
     }
 }

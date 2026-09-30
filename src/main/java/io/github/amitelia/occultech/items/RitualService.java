@@ -26,6 +26,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
+import io.github.amitelia.occultech.boss.BossService;
+import io.github.amitelia.occultech.boss.BossSpec;
 import io.github.amitelia.occultech.ritual.CirclePattern;
 import io.github.amitelia.occultech.ritual.Circles;
 import io.github.amitelia.occultech.ritual.RitualMatcher;
@@ -37,18 +39,20 @@ import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 
 /**
  * Runs rituals at altars: checks the circle, matches the offerings, consumes them up front (so nothing can be
- * pulled back out mid-ritual), locks the involved menus, plays the ritual and delivers the result.
+ * pulled back out mid-ritual), locks the involved menus, plays the ritual, then either delivers the crafted item or
+ * summons the boss.
  * <p>
- * If the circle is broken mid-ritual the offerings are lost. If the plugin shuts down mid-ritual the result is
- * delivered immediately, so a restart never eats items.
+ * If the circle is broken mid-ritual the offerings are lost. If the plugin shuts down mid-ritual, a crafting ritual
+ * delivers its result and a summoning ritual returns everything it took, so a restart never eats items.
  */
 public final class RitualService {
 
     public static final int DURATION_TICKS = 100;
     private static final int STEP_TICKS = 5;
     private static final Particle.DustOptions RITUAL_DUST = new Particle.DustOptions(Color.fromRGB(150, 60, 210), 1.2F);
+    private static final Particle.DustOptions SUMMON_DUST = new Particle.DustOptions(Color.fromRGB(200, 30, 50), 1.4F);
 
-    public enum Outcome { STARTED, BUSY, NOT_AN_ALTAR, INCOMPLETE_CIRCLE, NO_MATCH }
+    public enum Outcome { STARTED, BUSY, NOT_AN_ALTAR, INCOMPLETE_CIRCLE, NO_MATCH, ARENA_OCCUPIED }
 
     public record CircleCheck(int tier, @Nonnull CirclePattern pattern, int rotation, @Nonnull List<int[]> missing) {
 
@@ -57,17 +61,29 @@ public final class RitualService {
         }
     }
 
+    private record Taken(@Nullable BlockMenu menu, int slot, ItemStack item) {}
+
     private final Plugin plugin;
+    private final BossService bosses;
+    private final OccultechFightHooks hooks;
     private final List<RitualRecipe> recipes = new ArrayList<>();
+    private final Map<String, BossSpec> specs = new HashMap<>();
     private final Map<Location, Session> sessions = new HashMap<>();
     private final Set<Location> locked = new HashSet<>();
 
-    public RitualService(Plugin plugin) {
+    public RitualService(Plugin plugin, BossService bosses, OccultechFightHooks hooks) {
         this.plugin = plugin;
+        this.bosses = bosses;
+        this.hooks = hooks;
     }
 
     public void addRecipe(@Nonnull RitualRecipe recipe) {
         recipes.add(recipe);
+    }
+
+    public void addSummon(@Nonnull RitualRecipe recipe, @Nonnull BossSpec spec) {
+        recipes.add(recipe);
+        specs.put(recipe.bossId(), spec);
     }
 
     @Nonnull
@@ -75,12 +91,25 @@ public final class RitualService {
         return Collections.unmodifiableList(recipes);
     }
 
+    @Nonnull
+    public Optional<BossSpec> spec(@Nonnull String bossId) {
+        return Optional.ofNullable(specs.get(bossId));
+    }
+
+    @Nonnull
+    public BossService bosses() {
+        return bosses;
+    }
+
     public boolean isLocked(@Nonnull Location location) {
         return locked.contains(location.getBlock().getLocation());
     }
 
-    public boolean isRunning(@Nonnull Block altar) {
-        return sessions.containsKey(altar.getLocation());
+    /** Called when an altar's menu is created (e.g. chunk load): returns the catalyst of a fight lost to a crash. */
+    public void recoverAltar(@Nonnull Block altar) {
+        if (bosses.fightAt(altar).isEmpty()) {
+            hooks.recover(altar);
+        }
     }
 
     /** Checks the circle around an altar, choosing the rotation closest to complete. */
@@ -106,6 +135,10 @@ public final class RitualService {
             tell(player, "&7A ritual is already in progress here.");
             return Outcome.BUSY;
         }
+        if (bosses.fightAt(altar).isPresent()) {
+            tell(player, "&7A summoned creature still walks this circle.");
+            return Outcome.BUSY;
+        }
 
         Optional<CircleCheck> check = checkCircle(altar);
         BlockMenu altarMenu = BlockStorage.getInventory(altar);
@@ -127,18 +160,33 @@ public final class RitualService {
             bowls.add(MenuUtils.isEmpty(content) ? Bowl.EMPTY : new Bowl(MenuUtils.keyOf(content), content.getAmount()));
         }
 
-        String centerKey = MenuUtils.keyOf(altarMenu.getItemInSlot(RitualAltar.CENTER_SLOT));
-        Optional<RitualMatcher.Match> match = RitualMatcher.match(recipes, centerKey, bowls, check.get().tier());
+        ItemStack centerItem = altarMenu.getItemInSlot(RitualAltar.CENTER_SLOT);
+        Optional<RitualMatcher.Match> match = RitualMatcher.match(recipes, MenuUtils.keyOf(centerItem), bowls, check.get().tier());
         if (match.isEmpty()) {
             tell(player, "&7The circle stays silent: nothing answers to these offerings.");
             return Outcome.NO_MATCH;
         }
+        RitualRecipe recipe = match.get().recipe();
+        if (recipe.isSummon()) {
+            BossSpec spec = specs.get(recipe.bossId());
+            if (spec == null || !bosses.canSummon(altar.getLocation(), spec.arenaRadius())) {
+                tell(player, "&cAnother summoning is too close. Arenas may not overlap.");
+                return Outcome.ARENA_OCCUPIED;
+            }
+        }
 
-        // Consume everything before anything else happens, so the inputs can never be taken back out.
-        altarMenu.consumeItem(RitualAltar.CENTER_SLOT, 1);
+        // Take everything before anything else happens, so the inputs can never be taken back out.
+        List<Taken> taken = new ArrayList<>();
+        if (recipe.center() != null) {
+            taken.add(new Taken(altarMenu, RitualAltar.CENTER_SLOT, one(centerItem)));
+            altarMenu.consumeItem(RitualAltar.CENTER_SLOT, 1);
+        }
         int[] take = match.get().bowlAmounts();
         for (int i = 0; i < take.length; i++) {
             if (take[i] > 0) {
+                ItemStack item = bowlMenus.get(i).getItemInSlot(OfferingBowl.SLOT).clone();
+                item.setAmount(take[i]);
+                taken.add(new Taken(bowlMenus.get(i), OfferingBowl.SLOT, item));
                 bowlMenus.get(i).consumeItem(OfferingBowl.SLOT, take[i]);
             }
         }
@@ -150,8 +198,7 @@ public final class RitualService {
             }
         }
 
-        Session session = new Session(altar, match.get().recipe(), check.get().rotation(), bowlLocations,
-            player == null ? null : player.getUniqueId());
+        Session session = new Session(altar, recipe, check.get().rotation(), bowlLocations, taken, player == null ? null : player.getUniqueId());
         sessions.put(altar.getLocation(), session);
         locked.add(altar.getLocation());
         locked.addAll(bowlLocations);
@@ -159,11 +206,21 @@ public final class RitualService {
         return Outcome.STARTED;
     }
 
-    /** Called on plugin disable: finish every running ritual immediately so no offerings are lost. */
+    /** Called on plugin disable: crafting rituals finish, summoning rituals give everything back. */
     public void shutdown() {
         for (Session session : new ArrayList<>(sessions.values())) {
-            session.finish(false);
+            if (session.recipe.isSummon()) {
+                session.returnOfferings();
+            } else {
+                session.finish(false);
+            }
         }
+    }
+
+    private static ItemStack one(ItemStack item) {
+        ItemStack copy = item.clone();
+        copy.setAmount(1);
+        return copy;
     }
 
     private static java.util.function.BiFunction<Integer, Integer, String> lookupAround(Block altar) {
@@ -182,20 +239,22 @@ public final class RitualService {
         private final RitualRecipe recipe;
         private final int rotation;
         private final List<Location> bowls;
+        private final List<Taken> taken;
         private final UUID playerId;
         private BukkitTask task;
         private int elapsed;
 
-        Session(Block altar, RitualRecipe recipe, int rotation, List<Location> bowls, @Nullable UUID playerId) {
+        Session(Block altar, RitualRecipe recipe, int rotation, List<Location> bowls, List<Taken> taken, @Nullable UUID playerId) {
             this.altar = altar;
             this.recipe = recipe;
             this.rotation = rotation;
             this.bowls = bowls;
+            this.taken = taken;
             this.playerId = playerId;
         }
 
         void start() {
-            altar.getWorld().playSound(center(), Sound.BLOCK_BEACON_ACTIVATE, 1F, 0.8F);
+            altar.getWorld().playSound(center(), recipe.isSummon() ? Sound.ENTITY_EVOKER_PREPARE_SUMMON : Sound.BLOCK_BEACON_ACTIVATE, 1F, 0.8F);
             task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, STEP_TICKS, STEP_TICKS);
         }
 
@@ -220,15 +279,16 @@ public final class RitualService {
         private void effects() {
             ThreadLocalRandom random = ThreadLocalRandom.current();
             Location top = center();
+            Particle.DustOptions dust = recipe.isSummon() ? SUMMON_DUST : RITUAL_DUST;
             for (Location bowl : bowls) {
                 Location from = bowl.clone().add(0.5, 1.1, 0.5);
                 for (int i = 0; i < 4; i++) {
                     double t = random.nextDouble();
                     Location point = from.clone().add(top.clone().subtract(from).toVector().multiply(t));
-                    altar.getWorld().spawnParticle(Particle.DUST, point, 1, 0, 0, 0, 0, RITUAL_DUST);
+                    altar.getWorld().spawnParticle(Particle.DUST, point, 1, 0, 0, 0, 0, dust);
                 }
             }
-            altar.getWorld().spawnParticle(Particle.ENCHANT, top, 12, 0.4, 0.3, 0.4, 0.6);
+            altar.getWorld().spawnParticle(recipe.isSummon() ? Particle.SOUL : Particle.ENCHANT, top, 12, 0.4, 0.3, 0.4, 0.05);
             if (elapsed % 20 == 0) {
                 altar.getWorld().playSound(top, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1F, 0.6F + elapsed / (float) DURATION_TICKS);
             }
@@ -236,7 +296,14 @@ public final class RitualService {
 
         void finish(boolean withEffects) {
             end();
-            SlimefunItem output = SlimefunItem.getById(recipe.outputId());
+            if (recipe.isSummon()) {
+                BossSpec spec = specs.get(recipe.bossId());
+                ItemStack refund = recipe.center() == null || taken.isEmpty() ? null : taken.get(0).item().clone();
+                bosses.summon(recipe.bossId(), spec, altar, refund);
+                return;
+            }
+
+            SlimefunItem output = recipe.outputId() == null ? null : SlimefunItem.getById(recipe.outputId());
             if (output == null) {
                 return;
             }
@@ -255,6 +322,21 @@ public final class RitualService {
                 altar.getWorld().spawnParticle(Particle.END_ROD, center(), 20, 0.2, 0.6, 0.2, 0.02);
                 altar.getWorld().playSound(center(), Sound.ENTITY_EVOKER_CAST_SPELL, 1F, 1F);
                 tell(player(), "&dThe ritual is complete.");
+            }
+        }
+
+        /** Put back everything this ritual took (used when the server stops mid-summon). */
+        void returnOfferings() {
+            end();
+            for (Taken t : taken) {
+                if (t.menu() != null && MenuUtils.isEmpty(t.menu().getItemInSlot(t.slot()))) {
+                    t.menu().replaceExistingItem(t.slot(), t.item());
+                } else if (t.menu() != null) {
+                    ItemStack rest = t.menu().pushItem(t.item(), t.slot());
+                    if (rest != null) {
+                        altar.getWorld().dropItemNaturally(center(), rest);
+                    }
+                }
             }
         }
 

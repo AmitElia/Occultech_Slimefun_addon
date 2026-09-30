@@ -18,6 +18,7 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import io.github.amitelia.occultech.Occultech;
+import io.github.amitelia.occultech.boss.BossSpec;
 import io.github.amitelia.occultech.content.GridLayout;
 import io.github.amitelia.occultech.content.ItemCatalog;
 import io.github.amitelia.occultech.content.ItemCatalog.ItemDef;
@@ -44,6 +45,7 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 public final class ContentRegistrar {
 
     public static final int IMPLEMENTED_TIER = 0;
+    private static final double ARENA_RADIUS_BASE = 12;
 
     private static final int[] BOWL_DISPLAY_SLOTS = { 1, 3, 5, 7, 0, 2, 6, 8 };
     private static final Pattern MOB_NAME = Pattern.compile("\\b([A-Z][A-Z_]+)\\b");
@@ -73,6 +75,28 @@ public final class ContentRegistrar {
             }
         }
         researchCount = OccultechResearches.register(catalog, problems);
+        registerSummons();
+    }
+
+    /** Each implemented boss becomes a summoning ritual: offerings in the bowls, the catalyst (if any) on the altar. */
+    private void registerSummons() {
+        for (ItemCatalog.BossDef boss : catalog.bosses()) {
+            if (boss.tier() > IMPLEMENTED_TIER) {
+                continue;
+            }
+            if (!rituals.bosses().has(boss.id())) {
+                problems.add("Boss " + boss.id() + " has no behavior class");
+                continue;
+            }
+            boolean major = "major".equals(boss.kind());
+            BossSpec spec = new BossSpec(boss.id(), title(boss.id()), boss.tier(), major, ItemKeys.slimefunId(boss.drop()), boss.drops(),
+                ARENA_RADIUS_BASE + 2.0 * boss.tier(), major ? 900 : 600);
+
+            Map<String, Integer> offerings = new LinkedHashMap<>();
+            boss.offerings().forEach((key, amount) -> offerings.put(ItemKeys.fromCatalog(key), amount));
+            String center = boss.catalyst() == null ? null : ItemKeys.slimefunId(boss.catalyst());
+            rituals.addSummon(RitualRecipe.summoning(boss.id(), center, Map.copyOf(offerings), boss.tier()), spec);
+        }
     }
 
     @Nonnull
@@ -202,7 +226,7 @@ public final class ContentRegistrar {
             offerings.put(ItemKeys.fromCatalog(entry.getKey()), entry.getValue());
         }
 
-        rituals.addRecipe(new RitualRecipe(ItemKeys.slimefunId(def.id()), Math.max(1, recipe.out()),
+        rituals.addRecipe(RitualRecipe.crafting(ItemKeys.slimefunId(def.id()), Math.max(1, recipe.out()),
             ItemKeys.fromCatalog(recipe.center()), Map.copyOf(offerings), recipe.circle()));
         return grid;
     }
@@ -272,7 +296,7 @@ public final class ContentRegistrar {
         };
     }
 
-    private static String title(String id) {
+    public static String title(String id) {
         StringBuilder out = new StringBuilder();
         for (String word : id.split("_")) {
             out.append(out.isEmpty() ? "" : " ").append(word.charAt(0)).append(word.substring(1).toLowerCase());

@@ -11,8 +11,9 @@ import javax.annotation.Nullable;
 /**
  * Finds the ritual matching what is on the altar and in the bowls. Pure Java so it can be unit tested.
  * <p>
- * Rules: the center item must match exactly (one item), every offering needs its own bowl holding at least the
- * required amount, and every bowl not used by the recipe must be empty (so nothing is consumed by surprise).
+ * Rules: the center item must match exactly (one item), or the altar must be empty for rituals without a center
+ * (mini-boss summons). Every offering needs its own bowl holding at least the required amount, and every bowl not
+ * used by the recipe must be empty (so nothing is consumed by surprise).
  */
 public final class RitualMatcher {
 
@@ -35,11 +36,9 @@ public final class RitualMatcher {
 
     @Nonnull
     public static Optional<Match> match(@Nonnull Collection<RitualRecipe> recipes, @Nullable String centerKey, @Nonnull List<Bowl> bowls, int circleTier) {
-        if (centerKey == null) {
-            return Optional.empty();
-        }
         for (RitualRecipe recipe : recipes) {
-            if (recipe.circle() <= circleTier && recipe.center().equals(centerKey)) {
+            boolean centerMatches = recipe.center() == null ? centerKey == null : recipe.center().equals(centerKey);
+            if (recipe.circle() <= circleTier && centerMatches) {
                 int[] take = assign(recipe, bowls);
                 if (take != null) {
                     return Optional.of(new Match(recipe, take));

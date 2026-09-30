@@ -9,7 +9,12 @@ import org.bukkit.command.TabExecutor;
 import io.github.amitelia.occultech.Occultech;
 
 /**
- * {@code /occultech} admin command. Subcommands: {@code selftest}.
+ * {@code /occultech} admin command:
+ * <ul>
+ * <li>{@code selftest}: in-game integration test (console friendly)</li>
+ * <li>{@code showcase}: (re)build the item wall and ready-to-summon circles near spawn</li>
+ * <li>{@code showcase clear}: remove the showcase and restore the original blocks</li>
+ * </ul>
  */
 public final class OccultechCommand implements TabExecutor {
 
@@ -25,12 +30,27 @@ public final class OccultechCommand implements TabExecutor {
             new SelfTest(plugin, sender).run();
             return true;
         }
-        sender.sendMessage("Usage: /" + label + " selftest");
+        if (args.length >= 1 && args[0].equalsIgnoreCase("showcase")) {
+            Showcase showcase = new Showcase(plugin, sender);
+            if (args.length == 2 && args[1].equalsIgnoreCase("clear")) {
+                showcase.clear(true);
+            } else {
+                showcase.rebuild();
+            }
+            return true;
+        }
+        sender.sendMessage("Usage: /" + label + " <selftest | showcase [clear]>");
         return true;
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-        return args.length == 1 ? List.of("selftest") : List.of();
+        if (args.length == 1) {
+            return List.of("selftest", "showcase");
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("showcase")) {
+            return List.of("clear");
+        }
+        return List.of();
     }
 }

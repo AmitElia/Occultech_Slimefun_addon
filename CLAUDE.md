@@ -27,10 +27,18 @@ content/         ItemCatalog (parses recipes.yml), ItemKeys (item identity strin
 setup/           ALL Slimefun registration: ContentRegistrar (catalog -> SlimefunItems), groups per tier, recipe types, researches
 items/           SlimefunItem subclasses + runtime: RitualAltar, OfferingBowl, RitualService, OccultCodex, WeaponListener
 ritual/          CirclePattern, Circles (layout per tier), RitualMatcher/RitualRecipe - pure Java, unit tested
-core/            Bukkit-only shared bits (PDC Keys, e.g. the SUMMONED tag)
-debug/           /occultech command, SelfTest (in-game integration test)
-boss/, ability/  (planned) boss definitions/engine and reusable abilities
+core/            Bukkit-only shared bits (PDC Keys: SUMMONED, FIGHT, SHOWCASE)
+boss/            engine, Bukkit only: BossService (fights + all anti-abuse event rules), BossFight (one fight:
+                 arena leash, anti-pillar, hazards, breakable objects, boss bar, contribution, loot), BossBehavior
+                 (per-boss logic), FightHooks (Slimefun side implemented by items/OccultechFightHooks)
+boss/tier0/      BroodMother, Volley, WitchCoven, GelatinousSovereign + Tier0Bosses registry
+debug/           /occultech command: selftest (in-game integration test), showcase [clear]
 ```
+
+**Bosses:** recipes.yml `bosses:` gives name/tier/drops/offerings; behavior is a `BossBehavior` subclass registered in
+`Tier0Bosses` (id must match). `ContentRegistrar.registerSummons` turns each into a summoning ritual: offerings in the
+bowls, the catalyst on the altar for gate bosses, an empty altar for mini-bosses. A crash mid-fight is recovered via the
+`occultech_active_fight` block-storage marker on the altar (catalyst refunded on next load).
 
 **Items come from data:** `docs/recipes.yml` is packaged into the jar and registered at startup by `ContentRegistrar`
 (only tiers <= `ContentRegistrar.IMPLEMENTED_TIER`). Adding a plain item = edit recipes.yml (give it a `material`).
@@ -53,3 +61,7 @@ Rules:
 - **In-game validation:** `occultech selftest` (console or op) checks registration, builds a circle near spawn, runs a
   ritual end to end and cleans up. Headless run: pipe `occultech selftest` then `stop` into `scripts/run-server.ps1`
   after "Done (" appears in `run/logs/latest.log`; look for "Self-test finished: N passed, 0 failed".
+  The self-test also spawns, ticks and kills every implemented boss and checks cleanup, refunds and crash recovery.
+- `occultech showcase` builds an item wall (12 N of spawn) and ready-to-summon circles (16 S, 26 apart); every changed
+  block is recorded in `run/plugins/Occultech/showcase.yml` and `occultech showcase clear` restores them.
+- The test world is superflat, so wild slimes spawn everywhere - don't mistake them for boss leftovers.
