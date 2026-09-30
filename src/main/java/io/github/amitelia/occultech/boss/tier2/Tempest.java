@@ -38,9 +38,9 @@ public final class Tempest extends BossBehavior {
     private static final int RING_INTERVAL = 400;
     private static final int RING_TICKS = 160;
     private static final double RING_MIN = 5;
-    private static final double CHARGE_DAMAGE = 12;
-    private static final double BURST_DAMAGE = 18;
-    private static final double RING_DAMAGE = 8;
+    private static final double CHARGE_DAMAGE = 20;
+    private static final double BURST_DAMAGE = 30;
+    private static final double RING_DAMAGE = 6;
 
     private Breeze tempest;
     private int ringStart = -1;
@@ -165,7 +165,8 @@ public final class Tempest extends BossBehavior {
             for (Player player : fight.players()) {
                 Vector flat = player.getLocation().toVector().subtract(center.toVector()).setY(0);
                 if (flat.length() > radius + 0.5) {
-                    player.damage(RING_DAMAGE, tempest);
+                    // the squall cuts through armor: standing outside must hurt even in netherite
+                    Abyss.magic(player, RING_DAMAGE, tempest);
                 }
             }
         }

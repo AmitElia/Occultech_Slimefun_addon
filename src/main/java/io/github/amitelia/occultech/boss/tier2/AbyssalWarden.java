@@ -20,7 +20,9 @@ import io.github.amitelia.occultech.boss.BossFight;
 /**
  * Tier-2 mini-boss (max netherite). A giant guardian that glides over the land instead of flopping.
  * <ul>
- * <li>Charged beam: a thin beam tracks a player for 2s, turns white and locks 0.5s before firing - step aside.</li>
+ * <li>Charged beam: tracks a player for 2s and turns white near the end; sprint sideways to dodge. Magic damage
+ * (ignores armor, like the vanilla guardian laser).</li>
+ * <li>Tail lash: anyone within 3.5 blocks is hit once a second.</li>
  * <li>Spike burst: a ring warns for 1s, then spikes hurt and push everyone close to it.</li>
  * <li>Below half health it charges two beams at once, more often.</li>
  * </ul>
@@ -35,12 +37,15 @@ public final class AbyssalWarden extends BossBehavior {
     private static final int BEAM_INTERVAL = 120;
     private static final int BEAM_INTERVAL_ENRAGED = 80;
     private static final int SPIKE_INTERVAL = 240;
-    private static final double BEAM_DAMAGE = 24;
-    private static final double SPIKE_DAMAGE = 16;
+    private static final double BEAM_DAMAGE = 20;
+    private static final double SPIKE_DAMAGE = 30;
+    private static final double LASH_DAMAGE = 26;
+    private static final double LASH_RANGE = 3.5;
 
     private Guardian warden;
     private final List<Abyss.Beam> beams = new ArrayList<>();
     private int nextBeam = 60;
+    private int nextLash;
     private int spikesAt = -1;
     private boolean enraged;
 
@@ -77,7 +82,8 @@ public final class AbyssalWarden extends BossBehavior {
         int now = fight.elapsed();
         Player target = fight.nearestPlayer(warden.getLocation());
         if (target != null) {
-            Abyss.glide(warden, target.getLocation(), 0.3, 1.5, 6);
+            // close enough to lash anyone in melee; beams handle the rest
+            Abyss.glide(warden, target.getLocation(), 0.3, 1.5, 3);
         } else {
             Abyss.glide(warden, fight.center(), 0.2, 1.5, 0);
         }
@@ -98,9 +104,19 @@ public final class AbyssalWarden extends BossBehavior {
         beams.forEach(beam -> beam.step(fight, now));
         beams.removeIf(Abyss.Beam::done);
 
+        if (now >= nextLash) {
+            for (Player player : fight.players()) {
+                if (player.getLocation().add(0, 1, 0).distanceSquared(warden.getLocation().add(0, 1, 0)) <= LASH_RANGE * LASH_RANGE) {
+                    player.damage(LASH_DAMAGE, warden);
+                    warden.getWorld().playSound(warden.getLocation(), Sound.ENTITY_GUARDIAN_HURT, 1F, 0.5F);
+                    nextLash = now + 20;
+                }
+            }
+        }
+
         if (every(SPIKE_INTERVAL) && spikesAt < 0) {
             spikesAt = now + 20;
-            fight.telegraph(warden.getLocation(), 5, 25, SPIKES);
+            fight.telegraph(ground(warden.getLocation()), 5, 25, SPIKES);
             warden.getWorld().playSound(warden.getLocation(), Sound.ENTITY_GUARDIAN_FLOP, 2F, 0.5F);
         }
         if (spikesAt >= 0 && now >= spikesAt) {
@@ -109,12 +125,18 @@ public final class AbyssalWarden extends BossBehavior {
         }
     }
 
+    private static Location ground(Location at) {
+        Location spot = at.clone();
+        spot.setY(Abyss.groundY(at));
+        return spot;
+    }
+
     private void spikes() {
         Location at = warden.getLocation();
         at.getWorld().playSound(at, Sound.ENCHANT_THORNS_HIT, 2F, 0.6F);
         at.getWorld().spawnParticle(Particle.CRIT, at.clone().add(0, 1, 0), 60, 2.5, 1, 2.5, 0.4);
         for (Player player : fight.players()) {
-            if (player.getLocation().distanceSquared(at) <= 25) {
+            if (player.getLocation().distanceSquared(ground(at)) <= 25) {
                 player.damage(SPIKE_DAMAGE, warden);
                 Vector push = player.getLocation().toVector().subtract(at.toVector()).setY(0);
                 if (push.lengthSquared() > 0.01) {

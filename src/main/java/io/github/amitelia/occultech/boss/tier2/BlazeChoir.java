@@ -40,8 +40,8 @@ public final class BlazeChoir extends BossBehavior {
     private static final int SHIELD_INTERVAL = 120;
     private static final int CHORUS_INTERVAL = 300;
     private static final int CHORUS_WARNING = 30;
-    private static final double FIREBALL_DAMAGE = 14;
-    private static final double CHORUS_DAMAGE = 22;
+    private static final double FIREBALL_DAMAGE = 20;
+    private static final double CHORUS_DAMAGE = 32;
     private static final Color FLAME = Color.fromRGB(255, 120, 30);
     private static final String[] NAMES = { "Soprano", "Alto", "Bass" };
 

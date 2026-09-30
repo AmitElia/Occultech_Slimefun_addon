@@ -40,9 +40,9 @@ public final class Tidebreaker extends BossBehavior {
     private static final int CHARGE_TICKS = 25;
     private static final int WINDED_TICKS = 40;
     private static final int VOLLEY_INTERVAL = 200;
-    private static final double RAM_DAMAGE = 26;
-    private static final double MELEE_DAMAGE = 18;
-    private static final double TRIDENT_DAMAGE = 16;
+    private static final double RAM_DAMAGE = 38;
+    private static final double MELEE_DAMAGE = 28;
+    private static final double TRIDENT_DAMAGE = 24;
 
     private Drowned rider;
     private ZombieNautilus mount;

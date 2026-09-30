@@ -42,9 +42,9 @@ public final class DrownedElder extends BossBehavior {
     private static final int BEAM_INTERVAL_SURGED = 110;
     private static final int GUARDIAN_INTERVAL = 400;
     private static final int ADD_BEAM_INTERVAL = 80;
-    private static final double BEAM_DAMAGE = 28;
-    private static final double ADD_BEAM_DAMAGE = 12;
-    private static final double WAVE_DAMAGE = 22;
+    private static final double BEAM_DAMAGE = 24;
+    private static final double ADD_BEAM_DAMAGE = 10;
+    private static final double WAVE_DAMAGE = 36;
     private static final double WAVE_SPEED = 0.6;
     private static final int WAVES = 3;
     private static final int WAVE_GAP = 40;

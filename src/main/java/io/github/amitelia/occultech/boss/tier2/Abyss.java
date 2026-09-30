@@ -109,11 +109,25 @@ final class Abyss {
     }
 
     /**
-     * A beam that charges at a player, then locks its aim shortly before firing so it can be side-stepped.
+     * Magic damage from a fight creature: ignores armor like the vanilla guardian laser (Protection still counts).
+     * Used for beams, whose raw numbers would otherwise vanish into max-enchanted netherite.
+     */
+    static void magic(Player player, double amount, LivingEntity source) {
+        player.damage(amount, org.bukkit.damage.DamageSource.builder(org.bukkit.damage.DamageType.INDIRECT_MAGIC)
+            .withCausingEntity(source).withDirectEntity(source).build());
+    }
+
+    /**
+     * A beam that tracks a player while it charges and turns white for its last 0.75s. Its aim follows the player until
+     * the step before it fires (0.25s), so standing still or walking gets you hit and a sideways sprint dodges it.
      * Draw it every step with {@link #step}; it fires once.
      */
     static final class Beam {
-        private static final int LOCK_BEFORE = 10;
+        /** Ticks before firing the beam turns white (warning). */
+        private static final int WARN_BEFORE = 15;
+        /** Ticks before firing the aim stops following (one boss step). */
+        private static final int LOCK_BEFORE = 5;
+        private static final double WIDTH = 1.3;
 
         private final LivingEntity source;
         private final Player target;
@@ -146,21 +160,21 @@ final class Abyss {
                 return List.of();
             }
             Location eye = source.getEyeLocation();
-            if (now < fireAt - LOCK_BEFORE || aim == null) {
+            if (now <= fireAt - LOCK_BEFORE || aim == null) {
                 aim = target.getLocation().add(0, 1, 0).toVector().subtract(eye.toVector());
             }
             Location end = eye.clone().add(aim.clone().normalize().multiply(Math.max(aim.length(), 4) + 4));
             if (now < fireAt) {
-                float size = now >= fireAt - LOCK_BEFORE ? 1.2F : 0.6F;
-                line(eye, end, new Particle.DustOptions(now >= fireAt - LOCK_BEFORE ? Color.WHITE : color, size), 0.6);
+                boolean warning = now >= fireAt - WARN_BEFORE;
+                line(eye, end, new Particle.DustOptions(warning ? Color.WHITE : color, warning ? 1.2F : 0.6F), 0.6);
                 return List.of();
             }
             done = true;
             line(eye, end, new Particle.DustOptions(color, 2F), 0.3);
             eye.getWorld().playSound(eye, Sound.ENTITY_ELDER_GUARDIAN_HURT, 1.5F, 0.6F);
-            List<Player> hit = alongBeam(fight.players(), eye, aim, eye.distance(end), 1.0);
+            List<Player> hit = alongBeam(fight.players(), eye, aim, eye.distance(end), WIDTH);
             for (Player player : hit) {
-                player.damage(damage, source);
+                magic(player, damage, source);
             }
             return hit;
         }
