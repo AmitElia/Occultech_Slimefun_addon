@@ -181,6 +181,12 @@ final class Showcase {
         }
         label(new Location(world, cx + 0.5, y + WALL_HEIGHT + 0.8, wallZ + 1.2),
             "&5&lOccultech &7- Tier 0 Initiate\n&7Hover an item frame to read it. Use &f/sf cheat &7to take items.");
+
+        // working block demos in front of the wall
+        Block egg = world.getBlockAt(cx + WALL_HALF_WIDTH + 3, world.getHighestBlockYAt(cx + WALL_HALF_WIDTH + 3, wallZ + 3) + 1, wallZ + 3);
+        if (DebugWorld.placeSlimefun(egg, ItemKeys.slimefunId("BROOD_EGG"), this::record)) {
+            label(egg.getLocation().add(0.5, 2.6, 0.5), "&fBrood Egg &7(live demo)\n&7Spins string over time. Right-click to collect.");
+        }
     }
 
     /** Builds a circle on a small platform and returns a task that fills its menus once they exist. */
