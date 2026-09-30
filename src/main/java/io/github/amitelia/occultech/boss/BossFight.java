@@ -519,23 +519,35 @@ public final class BossFight {
         entity.getPersistentDataContainer().set(Keys.FIGHT, PersistentDataType.STRING, id.toString());
     }
 
+    /**
+     * Keeps bosses in the arena. Past the edge they are pushed back in (no teleport, so fights near the edge flow);
+     * only a boss far outside (or knocked out vertically) is placed back, just inside the edge where it left.
+     */
     private void leash() {
+        double radius = spec.arenaRadius();
         for (LivingEntity boss : bosses) {
             Location at = boss.getLocation();
             double dx = at.getX() - center.getX();
             double dz = at.getZ() - center.getZ();
-            boolean outside = dx * dx + dz * dz > Math.pow(spec.arenaRadius() + 1.5, 2) || Math.abs(at.getY() - center.getY()) > behavior.verticalLeash();
-            if (outside || at.getWorld() != center.getWorld()) {
-                boss.teleport(center.clone().add(0, 1, 0));
+            double distance = Math.sqrt(dx * dx + dz * dz);
+            boolean vertical = Math.abs(at.getY() - center.getY()) > behavior.verticalLeash();
+            if (at.getWorld() != center.getWorld() || vertical || distance > radius + 6) {
+                Location back = distance < 0.1 ? center.clone() : center.clone().add(dx / distance * (radius - 3), 0, dz / distance * (radius - 3));
+                back.setY(center.getY() + 1);
+                back.setDirection(center.toVector().subtract(back.toVector()));
+                boss.teleport(back);
                 heal(boss, 0.02);
                 boss.getWorld().spawnParticle(Particle.REVERSE_PORTAL, boss.getLocation(), 40, 0.5, 1, 0.5, 0.05);
+            } else if (distance > radius) {
+                org.bukkit.util.Vector inward = new org.bukkit.util.Vector(-dx / distance, 0, -dz / distance).multiply(0.5);
+                boss.setVelocity(inward.setY(Math.max(boss.getVelocity().getY(), 0.1)));
             }
         }
     }
 
     /** Extra mobs that wander (or phase, like vexes) out of the arena are brought back. */
     private void leashAdds() {
-        double limit = Math.pow(spec.arenaRadius() + 3, 2);
+        double limit = Math.pow(spec.arenaRadius() + 6, 2);
         for (Entity extra : extras) {
             if (extra instanceof LivingEntity living && !living.isDead()
                 && (living.getWorld() != center.getWorld() || living.getLocation().distanceSquared(center) > limit)) {

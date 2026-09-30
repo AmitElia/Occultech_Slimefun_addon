@@ -78,7 +78,7 @@ final class Showcase {
     private static final int PEDESTAL_SPACING = 3;
     private static final int[] PEDESTAL_COLUMNS = { -6, -9, -12 };
     private static final int WEST_EDGE = -24;
-    private static final int EAST_EDGE = 40;
+    private static final int EAST_EDGE = 52;
     private static final Map<Integer, List<String>> BOSS_ORDER = Map.of(
         0, List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "GELATINOUS_SOVEREIGN"),
         1, List.of("THE_UNBOUND", "NIGHT_MATRIARCH", "MIRRORED_MAGUS", "ARCHEVOKER"),
@@ -618,7 +618,7 @@ final class Showcase {
     }
 
     private int arenaRadius(int tier) {
-        return (int) Math.round(plugin.rituals().spec(BOSS_ORDER.get(tier).get(0)).map(s -> s.arenaRadius()).orElse(12.0 + 2 * tier));
+        return (int) Math.round(plugin.rituals().spec(BOSS_ORDER.get(tier).get(0)).map(s -> s.arenaRadius()).orElse(18.0 + 2 * tier));
     }
 
     private void setBlock(Block block, Material type) {

@@ -62,7 +62,7 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 public final class ContentRegistrar {
 
     public static final int IMPLEMENTED_TIER = 2;
-    private static final double ARENA_RADIUS_BASE = 12;
+    private static final double ARENA_RADIUS_BASE = 18;
     private static final int MACHINE_SECONDS = 8;
 
     private static final int[] BOWL_DISPLAY_SLOTS = { 1, 3, 5, 7, 0, 2, 6, 8 };

@@ -945,7 +945,7 @@ final class SelfTest {
 
     private List<Entity> nearby() {
         Block center = testAltar == null ? altar : testAltar;
-        return List.copyOf(center.getWorld().getNearbyEntities(center.getLocation(), 22, 24, 22));
+        return List.copyOf(center.getWorld().getNearbyEntities(center.getLocation(), 30, 24, 30));
     }
 
     private void finish() {

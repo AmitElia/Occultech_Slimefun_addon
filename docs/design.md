@@ -18,7 +18,7 @@ Slimefun resources -> occult materials -> ritual components -> circle glyph bloc
   checks that circle and marks missing pieces.
 
 ## Boss fights (engine rules implemented)
-- Arena: 12 blocks around the altar (+2 per tier). Bosses pulled out go back to the middle.
+- Arena: 18 blocks around the altar (+2 per tier). A boss past the edge is pushed back in; one far outside (6+ blocks) is put back just inside the edge where it left, never in the middle.
 - Health scales +25% per extra player present at the summon (config: `bosses.health-per-extra-player`, plus a global
   `bosses.health-multiplier`). Only players damage bosses; environment can't. Bosses pulled out of the arena heal 2%.
 - Anti-pillar: if the boss can't land a hit for 10s while being damaged, it teleports next to the nearest player
