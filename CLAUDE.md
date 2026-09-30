@@ -27,20 +27,24 @@ content/         ItemCatalog (parses recipes.yml), ItemKeys (item identity strin
 setup/           ALL Slimefun registration: ContentRegistrar (catalog -> SlimefunItems), groups per tier, recipe types, researches
 items/           SlimefunItem subclasses + runtime: RitualAltar, OfferingBowl, RitualService (+Holograms), OccultCodex/CodexMenu,
                  ProducerBlock (Brood Egg, Phantom Roost), ServitorShrine + ServitorService (contracts, spirit, Ward),
-                 FrenzyIdol, ScryingMirror, BoneScepter + MinionService (necromancy), WeaponListener (tier 0),
-                 GearListener (tier 1: Frenzy Cleaver, Duskwing, Mirror Ward, no Mending)
+                 FrenzyIdol, ScryingMirror, BoneScepter + MinionService (necromancy, minion kinds), WeaponListener
+                 (tier 0 + Abyssal set bonus), GearListener (tier 1 gear, Abyssal armor effects, no Mending),
+                 tier 2: OccultMachine (powered AContainer, recipes from recipes.yml), HeldWeapons (Wyrmbreath,
+                 Guardian's Gaze), AbyssalAnchor, ChoirBell, GuardianEye, WindChime, DecorationBlock + DecorationService
 ritual/          CirclePattern, Circles (layout per tier), RitualMatcher/RitualRecipe - pure Java, unit tested
-core/            Bukkit-only shared bits (PDC Keys: SUMMONED, FIGHT, SHOWCASE)
+core/            Bukkit-only shared bits (PDC Keys: SUMMONED, FIGHT, SHOWCASE, DAMAGE for fight projectiles)
 boss/            engine, Bukkit only: BossService (fights + all anti-abuse event rules), BossFight (one fight:
                  arena leash, anti-pillar, hazards, breakable objects, boss bar, contribution, loot), BossBehavior
                  (per-boss logic), FightHooks (Slimefun side implemented by items/OccultechFightHooks)
 boss/tier0/      BroodMother, Volley, WitchCoven, GelatinousSovereign + Tier0Bosses registry
 boss/tier1/      TheUnbound, NightMatriarch, MirroredMagus, Archevoker + Tier1Bosses registry
+boss/tier2/      AbyssalWarden, Tidebreaker, BlazeChoir, Tempest, DrownedElder + Tier2Bosses; Abyss (land gliding,
+                 dodgeable beams). Health attributes cap at 1024: big bosses use modifyIncomingDamage as armor
 debug/           /occultech command: selftest (in-game integration test), showcase [clear]
 ```
 
 **Bosses:** recipes.yml `bosses:` gives name/tier/drops/offerings; behavior is a `BossBehavior` subclass registered in
-`Tier0Bosses` (id must match). `ContentRegistrar.registerSummons` turns each into a summoning ritual: offerings in the
+`TierNBosses` (id must match). `ContentRegistrar.registerSummons` turns each into a summoning ritual: offerings in the
 bowls, the catalyst on the altar for gate bosses, an empty altar for mini-bosses. A crash mid-fight is recovered via the
 `occultech_active_fight` block-storage marker on the altar (catalyst refunded on next load).
 

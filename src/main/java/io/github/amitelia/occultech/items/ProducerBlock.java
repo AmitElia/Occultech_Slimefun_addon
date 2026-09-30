@@ -28,7 +28,7 @@ import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
 import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
 
 /**
- * A block that slowly produces one item into a 9-slot store (Brood Egg: string, Phantom Roost: membranes).
+ * A block that slowly produces items (cycling through its product list) into a 9-slot store (Brood Egg: string, Phantom Roost: membranes).
  * Right-click to collect; Slimefun cargo and Networks can pull from the store but not insert.
  * Production only happens while the chunk is loaded and never catches up on time spent unloaded.
  */
@@ -37,11 +37,14 @@ public class ProducerBlock extends SlimefunItem {
     public static final int[] OUTPUT_SLOTS = { 9, 10, 11, 12, 13, 14, 15, 16, 17 };
     private static final int INFO_SLOT = 4;
 
+    private static final String MADE_KEY = "occultech_made";
+
     private final Map<Location, Long> lastMade = new HashMap<>();
 
     public ProducerBlock(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, RitualService rituals,
-        Material product, String productName, int seconds, Material particleBlock) {
+        List<Material> products, String productName, int seconds, Material particleBlock) {
         super(group, item, type, recipe, output);
+        Material product = products.get(0);
         long interval = Math.max(1, seconds) * 1000L;
         String title = item.item().getItemMeta().getDisplayName();
 
@@ -106,7 +109,10 @@ public class ProducerBlock extends SlimefunItem {
                 Long last = lastMade.putIfAbsent(block.getLocation(), now);
                 if (last != null && now - last >= interval) {
                     lastMade.put(block.getLocation(), now);
-                    if (menu.pushItem(new ItemStack(product), OUTPUT_SLOTS) == null) {
+                    // several products cycle in order (e.g. shard, shard, crystal)
+                    int made = made(block) + 1;
+                    BlockStorage.addBlockInfo(block, MADE_KEY, String.valueOf(made % products.size()));
+                    if (menu.pushItem(new ItemStack(products.get((made - 1) % products.size())), OUTPUT_SLOTS) == null) {
                         block.getWorld().spawnParticle(Particle.BLOCK, block.getLocation().add(0.5, 0.6, 0.5), 6, 0.2, 0.2, 0.2,
                             particleBlock.createBlockData());
                     }
@@ -133,6 +139,15 @@ public class ProducerBlock extends SlimefunItem {
                 }
             }
         });
+    }
+
+    private static int made(Block block) {
+        try {
+            String value = BlockStorage.getLocationInfo(block.getLocation(), MADE_KEY);
+            return value == null ? 0 : Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     /** Hook for block-specific upkeep each tick (e.g. keeping an egg from hatching). */

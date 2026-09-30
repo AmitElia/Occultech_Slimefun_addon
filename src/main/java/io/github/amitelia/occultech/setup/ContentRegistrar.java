@@ -24,7 +24,16 @@ import io.github.amitelia.occultech.content.ItemCatalog;
 import io.github.amitelia.occultech.content.ItemCatalog.ItemDef;
 import io.github.amitelia.occultech.content.ItemCatalog.RecipeDef;
 import io.github.amitelia.occultech.content.ItemKeys;
+import io.github.amitelia.occultech.items.AbyssalAnchor;
 import io.github.amitelia.occultech.items.BoneScepter;
+import io.github.amitelia.occultech.items.ChoirBell;
+import io.github.amitelia.occultech.items.DecorationBlock;
+import io.github.amitelia.occultech.items.DecorationService;
+import io.github.amitelia.occultech.items.GuardianEye;
+import io.github.amitelia.occultech.items.HeldWeapons;
+import io.github.amitelia.occultech.items.MinionService;
+import io.github.amitelia.occultech.items.OccultMachine;
+import io.github.amitelia.occultech.items.WindChime;
 import io.github.amitelia.occultech.items.BroodEgg;
 import io.github.amitelia.occultech.items.FrenzyIdol;
 import io.github.amitelia.occultech.items.ProducerBlock;
@@ -50,8 +59,9 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
  */
 public final class ContentRegistrar {
 
-    public static final int IMPLEMENTED_TIER = 1;
+    public static final int IMPLEMENTED_TIER = 2;
     private static final double ARENA_RADIUS_BASE = 12;
+    private static final int MACHINE_SECONDS = 8;
 
     private static final int[] BOWL_DISPLAY_SLOTS = { 1, 3, 5, 7, 0, 2, 6, 8 };
     private static final Pattern MOB_NAME = Pattern.compile("\\b([A-Z][A-Z_]+)\\b");
@@ -60,6 +70,8 @@ public final class ContentRegistrar {
     private final ItemCatalog catalog;
     private final RitualService rituals;
     private final Map<String, SlimefunItemStack> stacks = new LinkedHashMap<>();
+    private final Map<String, OccultMachine> machines = new LinkedHashMap<>();
+    private final Map<String, RecipeType> machineTypes = new LinkedHashMap<>();
     private final List<String> problems = new ArrayList<>();
     private int researchCount;
 
@@ -80,8 +92,42 @@ public final class ContentRegistrar {
                 register(def);
             }
         }
+        registerAltRecipes();
         researchCount = OccultechResearches.register(catalog, problems);
         registerSummons();
+    }
+
+    /** Extra routes to an item made in an Occultech machine (e.g. Spirit Essence in the Soul Condenser). */
+    private void registerAltRecipes() {
+        for (ItemDef def : catalog.items()) {
+            if (def.tier() > IMPLEMENTED_TIER) {
+                continue;
+            }
+            for (RecipeDef alt : def.altRecipes()) {
+                OccultMachine machine = machines.get(alt.type());
+                if (machine != null) {
+                    registerMachineRecipe(def, alt, machine);
+                }
+            }
+        }
+    }
+
+    private void registerMachineRecipe(ItemDef def, RecipeDef recipe, OccultMachine machine) {
+        List<ItemStack> inputs = new ArrayList<>();
+        recipe.inputs().forEach((key, amount) -> {
+            ItemStack item = resolve(def, key, amount);
+            if (item != null) {
+                inputs.add(item);
+            }
+        });
+        ItemStack output = stacks.get(def.id()).item().clone();
+        output.setAmount(Math.max(1, recipe.out()));
+        machine.registerRecipe(MACHINE_SECONDS, inputs.toArray(ItemStack[]::new), new ItemStack[] { output });
+    }
+
+    @Nonnull
+    public Map<String, OccultMachine> machines() {
+        return Collections.unmodifiableMap(machines);
     }
 
     /** Each implemented boss becomes a summoning ritual: offerings in the bowls, the catalyst (if any) on the altar. */
@@ -169,11 +215,24 @@ public final class ContentRegistrar {
             if (def.durability() > 0 && meta instanceof Damageable damageable) {
                 damageable.setMaxDamage(def.durability());
             }
+            def.enchants().forEach((name, level) -> {
+                org.bukkit.enchantments.Enchantment enchantment = org.bukkit.Registry.ENCHANTMENT.get(org.bukkit.NamespacedKey.minecraft(name.toLowerCase()));
+                if (enchantment != null) {
+                    meta.addEnchant(enchantment, level, true);
+                } else {
+                    problems.add(def.id() + ": unknown enchantment " + name);
+                }
+            });
         };
         String id = ItemKeys.slimefunId(def.id());
         String name = nameColor(def.category()) + def.name();
         // a head texture replaces the material look (textures come from recipes.yml `head`)
-        return def.head() != null ? new SlimefunItemStack(id, def.head(), name, look) : new SlimefunItemStack(id, material, name, look);
+        SlimefunItemStack stack = def.head() != null ? new SlimefunItemStack(id, def.head(), name, look) : new SlimefunItemStack(id, material, name, look);
+        if (HeldWeapons.isHeld(id)) {
+            // item() is a copy on Slimefun Legacy, where the stack itself is the ItemStack
+            HeldWeapons.makeHoldable((Object) stack instanceof ItemStack itemStack ? itemStack : stack.item());
+        }
+        return stack;
     }
 
     private void register(ItemDef def) {
@@ -185,6 +244,16 @@ public final class ContentRegistrar {
 
         RecipeType type;
         ItemStack[] grid;
+        if (machineTypes.containsKey(recipe.type())) {
+            type = machineTypes.get(recipe.type());
+            grid = machineGrid(def, recipe);
+            OccultMachine machine = machines.get(recipe.type());
+            if (machine != null) {
+                registerMachineRecipe(def, recipe, machine);
+            }
+            registerItem(def, group, stack, type, grid, output);
+            return;
+        }
         switch (recipe.type()) {
             case "ENHANCED_CRAFTING_TABLE", "MAGIC_WORKBENCH", "ARMOR_FORGE", "ANCIENT_ALTAR", "SMELTERY" -> {
                 type = vanillaSlimefunType(recipe.type());
@@ -204,8 +273,37 @@ public final class ContentRegistrar {
             }
         }
 
+        registerItem(def, group, stack, type, grid, output);
+    }
+
+    private ItemStack[] machineGrid(ItemDef def, RecipeDef recipe) {
+        ItemStack[] grid = new ItemStack[9];
+        int slot = 0;
+        for (Map.Entry<String, Integer> input : recipe.inputs().entrySet()) {
+            if (slot < 9) {
+                grid[slot++] = resolve(def, input.getKey(), input.getValue());
+            }
+        }
+        return grid;
+    }
+
+    private void registerItem(ItemDef def, ItemGroup group, SlimefunItemStack stack, RecipeType type, ItemStack[] grid, ItemStack output) {
         SlimefunItem item = switch (def.id()) {
-            case "INITIATE_ALTAR", "BOUND_ALTAR" -> new RitualAltar(group, stack, type, grid, output, rituals);
+            case "INITIATE_ALTAR", "BOUND_ALTAR", "ABYSSAL_ALTAR" -> new RitualAltar(group, stack, type, grid, output, rituals);
+            case "OCCULT_FORGE" -> machine(def, new OccultMachine(group, stack, type, grid, output, "OCCULTECH_OCCULT_FORGE", Material.BLAZE_POWDER, 1024, 16, 1));
+            case "SOUL_CONDENSER" -> machine(def, new OccultMachine(group, stack, type, grid, output, "OCCULTECH_SOUL_CONDENSER", Material.SOUL_SAND, 512, 8, 1));
+            case "GUARDIAN_EYE" -> new GuardianEye(group, stack, type, grid, output, rituals, plugin.servitors());
+            case "WIND_CHIME" -> new WindChime(group, stack, type, grid, output, rituals);
+            case "PEARL_BED" -> new ProducerBlock(group, stack, type, grid, output, rituals, List.of(Material.PRISMARINE_SHARD, Material.PRISMARINE_SHARD, Material.PRISMARINE_CRYSTALS),
+                "prismarine", plugin.getConfig().getInt("pearl-bed.seconds-per-item", 60), Material.PRISMARINE);
+            case "EMBER_BRAZIER" -> new ProducerBlock(group, stack, type, grid, output, rituals, List.of(Material.BLAZE_POWDER), "blaze powder",
+                plugin.getConfig().getInt("ember-brazier.seconds-per-item", 60), Material.MAGMA_BLOCK);
+            case "WISP_JAR", "ABYSSAL_LANTERN", "RUNE_OBELISK", "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "BOTTLED_GALE" ->
+                new DecorationBlock(group, stack, type, grid, output, plugin.decorations(), DecorationService.Kind.valueOf(def.id()));
+            case "WYRMBREATH", "GUARDIANS_GAZE" -> new OccultItem(group, stack, type, grid, output);
+            case "ABYSSAL_ANCHOR" -> new AbyssalAnchor(group, stack, type, grid, output, plugin);
+            case "CHOIR_BELL" -> new ChoirBell(group, stack, type, grid, output);
+            case "GRAVE_LANTERN" -> new BoneScepter(group, stack, type, grid, output, plugin.minions(), MinionService.Kind.WITHER_KNIGHT, 3, 25_000);
             case "OFFERING_BOWL" -> new OfferingBowl(group, stack, type, grid, output, rituals);
             case "OCCULT_CODEX" -> new OccultCodex(group, stack, type, grid, output, rituals, plugin);
             case "BROOD_EGG" -> new BroodEgg(group, stack, type, grid, output, rituals, plugin.getConfig().getInt("brood-egg.seconds-per-string", 20));
@@ -214,12 +312,20 @@ public final class ContentRegistrar {
             case "SERVITOR_SHRINE" -> new ServitorShrine(group, stack, type, grid, output, rituals, plugin.servitors());
             case "FRENZY_IDOL" -> new FrenzyIdol(group, stack, type, grid, output, rituals, plugin.servitors());
             case "SCRYING_MIRROR" -> new ScryingMirror(group, stack, type, grid, output, rituals);
-            case "PHANTOM_ROOST" -> new ProducerBlock(group, stack, type, grid, output, rituals, Material.PHANTOM_MEMBRANE, "membranes",
+            case "PHANTOM_ROOST" -> new ProducerBlock(group, stack, type, grid, output, rituals, List.of(Material.PHANTOM_MEMBRANE), "membranes",
                 plugin.getConfig().getInt("phantom-roost.seconds-per-membrane", 90), Material.BONE_BLOCK);
-            case "BONE_SCEPTER" -> new BoneScepter(group, stack, type, grid, output, plugin.minions());
+            case "BONE_SCEPTER" -> new BoneScepter(group, stack, type, grid, output, plugin.minions(), MinionService.Kind.SKELETON_ARCHER, 2, 20_000);
             default -> new OccultItem(group, stack, type, grid, output);
         };
         item.register(plugin);
+        if ((def.id().equals("OCCULT_FORGE") || def.id().equals("SOUL_CONDENSER")) && !machineTypes.containsKey(def.id())) {
+            machineTypes.put(def.id(), new RecipeType(Occultech.key(def.id().toLowerCase()), stack));
+        }
+    }
+
+    private SlimefunItem machine(ItemDef def, OccultMachine machine) {
+        machines.put(def.id(), machine);
+        return machine;
     }
 
     private static RecipeType vanillaSlimefunType(String type) {

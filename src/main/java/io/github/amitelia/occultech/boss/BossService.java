@@ -247,6 +247,17 @@ public final class BossService implements Listener {
         }
     }
 
+    /** Fight projectiles can carry their own damage (vanilla tridents and fireballs are too weak for later tiers). */
+    @EventHandler(ignoreCancelled = true)
+    public void onProjectileHit(EntityDamageByEntityEvent e) {
+        if (e.getEntity() instanceof Player && e.getDamager() instanceof Projectile projectile) {
+            Double damage = projectile.getPersistentDataContainer().get(Keys.DAMAGE, PersistentDataType.DOUBLE);
+            if (damage != null && Keys.isSummoned(projectile)) {
+                e.setDamage(damage);
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerHurt(EntityDamageByEntityEvent e) {
         if (!(e.getEntity() instanceof Player)) {
@@ -320,6 +331,17 @@ public final class BossService implements Listener {
         }
     }
 
+    /** Fireballs and other fight sources never light blocks. */
+    @EventHandler(ignoreCancelled = true)
+    public void onIgnite(org.bukkit.event.block.BlockIgniteEvent e) {
+        Entity source = e.getIgnitingEntity();
+        if (source instanceof Projectile projectile && projectile.getShooter() instanceof Entity shooter && Keys.isSummoned(shooter)) {
+            e.setCancelled(true);
+        } else if (Keys.isSummoned(source)) {
+            e.setCancelled(true);
+        }
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void onCombust(EntityCombustEvent e) {
         if (Keys.isSummoned(e.getEntity())) {
@@ -374,6 +396,11 @@ public final class BossService implements Listener {
             if (e.getEntity() instanceof AbstractArrow arrow) {
                 arrow.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
             }
+            // tracked, so nothing a boss fired outlives its fight
+            BossFight owner = fightOf(shooter);
+            if (owner != null) {
+                owner.adopt(e.getEntity());
+            }
         }
     }
 
@@ -384,6 +411,9 @@ public final class BossService implements Listener {
         }
         e.getDrops().clear();
         e.setDroppedExp(0);
+        // corpses finish their death animation only while ticked; far from players they can linger forever
+        Entity corpse = e.getEntity();
+        Bukkit.getScheduler().runTaskLater(plugin, corpse::remove, 22L);
         BossFight fight = fightOf(e.getEntity());
         if (fight != null) {
             fight.onEntityDeath(e.getEntity(), e.getEntity().getKiller());

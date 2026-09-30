@@ -15,6 +15,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.AbstractArrow;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -24,6 +25,7 @@ import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Skeleton;
+import org.bukkit.entity.WitherSkeleton;
 import org.bukkit.entity.Tameable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -58,6 +60,14 @@ public final class MinionService implements Listener {
 
     private static final double COMMAND_RANGE = 32;
 
+    /** What a necromancy item raises. */
+    public enum Kind {
+        /** Bone Scepter (tier 1): skeleton archers. */
+        SKELETON_ARCHER,
+        /** Grave Lantern (tier 2): wither skeleton knights with swords and armor, 40 HP. */
+        WITHER_KNIGHT
+    }
+
     /** @param anchor a fixed spot to guard when there is no online owner (self-test only), else null */
     private record Minion(Mob entity, UUID owner, long expires, @Nullable Location anchor) {}
 
@@ -69,15 +79,20 @@ public final class MinionService implements Listener {
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 10L, 10L);
     }
 
-    /** Raises skeleton archers around the owner. */
-    public void raiseSkeletons(Player owner, int count, int seconds) {
-        raise(owner.getUniqueId(), owner.getName(), owner.getLocation(), count, seconds, null);
-        owner.getWorld().playSound(owner.getLocation(), Sound.ENTITY_SKELETON_AMBIENT, 1F, 0.6F);
+    /** Raises minions of a kind around the owner. */
+    public void raise(Player owner, Kind kind, int count, int seconds) {
+        raise(owner.getUniqueId(), owner.getName(), owner.getLocation(), kind, count, seconds, null);
+        owner.getWorld().playSound(owner.getLocation(), kind == Kind.WITHER_KNIGHT ? Sound.ENTITY_WITHER_SKELETON_AMBIENT
+            : Sound.ENTITY_SKELETON_AMBIENT, 1F, 0.6F);
     }
 
-    /** Self-test: raises minions for an owner who isn't online, guarding {@code at}. */
+    /** Self-test: raises skeleton archers for an owner who isn't online, guarding {@code at}. */
     public List<Mob> raiseForTest(UUID owner, Location at, int count, int seconds) {
-        return raise(owner, "Test", at, count, seconds, at);
+        return raiseForTest(owner, at, Kind.SKELETON_ARCHER, count, seconds);
+    }
+
+    public List<Mob> raiseForTest(UUID owner, Location at, Kind kind, int count, int seconds) {
+        return raise(owner, "Test", at, kind, count, seconds, at);
     }
 
     /** Orders an owner's minions to attack a target (what an owner's hit does). False if the target isn't allowed. */
@@ -111,31 +126,42 @@ public final class MinionService implements Listener {
         new ArrayList<>(byOwner.keySet()).forEach(this::dismissAll);
     }
 
-    private List<Mob> raise(UUID owner, String ownerName, Location around, int count, int seconds, @Nullable Location anchor) {
+    private List<Mob> raise(UUID owner, String ownerName, Location around, Kind kind, int count, int seconds, @Nullable Location anchor) {
         long expires = System.currentTimeMillis() + seconds * 1000L;
         List<Mob> raised = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             double angle = ThreadLocalRandom.current().nextDouble(Math.PI * 2);
             Location at = around.clone().add(Math.cos(angle) * 1.5, 0, Math.sin(angle) * 1.5);
-            Skeleton skeleton = at.getWorld().spawn(at, Skeleton.class, s -> {
-                s.setPersistent(false);
-                s.setRemoveWhenFarAway(false);
+            Mob minion = kind == Kind.WITHER_KNIGHT ? at.getWorld().spawn(at, WitherSkeleton.class, s -> {
+                prepare(s, owner, ChatColor.DARK_GRAY + ownerName + "'s Wither Knight");
+                s.getEquipment().setItemInMainHand(new ItemStack(Material.IRON_SWORD));
+                s.getEquipment().setChestplate(new ItemStack(Material.CHAINMAIL_CHESTPLATE));
+                s.getEquipment().setHelmet(new ItemStack(Material.CHAINMAIL_HELMET));
+                s.getAttribute(Attribute.MAX_HEALTH).setBaseValue(40);
+                s.setHealth(40);
+            }) : at.getWorld().spawn(at, Skeleton.class, s -> {
+                prepare(s, owner, ChatColor.GRAY + ownerName + "'s Bound Skeleton");
                 s.setShouldBurnInDay(false);
-                s.setCanPickupItems(false);
-                s.setCustomName(ChatColor.GRAY + ownerName + "'s Bound Skeleton");
-                s.setCustomNameVisible(false);
                 s.getEquipment().setItemInMainHand(new ItemStack(Material.BOW));
                 s.getEquipment().setHelmet(new ItemStack(Material.LEATHER_HELMET));
-                for (EquipmentSlot slot : new EquipmentSlot[] { EquipmentSlot.HAND, EquipmentSlot.HEAD }) {
-                    s.getEquipment().setDropChance(slot, 0F);
-                }
-                s.getPersistentDataContainer().set(Keys.MINION_OWNER, PersistentDataType.STRING, owner.toString());
             });
-            byOwner.computeIfAbsent(owner, k -> new ArrayList<>()).add(new Minion(skeleton, owner, expires, anchor));
-            raised.add(skeleton);
+            for (EquipmentSlot slot : new EquipmentSlot[] { EquipmentSlot.HAND, EquipmentSlot.HEAD, EquipmentSlot.CHEST }) {
+                minion.getEquipment().setDropChance(slot, 0F);
+            }
+            byOwner.computeIfAbsent(owner, k -> new ArrayList<>()).add(new Minion(minion, owner, expires, anchor));
+            raised.add(minion);
             at.getWorld().spawnParticle(Particle.SOUL, at.clone().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.02);
         }
         return raised;
+    }
+
+    private static void prepare(Mob mob, UUID owner, String name) {
+        mob.setPersistent(false);
+        mob.setRemoveWhenFarAway(false);
+        mob.setCanPickupItems(false);
+        mob.setCustomName(name);
+        mob.setCustomNameVisible(false);
+        mob.getPersistentDataContainer().set(Keys.MINION_OWNER, PersistentDataType.STRING, owner.toString());
     }
 
     // ------------------------------------------------------------------ upkeep

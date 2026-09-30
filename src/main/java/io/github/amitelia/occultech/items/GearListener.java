@@ -33,6 +33,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 import io.github.amitelia.occultech.content.ItemKeys;
@@ -47,6 +49,8 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
  * <li>Mirror Ward (carried): dropping below 30% health spawns a decoy of you that nearby mobs chase for 5s. 60s cooldown.</li>
  * <li>Mending never repairs Occultech gear (it is repaired with its boss drop instead).</li>
  * <li>The Bone Scepter can't be used on animals (it looks like a bone, but it isn't one).</li>
+ * <li>Abyssal armor (tier 2): helm Water Breathing, greaves Conduit Power while in water, boots Dolphin's Grace.
+ * The 4/4 set bonus is in {@link WeaponListener}.</li>
  * </ul>
  */
 public final class GearListener implements Listener {
@@ -55,6 +59,9 @@ public final class GearListener implements Listener {
     private static final String DUSKWING = ItemKeys.slimefunId("DUSKWING_CHARM");
     private static final String MIRROR_WARD = ItemKeys.slimefunId("MIRROR_WARD");
     private static final String SCEPTER = ItemKeys.slimefunId("BONE_SCEPTER");
+    private static final String ABYSSAL_HELMET = ItemKeys.slimefunId("ABYSSAL_HELMET");
+    private static final String ABYSSAL_LEGGINGS = ItemKeys.slimefunId("ABYSSAL_LEGGINGS");
+    private static final String ABYSSAL_BOOTS = ItemKeys.slimefunId("ABYSSAL_BOOTS");
     private static final NamespacedKey FRENZY = new NamespacedKey("occultech", "frenzy");
     private static final int MAX_STACKS = 5;
     private static final long STACK_WINDOW_MS = 3000;
@@ -101,6 +108,25 @@ public final class GearListener implements Listener {
             if (player.isOnGround()) {
                 noFall.remove(id);
             }
+
+            // abyssal armor
+            if (is(player.getInventory().getHelmet(), ABYSSAL_HELMET)) {
+                refresh(player, PotionEffectType.WATER_BREATHING);
+            }
+            if (player.isInWater() && is(player.getInventory().getLeggings(), ABYSSAL_LEGGINGS)) {
+                refresh(player, PotionEffectType.CONDUIT_POWER);
+            }
+            if (is(player.getInventory().getBoots(), ABYSSAL_BOOTS)) {
+                refresh(player, PotionEffectType.DOLPHINS_GRACE);
+            }
+        }
+    }
+
+    /** Keeps a worn-gear effect up (ambient, no particles) without replacing a stronger or longer one. */
+    private static void refresh(Player player, PotionEffectType type) {
+        PotionEffect current = player.getPotionEffect(type);
+        if (current == null || (current.getAmplifier() == 0 && current.getDuration() < 40)) {
+            player.addPotionEffect(new PotionEffect(type, 80, 0, true, false, true));
         }
     }
 

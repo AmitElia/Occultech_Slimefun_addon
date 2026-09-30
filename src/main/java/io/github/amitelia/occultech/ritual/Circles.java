@@ -18,6 +18,8 @@ public final class Circles {
     public static final String INITIATE_ALTAR = "OCCULTECH_INITIATE_ALTAR";
     public static final String BOUND_GLYPH = "OCCULTECH_BOUND_GLYPH";
     public static final String BOUND_ALTAR = "OCCULTECH_BOUND_ALTAR";
+    public static final String ABYSSAL_GLYPH = "OCCULTECH_ABYSSAL_GLYPH";
+    public static final String ABYSSAL_ALTAR = "OCCULTECH_ABYSSAL_ALTAR";
 
     /**
      * Tier 0 (5x5): altar in the middle, bowls on its four sides, candles on the diagonals, chalk ring outside.
@@ -50,8 +52,27 @@ public final class Circles {
         Map.of('c', CHALK_GLYPH, 'b', BOUND_GLYPH, 'K', TALLOW_CANDLE, 'B', OFFERING_BOWL, 'A', BOUND_ALTAR)
     );
 
-    private static final Map<String, Integer> ALTAR_TIERS = Map.of(INITIATE_ALTAR, 0, BOUND_ALTAR, 1);
-    private static final List<String> NAMES = List.of("Initiate's Circle", "Bound Circle");
+    /**
+     * Tier 2 (9x9): the Bound circle with an Abyssal Altar in the middle, wrapped in a ring of Abyssal Glyphs with a
+     * candle on each corner.
+     */
+    private static final CirclePattern ABYSSAL = new CirclePattern(
+        List.of(
+            "KaaaaaaaK",
+            "aKbbBbbKa",
+            "abcccccba",
+            "abcKBKcba",
+            "aBcBABcBa",
+            "abcKBKcba",
+            "abcccccba",
+            "aKbbBbbKa",
+            "KaaaaaaaK"
+        ),
+        Map.of('c', CHALK_GLYPH, 'b', BOUND_GLYPH, 'a', ABYSSAL_GLYPH, 'K', TALLOW_CANDLE, 'B', OFFERING_BOWL, 'A', ABYSSAL_ALTAR)
+    );
+
+    private static final Map<String, Integer> ALTAR_TIERS = Map.of(INITIATE_ALTAR, 0, BOUND_ALTAR, 1, ABYSSAL_ALTAR, 2);
+    private static final List<String> NAMES = List.of("Initiate's Circle", "Bound Circle", "Abyssal Circle");
 
     public static int highestTier() {
         return NAMES.size() - 1;
@@ -71,6 +92,9 @@ public final class Circles {
         }
         if (tier == 1) {
             return BOUND;
+        }
+        if (tier == 2) {
+            return ABYSSAL;
         }
         throw new IllegalArgumentException("No circle defined for tier " + tier);
     }

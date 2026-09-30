@@ -17,7 +17,7 @@ public class BroodEgg extends ProducerBlock {
 
     public BroodEgg(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, RitualService rituals,
         int secondsPerString) {
-        super(group, item, type, recipe, output, rituals, Material.STRING, "string", secondsPerString, Material.COBWEB);
+        super(group, item, type, recipe, output, rituals, java.util.List.of(Material.STRING), "string", secondsPerString, Material.COBWEB);
     }
 
     /** Sniffer eggs crack over time and hatch at full crack; keep it at zero so it never hatches. */

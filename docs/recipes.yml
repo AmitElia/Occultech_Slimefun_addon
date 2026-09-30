@@ -18,6 +18,7 @@
 # Weapons use item durability (never Slimefun energy); they stop working at 1 durability instead of breaking,
 # and are repaired in an anvil with the listed boss drop. Mending is disabled. See docs/mechanics.md.
 #   material : vanilla item used for the look (required for tiers that are implemented in code)
+#   enchants : optional enchantments on the item, may exceed vanilla levels (e.g. {THORNS: 5})
 #   head     : optional player-head texture (the base64 texture value or the textures.minecraft.net hash); replaces the material look
 #   durability / repair : max durability and the item that repairs it in a repair ritual (weapon on the altar, repair items in bowls, 25% each)
 #   in_place : RITUAL whose center is the altar block itself (altar left empty); the result replaces the altar block
@@ -38,7 +39,7 @@ tiers:
 circles:
   0: {INITIATE_ALTAR: 1, CHALK_GLYPH: 16, OFFERING_BOWL: 4, TALLOW_CANDLE: 4}
   1: {BOUND_ALTAR: 1, CHALK_GLYPH: 16, BOUND_GLYPH: 16, OFFERING_BOWL: 8, TALLOW_CANDLE: 8}
-  2: {ABYSSAL_ALTAR: 1, CHALK_GLYPH: 16, BOUND_GLYPH: 16, ABYSSAL_GLYPH: 24, OFFERING_BOWL: 8, TALLOW_CANDLE: 8}
+  2: {ABYSSAL_ALTAR: 1, CHALK_GLYPH: 16, BOUND_GLYPH: 16, ABYSSAL_GLYPH: 28, OFFERING_BOWL: 8, TALLOW_CANDLE: 12}
   3: {HOLLOW_ALTAR: 1, CHALK_GLYPH: 16, BOUND_GLYPH: 16, ABYSSAL_GLYPH: 24, HOLLOW_GLYPH: 32, OFFERING_BOWL: 12, TALLOW_CANDLE: 12}
 
 # kind: lesser = repeatable mini-boss, major = the tier's gate boss (needs a catalyst)
@@ -77,6 +78,12 @@ researches:
   BOUND_ARTS:        {id: 3, name: "Bound Arts",        cost: 20, items: [BOUND_STEEL, SPIRIT_ESSENCE, BOUND_CHALK, BOUND_GLYPH, RESONANT_CRYSTAL, BOUND_SIGIL, BOUND_ALTAR]}
   BOUND_TROPHIES:    {id: 4, name: "Bound Trophies",    cost: 25, items: [ARCHEVOKER_EFFIGY, FRENZY_CLEAVER, DUSKWING_CHARM, MIRROR_WARD]}
   NECROMANCY:        {id: 5, name: "Necromancy",        cost: 30, items: [BONE_SCEPTER]}
+  ABYSSAL_ARTS:      {id: 7, name: "Abyssal Arts",      cost: 40, items: [OCCULT_FORGE, SOUL_CONDENSER, ABYSSAL_ALLOY, TIDE_GLASS, ABYSSAL_SIGIL, ABYSSAL_GLYPH, ABYSSAL_ALTAR]}
+  ABYSSAL_TROPHIES:  {id: 8, name: "Abyssal Trophies",  cost: 45, items: [TIDE_RELIC, WYRMBREATH, GUARDIANS_GAZE, ABYSSAL_ANCHOR, CHOIR_BELL, WIND_CHIME]}
+  ABYSSAL_WARDROBE:  {id: 9, name: "Abyssal Wardrobe",  cost: 45, items: [ABYSSAL_HELMET, ABYSSAL_CHESTPLATE, ABYSSAL_LEGGINGS, ABYSSAL_BOOTS]}
+  DEEP_NECROMANCY:   {id: 10, name: "Deep Necromancy",  cost: 45, items: [GRAVE_LANTERN]}
+  DEEP_SERVITUDE:    {id: 11, name: "Deep Servitude",   cost: 50, items: [ABYSSAL_TETHER]}
+  DECORATIONS:       {id: 12, name: "Occult Decor",     cost: 15, items: [WISP_JAR, ABYSSAL_LANTERN, RUNE_OBELISK, OCCULT_ORRERY, SOULFIRE_BRAZIER]}
   SERVITUDE:         {id: 6, name: "Servitude",         cost: 35, items: [SERVITOR_SHRINE, HARVEST_CONTRACT, GATHER_CONTRACT, WARD_CONTRACT, BREWER_CONTRACT, SHEPHERD_CONTRACT, BEEKEEPER_CONTRACT, ACOLYTE_CONTRACT]}
 
 items:
@@ -215,95 +222,95 @@ items:
   # TIER 2 - ABYSSAL (max-enchanted netherite; gate: Evoker's Sigil) - powered machines from here
   # =====================================================================
   OCCULT_FORGE:
-    {tier: 2, cat: machine, name: Occult Forge, purpose: "Electric: forges occult alloys",
+    {tier: 2, material: BLAST_FURNACE, cat: machine, name: Occult Forge, purpose: "Electric: forges occult alloys",
      recipe: {type: ANCIENT_ALTAR, out: 1, in: {BOUND_SIGIL: 1, EVOKERS_SIGIL: 1, sf:HEATING_COIL: 2, sf:ELECTRIC_MOTOR: 1, sf:REINFORCED_PLATE: 2, BOUND_STEEL: 2}}}
   SOUL_CONDENSER:
-    {tier: 2, cat: machine, name: Soul Condenser, purpose: "Electric: condenses Spirit and Hollow Essence",
+    {tier: 2, material: RESPAWN_ANCHOR, cat: machine, name: Soul Condenser, purpose: "Electric: condenses Spirit and Hollow Essence",
      recipe: {type: ANCIENT_ALTAR, out: 1, in: {BOUND_SIGIL: 1, EVOKERS_SIGIL: 1, sf:ELECTRO_MAGNET: 2, RESONANT_CRYSTAL: 2, sf:MEDIUM_CAPACITOR: 1, BOUND_STEEL: 2}}}
   ABYSSAL_ALLOY:
-    {tier: 2, cat: material, name: Abyssal Alloy, purpose: "Tier-2 structural metal",
+    {tier: 2, material: PRISMARINE_CRYSTALS, cat: material, name: Abyssal Alloy, purpose: "Tier-2 structural metal",
      recipe: {type: OCCULT_FORGE, out: 1, in: {sf:REINFORCED_ALLOY_INGOT: 4, BOUND_STEEL: 2, mc:PRISMARINE_CRYSTALS: 8, sf:BLISTERING_INGOT_3: 1}}}
   TIDE_GLASS:
-    {tier: 2, cat: material, name: Tide Glass, purpose: "Lenses, tier-2 glyphs and summon offerings",
+    {tier: 2, material: LIGHT_BLUE_STAINED_GLASS_PANE, cat: material, name: Tide Glass, purpose: "Lenses, tier-2 glyphs and summon offerings",
      recipe: {type: OCCULT_FORGE, out: 4, in: {sf:MAGICAL_GLASS: 4, mc:PRISMARINE_SHARD: 16, SPIRIT_ESSENCE: 2}}}
   ABYSSAL_SIGIL:
-    {tier: 2, cat: component, name: Abyssal Sigil, purpose: "Tier-2 core component",
+    {tier: 2, material: NAUTILUS_SHELL, cat: component, name: Abyssal Sigil, purpose: "Tier-2 core component",
      recipe: {type: ANCIENT_ALTAR, out: 1, in: {BOUND_SIGIL: 1, ABYSSAL_ALLOY: 2, TIDE_GLASS: 2, sf:POWER_CRYSTAL: 2, sf:ANCIENT_RUNE_WATER: 2}}}
   ABYSSAL_GLYPH:
-    {tier: 2, cat: infrastructure, name: Abyssal Glyph, purpose: "Placeable tier-2 circle mark",
+    {tier: 2, material: CYAN_CARPET, cat: infrastructure, name: Abyssal Glyph, purpose: "Placeable tier-2 circle mark",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 8, in: {BOUND_CHALK: 4, TIDE_GLASS: 1, mc:PRISMARINE_SHARD: 4}}}
   ABYSSAL_ALTAR:
-    {tier: 2, cat: infrastructure, name: Abyssal Altar, purpose: "Center of the 9x9 circle; powered",
-     recipe: {type: RITUAL, circle: 1, out: 1, center: BOUND_ALTAR, in: {ABYSSAL_SIGIL: 4, EVOKERS_SIGIL: 3, ABYSSAL_ALLOY: 8, mc:HEART_OF_THE_SEA: 1, sf:CARBONADO: 4, sf:LARGE_CAPACITOR: 2}}}
+    {tier: 2, material: PRISMARINE_BRICKS, cat: infrastructure, name: Abyssal Altar, purpose: "Center of the 9x9 circle. Made by a ritual on the Bound Altar itself (leave it empty): the altar upgrades in place",
+     recipe: {type: RITUAL, circle: 1, out: 1, center: BOUND_ALTAR, in_place: true, in: {ABYSSAL_SIGIL: 4, EVOKERS_SIGIL: 3, ABYSSAL_ALLOY: 8, mc:HEART_OF_THE_SEA: 1, sf:CARBONADO: 4, sf:LARGE_CAPACITOR: 2}}}
   # tier-2 boss drops
-  ABYSSAL_LENS:  {tier: 2, cat: boss_drop, name: Abyssal Lens, purpose: "Beam weapons", recipe: {type: BOSS_DROP, boss: ABYSSAL_WARDEN}}
-  NAUTILUS_CORE: {tier: 2, cat: boss_drop, name: Nautilus Core, purpose: "Water mobility gear", recipe: {type: BOSS_DROP, boss: TIDEBREAKER}}
-  CHOIR_EMBER:   {tier: 2, cat: boss_drop, name: Choir Ember, purpose: "Fire weapons and tier-3 summon offerings", recipe: {type: BOSS_DROP, boss: BLAZE_CHOIR}}
-  TEMPEST_CORE:  {tier: 2, cat: boss_drop, name: Tempest Core, purpose: "Wind and dash items", recipe: {type: BOSS_DROP, boss: TEMPEST}}
-  ELDER_SCALE:   {tier: 2, cat: boss_drop, name: Elder Scale, purpose: "GATE -> tier 3 (Hollow Altar, Hollow Assembler); Abyssal armor", recipe: {type: BOSS_DROP, boss: DROWNED_ELDER}}
+  ABYSSAL_LENS:  {tier: 2, material: ENDER_EYE, cat: boss_drop, name: Abyssal Lens, purpose: "Beam weapons", recipe: {type: BOSS_DROP, boss: ABYSSAL_WARDEN}}
+  NAUTILUS_CORE: {tier: 2, material: HEART_OF_THE_SEA, cat: boss_drop, name: Nautilus Core, purpose: "Water mobility gear", recipe: {type: BOSS_DROP, boss: TIDEBREAKER}}
+  CHOIR_EMBER:   {tier: 2, material: BLAZE_POWDER, cat: boss_drop, name: Choir Ember, purpose: "Fire weapons and tier-3 summon offerings", recipe: {type: BOSS_DROP, boss: BLAZE_CHOIR}}
+  TEMPEST_CORE:  {tier: 2, material: BREEZE_ROD, cat: boss_drop, name: Tempest Core, purpose: "Wind and dash items", recipe: {type: BOSS_DROP, boss: TEMPEST}}
+  ELDER_SCALE:   {tier: 2, material: PRISMARINE_SHARD, cat: boss_drop, name: Elder Scale, purpose: "GATE -> tier 3 (Hollow Altar, Hollow Assembler); Abyssal armor", recipe: {type: BOSS_DROP, boss: DROWNED_ELDER}}
   TIDE_RELIC:
-    {tier: 2, cat: catalyst, name: Tide Relic, purpose: "Summons the Drowned Elder",
+    {tier: 2, material: CONDUIT, cat: catalyst, name: Tide Relic, purpose: "Summons the Drowned Elder",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:HEART_OF_THE_SEA, in: {ABYSSAL_LENS: 1, NAUTILUS_CORE: 1, TEMPEST_CORE: 1, CHOIR_EMBER: 1, mc:WET_SPONGE: 6, SPIRIT_ESSENCE: 12, ABYSSAL_ALLOY: 1}}}
   # tier-2 rewards
   WYRMBREATH:
-    {tier: 2, cat: weapon, name: Wyrmbreath, purpose: "Hold use: cone of dragon fire (particles) that burns and damages what's in front; overheats. Durability 1200, repair: Choir Ember",
+    {tier: 2, material: BLAZE_ROD, durability: 1200, repair: CHOIR_EMBER, cat: weapon, name: Wyrmbreath, purpose: "Hold use: cone of dragon fire (particles) that burns and damages what's in front; overheats. Durability 1200, repair: Choir Ember",
      recipe: {type: RITUAL, circle: 2, out: 1, center: ABYSSAL_SIGIL, in: {CHOIR_EMBER: 8, mc:DRAGON_BREATH: 4, ABYSSAL_ALLOY: 8, sf:LAVA_CRYSTAL: 4, sf:ANCIENT_RUNE_FIRE: 4, EVOKERS_SIGIL: 1}}}
   GUARDIANS_GAZE:
-    {tier: 2, cat: weapon, name: Guardian's Gaze, purpose: "Hold use: locks a beam on one target; damage ramps up while held. Durability 1200, repair: Abyssal Lens",
+    {tier: 2, material: END_ROD, durability: 1200, repair: ABYSSAL_LENS, cat: weapon, name: Guardian's Gaze, purpose: "Hold use: locks a beam on one target; damage ramps up while held. Durability 1200, repair: Abyssal Lens",
      recipe: {type: RITUAL, circle: 2, out: 1, center: ABYSSAL_SIGIL, in: {ABYSSAL_LENS: 8, TIDE_GLASS: 8, ABYSSAL_ALLOY: 8, sf:POWER_CRYSTAL: 4, EVOKERS_SIGIL: 1}}}
   GRAVE_LANTERN:
-    {tier: 2, cat: weapon, name: Grave Lantern, purpose: "Necromancy: raises 3 wither-skeleton knights for 30s. Durability 128 summons, repair: Choir Ember",
+    {tier: 2, material: SOUL_LANTERN, durability: 128, repair: CHOIR_EMBER, cat: weapon, name: Grave Lantern, purpose: "Necromancy: raises 3 wither-skeleton knights for 30s. Durability 128 summons, repair: Choir Ember",
      recipe: {type: RITUAL, circle: 2, out: 1, center: BONE_SCEPTER, in: {EVOKERS_SIGIL: 2, CHOIR_EMBER: 4, ABYSSAL_ALLOY: 8, mc:SOUL_LANTERN: 1, mc:WITHER_SKELETON_SKULL: 1, ABYSSAL_SIGIL: 1}}}
   ABYSSAL_HELMET:
-    {tier: 2, cat: armor, name: Abyssal Helm, purpose: "Netherite-level defense. Water Breathing while worn. Set (4/4): -20% damage from summoned creatures",
+    {tier: 2, material: NETHERITE_HELMET, cat: armor, name: Abyssal Helm, purpose: "Netherite-level defense. Water Breathing while worn. Set (4/4): -20% damage from summoned creatures",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:NETHERITE_HELMET, in: {ELDER_SCALE: 2, ABYSSAL_ALLOY: 10, TIDE_GLASS: 8, ABYSSAL_SIGIL: 2, sf:REINFORCED_PLATE: 2}}}
   ABYSSAL_CHESTPLATE:
-    {tier: 2, cat: armor, name: Abyssal Chestplate, purpose: "Netherite-level defense with Thorns V",
+    {tier: 2, material: NETHERITE_CHESTPLATE, enchants: {THORNS: 5}, cat: armor, name: Abyssal Chestplate, purpose: "Netherite-level defense with Thorns V",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:NETHERITE_CHESTPLATE, in: {ELDER_SCALE: 3, ABYSSAL_ALLOY: 16, TIDE_GLASS: 8, ABYSSAL_SIGIL: 2, sf:REINFORCED_PLATE: 3}}}
   ABYSSAL_LEGGINGS:
-    {tier: 2, cat: armor, name: Abyssal Greaves, purpose: "Netherite-level defense. Conduit Power while in water",
+    {tier: 2, material: NETHERITE_LEGGINGS, cat: armor, name: Abyssal Greaves, purpose: "Netherite-level defense. Conduit Power while in water",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:NETHERITE_LEGGINGS, in: {ELDER_SCALE: 3, ABYSSAL_ALLOY: 14, TIDE_GLASS: 8, ABYSSAL_SIGIL: 2, sf:REINFORCED_PLATE: 3}}}
   ABYSSAL_BOOTS:
-    {tier: 2, cat: armor, name: Abyssal Boots, purpose: "Netherite-level defense. Dolphin's Grace while worn",
+    {tier: 2, material: NETHERITE_BOOTS, cat: armor, name: Abyssal Boots, purpose: "Netherite-level defense. Dolphin's Grace while worn",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:NETHERITE_BOOTS, in: {ELDER_SCALE: 2, ABYSSAL_ALLOY: 10, TIDE_GLASS: 8, ABYSSAL_SIGIL: 2, sf:REINFORCED_PLATE: 2}}}
 
   # tier-2 bonus drops (15% per contributor per win)
-  GUARDIAN_EYE:    {tier: 2, cat: labor, name: Guardian Eye, purpose: "Bonus drop. A sentry that fires a guardian beam at hostile mobs within 12 blocks. A Frenzy Idol within 8 blocks makes it 1.5x stronger (never stacks)", recipe: {type: BOSS_DROP, boss: ABYSSAL_WARDEN, chance: 0.15}}
-  PEARL_BED:       {tier: 2, cat: labor, name: Pearl Bed, purpose: "Bonus drop. Slowly makes prismarine shards and crystals into a store cargo/Networks can pull from", recipe: {type: BOSS_DROP, boss: TIDEBREAKER, chance: 0.15}}
-  EMBER_BRAZIER:   {tier: 2, cat: labor, name: Ember Brazier, purpose: "Bonus drop. Slowly makes blaze powder into a store cargo/Networks can pull from. Never lights fires", recipe: {type: BOSS_DROP, boss: BLAZE_CHOIR, chance: 0.15}}
-  BOTTLED_GALE:    {tier: 2, cat: decoration, name: Bottled Gale, purpose: "Bonus drop. Decoration: a tiny tornado swirls above the jar. Right-click to change its tint", recipe: {type: BOSS_DROP, boss: TEMPEST, chance: 0.15}}
+  GUARDIAN_EYE:    {tier: 2, material: OBSERVER, cat: labor, name: Guardian Eye, purpose: "Bonus drop. A sentry that fires a guardian beam at hostile mobs within 12 blocks. A Frenzy Idol within 8 blocks makes it 1.5x stronger (never stacks)", recipe: {type: BOSS_DROP, boss: ABYSSAL_WARDEN, chance: 0.15}}
+  PEARL_BED:       {tier: 2, material: TUBE_CORAL_BLOCK, cat: labor, name: Pearl Bed, purpose: "Bonus drop. Slowly makes prismarine shards and crystals into a store cargo/Networks can pull from", recipe: {type: BOSS_DROP, boss: TIDEBREAKER, chance: 0.15}}
+  EMBER_BRAZIER:   {tier: 2, material: MAGMA_BLOCK, cat: labor, name: Ember Brazier, purpose: "Bonus drop. Slowly makes blaze powder into a store cargo/Networks can pull from. Never lights fires", recipe: {type: BOSS_DROP, boss: BLAZE_CHOIR, chance: 0.15}}
+  BOTTLED_GALE:    {tier: 2, material: GLASS, cat: decoration, name: Bottled Gale, purpose: "Bonus drop. Decoration: a tiny tornado swirls above the jar. Right-click to change its tint", recipe: {type: BOSS_DROP, boss: TEMPEST, chance: 0.15}}
 
   # tier-2 gear replacing the treads and the harness
   WIND_CHIME:
-    {tier: 2, cat: charm, name: Wind Chime, purpose: "Placed: players within 32 blocks get Speed II and Jump Boost II. Chimes softly now and then (a random pentatonic note every 10-25s), never constantly",
+    {tier: 2, material: BELL, cat: charm, name: Wind Chime, purpose: "Placed: players within 32 blocks get Speed II and Jump Boost II. Chimes softly now and then (a random pentatonic note every 10-25s), never constantly",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:BELL, in: {TEMPEST_CORE: 6, ABYSSAL_ALLOY: 4, TIDE_GLASS: 8, mc:BREEZE_ROD: 8, ABYSSAL_SIGIL: 1}}}
   ABYSSAL_ANCHOR:
-    {tier: 2, cat: weapon, name: Abyssal Anchor, durability: 1800, repair: NAUTILUS_CORE, purpose: "Heavy weapon. Right-click to hurl a spectral anchor on a chain: the first creature hit is dragged to you and slowed. Hits harder on wet targets. Durability 1800, repair: Nautilus Core",
-     recipe: {type: RITUAL, circle: 2, out: 1, center: mc:NETHERITE_AXE, in: {NAUTILUS_CORE: 8, ABYSSAL_ALLOY: 10, mc:CHAIN: 16, mc:HEAVY_CORE: 1, ABYSSAL_SIGIL: 1, EVOKERS_SIGIL: 1}}}
+    {tier: 2, material: NETHERITE_AXE, cat: weapon, name: Abyssal Anchor, durability: 1800, repair: NAUTILUS_CORE, purpose: "Heavy weapon. Right-click to hurl a spectral anchor on a chain: the first creature hit is dragged to you and slowed. Hits harder on wet targets. Durability 1800, repair: Nautilus Core",
+     recipe: {type: RITUAL, circle: 2, out: 1, center: mc:NETHERITE_AXE, in: {NAUTILUS_CORE: 8, ABYSSAL_ALLOY: 10, mc:IRON_CHAIN: 16, mc:HEAVY_CORE: 1, ABYSSAL_SIGIL: 1, EVOKERS_SIGIL: 1}}}
   CHOIR_BELL:
-    {tier: 2, cat: charm, name: Choir Bell, durability: 200, repair: CHOIR_EMBER, purpose: "Talisman. Right-click to ring: a burning shockwave knocks back and staggers summoned creatures within 7 blocks (bosses briefly slowed). 20s cooldown. Durability 200 rings, repair: Choir Ember",
+    {tier: 2, material: GOLD_NUGGET, cat: charm, name: Choir Bell, durability: 200, repair: CHOIR_EMBER, purpose: "Talisman. Right-click to ring: a burning shockwave knocks back and staggers summoned creatures within 7 blocks (bosses briefly slowed). 20s cooldown. Durability 200 rings, repair: Choir Ember",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:BELL, in: {CHOIR_EMBER: 10, ABYSSAL_ALLOY: 6, TIDE_GLASS: 4, sf:ANCIENT_RUNE_FIRE: 4, ABYSSAL_SIGIL: 1}}}
 
   # servitor range upgrade (moved here from tier 3)
   ABYSSAL_TETHER:
-    {tier: 2, cat: labor, name: Abyssal Tether, purpose: "Shrine upgrade (its own slot, keeps the contract): widens the shrine's area to 15x15 (Ward/Acolyte 25x25)",
-     recipe: {type: RITUAL, circle: 2, out: 1, center: SERVITOR_SHRINE, in: {ABYSSAL_SIGIL: 2, ABYSSAL_ALLOY: 8, TIDE_GLASS: 12, ELDER_SCALE: 1, SPIRIT_ESSENCE: 32, mc:HEART_OF_THE_SEA: 1}}}
+    {tier: 2, material: LEAD, cat: labor, name: Abyssal Tether, purpose: "Shrine upgrade (its own slot, keeps the contract): widens the shrine's area to 15x15 (Ward/Acolyte 25x25)",
+     recipe: {type: RITUAL, circle: 2, out: 1, center: mc:LODESTONE, in: {ABYSSAL_SIGIL: 2, ABYSSAL_ALLOY: 8, TIDE_GLASS: 12, ELDER_SCALE: 1, SPIRIT_ESSENCE: 32, mc:HEART_OF_THE_SEA: 1}}}
 
   # tier-2 decorations: visual effects only, never change blocks, only animate with a player within 24 blocks
   WISP_JAR:
-    {tier: 2, cat: decoration, name: Wisp Jar, purpose: "Decoration: like a firefly bush - a few soft glowing wisps drift and blink up to 10 blocks around it, mostly at night. Right-click to change their color",
+    {tier: 2, material: TINTED_GLASS, cat: decoration, name: Wisp Jar, purpose: "Decoration: like a firefly bush - a few soft glowing wisps drift and blink up to 10 blocks around it, mostly at night. Right-click to change their color",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:GLASS: 4, SPIRIT_ESSENCE: 2, mc:GLOWSTONE_DUST: 2, TIDE_GLASS: 1}}}
   ABYSSAL_LANTERN:
-    {tier: 2, cat: decoration, name: Abyssal Lantern, purpose: "Decoration: a column of rising bubbles and a slow ring of light, like a lamp at the bottom of the sea. Right-click to change the light color",
+    {tier: 2, material: SEA_LANTERN, cat: decoration, name: Abyssal Lantern, purpose: "Decoration: a column of rising bubbles and a slow ring of light, like a lamp at the bottom of the sea. Right-click to change the light color",
      recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:SEA_LANTERN: 1, TIDE_GLASS: 2, mc:PRISMARINE_SHARD: 4, ABYSSAL_ALLOY: 1, SPIRIT_ESSENCE: 1}}}
   RUNE_OBELISK:
-    {tier: 2, cat: decoration, name: Rune Obelisk, purpose: "Decoration: three runes orbit the stone (smooth client-side motion), with a spark now and then. Right-click to change the rune set",
+    {tier: 2, material: POLISHED_BLACKSTONE_BRICK_WALL, cat: decoration, name: Rune Obelisk, purpose: "Decoration: three runes orbit the stone (smooth client-side motion), with a spark now and then. Right-click to change the rune set",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:POLISHED_BLACKSTONE_BRICKS: 4, sf:BLANK_RUNE: 3, BOUND_CHALK: 1, SPIRIT_ESSENCE: 1}}}
   OCCULT_ORRERY:
-    {tier: 2, cat: decoration, name: Occult Orrery, purpose: "Decoration: a miniature sky - little worlds of sea, fire and void circle a glowing sun (smooth client-side motion). Right-click to change the worlds",
+    {tier: 2, material: LIGHTNING_ROD, cat: decoration, name: Occult Orrery, purpose: "Decoration: a miniature sky - little worlds of sea, fire and void circle a glowing sun (smooth client-side motion). Right-click to change the worlds",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:COPPER_BLOCK: 1, mc:ENDER_PEARL: 1, mc:MAGMA_CREAM: 1, mc:HEART_OF_THE_SEA: 1, ABYSSAL_ALLOY: 2, RESONANT_CRYSTAL: 2, CHOIR_EMBER: 1}}}
   SOULFIRE_BRAZIER:
-    {tier: 2, cat: decoration, name: Soulfire Brazier, purpose: "Decoration: a crackling bowl of flame particles with drifting embers. Gives light, never burns anything. Right-click: soul (blue) or ember (orange) flames",
+    {tier: 2, material: SOUL_LANTERN, cat: decoration, name: Soulfire Brazier, purpose: "Decoration: a crackling bowl of flame particles with drifting embers. Gives light, never burns anything. Right-click: soul (blue) or ember (orange) flames",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:IRON_BARS: 3, mc:SOUL_SOIL: 2, CHOIR_EMBER: 1, SOUL_ASH: 2, SPIRIT_ESSENCE: 1}}}
 
   # =====================================================================

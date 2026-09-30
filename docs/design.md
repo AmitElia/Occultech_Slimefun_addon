@@ -87,7 +87,7 @@ Health values are before group scaling. Balance is untested with real players; t
   ingredients into brewing stands (T2), Shepherd/Beekeeper (T2), Acolyte - keeps a circle's bowls stocked with a chosen
   ritual's offerings from a chest, never starts rituals itself (T2). Servitor Nexus (T3) links shrines and widens areas.
 
-## Tier 2 · Abyssal (planned, not implemented)
+## Tier 2 · Abyssal (implemented)
 - Balanced for max-enchanted netherite. First **powered machines** (Occult Forge, Soul Condenser); **rituals never use
   power** but cost more (mini-boss summons ~1.1k raw, the Drowned Elder ~4.6k, 3-13% of the 9x9 circle).
 - Ocean bosses fight **on land with custom movement** (no ponds). Mini-bosses: Abyssal Warden, Tidebreaker, Blaze Choir,
@@ -105,6 +105,20 @@ Health values are before group scaling. Balance is untested with real players; t
   Occult Orrery, Soulfire Brazier, Bottled Gale. Orbiting parts use display-entity interpolation (the client animates;
   the server sends one update every few seconds). Cut as not multiplayer friendly: Aurora Beacon (sky-wide particle
   ribbon), Tide Fountain (constant heavy particle arcs).
+- The 9x9 Abyssal circle comes from upgrading the Bound Altar in place (like Initiate -> Bound).
+- Crafting rituals keep the center item's enchantments (an enchanted netherite helmet stays enchanted as an Abyssal Helm).
+
+### Tier-2 bosses (implemented)
+Health attributes cap at 1024, so tier-2 bosses have modest health and thick hides: minis take a third of the damage
+dealt (~900-1000 effective health solo), the Drowned Elder a fifth (~2500). Group scaling still applies.
+Sea creatures are "puppets": no vanilla goals and no gravity, moved by the boss script so they glide over the land.
+| Boss | Mechanics |
+|------|-----------|
+| Abyssal Warden | glides after players; charged beam tracks for 2s, turns white and locks 0.5s before firing (step aside); spike burst after a 1s ring; two beams at once below half health |
+| Tidebreaker | drowned on a zombie nautilus; ram charge along a warned line, then winded for 2s (melee window); trident fan volley (no pickup); trident melee |
+| Blaze Choir | three blazes orbit the altar; the shield passes between them every 6s (90% less damage, glowing); fireballs never light blocks; Chorus flame circles under players; survivors sing faster |
+| Tempest | breeze with its own AI; wind-charge fan; squall ring closes in from the arena edge to 5 blocks (outside hurts); wind burst; two small breezes at half health |
+| Drowned Elder | Mining Fatigue II pressure; beams at up to three players; two gliding guardians every 20s with small beams; Tidal Surge at half health: three waves roll out - jump over each |
 
 ## Later tiers
 | Tier | Boss | Base mob | Idea |

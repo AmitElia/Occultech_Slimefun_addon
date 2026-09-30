@@ -76,15 +76,17 @@ final class Showcase {
     private static final int PEDESTAL_SPACING = 3;
     private static final int[] PEDESTAL_COLUMNS = { -6, -9, -12 };
     private static final int WEST_EDGE = -24;
-    private static final int EAST_EDGE = 36;
+    private static final int EAST_EDGE = 40;
     private static final Map<Integer, List<String>> BOSS_ORDER = Map.of(
         0, List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "GELATINOUS_SOVEREIGN"),
-        1, List.of("THE_UNBOUND", "NIGHT_MATRIARCH", "MIRRORED_MAGUS", "ARCHEVOKER"));
+        1, List.of("THE_UNBOUND", "NIGHT_MATRIARCH", "MIRRORED_MAGUS", "ARCHEVOKER"),
+        2, List.of("ABYSSAL_WARDEN", "TIDEBREAKER", "BLAZE_CHOIR", "TEMPEST", "DROWNED_ELDER"));
     private static final Map<Integer, List<String>> CRAFT_DEMOS = Map.of(
         0, List.of("craft:SOVEREIGN_CATALYST", "upgrade:BOUND_ALTAR"),
-        1, List.of("craft:SPIRIT_ESSENCE"));
-    private static final Material[] PEDESTALS = { Material.CHISELED_POLISHED_BLACKSTONE, Material.PURPUR_PILLAR };
-    private static final Material[] RINGS = { Material.PEARLESCENT_FROGLIGHT, Material.VERDANT_FROGLIGHT };
+        1, List.of("craft:SPIRIT_ESSENCE"),
+        2, List.of("upgrade:ABYSSAL_ALTAR"));
+    private static final Material[] PEDESTALS = { Material.CHISELED_POLISHED_BLACKSTONE, Material.PURPUR_PILLAR, Material.PRISMARINE_BRICKS };
+    private static final Material[] RINGS = { Material.PEARLESCENT_FROGLIGHT, Material.VERDANT_FROGLIGHT, Material.OCHRE_FROGLIGHT };
 
     private final Occultech plugin;
     private final CommandSender sender;
@@ -121,7 +123,7 @@ final class Showcase {
             z += length;
         }
         int servitorStart = z;
-        int end = z + 44;
+        int end = z + 50;
 
         loadArea(oz + 1, end + 1);
         layFloor(oz + 2, end, segments, servitorStart);
@@ -341,9 +343,10 @@ final class Showcase {
         if (recipe.isEmpty()) {
             return;
         }
-        String title = upgrade ? "&dUpgrade demo: Initiate's Altar -> " + ContentRegistrar.title(id) : "&dCrafting demo: " + ContentRegistrar.title(id);
+        String from = recipe.get().center() == null ? "altar" : ContentRegistrar.title(recipe.get().center().substring(recipe.get().center().indexOf('_') + 1));
+        String title = upgrade ? "&dUpgrade demo: " + from + " -> " + ContentRegistrar.title(id) : "&dCrafting demo: " + ContentRegistrar.title(id);
         String hint = upgrade ? "&7The altar stays empty. Press &fBegin Ritual&7." : "&7Everything is in place. Press &fBegin Ritual&7.";
-        Block altar = circle(x, z, upgrade ? 0 : tier, title, hint);
+        Block altar = circle(x, z, upgrade ? recipe.get().circle() : tier, title, hint);
         fills.add(() -> fill(altar, recipe.get()));
     }
 

@@ -23,6 +23,9 @@ public final class Keys {
     /** Marks hologram displays above bowls, altars and other blocks (never saved with the world). */
     public static final NamespacedKey HOLOGRAM = new NamespacedKey("occultech", "hologram");
 
+    /** Damage (double) a fight's projectile deals to a player, replacing vanilla's (e.g. tridents, small fireballs). */
+    public static final NamespacedKey DAMAGE = new NamespacedKey("occultech", "damage");
+
     /** Marks entities placed by /occultech showcase so it can clean up after itself. */
     public static final NamespacedKey SHOWCASE = new NamespacedKey("occultech", "showcase");
 

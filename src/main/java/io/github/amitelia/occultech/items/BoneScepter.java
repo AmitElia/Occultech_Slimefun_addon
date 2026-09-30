@@ -18,18 +18,18 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.handlers.ItemUseHandler;
 
 /**
- * Bone Scepter (tier-1 necromancy): right-click to raise 2 skeleton archers for 30 seconds.
- * Uses 1 durability per summon (Unbreaking applies) and stops working at 1 durability instead of breaking.
+ * Necromancy item: right-click to raise minions for 30 seconds. Bone Scepter (tier 1): 2 skeleton archers; Grave
+ * Lantern (tier 2): 3 wither knights. Uses 1 durability per summon (Unbreaking applies) and stops working at 1
+ * durability instead of breaking.
  */
 public class BoneScepter extends OccultItem {
 
-    private static final int SKELETONS = 2;
     private static final int LIFETIME_SECONDS = 30;
-    private static final long COOLDOWN_MS = 20_000;
 
     private final Map<UUID, Long> cooldowns = new HashMap<>();
 
-    public BoneScepter(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, MinionService minions) {
+    public BoneScepter(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, MinionService minions,
+        MinionService.Kind kind, int count, long cooldownMs) {
         super(group, item, type, recipe, output);
 
         addItemHandler((ItemUseHandler) e -> {
@@ -47,8 +47,8 @@ public class BoneScepter extends OccultItem {
                 player.playSound(player.getLocation(), Sound.BLOCK_BONE_BLOCK_BREAK, 1F, 0.6F);
                 return;
             }
-            cooldowns.put(player.getUniqueId(), now + COOLDOWN_MS);
-            minions.raiseSkeletons(player, SKELETONS, LIFETIME_SECONDS);
+            cooldowns.put(player.getUniqueId(), now + cooldownMs);
+            minions.raise(player, kind, count, LIFETIME_SECONDS);
         });
     }
 

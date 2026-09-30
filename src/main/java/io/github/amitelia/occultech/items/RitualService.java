@@ -450,6 +450,9 @@ public final class RitualService {
             }
             ItemStack result = output.getItem().clone();
             result.setAmount(recipe.outputAmount());
+            if (recipe.center() != null && !taken.isEmpty()) {
+                carryEnchantments(taken.get(0).item(), result);
+            }
 
             BlockMenu menu = BlockStorage.getInventory(altar);
             if (menu != null && MenuUtils.isEmpty(menu.getItemInSlot(RitualAltar.CENTER_SLOT))) {
@@ -464,6 +467,15 @@ public final class RitualService {
                 altar.getWorld().playSound(center(), Sound.ENTITY_EVOKER_CAST_SPELL, 1F, 1F);
                 tell(player(), "&dThe ritual is complete.");
             }
+        }
+
+        /** An enchanted center item (e.g. max-enchanted netherite armor) keeps its enchantments on the result. */
+        private static void carryEnchantments(ItemStack from, ItemStack to) {
+            from.getEnchantments().forEach((enchantment, level) -> {
+                if (to.getEnchantmentLevel(enchantment) < level) {
+                    to.addUnsafeEnchantment(enchantment, level);
+                }
+            });
         }
 
         /** The altar block itself becomes the result (e.g. Initiate's Altar -> Bound Altar). Its slot is empty by rule. */

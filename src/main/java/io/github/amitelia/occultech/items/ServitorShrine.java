@@ -42,6 +42,8 @@ import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
 public class ServitorShrine extends SlimefunItem {
 
     public static final int CONTRACT_SLOT = 4;
+    /** Takes an Abyssal Tether (tier 2), which widens the contract's radius. */
+    public static final int UPGRADE_SLOT = 13;
     public static final int[] STORE = range(18, 45);
     private static final int INFO_SLOT = 11;
     private static final int EMPOWER_SLOT = 15;
@@ -56,14 +58,15 @@ public class ServitorShrine extends SlimefunItem {
             @Override
             public void init() {
                 for (int slot = 0; slot < 18; slot++) {
-                    if (slot != CONTRACT_SLOT && slot != INFO_SLOT && slot != EMPOWER_SLOT) {
+                    if (slot != CONTRACT_SLOT && slot != UPGRADE_SLOT && slot != INFO_SLOT && slot != EMPOWER_SLOT) {
                         drawBackground(new int[] { slot });
                     }
                 }
                 addItem(INFO_SLOT, MenuUtils.icon(Material.HEART_OF_THE_SEA, "&5Servitor Shrine",
                     "&7Put a &fContract &7in the top slot;", "&7swap it any time to change the job.",
                     "", "&7Harvest, Gather, Shepherd, Beekeeper,", "&7Brewer's Aid: 9x9 around the shrine",
-                    "&7Ward, Acolyte: 17x17", "", "&7The store below holds output and supplies;",
+                    "&7Ward, Acolyte: 17x17", "", "&7Middle slot: &3Abyssal Tether &7widens",
+                    "&7these to 15x15 and 25x25.", "", "&7The store below holds output and supplies;",
                     "&7cargo and Networks can use it."), (p, s, i, a) -> false);
                 addItem(EMPOWER_SLOT, empowerIcon(), (p, s, i, a) -> false);
             }
@@ -90,6 +93,18 @@ public class ServitorShrine extends SlimefunItem {
                     @Override
                     public boolean onClick(InventoryClickEvent e, Player p, int s, ItemStack cursor, ClickAction action) {
                         return MenuUtils.isEmpty(cursor) || ServitorService.Contract.of(MenuUtils.keyOf(cursor)) != null;
+                    }
+                });
+                // only an Abyssal Tether goes in the upgrade slot
+                menu.addMenuClickHandler(UPGRADE_SLOT, new AdvancedMenuClickHandler() {
+                    @Override
+                    public boolean onClick(Player p, int s, ItemStack cursor, ClickAction action) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onClick(InventoryClickEvent e, Player p, int s, ItemStack cursor, ClickAction action) {
+                        return MenuUtils.isEmpty(cursor) || (ServitorService.TETHER_ID.equals(MenuUtils.keyOf(cursor)) && cursor.getAmount() == 1);
                     }
                 });
                 menu.addMenuClickHandler(EMPOWER_SLOT, (p, slot, stack, action) -> {
@@ -130,7 +145,7 @@ public class ServitorShrine extends SlimefunItem {
             public void tick(Block block, SlimefunItem sfItem, Config data) {
                 BlockMenu menu = BlockStorage.getInventory(block);
                 if (menu != null) {
-                    String status = servitors.tick(block, menu, STORE, CONTRACT_SLOT);
+                    String status = servitors.tick(block, menu, STORE, CONTRACT_SLOT, UPGRADE_SLOT);
                     rituals.holograms().show(block, null, "&5Servitor Shrine &8| " + status);
                 }
             }
@@ -143,7 +158,7 @@ public class ServitorShrine extends SlimefunItem {
                 servitors.removeShrine(e.getBlock().getLocation());
                 BlockMenu menu = BlockStorage.getInventory(e.getBlock());
                 if (menu != null) {
-                    menu.dropItems(e.getBlock().getLocation(), CONTRACT_SLOT);
+                    menu.dropItems(e.getBlock().getLocation(), CONTRACT_SLOT, UPGRADE_SLOT);
                     menu.dropItems(e.getBlock().getLocation(), STORE);
                 }
             }

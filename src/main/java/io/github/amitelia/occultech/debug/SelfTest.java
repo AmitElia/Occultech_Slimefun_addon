@@ -51,6 +51,7 @@ final class SelfTest {
     private static final String ACTIVE_KEY = "occultech_active_fight";
     private static final List<String> BOSSES = List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "GELATINOUS_SOVEREIGN");
     private static final List<String> TIER1_BOSSES = List.of("THE_UNBOUND", "NIGHT_MATRIARCH", "MIRRORED_MAGUS", "ARCHEVOKER");
+    private static final List<String> TIER2_BOSSES = List.of("ABYSSAL_WARDEN", "TIDEBREAKER", "BLAZE_CHOIR", "TEMPEST", "DROWNED_ELDER");
 
     private record Step(long delay, Runnable action) {}
 
@@ -100,7 +101,8 @@ final class SelfTest {
         then(0, this::buildCircle);
         then(5, this::circleDetection);
         then(0, this::fillForHolograms);
-        then(30, this::hologramsShown);
+        // Slimefun's block ticker needs a few seconds to start after the server boots
+        then(120, this::hologramsShown);
         then(0, this::craftingRitual);
         then(RitualService.DURATION_TICKS + 20L, this::craftingResult);
         then(0, this::placeBroodEgg);
@@ -109,12 +111,12 @@ final class SelfTest {
         then(0, this::summonRitual);
         then(RitualService.DURATION_TICKS + 20L, this::summonResult);
         then(0, this::killCurrentFight);
-        then(10, () -> checkFightEndedCleanly("Brood Mother (ritual)"));
+        then(30, () -> checkFightEndedCleanly("Brood Mother (ritual)"));
         for (String bossId : BOSSES) {
             then(0, () -> summonDirect(bossId));
             then(60, () -> checkFightRunning(bossId));
             then(0, this::killCurrentFight);
-            then(10, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
+            then(30, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
         }
         then(0, this::refundOnInterruption);
         then(5, this::crashRecovery);
@@ -131,7 +133,7 @@ final class SelfTest {
             then(0, () -> summonTier1(bossId));
             then(60, () -> checkFightRunning(bossId));
             then(0, this::killCurrentFight);
-            then(10, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
+            then(30, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
         }
         then(0, this::buildShrine);
         then(5, this::startHarvest);
@@ -161,6 +163,26 @@ final class SelfTest {
         then(RitualService.DURATION_TICKS + 20L, this::repaired);
         then(0, this::raiseMinions);
         then(100, this::minionsAttack);
+
+        // ---- tier 2
+        then(0, this::tier2Items);
+        then(0, this::startAbyssalUpgrade);
+        then(RitualService.DURATION_TICKS + 20L, this::abyssalUpgraded);
+        then(0, this::buildAbyssalRing);
+        then(5, this::abyssalCircleComplete);
+        then(0, this::startHelmRitual);
+        then(RitualService.DURATION_TICKS + 20L, this::helmResult);
+        for (String bossId : TIER2_BOSSES) {
+            then(0, () -> summonTier1(bossId));
+            then(60, () -> checkFightRunning(bossId));
+            then(0, this::killCurrentFight);
+            then(30, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
+        }
+        then(0, this::placeGuardianEye);
+        then(60, this::guardianEyeFired);
+        then(0, this::tetherShrine);
+        then(30, this::tethered);
+        then(0, this::decorationPalette);
         next();
     }
 
@@ -172,11 +194,11 @@ final class SelfTest {
         long expected = catalog.items().stream().filter(i -> i.tier() <= ContentRegistrar.IMPLEMENTED_TIER).count();
         long registered = catalog.items().stream().filter(i -> i.tier() <= ContentRegistrar.IMPLEMENTED_TIER)
             .filter(i -> SlimefunItem.getById(ItemKeys.slimefunId(i.id())) != null).count();
-        check("all " + expected + " tier-0 items registered", registered == expected, registered + " registered");
+        check("all " + expected + " items up to tier " + ContentRegistrar.IMPLEMENTED_TIER + " registered", registered == expected, registered + " registered");
         check("no content problems", registrar.problems().isEmpty(), String.join("; ", registrar.problems()));
         check("researches registered", registrar.researchCount() == catalog.researches().size(), registrar.researchCount() + " registered");
         long summons = rituals.recipes().stream().filter(RitualRecipe::isSummon).count();
-        int expectedSummons = BOSSES.size() + TIER1_BOSSES.size();
+        int expectedSummons = BOSSES.size() + TIER1_BOSSES.size() + TIER2_BOSSES.size();
         check(expectedSummons + " summoning rituals registered", summons == expectedSummons, summons + " summons");
     }
 
@@ -313,8 +335,9 @@ final class SelfTest {
         }
         check(name + " ends in victory", currentFight.isOver() && currentFight.result() == BossFight.Result.VICTORY,
             String.valueOf(currentFight.result()));
-        long leftovers = nearby().stream().filter(Keys::isSummoned).count();
-        check(name + " leaves no summoned entities", leftovers == 0, leftovers + " left");
+        List<Entity> left = nearby().stream().filter(Keys::isSummoned).toList();
+        check(name + " leaves no summoned entities", left.isEmpty(),
+            left.size() + " left: " + left.stream().map(e -> e.getType() + (e.isDead() ? " (dead)" : "")).toList());
         long drops = nearby().stream().filter(e -> e instanceof Item).count();
         check(name + " drops no vanilla loot", drops == 0, drops + " items on the ground");
         // superflat worlds spawn wild slimes, so only count slimes that appeared during the fight
@@ -713,6 +736,134 @@ final class SelfTest {
         check("dismissed minions are gone", minionList.stream().noneMatch(org.bukkit.entity.Entity::isValid), "still there");
     }
 
+    // ---- tier 2
+
+    private Block eye;
+    private Chunk chunk4;
+    private org.bukkit.entity.Husk husk;
+
+    private void tier2Items() {
+        ItemStack chest = SlimefunItem.getById(ItemKeys.slimefunId("ABYSSAL_CHESTPLATE")).getItem();
+        check("Abyssal Chestplate has Thorns V", chest.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.THORNS) == 5,
+            "thorns " + chest.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.THORNS));
+        ItemStack breath = SlimefunItem.getById(ItemKeys.slimefunId("WYRMBREATH")).getItem();
+        check("Wyrmbreath is holdable (consumable data)", breath.hasData(io.papermc.paper.datacomponent.DataComponentTypes.CONSUMABLE), "no data");
+        for (String machine : List.of("OCCULT_FORGE", "SOUL_CONDENSER")) {
+            SlimefunItem item = SlimefunItem.getById(ItemKeys.slimefunId(machine));
+            int recipes = item instanceof io.github.amitelia.occultech.items.OccultMachine m ? m.getMachineRecipes().size() : -1;
+            check(ContentRegistrar.title(machine) + " has its recipes", recipes > 0, recipes + " recipes");
+        }
+    }
+
+    private void startAbyssalUpgrade() {
+        String abyssal = ItemKeys.slimefunId("ABYSSAL_ALTAR");
+        RitualRecipe upgrade = rituals.recipes().stream().filter(r -> r.inPlace() && abyssal.equals(r.outputId())).findFirst().orElse(null);
+        check("Abyssal Altar upgrade ritual registered", upgrade != null, "missing");
+        if (upgrade == null) {
+            return;
+        }
+        testAltar = bound;
+        fillAt(bound, upgrade);
+        check("Abyssal upgrade starts on the Bound circle", rituals.begin(null, bound) == RitualService.Outcome.STARTED, "did not start");
+    }
+
+    private void abyssalUpgraded() {
+        check("Bound Altar upgraded in place to an Abyssal Altar", ItemKeys.slimefunId("ABYSSAL_ALTAR").equals(BlockStorage.checkID(bound)),
+            String.valueOf(BlockStorage.checkID(bound)));
+    }
+
+    private void buildAbyssalRing() {
+        io.github.amitelia.occultech.ritual.CirclePattern pattern = Circles.forTier(2);
+        for (int dz = -4; dz <= 4; dz++) {
+            for (int dx = -4; dx <= 4; dx++) {
+                String glyph = pattern.glyphAt(dx, dz);
+                Block block = bound.getRelative(dx, 0, dz);
+                if ((dx == 0 && dz == 0) || glyph == null || glyph.equals(BlockStorage.checkID(block))) {
+                    continue;
+                }
+                remember(block);
+                if (BlockStorage.hasBlockInfo(block)) {
+                    DebugWorld.emptyMenu(block);
+                    BlockStorage.clearBlockInfo(block);
+                }
+                DebugWorld.placeSlimefun(block, glyph, this::remember);
+            }
+        }
+    }
+
+    private void abyssalCircleComplete() {
+        Optional<RitualService.CircleCheck> check = rituals.checkCircle(bound);
+        check("9x9 Abyssal circle detected", check.isPresent() && check.get().tier() == 2 && check.get().complete(),
+            check.map(c -> "tier " + c.tier() + ", " + c.missing().size() + " missing").orElse("-"));
+    }
+
+    private void startHelmRitual() {
+        String helm = ItemKeys.slimefunId("ABYSSAL_HELMET");
+        RitualRecipe recipe = rituals.recipes().stream().filter(r -> helm.equals(r.outputId())).findFirst().orElse(null);
+        check("Abyssal Helm ritual registered", recipe != null, "missing");
+        if (recipe == null) {
+            return;
+        }
+        fillAt(bound, recipe);
+        ItemStack enchanted = new ItemStack(Material.NETHERITE_HELMET);
+        enchanted.addEnchantment(org.bukkit.enchantments.Enchantment.PROTECTION, 4);
+        DebugWorld.setAltarCenter(bound, enchanted);
+        check("Abyssal Helm ritual starts with an enchanted netherite helmet", rituals.begin(null, bound) == RitualService.Outcome.STARTED, "did not start");
+    }
+
+    private void helmResult() {
+        BlockMenu menu = BlockStorage.getInventory(bound);
+        ItemStack out = menu == null ? null : menu.getItemInSlot(RitualAltar.CENTER_SLOT);
+        SlimefunItem item = out == null || out.getType().isAir() ? null : SlimefunItem.getByItem(out);
+        check("ritual produced the Abyssal Helm", item != null && item.getId().equals(ItemKeys.slimefunId("ABYSSAL_HELMET")),
+            item == null ? "nothing" : item.getId());
+        check("the helmet's enchantments carry over (Protection IV)", out != null && out.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 4,
+            out == null ? "nothing" : out.getEnchantments().toString());
+        DebugWorld.setAltarCenter(bound, null);
+    }
+
+    private void placeGuardianEye() {
+        eye = bound.getRelative(-8, 0, 8);
+        DebugWorld.placeSlimefun(eye, ItemKeys.slimefunId("GUARDIAN_EYE"), this::remember);
+        // nobody is online: keep the eye's chunk loaded so Slimefun ticks it
+        chunk4 = eye.getChunk();
+        chunk4.addPluginChunkTicket(plugin);
+        husk = bound.getWorld().spawn(eye.getLocation().add(4.5, 0, 0.5), org.bukkit.entity.Husk.class, h -> h.setAI(false));
+    }
+
+    private void guardianEyeFired() {
+        double max = husk.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue();
+        check("Guardian Eye beams a hostile mob", husk.isDead() || husk.getHealth() < max, husk.getHealth() + "/" + max);
+        husk.remove();
+        plugin.rituals().holograms().clear(eye);
+    }
+
+    private void tetherShrine() {
+        BlockMenu menu = BlockStorage.getInventory(shrine);
+        if (menu != null) {
+            menu.replaceExistingItem(io.github.amitelia.occultech.items.ServitorShrine.UPGRADE_SLOT,
+                SlimefunItem.getById(ItemKeys.slimefunId("ABYSSAL_TETHER")).getItem().clone());
+        }
+    }
+
+    private void tethered() {
+        int radius = plugin.servitors().radiusOf(shrine.getLocation());
+        check("Abyssal Tether widens the Harvest radius 4 -> 7", radius == 7, "radius " + radius);
+        BlockMenu menu = BlockStorage.getInventory(shrine);
+        if (menu != null) {
+            menu.replaceExistingItem(io.github.amitelia.occultech.items.ServitorShrine.UPGRADE_SLOT, null);
+        }
+    }
+
+    private void decorationPalette() {
+        Block jar = bound.getRelative(-8, 0, -8);
+        DebugWorld.placeSlimefun(jar, ItemKeys.slimefunId("WISP_JAR"), this::remember);
+        var decorations = plugin.decorations();
+        int before = decorations.paletteOf(jar);
+        decorations.cyclePalette(jar, io.github.amitelia.occultech.items.DecorationService.Kind.WISP_JAR);
+        check("right-click cycles a decoration's palette", decorations.paletteOf(jar) == (before + 1) % 4, before + " -> " + decorations.paletteOf(jar));
+    }
+
     private void setContract(String id) {
         BlockMenu menu = BlockStorage.getInventory(shrine);
         if (menu != null) {
@@ -800,6 +951,9 @@ final class SelfTest {
         }
         if (chunk3 != null) {
             chunk3.removePluginChunkTicket(plugin);
+        }
+        if (chunk4 != null) {
+            chunk4.removePluginChunkTicket(plugin);
         }
         say((failed == 0 ? "&a" : "&c") + "[Occultech] Self-test finished: " + passed + " passed, " + failed + " failed.");
     }

@@ -26,6 +26,7 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
  * so the bow never creates arrows.</li>
  * <li>Warding Charm: while carried, damage from summoned creatures (entities tagged {@link Keys#SUMMONED}) is reduced by 15%.
  * Only one charm counts.</li>
+ * <li>Abyssal armor 4/4 (tier 2): damage from summoned creatures is reduced by 20% (stacks with the charm).</li>
  * </ul>
  */
 public final class WeaponListener implements Listener {
@@ -34,6 +35,9 @@ public final class WeaponListener implements Listener {
     public static final String WARDING_CHARM = ItemKeys.slimefunId("WARDING_CHARM");
     private static final float FULL_DRAW = 0.95F;
     private static final double WARDING_MULTIPLIER = 0.85;
+    private static final double ABYSSAL_SET_MULTIPLIER = 0.8;
+    private static final java.util.List<String> ABYSSAL_SET = java.util.List.of(ItemKeys.slimefunId("ABYSSAL_HELMET"),
+        ItemKeys.slimefunId("ABYSSAL_CHESTPLATE"), ItemKeys.slimefunId("ABYSSAL_LEGGINGS"), ItemKeys.slimefunId("ABYSSAL_BOOTS"));
 
     private final Plugin plugin;
 
@@ -77,9 +81,27 @@ public final class WeaponListener implements Listener {
         if (source instanceof Projectile projectile && projectile.getShooter() instanceof Entity shooter) {
             source = shooter;
         }
-        if (Keys.isSummoned(source) && carries(player, WARDING_CHARM)) {
+        if (!Keys.isSummoned(source)) {
+            return;
+        }
+        if (carries(player, WARDING_CHARM)) {
             e.setDamage(e.getDamage() * WARDING_MULTIPLIER);
         }
+        if (wearsAbyssalSet(player)) {
+            e.setDamage(e.getDamage() * ABYSSAL_SET_MULTIPLIER);
+        }
+    }
+
+    public static boolean wearsAbyssalSet(Player player) {
+        ItemStack[] armor = { player.getInventory().getHelmet(), player.getInventory().getChestplate(), player.getInventory().getLeggings(),
+            player.getInventory().getBoots() };
+        for (int i = 0; i < armor.length; i++) {
+            SlimefunItem piece = armor[i] == null || armor[i].getType().isAir() ? null : SlimefunItem.getByItem(armor[i]);
+            if (piece == null || !piece.getId().equals(ABYSSAL_SET.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static boolean carries(Player player, String id) {

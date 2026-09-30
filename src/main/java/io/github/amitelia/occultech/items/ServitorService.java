@@ -89,8 +89,14 @@ public final class ServitorService implements Listener {
             }
             return null;
         }
+
+        /** Work radius; an Abyssal Tether extends 4 to 7 and 8 to 12. */
+        public int radius(boolean tethered) {
+            return tethered ? (radius >= 8 ? 12 : 7) : radius;
+        }
     }
 
+    public static final String TETHER_ID = ItemKeys.slimefunId("ABYSSAL_TETHER");
     static final String OWNER_KEY = "occultech_owner";
     static final String EMPOWERED_KEY = "occultech_empowered_until";
     public static final int MAX_NEARBY = 4;
@@ -110,6 +116,7 @@ public final class ServitorService implements Listener {
         long lastSeen;
         long nextAction;
         Contract contract;
+        boolean tethered;
         ItemDisplay spirit;
     }
 
@@ -130,10 +137,11 @@ public final class ServitorService implements Listener {
     // ------------------------------------------------------------------ shrine lifecycle
 
     /** Called by the shrine's ticker. Returns a status line for its hologram. */
-    String tick(Block block, BlockMenu menu, int[] store, int contractSlot) {
+    String tick(Block block, BlockMenu menu, int[] store, int contractSlot, int upgradeSlot) {
         Shrine shrine = register(block.getLocation());
         long now = System.currentTimeMillis();
         shrine.contract = Contract.of(MenuUtils.keyOf(menu.getItemInSlot(contractSlot)));
+        shrine.tethered = TETHER_ID.equals(MenuUtils.keyOf(menu.getItemInSlot(upgradeSlot)));
         ensureSpirit(block, shrine);
 
         String boost = speedLabel(block);
@@ -141,14 +149,14 @@ public final class ServitorService implements Listener {
             return "&7Idle &8- &7insert a contract";
         }
         if (shrine.contract == Contract.WARD) {
-            return "&aWarding &7(no hostile spawns within " + Contract.WARD.radius + ")";
+            return "&aWarding &7(no hostile spawns within " + Contract.WARD.radius(shrine.tethered) + ")" + (shrine.tethered ? " &3(tethered)" : "");
         }
         boolean producer = shrine.contract != Contract.BREWER && shrine.contract != Contract.ACOLYTE;
         if (producer && !hasRoom(menu, store)) {
             return "&cStore full";
         }
         if (now < shrine.nextAction) {
-            return "&a" + shrine.contract.label + boost;
+            return "&a" + shrine.contract.label + boost + (shrine.tethered ? " &3(tethered)" : "");
         }
         shrine.nextAction = now + intervalMs(block);
 
@@ -162,7 +170,13 @@ public final class ServitorService implements Listener {
             case ACOLYTE -> serveAltar(block, menu, store, shrine, owner);
             default -> { }
         }
-        return "&a" + shrine.contract.label + boost;
+        return "&a" + shrine.contract.label + boost + (shrine.tethered ? " &3(tethered)" : "");
+    }
+
+    /** Current work radius of a registered shrine (self-test and info). */
+    public int radiusOf(Location at) {
+        Shrine shrine = shrines.get(at);
+        return shrine == null || shrine.contract == null ? 0 : shrine.contract.radius(shrine.tethered);
     }
 
     private Shrine register(Location at) {
@@ -220,7 +234,7 @@ public final class ServitorService implements Listener {
     /** Milliseconds between actions for a shrine: 2000, /1.5 near a Frenzy Idol (never stacks), /2 when empowered. */
     public long intervalMs(Block shrine) {
         double speed = 1;
-        if (idolNearby(shrine.getLocation())) {
+        if (idolNear(shrine.getLocation())) {
             speed *= IDOL_SPEEDUP;
         }
         if (empoweredFor(shrine) > 0) {
@@ -256,13 +270,14 @@ public final class ServitorService implements Listener {
         if (empowered > 0) {
             label.append(" &d(empowered ").append(empowered / 60000 + 1).append("m)");
         }
-        if (idolNearby(block.getLocation())) {
+        if (idolNear(block.getLocation())) {
             label.append(" &6(frenzied)");
         }
         return label.toString();
     }
 
-    private boolean idolNearby(Location at) {
+    /** True if a Frenzy Idol within 8 blocks was seen recently (shrines and Guardian Eyes). */
+    public boolean idolNear(Location at) {
         long now = System.currentTimeMillis();
         for (Map.Entry<Location, Long> idol : idols.entrySet()) {
             if (now - idol.getValue() < SEEN_TIMEOUT_MS && idol.getKey().getWorld() == at.getWorld()
@@ -278,10 +293,10 @@ public final class ServitorService implements Listener {
     /** True if a working Ward contract covers this spot. */
     public boolean isWarded(Location at) {
         long now = System.currentTimeMillis();
-        int radius = Contract.WARD.radius;
         for (Map.Entry<Location, Shrine> entry : shrines.entrySet()) {
             Location shrine = entry.getKey();
             Shrine state = entry.getValue();
+            int radius = Contract.WARD.radius(state.tethered);
             if (state.contract == Contract.WARD && now - state.lastSeen < SEEN_TIMEOUT_MS && shrine.getWorld() == at.getWorld()
                 && Math.abs(shrine.getX() - at.getX()) <= radius + 0.5 && Math.abs(shrine.getZ() - at.getZ()) <= radius + 0.5
                 && Math.abs(shrine.getY() - at.getY()) <= radius) {
@@ -301,7 +316,7 @@ public final class ServitorService implements Listener {
     // ------------------------------------------------------------------ jobs
 
     private void harvest(Block shrineBlock, BlockMenu menu, int[] store, Shrine shrine, @Nullable OfflinePlayer owner) {
-        for (Block crop : area(shrineBlock, Contract.HARVEST.radius, 1)) {
+        for (Block crop : area(shrineBlock, Contract.HARVEST.radius(shrine.tethered), 1)) {
             if (!(crop.getBlockData() instanceof Ageable ageable)) {
                 continue;
             }
@@ -329,7 +344,7 @@ public final class ServitorService implements Listener {
 
     private void gather(Block shrineBlock, BlockMenu menu, int[] store, Shrine shrine, @Nullable OfflinePlayer owner) {
         Location center = shrineBlock.getLocation().add(0.5, 0.5, 0.5);
-        int radius = Contract.GATHER.radius;
+        int radius = Contract.GATHER.radius(shrine.tethered);
         Collection<Entity> nearby = center.getWorld().getNearbyEntities(center, radius + 0.5, 2, radius + 0.5, e -> e instanceof Item);
         for (Entity entity : nearby) {
             Item item = (Item) entity;
@@ -352,7 +367,7 @@ public final class ServitorService implements Listener {
 
     /** Brewer's Aid: fuel with blaze powder; add nether wart to stands holding only water bottles. From the store. */
     private void brew(Block shrineBlock, BlockMenu menu, int[] store, Shrine shrine, @Nullable OfflinePlayer owner) {
-        for (Block block : area(shrineBlock, Contract.BREWER.radius, 1)) {
+        for (Block block : area(shrineBlock, Contract.BREWER.radius(shrine.tethered), 1)) {
             if (block.getType() != Material.BREWING_STAND || !mayWork(owner, block) || !(block.getState() instanceof BrewingStand stand)) {
                 continue;
             }
@@ -375,7 +390,7 @@ public final class ServitorService implements Listener {
 
     private void shear(Block shrineBlock, BlockMenu menu, int[] store, Shrine shrine, @Nullable OfflinePlayer owner) {
         Location center = shrineBlock.getLocation().add(0.5, 0.5, 0.5);
-        int radius = Contract.SHEPHERD.radius;
+        int radius = Contract.SHEPHERD.radius(shrine.tethered);
         for (Entity entity : center.getWorld().getNearbyEntities(center, radius + 0.5, 2, radius + 0.5, e -> e instanceof Sheep)) {
             Sheep sheep = (Sheep) entity;
             if (sheep.isSheared() || !sheep.isAdult() || !mayWork(owner, sheep.getLocation().getBlock())) {
@@ -393,7 +408,7 @@ public final class ServitorService implements Listener {
 
     /** Beekeeper: honeycomb from full hives and nests; no player action, so bees never get angry. */
     private void keepBees(Block shrineBlock, BlockMenu menu, int[] store, Shrine shrine, @Nullable OfflinePlayer owner) {
-        for (Block block : area(shrineBlock, Contract.BEEKEEPER.radius, 1)) {
+        for (Block block : area(shrineBlock, Contract.BEEKEEPER.radius(shrine.tethered), 1)) {
             if (!(block.getBlockData() instanceof Beehive hive) || hive.getHoneyLevel() < hive.getMaximumHoneyLevel() || !mayWork(owner, block)) {
                 continue;
             }
@@ -415,7 +430,7 @@ public final class ServitorService implements Listener {
         if (rituals == null) {
             return;
         }
-        int radius = Contract.ACOLYTE.radius;
+        int radius = Contract.ACOLYTE.radius(shrine.tethered);
         for (Block altar : area(shrineBlock, radius, 2)) {
             String id = BlockStorage.checkID(altar);
             if (id == null || Circles.tierOfAltar(id).isEmpty() || !mayWork(owner, altar) || rituals.isLocked(altar.getLocation())

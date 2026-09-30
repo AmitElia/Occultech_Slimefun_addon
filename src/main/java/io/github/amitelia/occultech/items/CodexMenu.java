@@ -32,7 +32,7 @@ final class CodexMenu {
     // first the four sides, then the four corners (used when a ritual has more than 4 offerings)
     private static final int[] BOWL_SLOTS = { 13, 21, 23, 31, 12, 14, 30, 32 };
     private static final int VIEW_ROWS = 5;
-    private static final int VIEW_COLUMNS = 7;
+    private static final int VIEW_COLUMNS = 9;
 
     private final RitualService rituals;
 
@@ -60,7 +60,7 @@ final class CodexMenu {
         for (int tier = 0; tier <= Circles.highestTier(); tier++) {
             int t = tier;
             int size = Circles.forTier(tier).radius() * 2 + 1;
-            button(menu, 11 + tier * 2, MenuUtils.icon(tier == 0 ? Material.LODESTONE : Material.AMETHYST_BLOCK, "&5" + Circles.name(tier),
+            button(menu, 11 + tier * 2, MenuUtils.icon(tier == 0 ? Material.LODESTONE : tier == 1 ? Material.AMETHYST_BLOCK : Material.PRISMARINE_BRICKS, "&5" + Circles.name(tier),
                 "&7" + size + "x" + size + ", tier " + tier, "", "&eClick to see the layout"), () -> openCircle(player, t, null));
         }
         menu.open(player);
@@ -96,7 +96,7 @@ final class CodexMenu {
         }
 
         int r = pattern.radius();
-        int leftColumn = 1 + (VIEW_COLUMNS - Math.min(size, VIEW_COLUMNS)) / 2;
+        int leftColumn = (VIEW_COLUMNS - Math.min(size, VIEW_COLUMNS)) / 2;
         for (int dz = -r; dz <= r; dz++) {
             for (int dx = -r; dx <= r; dx++) {
                 String glyph = pattern.glyphAt(dx, dz);
@@ -197,6 +197,11 @@ final class CodexMenu {
             case "NIGHT_MATRIARCH" -> Material.PHANTOM_SPAWN_EGG;
             case "MIRRORED_MAGUS" -> Material.PILLAGER_SPAWN_EGG;
             case "ARCHEVOKER" -> Material.EVOKER_SPAWN_EGG;
+            case "ABYSSAL_WARDEN" -> Material.GUARDIAN_SPAWN_EGG;
+            case "TIDEBREAKER" -> Material.DROWNED_SPAWN_EGG;
+            case "BLAZE_CHOIR" -> Material.BLAZE_SPAWN_EGG;
+            case "TEMPEST" -> Material.BREEZE_SPAWN_EGG;
+            case "DROWNED_ELDER" -> Material.ELDER_GUARDIAN_SPAWN_EGG;
             default -> Material.ZOMBIE_SPAWN_EGG;
         };
     }
