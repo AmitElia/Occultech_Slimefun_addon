@@ -1,5 +1,5 @@
 # Builds the addon, copies it into the test server and starts it.
-# A Java debugger can attach on port 5005 (IntelliJ: Remote JVM Debug).
+# A Java debugger can attach on localhost:5005 (IntelliJ: Remote JVM Debug). Never expose that port.
 param(
     [switch]$SkipBuild,
     [string]$Memory = "4G"
@@ -39,7 +39,8 @@ Write-Host "Deployed $($jar.Name)"
 
 Push-Location $run
 try {
-    & "$env:JAVA_HOME\bin\java.exe" "-Xmx$Memory" "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" -jar paper.jar --nogui
+    # Debugger only on this machine: an exposed JDWP port lets anyone run code on the PC.
+    & "$env:JAVA_HOME\bin\java.exe" "-Xmx$Memory" "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=127.0.0.1:5005" -jar paper.jar --nogui
 } finally {
     Pop-Location
 }
