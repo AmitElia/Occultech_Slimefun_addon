@@ -95,7 +95,6 @@ public final class NightMatriarch extends BossBehavior {
         }
 
         if (now < stunnedUntil) {
-            matriarch.setVelocity(new Vector());
             matriarch.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, matriarch.getLocation().add(0, 1.5, 0), 2, 0.4, 0.2, 0.4, 0);
             return;
         }
@@ -133,12 +132,25 @@ public final class NightMatriarch extends BossBehavior {
             matriarch.setAware(false);
             matriarch.setTarget(null);
         }
+    }
+
+    /** Every tick: hold still while stunned, and fly the dive smoothly. */
+    @Override
+    public void move() {
+        if (!matriarch.isValid()) {
+            return;
+        }
+        int now = fight.elapsed();
+        if (now < stunnedUntil) {
+            matriarch.setVelocity(new Vector());
+            return;
+        }
         if (diveEnd >= 0) {
             Vector to = diveTarget.clone().add(0, 0.5, 0).toVector().subtract(matriarch.getLocation().toVector());
             if (to.length() < 2 || now >= diveEnd) {
                 impact();
             } else {
-                matriarch.setVelocity(to.normalize().multiply(Math.min(1.6, 0.4 + to.length() * 0.15)));
+                matriarch.setVelocity(to.normalize().multiply(Math.min(1.3, 0.3 + to.length() * 0.1)));
             }
         }
     }

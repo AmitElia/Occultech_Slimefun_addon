@@ -31,6 +31,19 @@ public final class Keys {
 
     private Keys() {}
 
+    /** Per-player win counter for one boss (player PDC), used by the Trophy Board. */
+    public static NamespacedKey wins(String bossId) {
+        return new NamespacedKey("occultech", "wins_" + bossId.toLowerCase(java.util.Locale.ROOT));
+    }
+
+    public static int winsOf(org.bukkit.entity.Player player, String bossId) {
+        return player.getPersistentDataContainer().getOrDefault(wins(bossId), PersistentDataType.INTEGER, 0);
+    }
+
+    public static void recordWin(org.bukkit.entity.Player player, String bossId) {
+        player.getPersistentDataContainer().set(wins(bossId), PersistentDataType.INTEGER, winsOf(player, bossId) + 1);
+    }
+
     public static boolean isSummoned(@Nullable Entity entity) {
         return entity != null && entity.getPersistentDataContainer().has(SUMMONED, PersistentDataType.BYTE);
     }

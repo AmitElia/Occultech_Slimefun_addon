@@ -86,7 +86,8 @@ public class GuardianEye extends SlimefunItem {
         LivingEntity best = null;
         double bestDistance = Double.MAX_VALUE;
         for (Entity entity : block.getWorld().getNearbyEntities(eye, RANGE, RANGE, RANGE)) {
-            if (!(entity instanceof Monster monster) || Keys.isSummoned(entity) || Keys.minionOwner(entity) != null || monster.isDead()) {
+            if (!(entity instanceof Monster monster) || Keys.isSummoned(entity) || Keys.minionOwner(entity) != null || monster.isDead()
+                || entity.getPersistentDataContainer().has(Keys.HOLOGRAM)) {
                 continue;
             }
             double distance = monster.getLocation().distanceSquared(eye);

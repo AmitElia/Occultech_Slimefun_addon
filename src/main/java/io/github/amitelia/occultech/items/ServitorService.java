@@ -174,6 +174,18 @@ public final class ServitorService implements Listener {
         return "&a" + shrine.contract.label + boost + (shrine.tethered ? " &3(tethered)" : "");
     }
 
+    /** The contract a registered shrine is working, or null. */
+    @Nullable
+    public Contract contractAt(Location at) {
+        Shrine shrine = shrines.get(at);
+        return shrine == null ? null : shrine.contract;
+    }
+
+    public boolean tetheredAt(Location at) {
+        Shrine shrine = shrines.get(at);
+        return shrine != null && shrine.tethered;
+    }
+
     /** Current work radius of a registered shrine (self-test and info). */
     public int radiusOf(Location at) {
         Shrine shrine = shrines.get(at);

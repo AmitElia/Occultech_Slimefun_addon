@@ -25,6 +25,12 @@ public abstract class BossBehavior {
     /** Called every {@link BossService#STEP} ticks while the fight runs. */
     public abstract void tick();
 
+    /**
+     * Called every tick for scripted movement (puppets, dives, charges). Setting a velocity once per tick keeps the
+     * motion smooth; setting it once per step makes creatures lurch and stall. Keep it cheap: no searches here.
+     */
+    public void move() {}
+
     /** Adjust damage a boss entity takes from a player (e.g. shields). */
     public double modifyIncomingDamage(LivingEntity boss, double damage) {
         return damage;

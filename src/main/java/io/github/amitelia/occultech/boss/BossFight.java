@@ -149,8 +149,8 @@ public final class BossFight {
     }
 
     void start() {
-        Chunk chunk = altar.getChunk();
-        chunk.addPluginChunkTicket(service.plugin());
+        // keep the whole arena loaded, not just the altar's chunk, so nothing in the fight unloads mid-fight
+        service.holdChunks(arenaChunks());
         behavior.spawn(center.clone());
         broadcast("&5The circle flares - &c" + spec.name() + " &5answers the summons!");
         center.getWorld().playSound(center, Sound.ENTITY_WITHER_SPAWN, 0.6F, 1.4F);
@@ -447,6 +447,35 @@ public final class BossFight {
         }
     }
 
+    /** Every chunk the arena (plus a small margin) overlaps. */
+    private List<Chunk> arenaChunks() {
+        double reach = spec.arenaRadius() + 6;
+        int minX = (int) Math.floor((center.getX() - reach) / 16);
+        int maxX = (int) Math.floor((center.getX() + reach) / 16);
+        int minZ = (int) Math.floor((center.getZ() - reach) / 16);
+        int maxZ = (int) Math.floor((center.getZ() + reach) / 16);
+        List<Chunk> chunks = new ArrayList<>();
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                chunks.add(center.getWorld().getChunkAt(x, z));
+            }
+        }
+        return chunks;
+    }
+
+    /** Every tick: the behavior's scripted movement. */
+    void move() {
+        if (ended || bosses.isEmpty()) {
+            return;
+        }
+        try {
+            behavior.move();
+        } catch (RuntimeException e) {
+            service.plugin().getLogger().severe("Boss " + spec.id() + " movement failed: " + e);
+            end(Result.ERROR);
+        }
+    }
+
     /** Ends the fight: loot on victory, refund when the players aren't at fault, and always removes everything. */
     void end(Result how) {
         if (ended) {
@@ -482,7 +511,7 @@ public final class BossFight {
         hazards.clear();
         objects.clear();
         bar.removeAll();
-        altar.getChunk().removePluginChunkTicket(service.plugin());
+        service.releaseChunks(arenaChunks());
         service.hooks().clearActive(altar);
         service.onFightEnded(this);
     }
@@ -659,6 +688,7 @@ public final class BossFight {
                     }
                 });
                 giveMobDrops(player);
+                Keys.recordWin(player, spec.id());
             } else {
                 player.sendMessage(ChatColor.GRAY + "You didn't contribute enough to " + spec.name() + " to earn a reward.");
             }

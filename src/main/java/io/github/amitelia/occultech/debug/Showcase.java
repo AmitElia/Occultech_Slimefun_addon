@@ -508,6 +508,10 @@ final class Showcase {
             }
         }
         label(new Location(world, ox - 3.5, y + 1.6, startZ + 54.5), "&dChiming Amethyst Tile &8(tier 0)\n&7Walk on it (sneak to stay quiet)");
+        Block trophy = world.getBlockAt(ox, y, startZ + 50);
+        demoBlock(trophy, "TROPHY_BOARD", "&6Trophy Board &8(tier 0)\n&7Right-click: show a boss you've defeated");
+        // the showcase board starts on the Brood Mother so it isn't empty
+        BlockStorage.addBlockInfo(trophy, "occultech_trophy", "BROOD_MOTHER;0;the showcase");
         label(new Location(world, ox + 4.5, y + 1.6, startZ + 54.5), "&bTidal Coral Tile &8(tier 2)\n&7Walk on it. Right-click: coral");
 
         // east column: brewer, shepherd, beekeeper

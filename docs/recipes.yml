@@ -84,7 +84,7 @@ researches:
   DEEP_NECROMANCY:   {id: 10, name: "Deep Necromancy",  cost: 45, items: [GRAVE_LANTERN]}
   DEEP_SERVITUDE:    {id: 11, name: "Deep Servitude",   cost: 50, items: [ABYSSAL_TETHER]}
   DECORATIONS:       {id: 12, name: "Occult Decor",     cost: 15, items: [WISP_JAR, ABYSSAL_LANTERN, RUNE_OBELISK, OCCULT_ORRERY, SOULFIRE_BRAZIER, EVERLIVING_CORAL, TIDAL_TILE, PRISMATIC_NETHERRACK]}
-  HUMBLE_DECOR:      {id: 13, name: "Humble Decor",     cost: 6,  items: [CHIMING_TILE]}
+  HUMBLE_DECOR:      {id: 13, name: "Humble Decor",     cost: 6,  items: [CHIMING_TILE, TROPHY_BOARD]}
   TWILIGHT_DECOR:    {id: 14, name: "Twilight Decor",   cost: 10, items: [MOONLIT_LILY, WITCHCAP]}
   SERVITUDE:         {id: 6, name: "Servitude",         cost: 35, items: [SERVITOR_SHRINE, HARVEST_CONTRACT, GATHER_CONTRACT, WARD_CONTRACT, BREWER_CONTRACT, SHEPHERD_CONTRACT, BEEKEEPER_CONTRACT, ACOLYTE_CONTRACT]}
 
@@ -145,7 +145,10 @@ items:
     {tier: 0, material: RABBIT_FOOT, cat: charm, name: Warding Charm, purpose: "In inventory: -15% damage from summoned creatures",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {COVEN_BREW_BASE: 3, BINDING_THREAD: 2, WARDED_SILVER: 2, sf:COMMON_TALISMAN: 1, OCCULT_INK: 1}}}
 
-  # tier-0 cosmetic
+  # tier-0 cosmetics
+  TROPHY_BOARD:
+    {tier: 0, material: CHISELED_TUFF_BRICKS, cat: decoration, name: Trophy Board, purpose: "Decoration: a small turning model of one boss you have defeated, with your win count. Right-click to pick another",
+     recipe: {type: ENHANCED_CRAFTING_TABLE, out: 1, in: {mc:POLISHED_BLACKSTONE: 4, mc:GOLD_INGOT: 2, mc:GLASS: 2, CHALK_GLYPH: 1}}}
   CHIMING_TILE:
     {tier: 0, material: AMETHYST_BLOCK, cat: decoration, name: Chiming Amethyst Tile, purpose: "Decoration: chimes softly and sparkles when walked on (quiet while sneaking)",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 4, in: {mc:AMETHYST_BLOCK: 4, mc:AMETHYST_SHARD: 4, WARDED_SILVER: 1}}}

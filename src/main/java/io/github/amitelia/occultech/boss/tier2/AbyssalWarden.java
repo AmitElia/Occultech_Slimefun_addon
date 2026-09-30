@@ -46,6 +46,8 @@ public final class AbyssalWarden extends BossBehavior {
     private final List<Abyss.Beam> beams = new ArrayList<>();
     private int nextBeam = 60;
     private int nextLash;
+    /** Who it glides after (chosen each step, followed every tick). */
+    private Player chase;
     private int spikesAt = -1;
     private boolean enraged;
 
@@ -75,18 +77,25 @@ public final class AbyssalWarden extends BossBehavior {
     }
 
     @Override
+    public void move() {
+        if (!warden.isValid()) {
+            return;
+        }
+        // close enough to lash anyone in melee; beams handle the rest
+        if (chase != null && chase.isValid() && chase.getWorld() == warden.getWorld()) {
+            Abyss.glide(warden, chase.getLocation(), 0.16, 1.5, 3);
+        } else {
+            Abyss.glide(warden, fight.center(), 0.1, 1.5, 0);
+        }
+    }
+
+    @Override
     public void tick() {
         if (!warden.isValid()) {
             return;
         }
         int now = fight.elapsed();
-        Player target = fight.nearestPlayer(warden.getLocation());
-        if (target != null) {
-            // close enough to lash anyone in melee; beams handle the rest
-            Abyss.glide(warden, target.getLocation(), 0.3, 1.5, 3);
-        } else {
-            Abyss.glide(warden, fight.center(), 0.2, 1.5, 0);
-        }
+        chase = fight.nearestPlayer(warden.getLocation());
 
         if (!enraged && fight.healthFraction() < 0.5) {
             enraged = true;

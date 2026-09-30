@@ -77,5 +77,8 @@ Rules:
   `occultech inspect x y z` / `inspect shrines` print Slimefun ids and menu contents; `setslot x y z slot ID [n]` edits one.
 - Slimefun Legacy stores block data in a database and saves menus by slot: a `BlockMenuPreset` whose last slots hold no
   preset item must call `setSize(...)` in `init()`, or those slots are never saved (the Servitor Shrine store was lost).
+- The test server's `run/spigot.yml` sets every `entity-activation-range` to 0 so mobs tick with nobody online; the
+  self-test relies on it to check scripted boss movement. Production servers keep their own values.
+- Scripted boss movement goes in `BossBehavior.move()` (every tick); decisions stay in `tick()` (every 5 ticks).
 - Rebuilding Slimefun blocks at the same spot within seconds (self-test) can race the async storage; a single odd
   self-test failure that passes on rerun is that, not gameplay.

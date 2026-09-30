@@ -129,6 +129,14 @@ public final class CosmeticListener implements Listener {
         }
     }
 
+    /** Trophy models are real (tiny, frozen) mobs: they must never burn in daylight. */
+    @EventHandler(ignoreCancelled = true)
+    public void onCombust(org.bukkit.event.entity.EntityCombustEvent e) {
+        if (e.getEntity().getPersistentDataContainer().has(io.github.amitelia.occultech.core.Keys.HOLOGRAM)) {
+            e.setCancelled(true);
+        }
+    }
+
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         lastStep.remove(e.getPlayer().getUniqueId());

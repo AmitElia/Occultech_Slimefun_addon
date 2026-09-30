@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -15,6 +16,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.AbstractArrow;
@@ -71,6 +73,7 @@ public final class BossService implements Listener {
     private final Map<String, BossBlueprint> blueprints = new HashMap<>();
     private final Map<UUID, BossFight> fights = new LinkedHashMap<>();
     private BukkitTask task;
+    private BukkitTask moveTask;
     private double healthMultiplier = 1.0;
     private double healthPerExtraPlayer = 0.25;
 
@@ -82,6 +85,8 @@ public final class BossService implements Listener {
     public void start() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
         task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, STEP, STEP);
+        // scripted movement runs every tick, so puppeted bosses glide instead of lurching once per step
+        moveTask = Bukkit.getScheduler().runTaskTimer(plugin, this::move, 1L, 1L);
     }
 
     /** Boss health tuning (from config.yml). */
@@ -158,10 +163,33 @@ public final class BossService implements Listener {
         if (task != null) {
             task.cancel();
         }
+        if (moveTask != null) {
+            moveTask.cancel();
+        }
     }
 
     Plugin plugin() {
         return plugin;
+    }
+
+    /** Arenas can share chunks, so chunk tickets are counted: a chunk is released when the last fight lets go. */
+    private final Map<Chunk, Integer> heldChunks = new HashMap<>();
+
+    void holdChunks(List<Chunk> chunks) {
+        for (Chunk chunk : chunks) {
+            if (heldChunks.merge(chunk, 1, Integer::sum) == 1) {
+                chunk.addPluginChunkTicket(plugin);
+            }
+        }
+    }
+
+    void releaseChunks(List<Chunk> chunks) {
+        for (Chunk chunk : chunks) {
+            Integer left = heldChunks.computeIfPresent(chunk, (c, n) -> n <= 1 ? null : n - 1);
+            if (left == null) {
+                chunk.removePluginChunkTicket(plugin);
+            }
+        }
     }
 
     FightHooks hooks() {
@@ -175,6 +203,12 @@ public final class BossService implements Listener {
     private void tick() {
         for (BossFight fight : new ArrayList<>(fights.values())) {
             fight.tick();
+        }
+    }
+
+    private void move() {
+        for (BossFight fight : new ArrayList<>(fights.values())) {
+            fight.move();
         }
     }
 

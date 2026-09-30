@@ -57,6 +57,9 @@ public final class DrownedElder extends BossBehavior {
     private Location waveCenter;
     private int nextBeam = 80;
     private boolean surged;
+    /** Movement goals, chosen each step and followed every tick. */
+    private Player chase;
+    private final java.util.Map<Guardian, Player> guardianTargets = new java.util.HashMap<>();
 
     public DrownedElder(BossFight fight) {
         super(fight);
@@ -91,14 +94,7 @@ public final class DrownedElder extends BossBehavior {
         int now = fight.elapsed();
         guardians.removeIf(g -> !g.isValid() || g.isDead());
 
-        Player nearest = fight.nearestPlayer(elder.getLocation());
-        if (!waveStarts.isEmpty()) {
-            Abyss.glide(elder, waveCenter, 0.2, 3, 0);
-        } else if (nearest != null) {
-            Abyss.glide(elder, nearest.getLocation(), 0.22, 2.5, 7);
-        } else {
-            Abyss.glide(elder, fight.center(), 0.2, 2.5, 0);
-        }
+        chase = fight.nearestPlayer(elder.getLocation());
 
         if (every(FATIGUE_INTERVAL)) {
             for (Player player : fight.players()) {
@@ -148,11 +144,31 @@ public final class DrownedElder extends BossBehavior {
             if (target == null) {
                 continue;
             }
-            Abyss.glide(guardian, target.getLocation(), 0.3, 1.2, 4);
+            guardianTargets.put(guardian, target);
             if ((now + i * 20) % ADD_BEAM_INTERVAL == 0 && target.getLocation().distanceSquared(guardian.getLocation()) <= 144) {
                 beams.add(new Abyss.Beam(guardian, target, now, 30, ADD_BEAM_DAMAGE, ADD_BEAM));
             }
         }
+    }
+
+    @Override
+    public void move() {
+        if (!elder.isValid()) {
+            return;
+        }
+        if (!waveStarts.isEmpty() && waveCenter != null) {
+            Abyss.glide(elder, waveCenter, 0.12, 3, 0);
+        } else if (chase != null && chase.isValid() && chase.getWorld() == elder.getWorld()) {
+            Abyss.glide(elder, chase.getLocation(), 0.12, 2.5, 7);
+        } else {
+            Abyss.glide(elder, fight.center(), 0.1, 2.5, 0);
+        }
+        guardianTargets.entrySet().removeIf(entry -> !entry.getKey().isValid() || entry.getKey().isDead());
+        guardianTargets.forEach((guardian, target) -> {
+            if (target.isValid() && target.getWorld() == guardian.getWorld()) {
+                Abyss.glide(guardian, target.getLocation(), 0.18, 1.2, 4);
+            }
+        });
     }
 
     /** Each wave is a ring expanding from the surge point; players on the ground when it passes them are hit. */

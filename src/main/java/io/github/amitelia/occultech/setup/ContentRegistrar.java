@@ -303,6 +303,7 @@ public final class ContentRegistrar {
             case "WISP_JAR", "ABYSSAL_LANTERN", "RUNE_OBELISK", "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "BOTTLED_GALE", "MOONLIT_LILY", "WITCHCAP",
                 "EVERLIVING_CORAL", "PRISMATIC_NETHERRACK" ->
                 new DecorationBlock(group, stack, type, grid, output, plugin.decorations(), DecorationService.Kind.valueOf(def.id()));
+            case "TROPHY_BOARD" -> new io.github.amitelia.occultech.items.TrophyBoard(group, stack, type, grid, output, plugin, plugin.decorations());
             case "CHIMING_TILE" -> new StepTile(group, stack, type, grid, output, List.of(Material.AMETHYST_BLOCK));
             case "TIDAL_TILE" -> new StepTile(group, stack, type, grid, output, List.copyOf(CosmeticListener.CORAL_BLOCKS.stream()
                 .sorted().toList()));

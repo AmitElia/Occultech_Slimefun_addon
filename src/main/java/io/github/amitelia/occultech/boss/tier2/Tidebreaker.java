@@ -53,6 +53,8 @@ public final class Tidebreaker extends BossBehavior {
     private int nextCharge = 80;
     private int nextMelee;
     private final java.util.Set<java.util.UUID> rammed = new java.util.HashSet<>();
+    /** Who the nautilus swims after (chosen each step, followed every tick). */
+    private Player chase;
 
     public Tidebreaker(BossFight fight) {
         super(fight);
@@ -95,14 +97,11 @@ public final class Tidebreaker extends BossBehavior {
         remount();
 
         if (now < windedUntil) {
-            mount.setVelocity(new Vector());
             rider.getWorld().spawnParticle(Particle.SPLASH, rider.getLocation().add(0, 1.5, 0), 6, 0.4, 0.3, 0.4, 0);
             return;
         }
-
         if (chargeEnd >= 0) {
-            charge(now);
-            return;
+            return; // move() drives the charge
         }
         if (chargeAt >= 0) {
             if (now >= chargeAt) {
@@ -115,11 +114,10 @@ public final class Tidebreaker extends BossBehavior {
         }
 
         Player target = fight.nearestPlayer(mount.getLocation());
+        chase = target;
         if (target == null) {
-            Abyss.glide(mount, fight.center(), 0.2, 0.4, 0);
             return;
         }
-        Abyss.glide(mount, target.getLocation(), 0.28, 0.4, 2.5);
         Abyss.face(rider, target.getEyeLocation());
 
         if (now >= nextMelee && target.getLocation().distanceSquared(rider.getLocation()) <= 16) {
@@ -140,12 +138,29 @@ public final class Tidebreaker extends BossBehavior {
                 }
                 chargeDirection.normalize();
                 chargeAt = now + CHARGE_WARNING;
-                mount.setVelocity(new Vector());
                 warnLine();
             }
         }
     }
 
+    @Override
+    public void move() {
+        if (!rider.isValid() || !mount.isValid()) {
+            return;
+        }
+        int now = fight.elapsed();
+        if (now < windedUntil || chargeAt >= 0) {
+            mount.setVelocity(new Vector());
+        } else if (chargeEnd >= 0) {
+            charge(now);
+        } else if (chase != null && chase.isValid() && chase.getWorld() == mount.getWorld()) {
+            Abyss.glide(mount, chase.getLocation(), 0.2, 0.4, 2.5);
+        } else {
+            Abyss.glide(mount, fight.center(), 0.12, 0.4, 0);
+        }
+    }
+
+    /** One tick of the ram charge. */
     private void charge(int now) {
         Location at = mount.getLocation();
         boolean blocked = !at.clone().add(chargeDirection.clone().multiply(1.5)).add(0, 0.5, 0).getBlock().isPassable();
@@ -157,10 +172,10 @@ public final class Tidebreaker extends BossBehavior {
             fight.broadcast("&9The Tidebreaker is winded - &fstrike now!");
             return;
         }
-        Vector velocity = chargeDirection.clone().multiply(0.9);
+        Vector velocity = chargeDirection.clone().multiply(0.7);
         velocity.setY((Abyss.groundY(at) + 0.4 - at.getY()) * 0.3);
         mount.setVelocity(velocity);
-        at.getWorld().spawnParticle(Particle.BUBBLE_POP, at.clone().add(0, 0.8, 0), 12, 0.6, 0.4, 0.6, 0.05);
+        at.getWorld().spawnParticle(Particle.BUBBLE_POP, at.clone().add(0, 0.8, 0), 4, 0.6, 0.4, 0.6, 0.05);
         for (Player player : fight.players()) {
             if (!rammed.contains(player.getUniqueId()) && player.getLocation().distanceSquared(at) <= 4.5) {
                 rammed.add(player.getUniqueId());

@@ -115,6 +115,7 @@ final class SelfTest {
         for (String bossId : BOSSES) {
             then(0, () -> summonDirect(bossId));
             then(60, () -> checkFightRunning(bossId));
+            then(0, () -> checkMovement(bossId));
             then(0, this::killCurrentFight);
             then(30, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
         }
@@ -132,6 +133,7 @@ final class SelfTest {
         for (String bossId : TIER1_BOSSES) {
             then(0, () -> summonTier1(bossId));
             then(60, () -> checkFightRunning(bossId));
+            then(0, () -> checkMovement(bossId));
             then(0, this::killCurrentFight);
             then(30, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
         }
@@ -168,13 +170,16 @@ final class SelfTest {
         then(0, this::tier2Items);
         then(0, this::startAbyssalUpgrade);
         then(RitualService.DURATION_TICKS + 20L, this::abyssalUpgraded);
-        then(0, this::buildAbyssalRing);
-        then(5, this::abyssalCircleComplete);
+        // clearing and re-placing Slimefun blocks on the same spot must not happen in one tick: the storage is async
+        then(0, this::clearForAbyssalRing);
+        then(20, this::buildAbyssalRing);
+        then(20, this::abyssalCircleComplete);
         then(0, this::startHelmRitual);
         then(RitualService.DURATION_TICKS + 20L, this::helmResult);
         for (String bossId : TIER2_BOSSES) {
             then(0, () -> summonTier1(bossId));
             then(60, () -> checkFightRunning(bossId));
+            then(0, () -> checkMovement(bossId));
             then(0, this::killCurrentFight);
             then(30, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
         }
@@ -183,6 +188,7 @@ final class SelfTest {
         then(0, this::tetherShrine);
         then(30, this::tethered);
         then(0, this::decorationPalette);
+        then(60, this::trophyShown);
         next();
     }
 
@@ -435,6 +441,38 @@ final class SelfTest {
         testAltar = bound;
         currentFight = bosses.summon(bossId, spec, bound, null);
         check(ContentRegistrar.title(bossId) + " spawns", !currentFight.bosses().isEmpty(), "no entities");
+        if (List.of("ABYSSAL_WARDEN", "DROWNED_ELDER").contains(bossId) && !currentFight.bosses().isEmpty()) {
+            // with nobody in the arena, gliders head back to the altar: start one 10 blocks out and see it move
+            currentFight.bosses().get(0).teleport(currentFight.center().clone().add(10, 2, 0));
+        }
+    }
+
+    /** Scripted movement really moves (needs mobs ticking without players: activation range 0 on the test server). */
+    private void checkMovement(String bossId) {
+        if (currentFight == null || currentFight.bosses().isEmpty()) {
+            return;
+        }
+        org.bukkit.Location center = currentFight.center();
+        LivingEntity first = currentFight.bosses().get(0);
+        double flat = Math.hypot(first.getLocation().getX() - center.getX(), first.getLocation().getZ() - center.getZ());
+        switch (bossId) {
+            case "ABYSSAL_WARDEN", "DROWNED_ELDER" -> check(ContentRegistrar.title(bossId) + " glides back toward the altar",
+                flat < 8, String.format("%.1f blocks out (started at 10)", flat));
+            case "BLAZE_CHOIR" -> {
+                boolean orbiting = currentFight.bosses().stream().allMatch(b -> {
+                    double d = Math.hypot(b.getLocation().getX() - center.getX(), b.getLocation().getZ() - center.getZ());
+                    return d > 3.5 && d < 6.5 && b.getLocation().getY() > center.getY() + 1;
+                });
+                check("Blaze Choir circles the altar in the air", orbiting, "positions off the orbit");
+            }
+            case "TIDEBREAKER" -> check("Tidebreaker stays on its nautilus", first.getVehicle() != null, "dismounted");
+            case "NIGHT_MATRIARCH" -> {
+                org.bukkit.Location anchor = first instanceof org.bukkit.entity.Phantom phantom ? phantom.getAnchorLocation() : null;
+                check("Night Matriarch circles above its own altar", anchor != null
+                    && Math.hypot(anchor.getX() - center.getX(), anchor.getZ() - center.getZ()) < 1, String.valueOf(anchor));
+            }
+            default -> { }
+        }
     }
 
     private void buildShrine() {
@@ -739,6 +777,7 @@ final class SelfTest {
     // ---- tier 2
 
     private Block eye;
+    private Block trophyBoard;
     private Chunk chunk4;
     private org.bukkit.entity.Husk husk;
 
@@ -772,6 +811,25 @@ final class SelfTest {
             String.valueOf(BlockStorage.checkID(bound)));
     }
 
+    /** Removes Bound-circle pieces that the 9x9 pattern replaces with something else. */
+    private void clearForAbyssalRing() {
+        io.github.amitelia.occultech.ritual.CirclePattern pattern = Circles.forTier(2);
+        for (int dz = -4; dz <= 4; dz++) {
+            for (int dx = -4; dx <= 4; dx++) {
+                String glyph = pattern.glyphAt(dx, dz);
+                Block block = bound.getRelative(dx, 0, dz);
+                String id = BlockStorage.checkID(block);
+                if ((dx == 0 && dz == 0) || glyph == null || glyph.equals(id) || id == null) {
+                    continue;
+                }
+                remember(block);
+                DebugWorld.emptyMenu(block);
+                BlockStorage.clearBlockInfo(block);
+                block.setType(Material.AIR, false);
+            }
+        }
+    }
+
     private void buildAbyssalRing() {
         io.github.amitelia.occultech.ritual.CirclePattern pattern = Circles.forTier(2);
         for (int dz = -4; dz <= 4; dz++) {
@@ -780,11 +838,6 @@ final class SelfTest {
                 Block block = bound.getRelative(dx, 0, dz);
                 if ((dx == 0 && dz == 0) || glyph == null || glyph.equals(BlockStorage.checkID(block))) {
                     continue;
-                }
-                remember(block);
-                if (BlockStorage.hasBlockInfo(block)) {
-                    DebugWorld.emptyMenu(block);
-                    BlockStorage.clearBlockInfo(block);
                 }
                 DebugWorld.placeSlimefun(block, glyph, this::remember);
             }
@@ -870,9 +923,22 @@ final class SelfTest {
         DebugWorld.placeSlimefun(coral, ItemKeys.slimefunId("EVERLIVING_CORAL"), this::remember);
         decorations.cyclePalette(coral, io.github.amitelia.occultech.items.DecorationService.Kind.EVERLIVING_CORAL);
         check("Everliving Coral's palette swaps the coral type", coral.getType() == Material.BRAIN_CORAL, String.valueOf(coral.getType()));
-        for (String id : List.of("CHIMING_TILE", "MOONLIT_LILY", "WITCHCAP", "TIDAL_TILE", "PRISMATIC_NETHERRACK")) {
+        Block board = bound.getRelative(-8, 0, -4);
+        DebugWorld.placeSlimefun(board, ItemKeys.slimefunId("TROPHY_BOARD"), this::remember);
+        BlockStorage.addBlockInfo(board, "occultech_trophy", "ABYSSAL_WARDEN;3;Test");
+        trophyBoard = board;
+        plugin.decorations().setAlwaysVisible(true);
+        for (String id : List.of("CHIMING_TILE", "MOONLIT_LILY", "WITCHCAP", "TIDAL_TILE", "PRISMATIC_NETHERRACK", "TROPHY_BOARD")) {
             check(ContentRegistrar.title(id) + " registered", SlimefunItem.getById(ItemKeys.slimefunId(id)) != null, "missing");
         }
+    }
+
+    private void trophyShown() {
+        long models = trophyBoard.getWorld().getNearbyEntities(trophyBoard.getLocation().add(0.5, 1.5, 0.5), 1.5, 2, 1.5,
+            e -> e instanceof org.bukkit.entity.Guardian && e.getPersistentDataContainer().has(Keys.HOLOGRAM)).size();
+        check("Trophy Board shows a small model of the chosen boss", models == 1, models + " models");
+        plugin.decorations().remove(trophyBoard);
+        plugin.decorations().setAlwaysVisible(false);
     }
 
     private void setContract(String id) {

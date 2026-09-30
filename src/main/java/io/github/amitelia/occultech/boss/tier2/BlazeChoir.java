@@ -102,12 +102,7 @@ public final class BlazeChoir extends BossBehavior {
         int now = fight.elapsed();
         int fallen = 3 - singers.size();
 
-        spin += 0.08 + 0.03 * fallen;
-        for (int i = 0; i < singers.size(); i++) {
-            Blaze blaze = singers.get(i);
-            double angle = spin + Math.PI * 2 * i / singers.size();
-            Location spot = fight.center().clone().add(Math.cos(angle) * ORBIT_RADIUS, 2.5 + Math.sin(spin * 2 + i) * 0.5, Math.sin(angle) * ORBIT_RADIUS);
-            blaze.setVelocity(spot.toVector().subtract(blaze.getLocation().toVector()).multiply(0.25));
+        for (Blaze blaze : singers) {
             Player target = fight.nearestPlayer(blaze.getLocation());
             if (target != null) {
                 Abyss.face(blaze, target.getEyeLocation());
@@ -142,6 +137,25 @@ public final class BlazeChoir extends BossBehavior {
         if (chorusAt >= 0 && now >= chorusAt) {
             chorusAt = -1;
             erupt();
+        }
+    }
+
+    /** Every tick: the choir circles the altar, faster as it shrinks. */
+    @Override
+    public void move() {
+        if (singers.isEmpty()) {
+            return;
+        }
+        int fallen = 3 - singers.size();
+        spin += (0.08 + 0.03 * fallen) / 5;
+        for (int i = 0; i < singers.size(); i++) {
+            Blaze blaze = singers.get(i);
+            if (!blaze.isValid()) {
+                continue;
+            }
+            double angle = spin + Math.PI * 2 * i / singers.size();
+            Location spot = fight.center().clone().add(Math.cos(angle) * ORBIT_RADIUS, 2.5 + Math.sin(spin * 2 + i) * 0.5, Math.sin(angle) * ORBIT_RADIUS);
+            blaze.setVelocity(spot.toVector().subtract(blaze.getLocation().toVector()).multiply(0.3));
         }
     }
 

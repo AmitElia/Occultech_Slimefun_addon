@@ -47,7 +47,11 @@ public class ServitorShrine extends SlimefunItem {
     public static final int[] STORE = range(18, 45);
     private static final int INFO_SLOT = 11;
     private static final int EMPOWER_SLOT = 15;
+    /** Live readout: contract, work area, tether and Nexus link. */
+    private static final int RANGE_SLOT = 17;
     private static final String SPIRIT_ESSENCE = ItemKeys.slimefunId("SPIRIT_ESSENCE");
+
+    private final java.util.Map<org.bukkit.Location, String> shownRange = new java.util.HashMap<>();
 
     public ServitorShrine(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, RitualService rituals,
         ServitorService servitors) {
@@ -61,7 +65,7 @@ public class ServitorShrine extends SlimefunItem {
                 // slot 17 and Slimefun would never save the store (losing it, and the contract with it, on reload)
                 setSize(45);
                 for (int slot = 0; slot < 18; slot++) {
-                    if (slot != CONTRACT_SLOT && slot != UPGRADE_SLOT && slot != INFO_SLOT && slot != EMPOWER_SLOT) {
+                    if (slot != CONTRACT_SLOT && slot != UPGRADE_SLOT && slot != INFO_SLOT && slot != EMPOWER_SLOT && slot != RANGE_SLOT) {
                         drawBackground(new int[] { slot });
                     }
                 }
@@ -72,6 +76,7 @@ public class ServitorShrine extends SlimefunItem {
                     "&7these to 15x15 and 25x25.", "", "&7The store below holds output and supplies;",
                     "&7cargo and Networks can use it."), (p, s, i, a) -> false);
                 addItem(EMPOWER_SLOT, empowerIcon(), (p, s, i, a) -> false);
+                addItem(RANGE_SLOT, MenuUtils.icon(Material.SPYGLASS, "&bWork area", "&7Insert a contract."), (p, s, i, a) -> false);
             }
 
             @Override
@@ -150,6 +155,7 @@ public class ServitorShrine extends SlimefunItem {
                 if (menu != null) {
                     String status = servitors.tick(block, menu, STORE, CONTRACT_SLOT, UPGRADE_SLOT);
                     rituals.holograms().show(block, null, "&5Servitor Shrine &8| " + status);
+                    showRange(block, menu, servitors);
                 }
             }
         });
@@ -166,6 +172,38 @@ public class ServitorShrine extends SlimefunItem {
                 }
             }
         });
+    }
+
+    /** Updates the range readout (only when it changes) and outlines the work area while the menu is open. */
+    private void showRange(Block block, BlockMenu menu, ServitorService servitors) {
+        ServitorService.Contract contract = servitors.contractAt(block.getLocation());
+        boolean tethered = servitors.tetheredAt(block.getLocation());
+        int radius = contract == null ? 0 : contract.radius(tethered);
+        // keyed on the menu instance too: a reloaded chunk brings a fresh menu that needs the readout again
+        String key = System.identityHashCode(menu) + ":" + (contract == null ? "-" : contract.name()) + ":" + tethered;
+        if (!key.equals(shownRange.put(block.getLocation(), key))) {
+            String area = contract == null ? "&7no contract" : "&f" + (radius * 2 + 1) + "x" + (radius * 2 + 1) + " &7around the shrine";
+            menu.replaceExistingItem(RANGE_SLOT, MenuUtils.icon(Material.SPYGLASS, "&bWork area",
+                "&7Contract: &f" + (contract == null ? "none" : contract.label),
+                "&7Area: " + area,
+                "&7Abyssal Tether: " + (tethered ? "&3fitted &7(wider area)" : "&8none"),
+                "&7Servitor Nexus: &8not linked",
+                "", "&8The area is outlined while this menu is open."));
+        }
+        if (radius > 0 && menu.hasViewer()) {
+            outline(block, radius);
+        }
+    }
+
+    private static void outline(Block block, int radius) {
+        org.bukkit.Location corner = block.getLocation().add(0.5, 0.2, 0.5);
+        org.bukkit.Particle.DustOptions dust = new org.bukkit.Particle.DustOptions(org.bukkit.Color.fromRGB(150, 110, 255), 1F);
+        double edge = radius + 0.5;
+        for (double d = -edge; d <= edge; d += 1) {
+            for (double[] point : new double[][] { { d, -edge }, { d, edge }, { -edge, d }, { edge, d } }) {
+                block.getWorld().spawnParticle(org.bukkit.Particle.DUST, corner.clone().add(point[0], 0, point[1]), 1, 0, 0, 0, 0, dust);
+            }
+        }
     }
 
     private static ItemStack empowerIcon() {

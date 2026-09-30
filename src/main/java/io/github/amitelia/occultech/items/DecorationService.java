@@ -14,6 +14,9 @@ import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Display;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
@@ -96,7 +99,9 @@ public final class DecorationService {
         PRISMATIC_NETHERRACK(
             Palette.colors("&cR&6a&ei&an&bb&9o&dw", Color.WHITE),
             Palette.colors("&aAu&bro&5ra", Color.WHITE),
-            Palette.colors("&cDusk &5embers", Color.WHITE));
+            Palette.colors("&cDusk &5embers", Color.WHITE)),
+        /** Shows a boss model; its "palette" is the chosen boss (see {@link TrophyBoard}). */
+        TROPHY_BOARD(Palette.colors("&6Trophy", Color.WHITE));
 
         private final Palette[] palettes;
 
@@ -118,7 +123,9 @@ public final class DecorationService {
         final Kind kind;
         long lastSeen;
         int palette = -1;
-        final List<Display> parts = new ArrayList<>();
+        final List<Entity> parts = new ArrayList<>();
+        /** What a trophy board currently shows, so a new pick rebuilds its model. */
+        String shown;
 
         Decoration(Kind kind) {
             this.kind = kind;
@@ -127,6 +134,12 @@ public final class DecorationService {
 
     private final Map<Location, Decoration> decorations = new HashMap<>();
     private long ticks;
+    /** Self-test only: render even with no player nearby (the test server runs with nobody online). */
+    private boolean alwaysVisible;
+
+    public void setAlwaysVisible(boolean alwaysVisible) {
+        this.alwaysVisible = alwaysVisible;
+    }
 
     public DecorationService(Plugin plugin) {
         Bukkit.getScheduler().runTaskTimer(plugin, this::render, PERIOD, PERIOD);
@@ -165,10 +178,10 @@ public final class DecorationService {
     /** Number of display parts currently shown for a decoration (self-test). */
     public int partCount(Block block) {
         Decoration decoration = decorations.get(block.getLocation());
-        return decoration == null ? 0 : (int) decoration.parts.stream().filter(Display::isValid).count();
+        return decoration == null ? 0 : (int) decoration.parts.stream().filter(Entity::isValid).count();
     }
 
-    void remove(Block block) {
+    public void remove(Block block) {
         Decoration decoration = decorations.remove(block.getLocation());
         if (decoration != null) {
             clearParts(decoration);
@@ -193,7 +206,7 @@ public final class DecorationService {
                 return true;
             }
             Location center = at.clone().add(0.5, 0.5, 0.5);
-            if (center.getWorld().getNearbyPlayers(center, VIEW_RANGE).isEmpty()) {
+            if (!alwaysVisible && center.getWorld().getNearbyPlayers(center, VIEW_RANGE).isEmpty()) {
                 clearParts(decoration);
                 return false;
             }
@@ -214,6 +227,7 @@ public final class DecorationService {
                 case WITCHCAP -> witchcap(center, palette);
                 case EVERLIVING_CORAL -> coral(center);
                 case PRISMATIC_NETHERRACK -> prismaticFire(at.getBlock(), index);
+                case TROPHY_BOARD -> trophy(center, decoration, at.getBlock());
             }
             return false;
         });
@@ -432,6 +446,85 @@ public final class DecorationService {
         }
     }
 
+    /** A tiny, frozen model of the chosen boss turning above the board, with its name and win count. */
+    private void trophy(Location center, Decoration decoration, Block block) {
+        String choice = BlockStorage.getLocationInfo(block.getLocation(), TrophyBoard.TROPHY_KEY);
+        if (!java.util.Objects.equals(choice, decoration.shown)) {
+            clearParts(decoration);
+            decoration.shown = choice;
+        }
+        Location top = center.clone().add(0, 0.55, 0);
+        if (decoration.parts.isEmpty()) {
+            String[] parts = choice == null ? null : choice.split(";", 3);
+            String text = parts == null ? "&6Trophy Board\n&7Right-click to show a boss you've defeated"
+                : "&c" + io.github.amitelia.occultech.setup.ContentRegistrar.title(parts[0]) + "\n&7Defeated &f" + parts[1] + "&7x by &f" + parts[2];
+            decoration.parts.add(center.getWorld().spawn(top.clone().add(0, 1.25, 0), TextDisplay.class, d -> {
+                prepare(d);
+                d.setText(MenuUtils.color(text));
+                d.setBillboard(Display.Billboard.CENTER);
+                d.setShadowed(true);
+                d.setBackgroundColor(Color.fromARGB(90, 10, 5, 20));
+                d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(0.6F, 0.6F, 0.6F), new AxisAngle4f()));
+            }));
+            EntityType type = parts == null ? null : modelType(parts[0]);
+            if (type != null && type.getEntityClass() != null) {
+                decoration.parts.add(center.getWorld().spawn(top, type.getEntityClass(), entity -> {
+                    entity.setPersistent(false);
+                    entity.setSilent(true);
+                    entity.setInvulnerable(true);
+                    entity.setGravity(false);
+                    entity.getPersistentDataContainer().set(Keys.HOLOGRAM, PersistentDataType.BYTE, (byte) 1);
+                    if (entity instanceof org.bukkit.entity.Mob mob) {
+                        mob.setAI(false);
+                        mob.setRemoveWhenFarAway(false);
+                        mob.setCanPickupItems(false);
+                    }
+                    if (entity instanceof org.bukkit.entity.Slime slime) {
+                        slime.setSize(2);
+                    }
+                    if (entity instanceof org.bukkit.entity.Phantom phantom) {
+                        phantom.setShouldBurnInDay(false);
+                    }
+                    if (entity instanceof org.bukkit.entity.Ageable ageable) {
+                        ageable.setAdult();
+                    }
+                    if (entity instanceof LivingEntity living && living.getAttribute(org.bukkit.attribute.Attribute.SCALE) != null) {
+                        double height = Math.max(0.3, entity.getHeight());
+                        living.getAttribute(org.bukkit.attribute.Attribute.SCALE).setBaseValue(Math.max(0.06, Math.min(1, 0.9 / height)));
+                        living.setCollidable(false);
+                    }
+                }));
+            }
+        }
+        // turn the model slowly (it has no AI, so it only moves when told)
+        for (Entity part : decoration.parts) {
+            if (part instanceof LivingEntity model && model.isValid()) {
+                float yaw = model.getLocation().getYaw() + 6;
+                model.setRotation(yaw, 0);
+                model.setBodyYaw(yaw);
+            }
+        }
+    }
+
+    /** The entity a boss is built on, from recipes.yml's `base` (e.g. "3x WITCH", "DROWNED on ZOMBIE_NAUTILUS"). */
+    private static EntityType modelType(String bossId) {
+        var boss = io.github.amitelia.occultech.Occultech.instance().catalog().boss(bossId);
+        if (boss.isEmpty()) {
+            return null;
+        }
+        for (String word : boss.get().base().split(" ")) {
+            try {
+                EntityType type = EntityType.valueOf(word.toUpperCase(java.util.Locale.ROOT));
+                if (type.isAlive() && type.isSpawnable()) {
+                    return type;
+                }
+            } catch (IllegalArgumentException ignored) {
+                // "3x", "on", ...
+            }
+        }
+        return null;
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private static void prepare(Display display) {
@@ -441,7 +534,7 @@ public final class DecorationService {
     }
 
     private static void clearParts(Decoration decoration) {
-        decoration.parts.forEach(Display::remove);
+        decoration.parts.forEach(Entity::remove);
         decoration.parts.clear();
     }
 }
