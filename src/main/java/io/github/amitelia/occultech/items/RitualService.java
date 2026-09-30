@@ -66,6 +66,7 @@ public final class RitualService {
     private final Plugin plugin;
     private final BossService bosses;
     private final OccultechFightHooks hooks;
+    private final Holograms holograms;
     private final List<RitualRecipe> recipes = new ArrayList<>();
     private final Map<String, BossSpec> specs = new HashMap<>();
     private final Map<Location, Session> sessions = new HashMap<>();
@@ -75,6 +76,21 @@ public final class RitualService {
         this.plugin = plugin;
         this.bosses = bosses;
         this.hooks = hooks;
+        this.holograms = new Holograms(plugin);
+    }
+
+    @Nonnull
+    public Holograms holograms() {
+        return holograms;
+    }
+
+    /** Label for an altar's hologram: what the altar is doing right now, or null when idle. */
+    @Nullable
+    String altarStatus(@Nonnull Block altar) {
+        if (sessions.containsKey(altar.getLocation())) {
+            return sessions.get(altar.getLocation()).recipe.isSummon() ? "&cA summoning is underway..." : "&dThe ritual is underway...";
+        }
+        return bosses.fightAt(altar).map(fight -> "&c" + fight.spec().name() + " &7walks this circle").orElse(null);
     }
 
     public void addRecipe(@Nonnull RitualRecipe recipe) {
@@ -208,6 +224,7 @@ public final class RitualService {
 
     /** Called on plugin disable: crafting rituals finish, summoning rituals give everything back. */
     public void shutdown() {
+        holograms.clearAll();
         for (Session session : new ArrayList<>(sessions.values())) {
             if (session.recipe.isSummon()) {
                 session.returnOfferings();

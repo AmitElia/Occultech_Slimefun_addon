@@ -71,6 +71,8 @@ public final class BossService implements Listener {
     private final Map<String, BossBlueprint> blueprints = new HashMap<>();
     private final Map<UUID, BossFight> fights = new LinkedHashMap<>();
     private BukkitTask task;
+    private double healthMultiplier = 1.0;
+    private double healthPerExtraPlayer = 0.25;
 
     public BossService(Plugin plugin, FightHooks hooks) {
         this.plugin = plugin;
@@ -80,6 +82,20 @@ public final class BossService implements Listener {
     public void start() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
         task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, STEP, STEP);
+    }
+
+    /** Boss health tuning (from config.yml). */
+    public void setHealthScaling(double multiplier, double perExtraPlayer) {
+        this.healthMultiplier = Math.max(0.05, multiplier);
+        this.healthPerExtraPlayer = Math.max(0, perExtraPlayer);
+    }
+
+    double healthMultiplier() {
+        return healthMultiplier;
+    }
+
+    double healthPerExtraPlayer() {
+        return healthPerExtraPlayer;
     }
 
     public void register(@Nonnull BossBlueprint blueprint) {

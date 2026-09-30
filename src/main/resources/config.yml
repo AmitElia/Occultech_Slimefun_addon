@@ -2,3 +2,13 @@
 options:
   # Print extra information (ritual matching, boss phases) to the console
   debug: false
+
+bosses:
+  # Multiplies every boss's health (1.0 = as designed, 0.8 = 20% less)
+  health-multiplier: 1.0
+  # Extra boss health for each additional player in the arena when it is summoned (0.25 = +25% per player)
+  health-per-extra-player: 0.25
+
+brood-egg:
+  # Seconds between strings. Only counts while the chunk is loaded; no catch-up for offline time.
+  seconds-per-string: 20

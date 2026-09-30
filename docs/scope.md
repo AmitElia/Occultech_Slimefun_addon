@@ -57,7 +57,8 @@ There are no shortcuts: boss drops cannot be crafted, bought or duplicated.
   **Weapons never use energy**: they use item durability, repaired with their themed boss drop (see mechanics.md).
 - **Balance:** each boss is beatable solo with that tier's gear. HP and extra spawned mobs scale with the number of players in the arena.
 - **Every resource has its own purpose:** each Occultech material (especially boss drops) has its own recipes and never substitutes
-  for another resource, whether Occultech, Slimefun or another addon's. Bosses never drop their base mob's vanilla loot.
+  for another resource, whether Occultech, Slimefun or another addon's. Bosses give a curated list of common vanilla drops
+  plus XP (personal loot), never items other progression gates (totems, skulls, nether stars).
 - **Protecting other addons' materials:** avoid adding lots of demand for heavily used inputs (Nether Star in 285 recipes,
   Slime Ball in 177). Prefer the unused ocean drops, Heavy Core and Breeze Rod as crafting inputs.
 - **No griefing, and built to resist abuse:** fights never change world blocks, and every fight follows the engine rules against abuse

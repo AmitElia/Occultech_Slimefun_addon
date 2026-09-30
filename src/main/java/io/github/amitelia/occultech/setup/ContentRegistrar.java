@@ -24,6 +24,7 @@ import io.github.amitelia.occultech.content.ItemCatalog;
 import io.github.amitelia.occultech.content.ItemCatalog.ItemDef;
 import io.github.amitelia.occultech.content.ItemCatalog.RecipeDef;
 import io.github.amitelia.occultech.content.ItemKeys;
+import io.github.amitelia.occultech.items.BroodEgg;
 import io.github.amitelia.occultech.items.OccultCodex;
 import io.github.amitelia.occultech.items.OccultItem;
 import io.github.amitelia.occultech.items.OfferingBowl;
@@ -89,8 +90,26 @@ public final class ContentRegistrar {
                 continue;
             }
             boolean major = "major".equals(boss.kind());
+
+            // bonus drops: other items whose recipe is a chance-based drop from this boss (e.g. the Brood Egg)
+            Map<String, Double> bonus = new LinkedHashMap<>();
+            for (ItemDef def : catalog.items()) {
+                if (def.tier() <= IMPLEMENTED_TIER && def.isBossDrop() && boss.id().equals(def.recipe().boss())
+                    && !def.id().equals(boss.drop()) && def.recipe().chance() < 1) {
+                    bonus.put(ItemKeys.slimefunId(def.id()), def.recipe().chance());
+                }
+            }
+            Map<String, int[]> mobDrops = new LinkedHashMap<>();
+            boss.mobDrops().forEach((key, range) -> {
+                if (!ItemKeys.isVanilla(key) || Material.matchMaterial(key.substring(ItemKeys.VANILLA.length())) == null) {
+                    problems.add("Boss " + boss.id() + ": mob drop " + key + " is not a vanilla item");
+                } else {
+                    mobDrops.put(key.substring(ItemKeys.VANILLA.length()), range);
+                }
+            });
+
             BossSpec spec = new BossSpec(boss.id(), title(boss.id()), boss.tier(), major, ItemKeys.slimefunId(boss.drop()), boss.drops(),
-                ARENA_RADIUS_BASE + 2.0 * boss.tier(), major ? 900 : 600);
+                ARENA_RADIUS_BASE + 2.0 * boss.tier(), major ? 900 : 600, Map.copyOf(bonus), Map.copyOf(mobDrops), boss.xp());
 
             Map<String, Integer> offerings = new LinkedHashMap<>();
             boss.offerings().forEach((key, amount) -> offerings.put(ItemKeys.fromCatalog(key), amount));
@@ -164,7 +183,7 @@ public final class ContentRegistrar {
             }
             case "BOSS_DROP" -> {
                 type = OccultechRecipeTypes.BOSS_DROP;
-                grid = bossDisplay(recipe.boss());
+                grid = bossDisplay(recipe.boss(), recipe.chance());
             }
             default -> {
                 problems.add(def.id() + ": recipe type " + recipe.type() + " is not implemented yet");
@@ -176,6 +195,7 @@ public final class ContentRegistrar {
             case "INITIATE_ALTAR" -> new RitualAltar(group, stack, type, grid, output, rituals);
             case "OFFERING_BOWL" -> new OfferingBowl(group, stack, type, grid, output, rituals);
             case "OCCULT_CODEX" -> new OccultCodex(group, stack, type, grid, output, rituals, plugin);
+            case "BROOD_EGG" -> new BroodEgg(group, stack, type, grid, output, rituals, plugin.getConfig().getInt("brood-egg.seconds-per-string", 20));
             // placeable circle pieces are plain Slimefun blocks
             case "CHALK_GLYPH", "TALLOW_CANDLE" -> new SlimefunItem(group, stack, type, grid, output);
             default -> new OccultItem(group, stack, type, grid, output);
@@ -231,7 +251,7 @@ public final class ContentRegistrar {
         return grid;
     }
 
-    private ItemStack[] bossDisplay(@Nullable String bossId) {
+    private ItemStack[] bossDisplay(@Nullable String bossId, double chance) {
         ItemStack[] grid = new ItemStack[9];
         ItemCatalog.BossDef boss = bossId == null ? null : catalog.boss(bossId).orElse(null);
         if (boss == null) {
@@ -249,8 +269,10 @@ public final class ContentRegistrar {
         ItemStack icon = new ItemStack(egg);
         ItemMeta meta = icon.getItemMeta();
         meta.setDisplayName(color("&c" + title(boss.id())));
-        meta.setLore(List.of(color("&7Tier " + boss.tier() + " " + ("major".equals(boss.kind()) ? "gate boss" : "mini-boss")),
-            color("&7Drops at least " + boss.drops() + " per win")));
+        String dropLine = chance < 1
+            ? "&7" + Math.round(chance * 100) + "% chance per win"
+            : "&7Drops at least " + boss.drops() + " per win";
+        meta.setLore(List.of(color("&7Tier " + boss.tier() + " " + ("major".equals(boss.kind()) ? "gate boss" : "mini-boss")), color(dropLine)));
         icon.setItemMeta(meta);
         grid[4] = icon;
         return grid;

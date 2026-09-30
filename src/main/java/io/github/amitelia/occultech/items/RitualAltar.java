@@ -15,6 +15,8 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
+import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
+import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
@@ -73,9 +75,28 @@ public class RitualAltar extends SlimefunItem {
             }
         };
 
+        addItemHandler(new BlockTicker() {
+            @Override
+            public boolean isSynchronized() {
+                return true;
+            }
+
+            @Override
+            public void tick(Block block, SlimefunItem sfItem, Config data) {
+                BlockMenu menu = BlockStorage.getInventory(block);
+                ItemStack center = menu == null ? null : menu.getItemInSlot(CENTER_SLOT);
+                String status = rituals.altarStatus(block);
+                if (status == null) {
+                    status = MenuUtils.isEmpty(center) ? "&5" + sfItem.getItemName() : "&f" + Holograms.nameOf(center);
+                }
+                rituals.holograms().show(block, MenuUtils.isEmpty(center) ? null : center, status);
+            }
+        });
+
         addItemHandler(new BlockBreakHandler(false, false) {
             @Override
             public void onPlayerBreak(BlockBreakEvent e, ItemStack tool, List<ItemStack> drops) {
+                rituals.holograms().clear(e.getBlock());
                 BlockMenu menu = BlockStorage.getInventory(e.getBlock());
                 if (menu != null) {
                     menu.dropItems(e.getBlock().getLocation(), CENTER_SLOT);

@@ -64,6 +64,7 @@ final class SelfTest {
     private Block altar;
     private Chunk chunk;
     private BossFight currentFight;
+    private Block broodEgg;
     private java.util.Set<java.util.UUID> slimesBefore = java.util.Set.of();
 
     SelfTest(Occultech plugin, CommandSender sender) {
@@ -78,8 +79,13 @@ final class SelfTest {
         then(0, this::registration);
         then(0, this::buildCircle);
         then(5, this::circleDetection);
+        then(0, this::fillForHolograms);
+        then(30, this::hologramsShown);
         then(0, this::craftingRitual);
         then(RitualService.DURATION_TICKS + 20L, this::craftingResult);
+        then(0, this::placeBroodEgg);
+        then(40, this::broodEggWorks);
+        then(0, this::lootTables);
         then(0, this::summonRitual);
         then(RitualService.DURATION_TICKS + 20L, this::summonResult);
         then(0, this::killCurrentFight);
@@ -134,6 +140,50 @@ final class SelfTest {
         check("altar menu exists", BlockStorage.getInventory(altar) != null, "no menu");
     }
 
+    private void fillForHolograms() {
+        rituals.recipes().stream().filter(r -> CATALYST.equals(r.outputId())).findFirst().ifPresent(this::fill);
+    }
+
+    private void hologramsShown() {
+        long holograms = altar.getWorld().getNearbyEntities(altar.getLocation(), 4, 4, 4).stream()
+            .filter(e -> e.getPersistentDataContainer().has(Keys.HOLOGRAM, org.bukkit.persistence.PersistentDataType.BYTE)).count();
+        // 4 bowls + the altar, each an item display and a label
+        check("holograms above the bowls and altar", holograms >= 10, holograms + " hologram entities");
+    }
+
+    private void placeBroodEgg() {
+        broodEgg = altar.getRelative(4, 0, 0);
+        DebugWorld.placeSlimefun(broodEgg, ItemKeys.slimefunId("BROOD_EGG"), block -> previous.putIfAbsent(block, block.getBlockData()));
+    }
+
+    private void broodEggWorks() {
+        check("Brood Egg placed as a Slimefun block", ItemKeys.slimefunId("BROOD_EGG").equals(BlockStorage.checkID(broodEgg)), "not placed");
+        check("Brood Egg has a store", BlockStorage.getInventory(broodEgg) != null, "no menu");
+        var preset = me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset.getPreset(ItemKeys.slimefunId("BROOD_EGG"));
+        check("cargo/Networks can pull 9 slots from the Brood Egg",
+            preset != null && preset.getSlotsAccessedByItemTransport(me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow.WITHDRAW).length == 9,
+            "wrong withdraw slots");
+        check("cargo/Networks cannot insert into the Brood Egg",
+            preset != null && preset.getSlotsAccessedByItemTransport(me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow.INSERT).length == 0,
+            "insert allowed");
+        // make it start to crack; its ticker must reset it
+        if (broodEgg.getBlockData() instanceof org.bukkit.block.data.Hatchable hatchable) {
+            hatchable.setHatch(hatchable.getMaximumHatch());
+            broodEgg.setBlockData(hatchable, false);
+        }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> check("Brood Egg never hatches (crack reset)",
+            broodEgg.getBlockData() instanceof org.bukkit.block.data.Hatchable h && h.getHatch() == 0, "still cracked"), 30L);
+    }
+
+    private void lootTables() {
+        BossSpec brood = rituals.spec("BROOD_MOTHER").orElseThrow();
+        check("Brood Mother can drop a Brood Egg", brood.bonusDrops().containsKey(ItemKeys.slimefunId("BROOD_EGG")), brood.bonusDrops().toString());
+        for (String bossId : BOSSES) {
+            BossSpec spec = rituals.spec(bossId).orElseThrow();
+            check(ContentRegistrar.title(bossId) + " has mob drops and XP", !spec.mobDrops().isEmpty() && spec.xp() > 0, "none");
+        }
+    }
+
     private void craftingRitual() {
         RitualRecipe recipe = rituals.recipes().stream().filter(r -> CATALYST.equals(r.outputId())).findFirst().orElse(null);
         check("catalyst ritual recipe exists", recipe != null, "missing");
@@ -176,6 +226,8 @@ final class SelfTest {
     }
 
     private void checkFightRunning(String bossId) {
+        check(ContentRegistrar.title(bossId) + " is not scaled up for a solo summon", Math.abs(currentFight.healthMultiplier() - 1.0) < 0.001,
+            "multiplier " + currentFight.healthMultiplier());
         check(ContentRegistrar.title(bossId) + " runs 3s without errors", !currentFight.isOver(),
             "ended early: " + currentFight.result());
     }

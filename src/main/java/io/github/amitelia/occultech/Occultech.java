@@ -32,6 +32,9 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
+        // add settings introduced by newer versions to an existing config.yml
+        getConfig().options().copyDefaults(true);
+        saveConfig();
 
         try (InputStream in = getResource("recipes.yml")) {
             if (in == null) {
@@ -44,6 +47,8 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
 
         OccultechFightHooks hooks = new OccultechFightHooks();
         bosses = new BossService(this, hooks);
+        bosses.setHealthScaling(getConfig().getDouble("bosses.health-multiplier", 1.0),
+            getConfig().getDouble("bosses.health-per-extra-player", 0.25));
         Tier0Bosses.all().forEach(bosses::register);
         rituals = new RitualService(this, bosses, hooks);
         registrar = new ContentRegistrar(this, catalog, rituals);

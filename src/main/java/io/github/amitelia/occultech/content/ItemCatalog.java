@@ -25,7 +25,8 @@ public final class ItemCatalog {
     /**
      * @param inputs catalog keys ({@code mc:X}, {@code sf:X} or an Occultech id) to amounts, in file order
      */
-    public record RecipeDef(String type, int out, @Nullable String center, int circle, Map<String, Integer> inputs, @Nullable String boss) {}
+    public record RecipeDef(String type, int out, @Nullable String center, int circle, Map<String, Integer> inputs, @Nullable String boss,
+        double chance) {}
 
     public record ItemDef(String id, int tier, String category, String name, String purpose, @Nullable String material, int durability, RecipeDef recipe) {
 
@@ -36,7 +37,11 @@ public final class ItemCatalog {
 
     public record ResearchDef(String key, int id, String name, int cost, List<String> items) {}
 
-    public record BossDef(String id, int tier, String kind, String base, String drop, int drops, @Nullable String catalyst, Map<String, Integer> offerings) {}
+    /**
+     * @param mobDrops vanilla item key to {min, max} per contributor
+     */
+    public record BossDef(String id, int tier, String kind, String base, String drop, int drops, @Nullable String catalyst, Map<String, Integer> offerings,
+        Map<String, int[]> mobDrops, int xp) {}
 
     private final Map<Integer, TierDef> tiers;
     private final Map<String, ItemDef> items;
@@ -82,7 +87,8 @@ public final class ItemCatalog {
         map(root.get("bosses")).forEach((id, v) -> {
             Map<String, Object> b = map(v);
             bosses.put(id, new BossDef(id, integer(b.get("tier"), 0), str(b.get("kind")), str(b.get("base")), str(b.get("drop")),
-                integer(b.get("drops"), 1), (String) b.get("catalyst"), amounts(b.get("offerings"))));
+                integer(b.get("drops"), 1), (String) b.get("catalyst"), amounts(b.get("offerings")), ranges(b.get("mob_drops")),
+                integer(b.get("xp"), 0)));
         });
 
         return new ItemCatalog(Collections.unmodifiableMap(tiers), Collections.unmodifiableMap(items),
@@ -125,7 +131,20 @@ public final class ItemCatalog {
 
     private static RecipeDef recipe(Map<String, Object> r) {
         return new RecipeDef(str(r.get("type")), integer(r.get("out"), 1), (String) r.get("center"), integer(r.get("circle"), 0),
-            amounts(r.get("in")), (String) r.get("boss"));
+            amounts(r.get("in")), (String) r.get("boss"), r.get("chance") instanceof Number n ? n.doubleValue() : 1.0);
+    }
+
+    /** "min-max" (or a single number) per key. */
+    private static Map<String, int[]> ranges(Object o) {
+        Map<String, int[]> out = new LinkedHashMap<>();
+        map(o).forEach((k, v) -> {
+            String text = String.valueOf(v).trim();
+            int dash = text.indexOf('-', 1);
+            int min = Integer.parseInt(dash < 0 ? text : text.substring(0, dash).trim());
+            int max = dash < 0 ? min : Integer.parseInt(text.substring(dash + 1).trim());
+            out.put(k, new int[] { Math.min(min, max), Math.max(min, max) });
+        });
+        return Collections.unmodifiableMap(out);
     }
 
     private static Map<String, Integer> amounts(Object o) {

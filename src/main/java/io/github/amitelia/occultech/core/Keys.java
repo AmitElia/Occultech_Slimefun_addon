@@ -17,6 +17,9 @@ public final class Keys {
     /** The fight (UUID string) a summoned entity belongs to. */
     public static final NamespacedKey FIGHT = new NamespacedKey("occultech", "fight");
 
+    /** Marks hologram displays above bowls, altars and other blocks (never saved with the world). */
+    public static final NamespacedKey HOLOGRAM = new NamespacedKey("occultech", "hologram");
+
     /** Marks entities placed by /occultech showcase so it can clean up after itself. */
     public static final NamespacedKey SHOWCASE = new NamespacedKey("occultech", "showcase");
 

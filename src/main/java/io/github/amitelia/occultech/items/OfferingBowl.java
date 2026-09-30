@@ -12,6 +12,8 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.handlers.BlockBreakHandler;
+import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
+import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
@@ -19,7 +21,7 @@ import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
 
 /**
  * Holds one stack of offerings for a ritual. Contents are a Slimefun block menu, so Slimefun persists them;
- * the slot is locked while a ritual that uses this bowl is running.
+ * the slot is locked while a ritual that uses this bowl is running. A hologram shows what's inside.
  */
 public class OfferingBowl extends SlimefunItem {
 
@@ -54,9 +56,28 @@ public class OfferingBowl extends SlimefunItem {
             }
         };
 
+        addItemHandler(new BlockTicker() {
+            @Override
+            public boolean isSynchronized() {
+                return true;
+            }
+
+            @Override
+            public void tick(Block block, SlimefunItem sfItem, Config data) {
+                BlockMenu menu = BlockStorage.getInventory(block);
+                ItemStack content = menu == null ? null : menu.getItemInSlot(SLOT);
+                if (MenuUtils.isEmpty(content)) {
+                    rituals.holograms().show(block, null, null);
+                } else {
+                    rituals.holograms().show(block, content, "&7" + content.getAmount() + "x &f" + Holograms.nameOf(content));
+                }
+            }
+        });
+
         addItemHandler(new BlockBreakHandler(false, false) {
             @Override
             public void onPlayerBreak(BlockBreakEvent e, ItemStack tool, List<ItemStack> drops) {
+                rituals.holograms().clear(e.getBlock());
                 BlockMenu menu = BlockStorage.getInventory(e.getBlock());
                 if (menu != null) {
                     menu.dropItems(e.getBlock().getLocation(), SLOT);

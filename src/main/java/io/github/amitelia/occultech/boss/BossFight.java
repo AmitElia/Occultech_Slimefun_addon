@@ -302,9 +302,9 @@ public final class BossFight {
         return max <= 0 ? 0 : Math.max(0, Math.min(1, health / max));
     }
 
-    /** Health multiplier from the number of players present when summoned. */
+    /** Health multiplier: the configured base, plus a configured share per extra player present when summoned. */
     public double healthMultiplier() {
-        return 1 + 0.6 * (playersAtStart - 1);
+        return service.healthMultiplier() * (1 + service.healthPerExtraPlayer() * (playersAtStart - 1));
     }
 
     public int playersAtStart() {
@@ -523,7 +523,7 @@ public final class BossFight {
             boolean outside = dx * dx + dz * dz > Math.pow(spec.arenaRadius() + 1.5, 2) || Math.abs(at.getY() - center.getY()) > 8;
             if (outside || at.getWorld() != center.getWorld()) {
                 boss.teleport(center.clone().add(0, 1, 0));
-                heal(boss, 0.05);
+                heal(boss, 0.02);
                 boss.getWorld().spawnParticle(Particle.REVERSE_PORTAL, boss.getLocation(), 40, 0.5, 1, 0.5, 0.05);
             }
         }
@@ -615,9 +615,33 @@ public final class BossFight {
             if (share >= MIN_DAMAGE_SHARE && present >= MIN_PRESENCE_SHARE) {
                 int amount = spec.drops() + (ThreadLocalRandom.current().nextDouble() < BONUS_DROP_CHANCE ? 1 : 0);
                 service.hooks().giveLoot(player, spec.dropId(), amount);
+                spec.bonusDrops().forEach((id, chance) -> {
+                    if (ThreadLocalRandom.current().nextDouble() < chance) {
+                        service.hooks().giveLoot(player, id, 1);
+                    }
+                });
+                giveMobDrops(player);
             } else {
                 player.sendMessage(ChatColor.GRAY + "You didn't contribute enough to " + spec.name() + " to earn a reward.");
             }
+        }
+    }
+
+    /** The boss's curated vanilla drops and XP, handed to one contributor (never dropped for others to grab). */
+    private void giveMobDrops(Player player) {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        for (Map.Entry<String, int[]> drop : spec.mobDrops().entrySet()) {
+            Material material = Material.matchMaterial(drop.getKey());
+            int amount = random.nextInt(drop.getValue()[0], drop.getValue()[1] + 1);
+            if (material == null || amount <= 0) {
+                continue;
+            }
+            for (ItemStack rest : player.getInventory().addItem(new ItemStack(material, amount)).values()) {
+                player.getWorld().dropItem(player.getLocation(), rest).setOwner(player.getUniqueId());
+            }
+        }
+        if (spec.xp() > 0) {
+            player.giveExp(spec.xp());
         }
     }
 

@@ -12,7 +12,8 @@
 #            `circle` = minimum circle tier. Bowl count per circle: 0:4, 1:8, 2:8, 3:12
 #   OCCULT_FORGE / SOUL_CONDENSER : Occultech electric machines (tier 2). Up to 4 inputs, stacks allowed.
 #   HOLLOW_ASSEMBLER : Occultech electric 6x6 workbench (tier 3), 1 item per slot (max 36)
-#   BOSS_DROP : only obtainable from the named boss.
+#   BOSS_DROP : only obtainable from the named boss. `chance` (default 1) = bonus drop rolled per contributor per win,
+#               for extra drops besides the boss's main drop.
 #
 # Weapons use item durability (never Slimefun energy); they stop working at 1 durability instead of breaking,
 # and are repaired in an anvil with the listed boss drop. Mending is disabled. See docs/mechanics.md.
@@ -39,12 +40,14 @@ circles:
 
 # kind: lesser = repeatable mini-boss, major = the tier's gate boss (needs a catalyst)
 # drops: guaranteed minimum per win per contributor (small random bonus on top, not counted here)
+# mob_drops: vanilla items "min-max" and xp, given to each contributor from the boss itself (never from its extra mobs).
+#            Keep these to common drops - nothing other progression gates (totems, skulls, nether stars).
 bosses:
   # ---- Tier 0 (iron gear)
-  BROOD_MOTHER:         {tier: 0, kind: lesser, base: SPIDER,     drop: BROOD_SILK,      drops: 3, offerings: {mc:STRING: 8, mc:SPIDER_EYE: 4, mc:FERMENTED_SPIDER_EYE: 1, GRAVE_SALT: 2}}
-  VOLLEY:               {tier: 0, kind: lesser, base: SKELETON,   drop: FLETCHERS_QUILL, drops: 3, offerings: {mc:ARROW: 16, mc:BONE_BLOCK: 1, mc:FEATHER: 4, GRAVE_SALT: 2}}
-  WITCH_COVEN:          {tier: 0, kind: lesser, base: "3x WITCH", drop: COVEN_BREW_BASE, drops: 3, offerings: {mc:GLOWSTONE_DUST: 4, mc:REDSTONE: 4, mc:SUGAR: 4, GRAVE_SALT: 2}}
-  GELATINOUS_SOVEREIGN: {tier: 0, kind: major,  base: SLIME,      drop: SOVEREIGN_GEL,   drops: 3, catalyst: SOVEREIGN_CATALYST, offerings: {mc:SLIME_BLOCK: 2, GRAVE_SALT: 4, TALLOW_CANDLE: 2}}
+  BROOD_MOTHER:         {tier: 0, kind: lesser, base: SPIDER,     drop: BROOD_SILK,      drops: 3, offerings: {mc:STRING: 8, mc:SPIDER_EYE: 4, mc:FERMENTED_SPIDER_EYE: 1, GRAVE_SALT: 2}, mob_drops: {mc:STRING: "4-8", mc:SPIDER_EYE: "1-3", mc:COBWEB: "0-2"}, xp: 40}
+  VOLLEY:               {tier: 0, kind: lesser, base: SKELETON,   drop: FLETCHERS_QUILL, drops: 3, offerings: {mc:ARROW: 16, mc:BONE_BLOCK: 1, mc:FEATHER: 4, GRAVE_SALT: 2}, mob_drops: {mc:ARROW: "8-16", mc:BONE: "4-8", mc:SPECTRAL_ARROW: "0-4"}, xp: 40}
+  WITCH_COVEN:          {tier: 0, kind: lesser, base: "3x WITCH", drop: COVEN_BREW_BASE, drops: 3, offerings: {mc:GLOWSTONE_DUST: 4, mc:REDSTONE: 4, mc:SUGAR: 4, GRAVE_SALT: 2}, mob_drops: {mc:REDSTONE: "2-6", mc:GLOWSTONE_DUST: "2-6", mc:SUGAR: "1-4", mc:GUNPOWDER: "1-3", mc:GLASS_BOTTLE: "1-3"}, xp: 50}
+  GELATINOUS_SOVEREIGN: {tier: 0, kind: major,  base: SLIME,      drop: SOVEREIGN_GEL,   drops: 3, catalyst: SOVEREIGN_CATALYST, offerings: {mc:SLIME_BLOCK: 2, GRAVE_SALT: 4, TALLOW_CANDLE: 2}, mob_drops: {mc:SLIME_BALL: "8-16", mc:SLIME_BLOCK: "0-2"}, xp: 100}
   # ---- Tier 1 (basic diamond)
   THE_UNBOUND:          {tier: 1, kind: lesser, base: VINDICATOR, drop: FRENZIED_EDGE,   drops: 3, offerings: {mc:IRON_AXE: 1, mc:EMERALD: 4, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}}
   NIGHT_MATRIARCH:      {tier: 1, kind: lesser, base: PHANTOM,    drop: DUSK_MEMBRANE,   drops: 3, offerings: {mc:PHANTOM_MEMBRANE: 4, mc:FEATHER: 8, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}, condition: night}
@@ -110,6 +113,7 @@ items:
   BROOD_SILK:      {tier: 0, material: COBWEB, cat: boss_drop, name: Brood Silk, purpose: "Binding Thread (charms, contracts, harnesses)", recipe: {type: BOSS_DROP, boss: BROOD_MOTHER}}
   FLETCHERS_QUILL: {tier: 0, material: FEATHER, cat: boss_drop, name: Fletcher's Quill, purpose: "Ranged weapons", recipe: {type: BOSS_DROP, boss: VOLLEY}}
   COVEN_BREW_BASE: {tier: 0, material: GLOWSTONE_DUST, cat: boss_drop, name: Coven Brew Base, purpose: "Protective charms", recipe: {type: BOSS_DROP, boss: WITCH_COVEN}}
+  BROOD_EGG:       {tier: 0, material: SNIFFER_EGG, cat: labor, name: Brood Egg, purpose: "Never hatches. Spins 1 String every 20s into its store (9 slots); right-click to collect. Cargo and Networks can pull from it", recipe: {type: BOSS_DROP, boss: BROOD_MOTHER, chance: 0.15}}
   SOVEREIGN_GEL:   {tier: 0, material: SLIME_BALL, cat: boss_drop, name: Sovereign Gel, purpose: "GATE -> tier 1 (Bound Altar, Servitor Shrine, tier-1 capstones)", recipe: {type: BOSS_DROP, boss: GELATINOUS_SOVEREIGN}}
   SOVEREIGN_CATALYST:
     {tier: 0, material: SLIME_BLOCK, cat: catalyst, name: Sovereign's Catalyst, purpose: "Summons the Gelatinous Sovereign",

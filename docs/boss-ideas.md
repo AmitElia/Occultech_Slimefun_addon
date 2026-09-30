@@ -9,14 +9,17 @@ The **MC** column shows the Minecraft version that added the mob. The local test
    particles and sounds, display and interaction entities, boss bars. No client mods, resource packs, or packet tricks that multiplayer servers can't rely on.
 3. **Built to resist abuse** (see the engine rules below). If an idea can't be protected against cheese or duplication, it gets cut.
 4. **Every resource has its own purpose.** Each boss drop is a new material with its own recipes. It never replaces or substitutes
-   an existing Occultech, Slimefun or other-addon resource, and bosses never drop the vanilla loot their base mob normally drops.
+   an existing Occultech, Slimefun or other-addon resource. Vanilla drops are a curated list per boss (`mob_drops` in
+   recipes.yml): common items only, never ones other progression gates (totems, skulls, nether stars), and only from the
+   boss itself - extra mobs spawned in the fight drop nothing.
 5. **No mechanics that are fragile across players or server events.** Nothing that takes or holds player items, swaps inventories, or
    depends on precise client-side timing.
 6. **Fun, and cheap to repeat.** Every attack is telegraphed (particles and sound before it lands). No unavoidable one-shots.
    Phases are easy to read. Repeat summons are cheap relative to the player's progression (see costs below).
 
 ## Engine rules against abuse (apply to every boss and mini-boss)
-- **Tagging:** every summoned entity (boss, extra mobs, mounts, clones) is tagged in its persistent data. Tagged entities give no vanilla drops or XP.
+- **Tagging:** every summoned entity (boss, extra mobs, mounts, clones) is tagged in its persistent data. Tagged entities give no vanilla drops or XP
+  on death; the boss's curated drops and XP are handed to contributors with the rest of the loot.
   They can't be leashed, name-tagged, ridden by players, traded with or converted (e.g. zombie → drowned). They can't use portals.
 - **No block changes:** a global listener cancels block changes, block damage from explosions and fire started by tagged entities
   or their projectiles. Lightning is visual only, with damage applied by the plugin.

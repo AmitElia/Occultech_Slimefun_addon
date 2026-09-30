@@ -22,7 +22,7 @@ import io.github.amitelia.occultech.boss.BossFight;
  * <ul>
  * <li>Phase 1: every 8s marks a player's spot with a lime ring (1.5s), leaps onto it and sends out a shockwave that
  * only hurts players standing on the ground - jump to dodge.</li>
- * <li>Phase 2 (66%): splits off shards that crawl back to the altar; each one that arrives heals the Sovereign by 10%.</li>
+ * <li>Phase 2 (66%): splits off 3 shards that crawl back to the altar; each one that arrives heals the Sovereign by 6%.</li>
  * <li>Phase 3 (33%): shrinks and speeds up, leaving acid puddles that hurt anyone standing in them.</li>
  * </ul>
  */
@@ -34,6 +34,8 @@ public final class GelatinousSovereign extends BossBehavior {
     private static final int SLAM_WARNING = 30;
     private static final int PUDDLE_INTERVAL = 100;
     private static final double BASE_HEALTH = 600;
+    private static final int SHARDS = 3;
+    private static final double SHARD_HEAL = 0.06;
 
     private final List<Slime> shards = new ArrayList<>();
     private Slime sovereign;
@@ -127,7 +129,7 @@ public final class GelatinousSovereign extends BossBehavior {
     }
 
     private void splitShards() {
-        int count = 2 + fight.playersAtStart();
+        int count = SHARDS;
         for (int i = 0; i < count; i++) {
             double angle = Math.PI * 2 * i / count;
             Location at = fight.center().add(Math.cos(angle) * (fight.radius() - 3), 0.5, Math.sin(angle) * (fight.radius() - 3));
@@ -153,7 +155,7 @@ public final class GelatinousSovereign extends BossBehavior {
             }
             Vector toAltar = altar.toVector().subtract(shard.getLocation().toVector()).setY(0);
             if (toAltar.lengthSquared() < 4) {
-                fight.healBoss(sovereign, 0.10);
+                fight.healBoss(sovereign, SHARD_HEAL);
                 shard.getWorld().spawnParticle(Particle.ITEM_SLIME, shard.getLocation(), 30, 0.5, 0.5, 0.5, 0);
                 shard.getWorld().playSound(shard.getLocation(), Sound.ENTITY_SLIME_SQUISH, 1.5F, 1.5F);
                 fight.broadcast("&aA shard rejoins its Sovereign.");

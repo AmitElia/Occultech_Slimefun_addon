@@ -117,7 +117,10 @@ def cost(key):
 @lru_cache(maxsize=None)
 def drop_value(drop_id):
     """Effective raw cost of one boss drop = summon cost / guaranteed drops per win."""
-    boss = items[drop_id]["recipe"]["boss"]
+    recipe = items[drop_id]["recipe"]
+    boss = recipe["boss"]
+    if "chance" in recipe:
+        return summon_cost(boss) / recipe["chance"]
     return summon_cost(boss) / bosses[boss]["drops"]
 
 

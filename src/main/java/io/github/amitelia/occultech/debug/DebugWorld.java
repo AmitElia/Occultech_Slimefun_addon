@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 
+import io.github.amitelia.occultech.Occultech;
 import io.github.amitelia.occultech.content.ItemKeys;
 import io.github.amitelia.occultech.items.OfferingBowl;
 import io.github.amitelia.occultech.items.RitualAltar;
@@ -89,6 +90,7 @@ final class DebugWorld {
 
     /** Empties the menu of a circle block before it is removed, so nothing drops. */
     static void emptyMenu(Block block) {
+        Occultech.instance().rituals().holograms().clear(block);
         String id = BlockStorage.checkID(block);
         if (Circles.OFFERING_BOWL.equals(id)) {
             setBowl(block, null);
