@@ -231,7 +231,9 @@ public final class BossService implements Listener {
             // summoned creatures may hurt each other (e.g. a stray splash potion); other mobs may not help
             boolean fromFight = Keys.isSummoned(damager)
                 || (damager instanceof Projectile p && p.getShooter() instanceof Entity shooter && Keys.isSummoned(shooter));
-            if (!fromFight) {
+            // ...but a boss is never hurt by its own fight (e.g. The Unbound's thralls, stray fireballs), only by players
+            BossFight own = fightOf(victim);
+            if (!fromFight || (own != null && own.isBoss(victim))) {
                 e.setCancelled(true);
             }
             return;

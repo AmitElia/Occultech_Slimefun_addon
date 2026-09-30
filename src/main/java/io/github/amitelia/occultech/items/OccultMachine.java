@@ -1,6 +1,12 @@
 package io.github.amitelia.occultech.items;
 
+import java.util.concurrent.ThreadLocalRandom;
+
+import org.bukkit.Color;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
@@ -57,6 +63,34 @@ public class OccultMachine extends AContainer {
     public ItemStack getProgressBar() {
         // AContainer's constructor asks for this before our fields are set
         return new ItemStack(progressIcon == null ? Material.BLAZE_POWDER : progressIcon);
+    }
+
+    @Override
+    protected void tick(Block block) {
+        super.tick(block);
+        if (getMachineProcessor().getOperation(block) != null) {
+            workingParticles(block);
+        }
+    }
+
+    /** Only while a recipe is running: forge fire for the Occult Forge, drifting souls for the Soul Condenser. */
+    private void workingParticles(Block block) {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        Location top = block.getLocation().add(0.5, 1.05, 0.5);
+        if (progressIcon == Material.SOUL_SAND) {
+            block.getWorld().spawnParticle(Particle.SOUL, top, 2, 0.25, 0.1, 0.25, 0.02);
+            if (random.nextInt(3) == 0) {
+                block.getWorld().spawnParticle(Particle.SCULK_SOUL, top.clone().add(0, 0.3, 0), 1, 0.2, 0.2, 0.2, 0.01);
+            }
+            block.getWorld().spawnParticle(Particle.DUST, top.clone().add(random.nextDouble(-0.5, 0.5), random.nextDouble(-0.9, 0), 0.52), 1,
+                0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(90, 200, 230), 0.7F));
+        } else {
+            block.getWorld().spawnParticle(Particle.FLAME, top, 2, 0.2, 0.05, 0.2, 0.01);
+            block.getWorld().spawnParticle(Particle.SMOKE, top.clone().add(0, 0.2, 0), 1, 0.15, 0.1, 0.15, 0.01);
+            if (random.nextInt(4) == 0) {
+                block.getWorld().spawnParticle(Particle.LAVA, top, 1);
+            }
+        }
     }
 
     @Override

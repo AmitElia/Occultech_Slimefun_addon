@@ -73,3 +73,9 @@ Rules:
 - `occultech showcase` builds an item wall (12 N of spawn) and ready-to-summon circles (16 S, 26 apart); every changed
   block is recorded in `run/plugins/Occultech/showcase.yml` and `occultech showcase clear` restores them.
 - The test world is superflat, so wild slimes spawn everywhere - don't mistake them for boss leftovers.
+- Showcase kits have a button (command block) running `occultech restock x y z BOSS_ID` to refill that circle.
+  `occultech inspect x y z` / `inspect shrines` print Slimefun ids and menu contents; `setslot x y z slot ID [n]` edits one.
+- Slimefun Legacy stores block data in a database and saves menus by slot: a `BlockMenuPreset` whose last slots hold no
+  preset item must call `setSize(...)` in `init()`, or those slots are never saved (the Servitor Shrine store was lost).
+- Rebuilding Slimefun blocks at the same spot within seconds (self-test) can race the async storage; a single odd
+  self-test failure that passes on rerun is that, not gameplay.

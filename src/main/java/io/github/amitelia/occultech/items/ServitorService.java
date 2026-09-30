@@ -143,6 +143,7 @@ public final class ServitorService implements Listener {
         shrine.contract = Contract.of(MenuUtils.keyOf(menu.getItemInSlot(contractSlot)));
         shrine.tethered = TETHER_ID.equals(MenuUtils.keyOf(menu.getItemInSlot(upgradeSlot)));
         ensureSpirit(block, shrine);
+        sparkle(shrine);
 
         String boost = speedLabel(block);
         if (shrine.contract == null) {
@@ -210,6 +211,11 @@ public final class ServitorService implements Listener {
         if (shrine != null && shrine.spirit != null) {
             shrine.spirit.remove();
         }
+    }
+
+    /** Every shrine seen recently (debug listing). */
+    public List<Location> shrineLocations() {
+        return new ArrayList<>(shrines.keySet());
     }
 
     /** Self-test: counts a location as a shrine for the placement cap. */
@@ -611,6 +617,19 @@ public final class ServitorService implements Listener {
             d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(0.4F, 0.4F, 0.4F), new AxisAngle4f()));
             d.getPersistentDataContainer().set(Keys.HOLOGRAM, PersistentDataType.BYTE, (byte) 1);
         });
+    }
+
+    /** A few sparkles around the floating spirit, every shrine tick. */
+    private static void sparkle(Shrine shrine) {
+        if (shrine.spirit == null || !shrine.spirit.isValid()) {
+            return;
+        }
+        Location at = shrine.spirit.getLocation();
+        at.getWorld().spawnParticle(Particle.END_ROD, at, 1, 0.25, 0.25, 0.25, 0.005);
+        at.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, at, 2, 0.3, 0.3, 0.3, 0.02);
+        if (Math.random() < 0.3) {
+            at.getWorld().spawnParticle(Particle.ENCHANT, at, 4, 0.3, 0.3, 0.3, 0.5);
+        }
     }
 
     private static void moveSpirit(Shrine shrine, Location to) {

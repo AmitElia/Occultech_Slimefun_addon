@@ -840,6 +840,9 @@ final class SelfTest {
 
     private void tetherShrine() {
         BlockMenu menu = BlockStorage.getInventory(shrine);
+        // an inferred menu size would stop at slot 17 and Slimefun would never save the store (items lost on reload)
+        int size = menu == null ? -1 : menu.getPreset().getSize();
+        check("shrine menu has an explicit 45-slot size (store is saved)", size == 45, "size " + size);
         if (menu != null) {
             menu.replaceExistingItem(io.github.amitelia.occultech.items.ServitorShrine.UPGRADE_SLOT,
                 SlimefunItem.getById(ItemKeys.slimefunId("ABYSSAL_TETHER")).getItem().clone());

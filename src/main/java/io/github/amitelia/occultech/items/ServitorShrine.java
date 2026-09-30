@@ -57,6 +57,9 @@ public class ServitorShrine extends SlimefunItem {
 
             @Override
             public void init() {
+                // the store (18-44) holds no preset items, so the size must be explicit: an inferred size would stop at
+                // slot 17 and Slimefun would never save the store (losing it, and the contract with it, on reload)
+                setSize(45);
                 for (int slot = 0; slot < 18; slot++) {
                     if (slot != CONTRACT_SLOT && slot != UPGRADE_SLOT && slot != INFO_SLOT && slot != EMPOWER_SLOT) {
                         drawBackground(new int[] { slot });

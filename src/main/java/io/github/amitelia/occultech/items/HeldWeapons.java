@@ -38,7 +38,7 @@ import net.kyori.adventure.key.Key;
  * <ul>
  * <li><b>Wyrmbreath</b>: a cone of vanilla fire particles; creatures in the cone (6 blocks, 25 degrees, line of sight)
  * burn and take damage. Heat builds while firing; at 100 it overheats and locks for 3s. Never ignites blocks.</li>
- * <li><b>Guardian's Gaze</b>: locks a beam onto the creature you aim at (24 blocks); damage ramps up the longer it's
+ * <li><b>Guardian's Gaze</b>: locks a beam onto the creature you aim at (40 blocks); damage ramps up the longer it's
  * held, and the lock breaks without line of sight.</li>
  * </ul>
  * Neither hurts players. Both use 1 durability per second of use and stop at their last point.
@@ -51,7 +51,9 @@ public final class HeldWeapons implements Listener {
 
     private static final double FIRE_RANGE = 6;
     private static final double FIRE_ANGLE = 25;
-    private static final double BEAM_RANGE = 24;
+    private static final double BEAM_RANGE = 40;
+    /** How far off the crosshair (degrees) the Gaze still finds a target. */
+    private static final double BEAM_AIM_ASSIST = 6;
     private static final int OVERHEAT = 100;
     private static final long OVERHEAT_LOCK_MS = 3000;
     private static final Particle.DustOptions BEAM = new Particle.DustOptions(Color.fromRGB(90, 220, 210), 0.9F);
@@ -172,7 +174,7 @@ public final class HeldWeapons implements Listener {
             }
             Vector to = target.getLocation().add(0, target.getHeight() / 2, 0).toVector().subtract(eye.toVector());
             if (to.length() <= FIRE_RANGE && Math.toDegrees(to.angle(look)) <= FIRE_ANGLE && hasLineOfSight(eye, target)) {
-                target.damage(4, player);
+                hurt(target, 4, player);
                 target.setFireTicks(Math.max(target.getFireTicks(), 80));
             }
         }
@@ -199,10 +201,9 @@ public final class HeldWeapons implements Listener {
             gazeTicks.remove(id);
         }
         if (target == null) {
-            RayTraceResult hit = player.getWorld().rayTrace(eye, eye.getDirection(), BEAM_RANGE, FluidCollisionMode.NEVER, true, 0.4,
-                e -> e instanceof LivingEntity living && validTarget(player, living));
-            if (hit == null || !(hit.getHitEntity() instanceof LivingEntity found)) {
-                drawBeam(eye, eye.clone().add(eye.getDirection().multiply(6)));
+            LivingEntity found = aimedAt(player, eye);
+            if (found == null) {
+                drawBeam(eye.clone().add(0, -0.2, 0), beamEnd(eye));
                 return;
             }
             target = found;
@@ -215,7 +216,7 @@ public final class HeldWeapons implements Listener {
         drawBeam(eye.clone().add(0, -0.2, 0), center);
         if (held % 10 == 0) {
             double damage = Math.min(10, 3 + held / 20.0);
-            target.damage(damage, player);
+            hurt(target, damage, player);
             player.sendActionBar(ChatColor.AQUA + "Gaze " + ChatColor.WHITE + String.format("%.0f", damage) + " dmg");
         }
     }
@@ -232,6 +233,46 @@ public final class HeldWeapons implements Listener {
             point.getWorld().spawnParticle(Particle.DUST, point, 1, 0, 0, 0, 0, BEAM);
             point.add(step);
         }
+    }
+
+    /** The valid creature closest to the crosshair within a small cone, in line of sight. */
+    private static LivingEntity aimedAt(Player player, Location eye) {
+        Vector look = eye.getDirection();
+        LivingEntity best = null;
+        double bestAngle = BEAM_AIM_ASSIST;
+        for (Entity entity : player.getNearbyEntities(BEAM_RANGE, BEAM_RANGE, BEAM_RANGE)) {
+            if (!(entity instanceof LivingEntity living) || !validTarget(player, living)) {
+                continue;
+            }
+            Vector to = living.getLocation().add(0, living.getHeight() / 2, 0).toVector().subtract(eye.toVector());
+            double distance = to.length();
+            if (distance > BEAM_RANGE || distance < 0.5) {
+                continue;
+            }
+            // big creatures are easier to hit: allow their half-width on top of the cone
+            double allowance = Math.toDegrees(Math.atan(living.getWidth() / 2 / distance));
+            double angle = Math.toDegrees(to.angle(look)) - allowance;
+            if (angle < bestAngle && hasLineOfSight(eye, living)) {
+                best = living;
+                bestAngle = angle;
+            }
+        }
+        return best;
+    }
+
+    /** Where a beam that hits nothing stops: the first block, or full range. */
+    private static Location beamEnd(Location eye) {
+        RayTraceResult block = eye.getWorld().rayTraceBlocks(eye, eye.getDirection(), BEAM_RANGE, FluidCollisionMode.NEVER, true);
+        return block == null ? eye.clone().add(eye.getDirection().multiply(BEAM_RANGE)) : block.getHitPosition().toLocation(eye.getWorld());
+    }
+
+    /**
+     * Damage from a held weapon. These hit several times a second, faster than a creature's invulnerability frames
+     * (which would otherwise swallow almost every tick of damage), so the frames are cleared first.
+     */
+    static void hurt(LivingEntity target, double amount, Player player) {
+        target.setNoDamageTicks(0);
+        target.damage(amount, player);
     }
 
     // ------------------------------------------------------------------ helpers

@@ -33,7 +33,7 @@ import io.github.thebusybiscuit.slimefun4.core.handlers.ItemUseHandler;
 
 /**
  * Abyssal Anchor: a heavy weapon. Right-click hurls a spectral anchor on a chain (18 blocks). The first creature it hits
- * is dragged to you, slowed and hurt. Never grabs players. 4s cooldown, 1 durability per throw. Hits harder on wet
+ * is dragged to you, slowed and hurt. Players are only grabbed where PvP is allowed. 4s cooldown, 1 durability per throw. Hits harder on wet
  * targets (in water or rain: x1.3).
  */
 public class AbyssalAnchor extends OccultItem {
@@ -100,8 +100,8 @@ public class AbyssalAnchor extends OccultItem {
                 chain(player.getEyeLocation().add(0, -0.3, 0), position);
 
                 for (Entity entity : position.getWorld().getNearbyEntities(position, 1.2, 1.2, 1.2)) {
-                    if (entity instanceof LivingEntity target && target != player && !(target instanceof Player)
-                        && !(target instanceof org.bukkit.entity.ArmorStand) && Keys.minionOwner(target) == null) {
+                    if (entity instanceof LivingEntity target && target != player && !(target instanceof org.bukkit.entity.ArmorStand)
+                        && Keys.minionOwner(target) == null && (!(target instanceof Player victim) || mayGrab(player, victim))) {
                         grab(player, target);
                         anchor.remove();
                         cancel();
@@ -110,6 +110,13 @@ public class AbyssalAnchor extends OccultItem {
                 }
             }
         }.runTaskTimer(plugin, 1L, 1L);
+    }
+
+    /** Players can be hooked only where PvP is on and protection plugins allow attacking them. */
+    private static boolean mayGrab(Player thrower, Player victim) {
+        return victim.getGameMode() != org.bukkit.GameMode.SPECTATOR && victim.getWorld().getPVP()
+            && io.github.thebusybiscuit.slimefun4.implementation.Slimefun.getProtectionManager().hasPermission(thrower, victim.getLocation(),
+                io.github.thebusybiscuit.slimefun4.libraries.dough.protection.Interaction.ATTACK_PLAYER);
     }
 
     private static void grab(Player player, LivingEntity target) {

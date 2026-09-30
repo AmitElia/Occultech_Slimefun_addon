@@ -123,7 +123,11 @@ public class ProducerBlock extends SlimefunItem {
                     ItemStack content = menu.getItemInSlot(slot);
                     stored += MenuUtils.isEmpty(content) ? 0 : content.getAmount();
                 }
-                String status = stored >= OUTPUT_SLOTS.length * product.getMaxStackSize() ? "&cFull" : "&7" + stored + " " + productName;
+                boolean full = stored >= OUTPUT_SLOTS.length * product.getMaxStackSize();
+                if (!full) {
+                    ambient(block, product);
+                }
+                String status = full ? "&cFull" : "&7" + stored + " " + productName;
                 rituals.holograms().show(block, null, title + " &8| " + status);
             }
         });
@@ -147,6 +151,24 @@ public class ProducerBlock extends SlimefunItem {
             return value == null ? 0 : Integer.parseInt(value);
         } catch (NumberFormatException e) {
             return 0;
+        }
+    }
+
+    /** A light effect while the block is producing (stops when full), by what it makes. */
+    private static void ambient(Block block, Material product) {
+        Location at = block.getLocation().add(0.5, 0.9, 0.5);
+        switch (product) {
+            case PRISMARINE_SHARD, PRISMARINE_CRYSTALS -> {
+                block.getWorld().spawnParticle(Particle.BUBBLE_POP, at, 2, 0.3, 0.1, 0.3, 0.01);
+                block.getWorld().spawnParticle(Particle.GLOW, at, 1, 0.3, 0.2, 0.3, 0);
+            }
+            case BLAZE_POWDER -> {
+                block.getWorld().spawnParticle(Particle.FLAME, at, 1, 0.15, 0.05, 0.15, 0.01);
+                block.getWorld().spawnParticle(Particle.SMALL_FLAME, at.clone().add(0, 0.3, 0), 1, 0.2, 0.2, 0.2, 0.01);
+            }
+            case PHANTOM_MEMBRANE -> block.getWorld().spawnParticle(Particle.WHITE_ASH, at.clone().add(0, 0.4, 0), 3, 0.4, 0.3, 0.4, 0);
+            case STRING -> block.getWorld().spawnParticle(Particle.MYCELIUM, at, 2, 0.3, 0.1, 0.3, 0);
+            default -> { }
         }
     }
 

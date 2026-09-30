@@ -24,6 +24,8 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
+import org.bukkit.block.CommandBlock;
+import org.bukkit.block.data.FaceAttachable;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
@@ -279,7 +281,9 @@ final class Showcase {
         first.ifPresent(recipe -> fills.add(() -> fill(altar, recipe)));
 
         for (int i = 0; i < bosses.size(); i++) {
-            kit(world.getBlockAt(cx - radius + 3, floorY + 1, cz - 4 + i * 3), bosses.get(i));
+            Block chest = world.getBlockAt(cx - radius + 3, floorY + 1, cz - 4 + i * 3);
+            kit(chest, bosses.get(i));
+            restockButton(chest.getRelative(0, 0, 1), altar, bosses.get(i));
         }
     }
 
@@ -331,7 +335,51 @@ final class Showcase {
         }
         boolean major = plugin.catalog().boss(bossId).map(b -> "major".equals(b.kind())).orElse(false);
         label(chestBlock.getLocation().add(0.5, 1.6, 0.5), "&c" + ContentRegistrar.title(bossId) + " kit\n&7"
-            + (major ? "Catalyst on the altar, the rest in bowls" : "One stack per bowl, altar empty"));
+            + (major ? "Catalyst on the altar, the rest in bowls" : "One stack per bowl, altar empty") + "\n&eButton: restock the circle");
+    }
+
+    /** A command block with a button on top that refills the circle for one boss. */
+    private void restockButton(Block at, Block altar, String bossId) {
+        setBlock(at, Material.COMMAND_BLOCK);
+        if (at.getState() instanceof CommandBlock commandBlock) {
+            commandBlock.setCommand("occultech restock " + altar.getX() + " " + altar.getY() + " " + altar.getZ() + " " + bossId);
+            commandBlock.update(true, false);
+        }
+        Block button = at.getRelative(0, 1, 0);
+        setBlock(button, Material.POLISHED_BLACKSTONE_BUTTON);
+        if (button.getBlockData() instanceof FaceAttachable face) {
+            face.setAttachedFace(FaceAttachable.AttachedFace.FLOOR);
+            button.setBlockData(face, false);
+        }
+    }
+
+    /**
+     * Refills a circle for a boss: the catalyst (gate bosses) on the altar, offerings in the bowls. Refuses while a
+     * ritual or fight is running there. Used by the showcase buttons via {@code /occultech restock}.
+     */
+    static void restock(Occultech plugin, CommandSender sender, Block altar, String bossId) {
+        Optional<RitualRecipe> recipe = plugin.rituals().recipes().stream().filter(r -> bossId.equals(r.bossId())).findFirst();
+        if (recipe.isEmpty() || plugin.rituals().checkCircle(altar).isEmpty()) {
+            sender.sendMessage("No summoning ritual for " + bossId + " at that circle.");
+            return;
+        }
+        String message;
+        if (plugin.rituals().isLocked(altar.getLocation()) || plugin.rituals().bosses().fightAt(altar).isPresent()) {
+            message = "&cThe circle is busy - finish or leave the fight first.";
+        } else {
+            fill(plugin, altar, recipe.get());
+            altar.getWorld().playSound(altar.getLocation(), org.bukkit.Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1F, 1.2F);
+            altar.getWorld().spawnParticle(org.bukkit.Particle.SOUL, altar.getLocation().add(0.5, 1.2, 0.5), 20, 0.6, 0.4, 0.6, 0.02);
+            message = "&dThe circle is stocked for &c" + ContentRegistrar.title(bossId) + "&d. Open the altar and press &fBegin Ritual&d.";
+        }
+        String colored = ChatColor.translateAlternateColorCodes('&', message);
+        // command blocks can't show chat, so tell the players standing near the circle
+        for (Player player : altar.getWorld().getNearbyPlayers(altar.getLocation(), 24)) {
+            player.sendMessage(colored);
+        }
+        if (!(sender instanceof org.bukkit.command.BlockCommandSender)) {
+            sender.sendMessage(colored);
+        }
     }
 
     private void craftDemo(int x, int z, int tier, String entry) {
@@ -358,6 +406,10 @@ final class Showcase {
     }
 
     private void fill(Block altar, RitualRecipe recipe) {
+        fill(plugin, altar, recipe);
+    }
+
+    private static void fill(Occultech plugin, Block altar, RitualRecipe recipe) {
         boolean centerItem = recipe.center() != null && !recipe.inPlace();
         DebugWorld.setAltarCenter(altar, centerItem ? DebugWorld.item(recipe.center(), 1) : null);
         var check = plugin.rituals().checkCircle(altar);
@@ -365,6 +417,7 @@ final class Showcase {
             return;
         }
         List<int[]> bowls = check.get().pattern().positionsOf(Circles.OFFERING_BOWL, check.get().rotation());
+        bowls.forEach(offset -> DebugWorld.setBowl(altar.getRelative(offset[0], 0, offset[1]), null));
         int i = 0;
         for (Map.Entry<String, Integer> offering : recipe.offerings().entrySet()) {
             if (i < bowls.size()) {

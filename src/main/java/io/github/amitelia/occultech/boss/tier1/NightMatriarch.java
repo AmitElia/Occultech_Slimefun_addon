@@ -56,6 +56,12 @@ public final class NightMatriarch extends BossBehavior {
             BossFight.setAttribute(p, Attribute.SCALE, 4);
             BossFight.setAttribute(p, Attribute.FOLLOW_RANGE, 40);
         });
+        matriarch.setAnchorLocation(anchor());
+    }
+
+    /** Phantoms circle an anchor point; keep it above the altar so it never drifts out of the arena. */
+    private Location anchor() {
+        return fight.center().clone().add(0, 9, 0);
     }
 
     @Override
@@ -74,6 +80,9 @@ public final class NightMatriarch extends BossBehavior {
             return;
         }
         int now = fight.elapsed();
+        if (matriarch.getAnchorLocation() == null || matriarch.getAnchorLocation().distanceSquared(anchor()) > 1) {
+            matriarch.setAnchorLocation(anchor());
+        }
 
         long time = matriarch.getWorld().getTime();
         boolean isNight = time >= 13000 && time <= 23000;
@@ -86,12 +95,14 @@ public final class NightMatriarch extends BossBehavior {
         }
 
         if (now < stunnedUntil) {
+            matriarch.setVelocity(new Vector());
             matriarch.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, matriarch.getLocation().add(0, 1.5, 0), 2, 0.4, 0.2, 0.4, 0);
             return;
         }
         if (stunnedUntil >= 0 && now >= stunnedUntil) {
             stunnedUntil = -1;
-            matriarch.setAI(true);
+            // unaware = no AI but normal physics, unlike setAI(false), which can freeze a mob in the air
+            matriarch.setAware(true);
             matriarch.setGlowing(false);
             matriarch.setVelocity(new Vector(0, 0.8, 0));
         }
@@ -119,21 +130,32 @@ public final class NightMatriarch extends BossBehavior {
         if (now == diveAt) {
             diveAt = -1;
             diveEnd = now + DIVE_MAX_TICKS;
-            matriarch.setAI(false);
+            matriarch.setAware(false);
+            matriarch.setTarget(null);
         }
         if (diveEnd >= 0) {
             Vector to = diveTarget.clone().add(0, 0.5, 0).toVector().subtract(matriarch.getLocation().toVector());
             if (to.length() < 2 || now >= diveEnd) {
                 impact();
             } else {
-                matriarch.setVelocity(to.normalize().multiply(1.4));
+                matriarch.setVelocity(to.normalize().multiply(Math.min(1.6, 0.4 + to.length() * 0.15)));
             }
         }
+    }
+
+    /** Top of the ground under a spot, so the stunned Matriarch lies on the floor rather than in the air. */
+    private static double groundY(Location at) {
+        org.bukkit.block.Block block = at.getBlock();
+        for (int i = 0; i < 8 && block.isPassable(); i++) {
+            block = block.getRelative(0, -1, 0);
+        }
+        return block.isPassable() ? at.getY() : block.getY() + 1;
     }
 
     private void impact() {
         diveEnd = -1;
         Location at = diveTarget.clone();
+        at.setY(groundY(at));
         matriarch.teleport(at.clone().add(0, 0.3, 0));
         matriarch.setVelocity(new Vector());
         matriarch.setGlowing(true);
