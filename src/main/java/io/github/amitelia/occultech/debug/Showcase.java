@@ -258,20 +258,21 @@ final class Showcase {
             "&5&lOccultech &7- Tiers 0-" + ContentRegistrar.IMPLEMENTED_TIER + "\n&7Hover an item frame to read it. Use &f/sf cheat &7to take items.");
     }
 
-    /** Live block demos in a row east of the wall. Returns a task that fills menus once they exist. */
+    /** Live block demos east of the wall, and one working shrine per contract. Returns a task that fills menus. */
     private Runnable buildDemos(World world, int x, int z) {
         int y = world.getHighestBlockYAt(x, z) + 1;
+        List<Runnable> fills = new ArrayList<>();
         demoBlock(world.getBlockAt(x, y, z), "BROOD_EGG", "&fBrood Egg &7(live)\n&7Spins string. Right-click to collect.");
         demoBlock(world.getBlockAt(x + 3, y, z), "PHANTOM_ROOST", "&fPhantom Roost &7(live)\n&7Makes phantom membranes.");
-        demoBlock(world.getBlockAt(x + 6, y, z), "FRENZY_IDOL", "&6Frenzy Idol\n&7Speeds up the shrine next to it.");
+        demoBlock(world.getBlockAt(x + 6, y, z), "FRENZY_IDOL", "&6Frenzy Idol\n&7Harvest shrine next to it works 1.5x faster.");
 
-        // Servitor Shrine in the middle of a ripe nether wart field
-        Block shrine = world.getBlockAt(x + 12, y, z + 4);
+        // Harvest: a ripe nether wart field (the idol above is within 8 blocks)
+        Block harvest = world.getBlockAt(x + 12, y, z + 4);
         for (int dx = -4; dx <= 4; dx++) {
             for (int dz = -4; dz <= 4; dz++) {
-                setBlock(shrine.getRelative(dx, -1, dz), Material.SOUL_SAND);
+                setBlock(harvest.getRelative(dx, -1, dz), Material.SOUL_SAND);
                 if (dx != 0 || dz != 0) {
-                    Block wart = shrine.getRelative(dx, 0, dz);
+                    Block wart = harvest.getRelative(dx, 0, dz);
                     setBlock(wart, Material.NETHER_WART);
                     Ageable age = (Ageable) wart.getBlockData();
                     age.setAge(age.getMaximumAge());
@@ -279,9 +280,7 @@ final class Showcase {
                 }
             }
         }
-        demoBlock(shrine, "SERVITOR_SHRINE", "&5Servitor Shrine &7(Harvest contract)\n&7Watch the spirit reap the wart.");
-        BlockStorage.addBlockInfo(shrine, "occultech_owner", sender instanceof Player p ? p.getUniqueId().toString() : DEMO_OWNER);
-        // the idol (x + 6) sits within 8 blocks of the shrine so the demo shows the speed-up
+        fills.add(shrine(harvest, "HARVEST_CONTRACT", "&5Contract: Harvest\n&7Reaps and replants the wart.", Map.of()));
 
         Block mirror = world.getBlockAt(x + 3, y, z + 4);
         demoBlock(mirror, "SCRYING_MIRROR", "&dScrying Mirror\n&7Watching the Archevoker's circle.");
@@ -290,12 +289,102 @@ final class Showcase {
             BlockStorage.addBlockInfo(mirror, "occultech_link", archevoker.getWorld().getName() + ";" + archevoker.getX() + ";" + archevoker.getY() + ";" + archevoker.getZ());
         }
 
-        return () -> {
-            BlockMenu menu = BlockStorage.getInventory(shrine);
-            SlimefunItem contract = SlimefunItem.getById(ItemKeys.slimefunId("HARVEST_CONTRACT"));
-            if (menu != null && contract != null) {
-                menu.replaceExistingItem(ServitorShrine.CONTRACT_SLOT, contract.getItem().clone());
+        // the other contracts in a row further east, 13 apart (so no more than 4 shrines within 12 blocks)
+        int cx = x + 26;
+        int cz = z + 4;
+
+        Block gather = world.getBlockAt(cx, y, cz);
+        fills.add(shrine(gather, "GATHER_CONTRACT", "&5Contract: Gather\n&7Drop items nearby - it collects them.", Map.of()));
+        fills.add(() -> {
+            for (int i = 0; i < 4; i++) {
+                world.dropItem(gather.getLocation().add(-2 + i, 0.5, 2.5), new ItemStack(Material.BONE, 4)).setPickupDelay(0);
             }
+        });
+
+        Block ward = world.getBlockAt(cx + 13, y, cz);
+        fills.add(shrine(ward, "WARD_CONTRACT", "&5Contract: Ward\n&7No hostile mobs spawn within 8 blocks.", Map.of()));
+
+        Block brewer = world.getBlockAt(cx + 26, y, cz);
+        for (int i = -1; i <= 1; i += 2) {
+            Block stand = brewer.getRelative(i * 2, 0, 0);
+            setBlock(stand, Material.BREWING_STAND);
+            fills.add(() -> {
+                if (stand.getState() instanceof org.bukkit.block.BrewingStand bs) {
+                    for (int slot = 0; slot < 3; slot++) {
+                        ItemStack water = new ItemStack(Material.POTION);
+                        org.bukkit.inventory.meta.PotionMeta meta = (org.bukkit.inventory.meta.PotionMeta) water.getItemMeta();
+                        meta.setBasePotionType(org.bukkit.potion.PotionType.WATER);
+                        water.setItemMeta(meta);
+                        bs.getInventory().setItem(slot, water);
+                    }
+                }
+            });
+        }
+        fills.add(shrine(brewer, "BREWER_CONTRACT", "&5Contract: Brewer's Aid\n&7Fuels the stands and adds nether wart.",
+            Map.of(Material.NETHER_WART, 16, Material.BLAZE_POWDER, 8)));
+
+        Block shepherd = world.getBlockAt(cx + 39, y, cz);
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dz = -3; dz <= 3; dz++) {
+                if (Math.abs(dx) == 3 || Math.abs(dz) == 3) {
+                    setBlock(shepherd.getRelative(dx, 0, dz), Material.OAK_FENCE);
+                }
+            }
+        }
+        fills.add(shrine(shepherd, "SHEPHERD_CONTRACT", "&5Contract: Shepherd\n&7Shears the sheep in the pen.", Map.of()));
+        fills.add(() -> {
+            org.bukkit.DyeColor[] colors = { org.bukkit.DyeColor.WHITE, org.bukkit.DyeColor.PURPLE, org.bukkit.DyeColor.BLACK };
+            for (int i = 0; i < 3; i++) {
+                org.bukkit.DyeColor color = colors[i];
+                world.spawn(shepherd.getLocation().add(-1.5 + i * 1.5, 0, 1.5), org.bukkit.entity.Sheep.class, sheep -> {
+                    sheep.setColor(color);
+                    sheep.getPersistentDataContainer().set(Keys.SHOWCASE, PersistentDataType.BYTE, (byte) 1);
+                });
+            }
+        });
+
+        Block beekeeper = world.getBlockAt(cx + 52, y, cz);
+        for (int i = -1; i <= 1; i += 2) {
+            Block hive = beekeeper.getRelative(i * 2, 0, 0);
+            setBlock(hive, Material.BEEHIVE);
+            org.bukkit.block.data.type.Beehive data = (org.bukkit.block.data.type.Beehive) hive.getBlockData();
+            data.setHoneyLevel(data.getMaximumHoneyLevel());
+            hive.setBlockData(data, false);
+        }
+        fills.add(shrine(beekeeper, "BEEKEEPER_CONTRACT", "&5Contract: Beekeeper\n&7Takes honeycomb from full hives.", Map.of()));
+
+        // Acolyte: next to the Brood Mother circle, stocked with its offerings
+        Block brood = altars.get("BROOD_MOTHER");
+        if (brood != null) {
+            Block acolyte = brood.getRelative(0, 0, -7);
+            Map<Material, Integer> stock = Map.of(Material.STRING, 32, Material.SPIDER_EYE, 16, Material.FERMENTED_SPIDER_EYE, 4);
+            fills.add(shrine(acolyte, "ACOLYTE_CONTRACT", "&5Contract: Acolyte\n&7Summon the Brood Mother once;\n&7it then restocks the bowls.", stock));
+            fills.add(() -> {
+                SlimefunItem salt = SlimefunItem.getById(ItemKeys.slimefunId("GRAVE_SALT"));
+                BlockMenu menu = BlockStorage.getInventory(acolyte);
+                if (menu != null && salt != null) {
+                    ItemStack salts = salt.getItem().clone();
+                    salts.setAmount(16);
+                    menu.pushItem(salts, ServitorShrine.STORE);
+                }
+            });
+        }
+
+        return () -> fills.forEach(Runnable::run);
+    }
+
+    /** Places a shrine with a contract and optional starting supplies. Returns the fill task. */
+    private Runnable shrine(Block block, String contract, String label, Map<Material, Integer> supplies) {
+        demoBlock(block, "SERVITOR_SHRINE", label);
+        BlockStorage.addBlockInfo(block, "occultech_owner", sender instanceof Player p ? p.getUniqueId().toString() : DEMO_OWNER);
+        return () -> {
+            BlockMenu menu = BlockStorage.getInventory(block);
+            SlimefunItem item = SlimefunItem.getById(ItemKeys.slimefunId(contract));
+            if (menu == null || item == null) {
+                return;
+            }
+            menu.replaceExistingItem(ServitorShrine.CONTRACT_SLOT, item.getItem().clone());
+            supplies.forEach((type, amount) -> menu.pushItem(new ItemStack(type, amount), ServitorShrine.STORE));
         };
     }
 

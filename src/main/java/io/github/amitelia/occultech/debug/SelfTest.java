@@ -71,6 +71,17 @@ final class SelfTest {
     private Block wart;
     private Chunk chunk2;
     private Chunk chunk3;
+    private Block stand;
+    private Block hive;
+    private Block idolA;
+    private Block idolB;
+    private Block acolyte;
+    private RitualRecipe acolyteRecipe;
+    private int[] repairBowl;
+    private org.bukkit.entity.Sheep sheep;
+    private java.util.UUID minionOwner;
+    private List<org.bukkit.entity.Mob> minionList = List.of();
+    private org.bukkit.entity.LivingEntity victim;
     private int diamondsBefore;
     private org.bukkit.entity.Item testDrop;
     private Block broodEgg;
@@ -130,6 +141,26 @@ final class SelfTest {
         then(0, this::startWard);
         then(30, this::warded);
         then(0, this::scryingMirror);
+
+        // ---- more shrine contracts and edge cases
+        then(0, this::startBrewer);
+        then(70, this::brewed);
+        then(0, this::startShepherd);
+        then(70, this::sheared);
+        then(0, this::startBeekeeper);
+        then(70, this::beesKept);
+        then(0, this::speedRules);
+        then(0, this::placementCap);
+        then(0, this::startAcolyte);
+        then(200, this::acolyteRestocked);
+        then(0, this::contractSwap);
+        then(50, this::contractSwapped);
+
+        // ---- repair ritual and necromancy
+        then(0, this::startRepair);
+        then(RitualService.DURATION_TICKS + 20L, this::repaired);
+        then(0, this::raiseMinions);
+        then(100, this::minionsAttack);
         next();
     }
 
@@ -448,6 +479,237 @@ final class SelfTest {
         BlockStorage.addBlockInfo(mirror, "occultech_link", altar.getWorld().getName() + ";" + altar.getX() + ";" + altar.getY() + ";" + altar.getZ());
         String status = io.github.amitelia.occultech.items.ScryingMirrorAccess.status(rituals, mirror);
         check("Scrying Mirror reads its linked circle", status.contains("Circle complete"), ChatColor.stripColor(status));
+    }
+
+    // ---- more contracts
+
+    private void clearStore() {
+        BlockMenu menu = BlockStorage.getInventory(shrine);
+        if (menu != null) {
+            for (int slot : io.github.amitelia.occultech.items.ServitorShrine.STORE) {
+                menu.replaceExistingItem(slot, null);
+            }
+        }
+    }
+
+    private void supply(Material type, int amount) {
+        BlockMenu menu = BlockStorage.getInventory(shrine);
+        if (menu != null) {
+            menu.pushItem(new ItemStack(type, amount), io.github.amitelia.occultech.items.ServitorShrine.STORE);
+        }
+    }
+
+    private void startBrewer() {
+        clearStore();
+        stand = shrine.getRelative(-2, 0, 0);
+        remember(stand);
+        stand.setType(Material.BREWING_STAND, false);
+        if (stand.getState() instanceof org.bukkit.block.BrewingStand bs) {
+            ItemStack water = new ItemStack(Material.POTION);
+            org.bukkit.inventory.meta.PotionMeta meta = (org.bukkit.inventory.meta.PotionMeta) water.getItemMeta();
+            meta.setBasePotionType(org.bukkit.potion.PotionType.WATER);
+            water.setItemMeta(meta);
+            bs.getInventory().setItem(0, water);
+        }
+        supply(Material.NETHER_WART, 4);
+        supply(Material.BLAZE_POWDER, 2);
+        setContract("BREWER_CONTRACT");
+    }
+
+    private void brewed() {
+        org.bukkit.block.BrewingStand bs = (org.bukkit.block.BrewingStand) stand.getState();
+        ItemStack ingredient = bs.getInventory().getIngredient();
+        boolean fueled = bs.getFuelLevel() > 0 || (bs.getInventory().getFuel() != null && bs.getInventory().getFuel().getType() == Material.BLAZE_POWDER);
+        check("Brewer's Aid fuels the brewing stand", fueled, "no fuel");
+        boolean wartIn = (ingredient != null && ingredient.getType() == Material.NETHER_WART) || bs.getBrewingTime() > 0 || storeCount(Material.NETHER_WART) < 4;
+        check("Brewer's Aid adds nether wart to water bottles", wartIn, "no wart added");
+        stand.setType(Material.AIR, false);
+    }
+
+    private void startShepherd() {
+        clearStore();
+        sheep = shrine.getWorld().spawn(shrine.getLocation().add(2.5, 0, 2.5), org.bukkit.entity.Sheep.class, s -> s.setColor(org.bukkit.DyeColor.PURPLE));
+        setContract("SHEPHERD_CONTRACT");
+    }
+
+    private void sheared() {
+        check("Shepherd shears the sheep", sheep.isSheared(), "not sheared");
+        check("Shepherd stores wool of the sheep's color", storeCount(Material.PURPLE_WOOL) > 0, "no purple wool");
+        sheep.remove();
+    }
+
+    private void startBeekeeper() {
+        clearStore();
+        hive = shrine.getRelative(0, 0, 2);
+        remember(hive);
+        hive.setType(Material.BEEHIVE, false);
+        org.bukkit.block.data.type.Beehive data = (org.bukkit.block.data.type.Beehive) hive.getBlockData();
+        data.setHoneyLevel(data.getMaximumHoneyLevel());
+        hive.setBlockData(data, false);
+        setContract("BEEKEEPER_CONTRACT");
+    }
+
+    private void beesKept() {
+        org.bukkit.block.data.type.Beehive data = (org.bukkit.block.data.type.Beehive) hive.getBlockData();
+        check("Beekeeper empties the full hive", data.getHoneyLevel() == 0, "honey level " + data.getHoneyLevel());
+        check("Beekeeper stores honeycomb", storeCount(Material.HONEYCOMB) == 3, storeCount(Material.HONEYCOMB) + " honeycomb");
+        hive.setType(Material.AIR, false);
+    }
+
+    private void speedRules() {
+        var servitors = plugin.servitors();
+        BlockStorage.addBlockInfo(shrine, "occultech_empowered_until", null);
+        check("base speed: one action every 2s", servitors.intervalMs(shrine) == 2000, servitors.intervalMs(shrine) + "ms");
+        servitors.empower(shrine);
+        check("empowered: double speed", servitors.intervalMs(shrine) == 1000, servitors.intervalMs(shrine) + "ms");
+        check("empowering banks one hour", Math.abs(servitors.empoweredFor(shrine) - 3_600_000L) < 5000, servitors.empoweredFor(shrine) + "ms");
+
+        idolA = shrine.getRelative(3, 0, 3);
+        idolB = shrine.getRelative(-3, 0, 3);
+        DebugWorld.placeSlimefun(idolA, ItemKeys.slimefunId("FRENZY_IDOL"), this::remember);
+        DebugWorld.placeSlimefun(idolB, ItemKeys.slimefunId("FRENZY_IDOL"), this::remember);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            check("empowered + Frenzy Idol: x3 speed", servitors.intervalMs(shrine) == 666, servitors.intervalMs(shrine) + "ms");
+            check("two Frenzy Idols don't stack", servitors.intervalMs(shrine) == 666, servitors.intervalMs(shrine) + "ms");
+            BlockStorage.addBlockInfo(shrine, "occultech_empowered_until", null);
+            check("idol alone: x1.5 speed", servitors.intervalMs(shrine) == 1333, servitors.intervalMs(shrine) + "ms");
+            for (Block idol : List.of(idolA, idolB)) {
+                plugin.rituals().holograms().clear(idol);
+                BlockStorage.clearBlockInfo(idol);
+                idol.setType(Material.AIR, false);
+            }
+        }, 40L);
+    }
+
+    private void placementCap() {
+        var servitors = plugin.servitors();
+        List<org.bukkit.Location> fakes = List.of(shrine.getLocation().add(4, 0, 0), shrine.getLocation().add(0, 0, 4), shrine.getLocation().add(-4, 0, 0));
+        fakes.forEach(servitors::registerForTest);
+        org.bukkit.Location here = shrine.getLocation().add(2, 0, 2);
+        check("4 shrines within 12 blocks block a 5th", !servitors.canPlace(here), servitors.nearbyShrines(here) + " nearby");
+        check("a shrine 30 blocks away is still allowed", servitors.canPlace(shrine.getLocation().add(30, 0, 0)), "blocked");
+        fakes.forEach(servitors::unregisterForTest);
+        check("with 3 fakes gone, placing is allowed again", servitors.canPlace(here), servitors.nearbyShrines(here) + " nearby");
+    }
+
+    private void startAcolyte() {
+        // the acolyte needs an altar within 8 blocks: use the test circle, which sits 12 away, via a second shrine
+        acolyte = altar.getRelative(6, 0, 0);
+        remember(acolyte.getRelative(0, -1, 0));
+        DebugWorld.placeSlimefun(acolyte, ItemKeys.slimefunId("SERVITOR_SHRINE"), this::remember);
+        BlockStorage.addBlockInfo(acolyte, "occultech_owner", new java.util.UUID(0, 0).toString());
+        RitualRecipe brood = rituals.recipes().stream().filter(r -> "BROOD_MOTHER".equals(r.bossId())).findFirst().orElseThrow();
+        acolyteRecipe = brood;
+        rituals.rememberRitual(altar, brood);
+        RitualService.CircleCheck check = rituals.checkCircle(altar).orElseThrow();
+        check.pattern().positionsOf(Circles.OFFERING_BOWL, check.rotation()).forEach(o -> DebugWorld.setBowl(altar.getRelative(o[0], 0, o[1]), null));
+        DebugWorld.setAltarCenter(altar, null);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            BlockMenu menu = BlockStorage.getInventory(acolyte);
+            if (menu == null) {
+                return;
+            }
+            for (Map.Entry<String, Integer> offering : brood.offerings().entrySet()) {
+                ItemStack stock = DebugWorld.item(offering.getKey(), offering.getValue() * 2);
+                if (stock != null) {
+                    menu.pushItem(stock, io.github.amitelia.occultech.items.ServitorShrine.STORE);
+                }
+            }
+            menu.replaceExistingItem(io.github.amitelia.occultech.items.ServitorShrine.CONTRACT_SLOT,
+                SlimefunItem.getById(ItemKeys.slimefunId("ACOLYTE_CONTRACT")).getItem().clone());
+        }, 5L);
+    }
+
+    private void acolyteRestocked() {
+        RitualService.CircleCheck check = rituals.checkCircle(altar).orElseThrow();
+        java.util.Map<String, Integer> inBowls = new java.util.HashMap<>();
+        for (int[] o : check.pattern().positionsOf(Circles.OFFERING_BOWL, check.rotation())) {
+            BlockMenu menu = BlockStorage.getInventory(altar.getRelative(o[0], 0, o[1]));
+            ItemStack item = menu == null ? null : menu.getItemInSlot(io.github.amitelia.occultech.items.OfferingBowl.SLOT);
+            if (item != null && !item.getType().isAir()) {
+                SlimefunItem sf = SlimefunItem.getByItem(item);
+                inBowls.merge(sf != null ? sf.getId() : ItemKeys.vanilla(item.getType().name()), item.getAmount(), Integer::sum);
+            }
+        }
+        check("Acolyte restocks every offering of the last ritual", inBowls.equals(acolyteRecipe.offerings()), inBowls.toString());
+        check("Acolyte never starts the ritual", rituals.bosses().fightAt(altar).isEmpty() && !rituals.isLocked(altar.getLocation()), "started");
+        plugin.rituals().holograms().clear(acolyte);
+        plugin.servitors().unregisterForTest(acolyte.getLocation());
+        BlockMenu menu = BlockStorage.getInventory(acolyte);
+        if (menu != null) {
+            menu.replaceExistingItem(io.github.amitelia.occultech.items.ServitorShrine.CONTRACT_SLOT, null);
+            for (int slot : io.github.amitelia.occultech.items.ServitorShrine.STORE) {
+                menu.replaceExistingItem(slot, null);
+            }
+        }
+        BlockStorage.clearBlockInfo(acolyte);
+        acolyte.setType(Material.AIR, false);
+        check.pattern().positionsOf(Circles.OFFERING_BOWL, check.rotation()).forEach(o -> DebugWorld.setBowl(altar.getRelative(o[0], 0, o[1]), null));
+    }
+
+    private void contractSwap() {
+        clearStore();
+        setContract("WARD_CONTRACT");
+    }
+
+    private void contractSwapped() {
+        check("swapping the contract changes the job (now Ward)", plugin.servitors().isWarded(shrine.getLocation().add(1, 0, 1)), "not warding");
+        setContract("HARVEST_CONTRACT");
+    }
+
+    // ---- repair ritual
+
+    private void startRepair() {
+        rituals.checkCircle(altar).ifPresent(check ->
+            check.pattern().positionsOf(Circles.OFFERING_BOWL, check.rotation()).forEach(o -> DebugWorld.setBowl(altar.getRelative(o[0], 0, o[1]), null)));
+        ItemStack bow = SlimefunItem.getById(ItemKeys.slimefunId("QUILLSHOT_BOW")).getItem().clone();
+        org.bukkit.inventory.meta.Damageable meta = (org.bukkit.inventory.meta.Damageable) bow.getItemMeta();
+        meta.setDamage(300);
+        bow.setItemMeta(meta);
+        DebugWorld.setAltarCenter(altar, bow);
+        RitualService.CircleCheck check = rituals.checkCircle(altar).orElseThrow();
+        int[] first = check.pattern().positionsOf(Circles.OFFERING_BOWL, check.rotation()).get(0);
+        DebugWorld.setBowl(altar.getRelative(first[0], 0, first[1]), DebugWorld.item(ItemKeys.slimefunId("FLETCHERS_QUILL"), 5));
+        check("repair ritual starts (damaged bow + Fletcher's Quills)", rituals.begin(null, altar) == RitualService.Outcome.STARTED, "did not start");
+        BlockMenu bowl = BlockStorage.getInventory(altar.getRelative(first[0], 0, first[1]));
+        ItemStack left = bowl == null ? null : bowl.getItemInSlot(io.github.amitelia.occultech.items.OfferingBowl.SLOT);
+        check("repair uses only the quills it needs (2 of 5)", left != null && left.getAmount() == 3, left == null ? "none left" : left.getAmount() + " left");
+        repairBowl = first;
+    }
+
+    private void repaired() {
+        BlockMenu menu = BlockStorage.getInventory(altar);
+        ItemStack bow = menu == null ? null : menu.getItemInSlot(RitualAltar.CENTER_SLOT);
+        int damage = bow != null && bow.getItemMeta() instanceof org.bukkit.inventory.meta.Damageable d ? d.getDamage() : -1;
+        check("repair ritual restores the bow to full", damage == 0, "damage " + damage);
+        DebugWorld.setAltarCenter(altar, null);
+        DebugWorld.setBowl(altar.getRelative(repairBowl[0], 0, repairBowl[1]), null);
+    }
+
+    // ---- necromancy
+
+    private void raiseMinions() {
+        org.bukkit.Location at = altar.getLocation().add(-6, 0, 6);
+        minionOwner = java.util.UUID.randomUUID();
+        minionList = plugin.minions().raiseForTest(minionOwner, at, 2, 30);
+        victim = altar.getWorld().spawn(at.clone().add(6, 0, 0), org.bukkit.entity.Cow.class);
+        check("minions obey an attack order on any mob (a cow)", plugin.minions().command(minionOwner, victim), "order refused");
+    }
+
+    private void minionsAttack() {
+        boolean targeting = minionList.stream().allMatch(m -> !m.isValid() || m.getTarget() == victim || victim.isDead());
+        check("minions keep the ordered target", targeting, "targets: " + minionList.stream().map(m -> String.valueOf(m.getTarget())).toList());
+        double max = victim.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue();
+        boolean playerNear = !victim.getWorld().getNearbyEntities(victim.getLocation(), 32, 32, 32, e -> e instanceof org.bukkit.entity.Player).isEmpty();
+        if (playerNear) {
+            check("minions actually hurt the target", victim.isDead() || victim.getHealth() < max, victim.getHealth() + "/" + max);
+        } else {
+            // Paper freezes mob AI far from players (entity activation range), so the bows only fire with someone nearby
+            say("&e  SKIP &7minions actually hurt the target &8(needs a player within 32 blocks for mob AI)");
+        }
+        plugin.minions().dismissAll(minionOwner);
+        victim.remove();
+        check("dismissed minions are gone", minionList.stream().noneMatch(org.bukkit.entity.Entity::isValid), "still there");
     }
 
     private void setContract(String id) {

@@ -59,9 +59,19 @@ Health values are before group scaling. Balance is untested with real players; t
 | Mirrored Magus | Illusioner | 220 | Every 15s 3 decoys (can't cast) and a blink; the real one sparkles; hitting a decoy makes you glow and it blinks again | Mirror Dust; 15% Scrying Mirror |
 | Archevoker | Evoker (gate) | 700 | Fang patterns (ring / line / spiral) drawn 1s ahead, faster below 50%; its vexes are adopted, capped and leashed; 3 phylacteries let it cheat death once at 40% - break them first | Evoker's Sigil |
 
-- **Servitor Shrine** is the tier-1 capstone: a Bound-circle ritual that needs 2 Evoker's Sigils (~6.7k raw). Max 4 per
-  chunk. Contracts: Harvest, Gather, Ward.
-- **Bone Scepter**: 2 skeleton archers for 30s, 20s cooldown, 64 uses (durability).
+- **Servitor Shrine** is the tier-1 capstone: a Bound-circle ritual that needs 2 Evoker's Sigils (~6.7k raw). At most 4
+  shrines within 12 blocks of each other. One action every 2s; a Frenzy Idol within 8 blocks makes it 1.5x faster (idols
+  never stack); **Empower** (1 Spirit Essence) doubles speed for an hour, banking up to 24h (so 3x at most). Its store
+  takes output and supplies; cargo/Networks can use it. Contracts (swap any time):
+  Harvest, Gather, Shepherd, Beekeeper, Brewer's Aid (9x9) and Ward, Acolyte (17x17). The Acolyte restocks an altar's
+  bowls with the offerings of the last ritual done there, one bowl per action, and never starts a ritual.
+- **Repair ritual:** a damaged weapon on the altar and only its repair item in the bowls; each item restores 25%, only
+  what's needed is used, and breaking the circle loses the repair items but never the weapon. (Slimefun forbids its items
+  in anvils, so repairs are rituals.)
+- **Head textures:** any item can use `head: <texture>` in recipes.yml instead of `material`.
+- **Bone Scepter**: 2 skeleton archers for 30s, 20s cooldown, 64 uses (durability). Minions attack whatever their owner
+  attacks (except players, other minions and the owner's pets) and hold that target; on their own they only fight
+  hostile mobs and bosses.
 - **Gear**: Frenzy Cleaver (+0.2 attack speed per stack, max 5), Duskwing Charm (double jump, no fall damage after it,
   4s cooldown), Mirror Ward (decoy below 30% HP, 60s cooldown). Mending never repairs Occultech gear.
 

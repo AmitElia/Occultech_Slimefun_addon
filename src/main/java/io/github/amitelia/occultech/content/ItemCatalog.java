@@ -28,7 +28,12 @@ public final class ItemCatalog {
     public record RecipeDef(String type, int out, @Nullable String center, int circle, Map<String, Integer> inputs, @Nullable String boss,
         double chance, boolean inPlace) {}
 
-    public record ItemDef(String id, int tier, String category, String name, String purpose, @Nullable String material, int durability, RecipeDef recipe) {
+    /**
+     * @param head   optional player-head texture replacing the material look
+     * @param repair Occultech id of the item that repairs this one in a repair ritual, or null
+     */
+    public record ItemDef(String id, int tier, String category, String name, String purpose, @Nullable String material, int durability, RecipeDef recipe,
+        @Nullable String head, @Nullable String repair) {
 
         public boolean isBossDrop() {
             return "BOSS_DROP".equals(recipe.type());
@@ -70,7 +75,8 @@ public final class ItemCatalog {
         map(root.get("items")).forEach((id, v) -> {
             Map<String, Object> i = map(v);
             items.put(id, new ItemDef(id, integer(i.get("tier"), 0), str(i.get("cat")), str(i.get("name")), str(i.get("purpose")),
-                (String) i.get("material"), integer(i.get("durability"), 0), recipe(map(i.get("recipe")))));
+                (String) i.get("material"), integer(i.get("durability"), 0), recipe(map(i.get("recipe"))), (String) i.get("head"),
+                (String) i.get("repair")));
         });
 
         Map<String, ResearchDef> researches = new LinkedHashMap<>();

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -11,6 +12,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
+import io.github.amitelia.occultech.content.ItemKeys;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -28,13 +30,22 @@ import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
 
 /**
  * Servitor Shrine: houses a bound spirit that works the area around it according to the contract in its slot.
- * No fuel. Output goes into a 27-slot store that cargo and Networks can pull from. See {@link ServitorService}.
+ * <ul>
+ * <li>Contract slot: only contract items; swap them any time to change the job.</li>
+ * <li>Store (27 slots): output of producing contracts, and the supply for Brewer's Aid / Acolyte. Players, cargo and
+ * Networks can put items in and take them out.</li>
+ * <li>Empower: feed one Spirit Essence from your inventory for an hour of double speed (up to 24h banked).</li>
+ * </ul>
+ * No fuel otherwise. At most {@value ServitorService#MAX_NEARBY} shrines within {@value ServitorService#CAP_RADIUS}
+ * blocks. See {@link ServitorService}.
  */
 public class ServitorShrine extends SlimefunItem {
 
     public static final int CONTRACT_SLOT = 4;
     public static final int[] STORE = range(18, 45);
-    private static final int INFO_SLOT = 13;
+    private static final int INFO_SLOT = 11;
+    private static final int EMPOWER_SLOT = 15;
+    private static final String SPIRIT_ESSENCE = ItemKeys.slimefunId("SPIRIT_ESSENCE");
 
     public ServitorShrine(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, RitualService rituals,
         ServitorService servitors) {
@@ -45,14 +56,16 @@ public class ServitorShrine extends SlimefunItem {
             @Override
             public void init() {
                 for (int slot = 0; slot < 18; slot++) {
-                    if (slot != CONTRACT_SLOT && slot != INFO_SLOT) {
+                    if (slot != CONTRACT_SLOT && slot != INFO_SLOT && slot != EMPOWER_SLOT) {
                         drawBackground(new int[] { slot });
                     }
                 }
                 addItem(INFO_SLOT, MenuUtils.icon(Material.HEART_OF_THE_SEA, "&5Servitor Shrine",
-                    "&7Put a &fContract &7in the slot above.", "&7Harvest / Gather: works 9x9 around the shrine",
-                    "&7Ward: no hostile spawns within 8 blocks", "", "&7No fuel. Output lands in the store below;",
-                    "&7cargo and Networks can pull from it."), (p, s, i, a) -> false);
+                    "&7Put a &fContract &7in the top slot;", "&7swap it any time to change the job.",
+                    "", "&7Harvest, Gather, Shepherd, Beekeeper,", "&7Brewer's Aid: 9x9 around the shrine",
+                    "&7Ward, Acolyte: 17x17", "", "&7The store below holds output and supplies;",
+                    "&7cargo and Networks can use it."), (p, s, i, a) -> false);
+                addItem(EMPOWER_SLOT, empowerIcon(), (p, s, i, a) -> false);
             }
 
             @Override
@@ -62,37 +75,48 @@ public class ServitorShrine extends SlimefunItem {
 
             @Override
             public int[] getSlotsAccessedByItemTransport(ItemTransportFlow flow) {
-                return flow == ItemTransportFlow.WITHDRAW ? STORE : new int[0];
+                return STORE;
             }
 
             @Override
             public void newInstance(BlockMenu menu, Block block) {
-                // the store is output only
-                for (int slot : STORE) {
-                    menu.addMenuClickHandler(slot, new AdvancedMenuClickHandler() {
-                        @Override
-                        public boolean onClick(Player p, int s, ItemStack cursor, ClickAction action) {
-                            return false;
-                        }
+                // only contracts go in the contract slot
+                menu.addMenuClickHandler(CONTRACT_SLOT, new AdvancedMenuClickHandler() {
+                    @Override
+                    public boolean onClick(Player p, int s, ItemStack cursor, ClickAction action) {
+                        return false;
+                    }
 
-                        @Override
-                        public boolean onClick(InventoryClickEvent e, Player p, int s, ItemStack cursor, ClickAction action) {
-                            return cursor == null || cursor.getType().isAir();
-                        }
-                    });
-                }
+                    @Override
+                    public boolean onClick(InventoryClickEvent e, Player p, int s, ItemStack cursor, ClickAction action) {
+                        return MenuUtils.isEmpty(cursor) || ServitorService.Contract.of(MenuUtils.keyOf(cursor)) != null;
+                    }
+                });
+                menu.addMenuClickHandler(EMPOWER_SLOT, (p, slot, stack, action) -> {
+                    if (takeEssence(p)) {
+                        servitors.empower(block);
+                        p.playSound(block.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1F, 1.4F);
+                        p.sendMessage(ChatColor.LIGHT_PURPLE + "The spirit is empowered: double speed for "
+                            + (servitors.empoweredFor(block) / 60000 + 1) + " minutes.");
+                    } else {
+                        p.sendMessage(ChatColor.GRAY + "You need a Spirit Essence in your inventory to empower the shrine.");
+                    }
+                    return false;
+                });
             }
         };
 
         addItemHandler(new BlockPlaceHandler(false) {
             @Override
             public void onPlayerPlace(BlockPlaceEvent e) {
-                if (servitors.countInChunk(e.getBlock()) >= ServitorService.MAX_PER_CHUNK) {
+                if (!servitors.canPlace(e.getBlock().getLocation())) {
                     e.setCancelled(true);
-                    e.getPlayer().sendMessage(ChatColor.RED + "Too many spirits bound in this chunk (max " + ServitorService.MAX_PER_CHUNK + ").");
+                    e.getPlayer().sendMessage(ChatColor.RED + "Too many spirits bound nearby (max " + ServitorService.MAX_NEARBY
+                        + " shrines within " + ServitorService.CAP_RADIUS + " blocks).");
                     return;
                 }
                 BlockStorage.addBlockInfo(e.getBlock(), ServitorService.OWNER_KEY, e.getPlayer().getUniqueId().toString());
+                servitors.onPlaced(e.getBlock());
             }
         });
 
@@ -124,6 +148,23 @@ public class ServitorShrine extends SlimefunItem {
                 }
             }
         });
+    }
+
+    private static ItemStack empowerIcon() {
+        return MenuUtils.icon(Material.POPPED_CHORUS_FRUIT, "&dEmpower",
+            "&7Click with a &fSpirit Essence &7in your", "&7inventory: double speed for &f1 hour&7.",
+            "&7Banks up to 24 hours. Stacks with a", "&7Frenzy Idol (x1.5) for x3.");
+    }
+
+    private static boolean takeEssence(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            SlimefunItem sfItem = item == null || item.getType().isAir() ? null : SlimefunItem.getByItem(item);
+            if (sfItem != null && sfItem.getId().equals(SPIRIT_ESSENCE)) {
+                item.setAmount(item.getAmount() - 1);
+                return true;
+            }
+        }
+        return false;
     }
 
     private static int[] range(int from, int to) {

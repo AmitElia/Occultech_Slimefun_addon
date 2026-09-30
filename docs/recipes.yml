@@ -18,6 +18,8 @@
 # Weapons use item durability (never Slimefun energy); they stop working at 1 durability instead of breaking,
 # and are repaired in an anvil with the listed boss drop. Mending is disabled. See docs/mechanics.md.
 #   material : vanilla item used for the look (required for tiers that are implemented in code)
+#   head     : optional player-head texture (the base64 texture value or the textures.minecraft.net hash); replaces the material look
+#   durability / repair : max durability and the item that repairs it in a repair ritual (weapon on the altar, repair items in bowls, 25% each)
 #   in_place : RITUAL whose center is the altar block itself (altar left empty); the result replaces the altar block
 #   alt_recipes : optional extra routes to the same item (e.g. a machine that automates it). Costs use `recipe`.
 #
@@ -75,7 +77,7 @@ researches:
   BOUND_ARTS:        {id: 3, name: "Bound Arts",        cost: 20, items: [BOUND_STEEL, SPIRIT_ESSENCE, BOUND_CHALK, BOUND_GLYPH, RESONANT_CRYSTAL, BOUND_SIGIL, BOUND_ALTAR]}
   BOUND_TROPHIES:    {id: 4, name: "Bound Trophies",    cost: 25, items: [ARCHEVOKER_EFFIGY, FRENZY_CLEAVER, DUSKWING_CHARM, MIRROR_WARD]}
   NECROMANCY:        {id: 5, name: "Necromancy",        cost: 30, items: [BONE_SCEPTER]}
-  SERVITUDE:         {id: 6, name: "Servitude",         cost: 35, items: [SERVITOR_SHRINE, HARVEST_CONTRACT, GATHER_CONTRACT, WARD_CONTRACT]}
+  SERVITUDE:         {id: 6, name: "Servitude",         cost: 35, items: [SERVITOR_SHRINE, HARVEST_CONTRACT, GATHER_CONTRACT, WARD_CONTRACT, BREWER_CONTRACT, SHEPHERD_CONTRACT, BEEKEEPER_CONTRACT, ACOLYTE_CONTRACT]}
 
 items:
   # =====================================================================
@@ -128,7 +130,7 @@ items:
     {tier: 0, material: STRING, cat: material, name: Binding Thread, purpose: "Charms, contracts and harnesses",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 4, in: {BROOD_SILK: 2, mc:STRING: 4, OCCULT_INK: 1}}}
   QUILLSHOT_BOW:
-    {tier: 0, material: BOW, durability: 600, cat: weapon, name: Quillshot Bow, purpose: "Fires a 3-arrow burst on full draw (uses 1 arrow). Durability 600, repair: Fletcher's Quill",
+    {tier: 0, material: BOW, durability: 600, repair: FLETCHERS_QUILL, cat: weapon, name: Quillshot Bow, purpose: "Fires a 3-arrow burst on full draw (uses 1 arrow). Durability 600, repair: Fletcher's Quill",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:BOW: 1, FLETCHERS_QUILL: 3, WARDED_SILVER: 2, BINDING_THREAD: 2, INITIATES_SIGIL: 1}}}
   WARDING_CHARM:
     {tier: 0, material: RABBIT_FOOT, cat: charm, name: Warding Charm, purpose: "In inventory: -15% damage from summoned creatures",
@@ -172,7 +174,7 @@ items:
      recipe: {type: RITUAL, circle: 1, out: 1, center: mc:TOTEM_OF_UNDYING, in: {FRENZIED_EDGE: 1, DUSK_MEMBRANE: 1, MIRROR_DUST: 1, mc:EMERALD_BLOCK: 2, SPIRIT_ESSENCE: 4}}}
   # tier-1 rewards
   FRENZY_CLEAVER:
-    {tier: 1, material: DIAMOND_AXE, durability: 1500, cat: weapon, name: Frenzy Cleaver, purpose: "Each hit within 3s stacks attack speed (max 5 stacks). Durability 1500, repair: Frenzied Edge",
+    {tier: 1, material: DIAMOND_AXE, durability: 1500, repair: FRENZIED_EDGE, cat: weapon, name: Frenzy Cleaver, purpose: "Each hit within 3s stacks attack speed (max 5 stacks). Durability 1500, repair: Frenzied Edge",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:DIAMOND_AXE: 1, FRENZIED_EDGE: 3, BOUND_STEEL: 2, BOUND_SIGIL: 1, SOVEREIGN_GEL: 1, RESONANT_CRYSTAL: 1}}}
   DUSKWING_CHARM:
     {tier: 1, material: TURTLE_SCUTE, cat: charm, name: Duskwing Charm, purpose: "Double jump, and no fall damage after it (cooldown)",
@@ -181,7 +183,7 @@ items:
     {tier: 1, material: GLASS_PANE, cat: charm, name: Mirror Ward, purpose: "Below 30% HP: spawns a decoy that draws mob aggro for 5s (60s cooldown)",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {MIRROR_DUST: 4, WARDING_CHARM: 1, RESONANT_CRYSTAL: 2, BINDING_THREAD: 2}}}
   BONE_SCEPTER:
-    {tier: 1, material: BONE, durability: 64, cat: weapon, name: Bone Scepter, purpose: "Necromancy: raises 2 skeleton archers for 30s. Durability 64 summons, repair: Grave Salt",
+    {tier: 1, material: BONE, durability: 64, repair: GRAVE_SALT, cat: weapon, name: Bone Scepter, purpose: "Necromancy: raises 2 skeleton archers for 30s. Durability 64 summons, repair: Grave Salt",
      recipe: {type: RITUAL, circle: 1, out: 1, center: mc:BLAZE_ROD, in: {EVOKERS_SIGIL: 1, mc:BONE_BLOCK: 8, SPIRIT_ESSENCE: 4, BOUND_SIGIL: 1, mc:SKELETON_SKULL: 1, SOVEREIGN_GEL: 1}}}
   SERVITOR_SHRINE:
     {tier: 1, material: PURPUR_PILLAR, cat: labor, name: Servitor Shrine, purpose: "Houses one bound spirit that works a 9x9 area around it (crops stay normal blocks). No fuel: the contract is the cost",
@@ -193,6 +195,18 @@ items:
     {tier: 1, material: PAPER, cat: labor, name: "Contract: Gather", purpose: "Shrine spirit collects dropped items into an adjacent chest",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 1, OCCULT_INK: 2, BINDING_THREAD: 2, mc:HOPPER: 1, SPIRIT_ESSENCE: 2, RESONANT_CRYSTAL: 1}}}
 
+  BREWER_CONTRACT:
+    {tier: 1, material: PAPER, cat: labor, name: "Contract: Brewer's Aid", purpose: "Shrine spirit fuels nearby brewing stands (blaze powder) and turns water bottles into awkward potions (nether wart) from the shrine's store",
+     recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 1, OCCULT_INK: 2, BINDING_THREAD: 1, mc:BREWING_STAND: 1, SPIRIT_ESSENCE: 2, RESONANT_CRYSTAL: 2}}}
+  SHEPHERD_CONTRACT:
+    {tier: 1, material: PAPER, cat: labor, name: "Contract: Shepherd", purpose: "Shrine spirit shears sheep in its area and stores the wool",
+     recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 1, OCCULT_INK: 2, BINDING_THREAD: 2, mc:SHEARS: 1, SPIRIT_ESSENCE: 2, RESONANT_CRYSTAL: 1}}}
+  BEEKEEPER_CONTRACT:
+    {tier: 1, material: PAPER, cat: labor, name: "Contract: Beekeeper", purpose: "Shrine spirit harvests honeycomb from full hives and nests in its area without angering the bees",
+     recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 1, OCCULT_INK: 2, BINDING_THREAD: 2, mc:HONEYCOMB: 1, SPIRIT_ESSENCE: 2, RESONANT_CRYSTAL: 1}}}
+  ACOLYTE_CONTRACT:
+    {tier: 1, material: PAPER, cat: labor, name: "Contract: Acolyte", purpose: "Shrine spirit restocks the bowls of an altar within 8 blocks with the offerings of the last ritual done there, from the shrine's store. Never starts a ritual",
+     recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 1, OCCULT_INK: 2, BOUND_SIGIL: 1, SPIRIT_ESSENCE: 3, RESONANT_CRYSTAL: 2}}}
   WARD_CONTRACT:
     {tier: 1, material: PAPER, cat: labor, name: "Contract: Ward", purpose: "Shrine spirit stops hostile mobs from spawning naturally in its area",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 1, OCCULT_INK: 2, BINDING_THREAD: 2, sf:ANCIENT_RUNE_EARTH: 1, SPIRIT_ESSENCE: 2, RESONANT_CRYSTAL: 1}}}

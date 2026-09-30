@@ -157,7 +157,11 @@ public final class ContentRegistrar {
             default -> false;
         };
 
-        return new SlimefunItemStack(ItemKeys.slimefunId(def.id()), material, nameColor(def.category()) + def.name(), meta -> {
+        if (def.repair() != null) {
+            lore.add(lore.size() - 1, color("&8Repair: ritual with " + catalog.item(def.repair()).map(ItemCatalog.ItemDef::name).orElse(def.repair())));
+            rituals.addRepair(ItemKeys.slimefunId(def.id()), ItemKeys.slimefunId(def.repair()));
+        }
+        java.util.function.Consumer<ItemMeta> look = meta -> {
             meta.setLore(lore);
             if (glint) {
                 meta.setEnchantmentGlintOverride(true);
@@ -165,7 +169,11 @@ public final class ContentRegistrar {
             if (def.durability() > 0 && meta instanceof Damageable damageable) {
                 damageable.setMaxDamage(def.durability());
             }
-        });
+        };
+        String id = ItemKeys.slimefunId(def.id());
+        String name = nameColor(def.category()) + def.name();
+        // a head texture replaces the material look (textures come from recipes.yml `head`)
+        return def.head() != null ? new SlimefunItemStack(id, def.head(), name, look) : new SlimefunItemStack(id, material, name, look);
     }
 
     private void register(ItemDef def) {

@@ -70,6 +70,8 @@ public final class RitualService {
     private final List<RitualRecipe> recipes = new ArrayList<>();
     private final Map<String, BossSpec> specs = new HashMap<>();
     private final Map<Location, Session> sessions = new HashMap<>();
+    private final Map<String, String> repairs = new HashMap<>();
+    private static final String LAST_RITUAL_KEY = "occultech_last_ritual";
     private final Set<Location> locked = new HashSet<>();
 
     public RitualService(Plugin plugin, BossService bosses, OccultechFightHooks hooks) {
@@ -180,8 +182,11 @@ public final class RitualService {
         Optional<RitualMatcher.Match> match = RitualMatcher.match(recipes, MenuUtils.keyOf(centerItem), BlockStorage.checkID(altar), bowls,
             check.get().tier());
         if (match.isEmpty()) {
-            tell(player, "&7The circle stays silent: nothing answers to these offerings.");
-            return Outcome.NO_MATCH;
+            if (MenuUtils.isEmpty(centerItem) || !startRepair(player, altar, check.get(), altarMenu, centerItem, bowlMenus, bowls)) {
+                tell(player, "&7The circle stays silent: nothing answers to these offerings.");
+                return Outcome.NO_MATCH;
+            }
+            return Outcome.STARTED;
         }
         RitualRecipe recipe = match.get().recipe();
         if (recipe.isSummon()) {
@@ -215,12 +220,111 @@ public final class RitualService {
             }
         }
 
-        Session session = new Session(altar, recipe, check.get().rotation(), bowlLocations, taken, player == null ? null : player.getUniqueId());
-        sessions.put(altar.getLocation(), session);
-        locked.add(altar.getLocation());
-        locked.addAll(bowlLocations);
-        session.start();
+        if (!recipe.inPlace()) {
+            BlockStorage.addBlockInfo(altar, LAST_RITUAL_KEY, ritualKey(recipe));
+        }
+        startSession(new Session(altar, recipe, check.get().rotation(), bowlLocations, taken, player == null ? null : player.getUniqueId(), null));
         return Outcome.STARTED;
+    }
+
+    private void startSession(Session session) {
+        sessions.put(session.altar.getLocation(), session);
+        locked.add(session.altar.getLocation());
+        locked.addAll(session.bowls);
+        session.start();
+    }
+
+    // ------------------------------------------------------------------ repair ritual
+
+    /** Registers which item repairs a durability item (from recipes.yml `repair`). */
+    public void addRepair(String itemId, String repairItemId) {
+        repairs.put(itemId, repairItemId);
+    }
+
+    /**
+     * Repair ritual: a damaged Occultech weapon on the altar and only its repair item in the bowls. Each repair item
+     * restores 25% of the maximum durability; only as many as needed are used. Breaking the circle loses the repair
+     * items but never the weapon.
+     */
+    private boolean startRepair(@Nullable Player player, Block altar, CircleCheck check, BlockMenu altarMenu, ItemStack weapon,
+        List<BlockMenu> bowlMenus, List<Bowl> bowls) {
+        SlimefunItem sfItem = SlimefunItem.getByItem(weapon);
+        String repairKey = sfItem == null ? null : repairs.get(sfItem.getId());
+        if (repairKey == null || !(weapon.getItemMeta() instanceof org.bukkit.inventory.meta.Damageable meta) || !meta.hasMaxDamage()
+            || meta.getDamage() <= 0 || weapon.getAmount() != 1) {
+            return false;
+        }
+        int available = 0;
+        for (Bowl bowl : bowls) {
+            if (!bowl.isEmpty()) {
+                if (!repairKey.equals(bowl.key())) {
+                    return false;
+                }
+                available += bowl.amount();
+            }
+        }
+        int perUnit = Math.max(1, meta.getMaxDamage() / 4);
+        int units = Math.min(available, (meta.getDamage() + perUnit - 1) / perUnit);
+        if (units <= 0) {
+            return false;
+        }
+
+        List<Taken> taken = new ArrayList<>();
+        taken.add(new Taken(altarMenu, RitualAltar.CENTER_SLOT, weapon.clone()));
+        altarMenu.replaceExistingItem(RitualAltar.CENTER_SLOT, null);
+        int left = units;
+        for (int i = 0; i < bowls.size() && left > 0; i++) {
+            if (!bowls.get(i).isEmpty()) {
+                int use = Math.min(left, bowls.get(i).amount());
+                ItemStack item = bowlMenus.get(i).getItemInSlot(OfferingBowl.SLOT).clone();
+                item.setAmount(use);
+                taken.add(new Taken(bowlMenus.get(i), OfferingBowl.SLOT, item));
+                bowlMenus.get(i).consumeItem(OfferingBowl.SLOT, use);
+                left -= use;
+            }
+        }
+        List<Location> bowlLocations = new ArrayList<>();
+        for (BlockMenu menu : bowlMenus) {
+            if (menu != null) {
+                bowlLocations.add(menu.getLocation().getBlock().getLocation());
+            }
+        }
+
+        ItemStack repaired = weapon.clone();
+        org.bukkit.inventory.meta.Damageable repairedMeta = (org.bukkit.inventory.meta.Damageable) repaired.getItemMeta();
+        repairedMeta.setDamage(Math.max(0, meta.getDamage() - units * perUnit));
+        repaired.setItemMeta(repairedMeta);
+
+        RitualRecipe marker = RitualRecipe.crafting(sfItem.getId(), 1, sfItem.getId(), Map.of(repairKey, units), check.tier());
+        startSession(new Session(altar, marker, check.rotation(), bowlLocations, taken, player == null ? null : player.getUniqueId(), repaired));
+        tell(player, "&7The circle mends your " + sfItem.getItemName() + "&7 (" + units + " offering" + (units == 1 ? "" : "s") + ").");
+        return true;
+    }
+
+    // ------------------------------------------------------------------ last ritual (Acolyte contract)
+
+    /** The last ritual performed at an altar (survives restarts), or null. */
+    @Nullable
+    public RitualRecipe lastRitual(@Nonnull Block altar) {
+        String key = BlockStorage.getLocationInfo(altar.getLocation(), LAST_RITUAL_KEY);
+        if (key == null) {
+            return null;
+        }
+        for (RitualRecipe recipe : recipes) {
+            if (!recipe.inPlace() && key.equals(ritualKey(recipe))) {
+                return recipe;
+            }
+        }
+        return null;
+    }
+
+    /** Remember a ritual as the altar's last one (the self-test uses this to prime an Acolyte). */
+    public void rememberRitual(@Nonnull Block altar, @Nonnull RitualRecipe recipe) {
+        BlockStorage.addBlockInfo(altar, LAST_RITUAL_KEY, ritualKey(recipe));
+    }
+
+    private static String ritualKey(RitualRecipe recipe) {
+        return recipe.isSummon() ? "boss:" + recipe.bossId() : "item:" + recipe.outputId();
     }
 
     /** Called on plugin disable: crafting rituals finish, summoning rituals give everything back. */
@@ -259,16 +363,22 @@ public final class RitualService {
         private final List<Location> bowls;
         private final List<Taken> taken;
         private final UUID playerId;
+        private final ItemStack repaired;
         private BukkitTask task;
         private int elapsed;
 
-        Session(Block altar, RitualRecipe recipe, int rotation, List<Location> bowls, List<Taken> taken, @Nullable UUID playerId) {
+        /**
+         * @param repaired for a repair ritual: the mended weapon to hand back (null for recipes)
+         */
+        Session(Block altar, RitualRecipe recipe, int rotation, List<Location> bowls, List<Taken> taken, @Nullable UUID playerId,
+            @Nullable ItemStack repaired) {
             this.altar = altar;
             this.recipe = recipe;
             this.rotation = rotation;
             this.bowls = bowls;
             this.taken = taken;
             this.playerId = playerId;
+            this.repaired = repaired;
         }
 
         void start() {
@@ -314,6 +424,15 @@ public final class RitualService {
 
         void finish(boolean withEffects) {
             end();
+            if (repaired != null) {
+                deliver(repaired.clone());
+                if (withEffects) {
+                    altar.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, center(), 20, 0.3, 0.3, 0.3, 0);
+                    altar.getWorld().playSound(center(), Sound.BLOCK_ANVIL_USE, 0.7F, 1.4F);
+                    tell(player(), "&dThe circle has mended your weapon.");
+                }
+                return;
+            }
             if (recipe.isSummon()) {
                 BossSpec spec = specs.get(recipe.bossId());
                 ItemStack refund = recipe.center() == null || taken.isEmpty() ? null : taken.get(0).item().clone();
@@ -375,8 +494,21 @@ public final class RitualService {
             }
         }
 
+        private void deliver(ItemStack item) {
+            BlockMenu menu = BlockStorage.getInventory(altar);
+            if (menu != null && MenuUtils.isEmpty(menu.getItemInSlot(RitualAltar.CENTER_SLOT))) {
+                menu.replaceExistingItem(RitualAltar.CENTER_SLOT, item);
+            } else {
+                altar.getWorld().dropItemNaturally(center(), item);
+            }
+        }
+
         private void fail() {
             end();
+            if (repaired != null && !taken.isEmpty()) {
+                // a broken repair loses the offerings, never the weapon
+                deliver(taken.get(0).item().clone());
+            }
             altar.getWorld().spawnParticle(Particle.LARGE_SMOKE, center(), 30, 0.4, 0.4, 0.4, 0.02);
             altar.getWorld().playSound(center(), Sound.BLOCK_FIRE_EXTINGUISH, 1F, 0.6F);
             tell(player(), "&cThe circle was broken. The offerings are lost.");

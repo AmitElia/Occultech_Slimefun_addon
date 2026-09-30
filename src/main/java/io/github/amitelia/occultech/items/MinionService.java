@@ -16,6 +16,7 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.AbstractArrow;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
@@ -23,16 +24,17 @@ import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Skeleton;
+import org.bukkit.entity.Tameable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
@@ -43,8 +45,9 @@ import io.github.amitelia.occultech.core.Keys;
 /**
  * Necromancy minions: undead that fight for a player for a short time.
  * <ul>
- * <li>They attack hostile mobs, bosses, and whatever their owner hits or is hit by; never players, villagers, animals
- * or other minions. They never hurt players.</li>
+ * <li>They attack <b>whatever their owner attacks</b> (except players, other minions and the owner's pets) and whatever
+ * attacks their owner. That target is re-applied every half second so vanilla AI can't drop it.</li>
+ * <li>On their own they only pick fights with hostile mobs and bosses. They never hurt players.</li>
  * <li>They follow their owner, don't burn in daylight, never drop anything, and despawn when their time runs out or
  * the owner logs out, dies or changes world. They are never saved with the world.</li>
  * <li>Mobs killed only by minions give no XP, so AFK minion farms don't pay.</li>
@@ -53,9 +56,13 @@ import io.github.amitelia.occultech.core.Keys;
  */
 public final class MinionService implements Listener {
 
-    private record Minion(Mob entity, UUID owner, long expires) {}
+    private static final double COMMAND_RANGE = 32;
+
+    /** @param anchor a fixed spot to guard when there is no online owner (self-test only), else null */
+    private record Minion(Mob entity, UUID owner, long expires, @Nullable Location anchor) {}
 
     private final Map<UUID, List<Minion>> byOwner = new HashMap<>();
+    private final Map<UUID, LivingEntity> commanded = new HashMap<>();
 
     public MinionService(Plugin plugin) {
         Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -64,28 +71,26 @@ public final class MinionService implements Listener {
 
     /** Raises skeleton archers around the owner. */
     public void raiseSkeletons(Player owner, int count, int seconds) {
-        long expires = System.currentTimeMillis() + seconds * 1000L;
-        for (int i = 0; i < count; i++) {
-            double angle = ThreadLocalRandom.current().nextDouble(Math.PI * 2);
-            Location at = owner.getLocation().add(Math.cos(angle) * 1.5, 0, Math.sin(angle) * 1.5);
-            Skeleton skeleton = owner.getWorld().spawn(at, Skeleton.class, s -> {
-                s.setPersistent(false);
-                s.setRemoveWhenFarAway(false);
-                s.setShouldBurnInDay(false);
-                s.setCanPickupItems(false);
-                s.setCustomName(ChatColor.GRAY + owner.getName() + "'s Bound Skeleton");
-                s.setCustomNameVisible(false);
-                s.getEquipment().setItemInMainHand(new ItemStack(Material.BOW));
-                s.getEquipment().setHelmet(new ItemStack(Material.LEATHER_HELMET));
-                for (EquipmentSlot slot : new EquipmentSlot[] { EquipmentSlot.HAND, EquipmentSlot.HEAD }) {
-                    s.getEquipment().setDropChance(slot, 0F);
-                }
-                s.getPersistentDataContainer().set(Keys.MINION_OWNER, PersistentDataType.STRING, owner.getUniqueId().toString());
-            });
-            byOwner.computeIfAbsent(owner.getUniqueId(), k -> new ArrayList<>()).add(new Minion(skeleton, owner.getUniqueId(), expires));
-            at.getWorld().spawnParticle(Particle.SOUL, at.clone().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.02);
-        }
+        raise(owner.getUniqueId(), owner.getName(), owner.getLocation(), count, seconds, null);
         owner.getWorld().playSound(owner.getLocation(), Sound.ENTITY_SKELETON_AMBIENT, 1F, 0.6F);
+    }
+
+    /** Self-test: raises minions for an owner who isn't online, guarding {@code at}. */
+    public List<Mob> raiseForTest(UUID owner, Location at, int count, int seconds) {
+        return raise(owner, "Test", at, count, seconds, at);
+    }
+
+    /** Orders an owner's minions to attack a target (what an owner's hit does). False if the target isn't allowed. */
+    public boolean command(UUID owner, LivingEntity target) {
+        if (!mayBeCommanded(owner, target)) {
+            return false;
+        }
+        commanded.put(owner, target);
+        List<Minion> minions = byOwner.get(owner);
+        if (minions != null) {
+            minions.forEach(m -> m.entity().setTarget(target));
+        }
+        return true;
     }
 
     public int count(Player owner) {
@@ -93,22 +98,80 @@ public final class MinionService implements Listener {
         return minions == null ? 0 : minions.size();
     }
 
+    /** Removes an owner's minions (plugin disable, self-test cleanup). */
+    public void dismissAll(UUID owner) {
+        commanded.remove(owner);
+        List<Minion> minions = byOwner.remove(owner);
+        if (minions != null) {
+            minions.forEach(m -> dismiss(m.entity()));
+        }
+    }
+
+    public void shutdown() {
+        new ArrayList<>(byOwner.keySet()).forEach(this::dismissAll);
+    }
+
+    private List<Mob> raise(UUID owner, String ownerName, Location around, int count, int seconds, @Nullable Location anchor) {
+        long expires = System.currentTimeMillis() + seconds * 1000L;
+        List<Mob> raised = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            double angle = ThreadLocalRandom.current().nextDouble(Math.PI * 2);
+            Location at = around.clone().add(Math.cos(angle) * 1.5, 0, Math.sin(angle) * 1.5);
+            Skeleton skeleton = at.getWorld().spawn(at, Skeleton.class, s -> {
+                s.setPersistent(false);
+                s.setRemoveWhenFarAway(false);
+                s.setShouldBurnInDay(false);
+                s.setCanPickupItems(false);
+                s.setCustomName(ChatColor.GRAY + ownerName + "'s Bound Skeleton");
+                s.setCustomNameVisible(false);
+                s.getEquipment().setItemInMainHand(new ItemStack(Material.BOW));
+                s.getEquipment().setHelmet(new ItemStack(Material.LEATHER_HELMET));
+                for (EquipmentSlot slot : new EquipmentSlot[] { EquipmentSlot.HAND, EquipmentSlot.HEAD }) {
+                    s.getEquipment().setDropChance(slot, 0F);
+                }
+                s.getPersistentDataContainer().set(Keys.MINION_OWNER, PersistentDataType.STRING, owner.toString());
+            });
+            byOwner.computeIfAbsent(owner, k -> new ArrayList<>()).add(new Minion(skeleton, owner, expires, anchor));
+            raised.add(skeleton);
+            at.getWorld().spawnParticle(Particle.SOUL, at.clone().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.02);
+        }
+        return raised;
+    }
+
     // ------------------------------------------------------------------ upkeep
 
     private void tick() {
         long now = System.currentTimeMillis();
         byOwner.entrySet().removeIf(entry -> {
-            Player owner = Bukkit.getPlayer(entry.getKey());
+            UUID ownerId = entry.getKey();
+            Player owner = Bukkit.getPlayer(ownerId);
+            LivingEntity target = commanded.get(ownerId);
+            if (target != null && (!target.isValid() || target.isDead())) {
+                commanded.remove(ownerId);
+                target = null;
+            }
+            LivingEntity order = target;
             entry.getValue().removeIf(minion -> {
-                boolean gone = !minion.entity().isValid() || minion.entity().isDead();
-                if (gone || now >= minion.expires() || owner == null || owner.isDead() || owner.getWorld() != minion.entity().getWorld()) {
-                    dismiss(minion.entity());
+                Mob mob = minion.entity();
+                boolean ownerGone = minion.anchor() == null && (owner == null || owner.isDead() || owner.getWorld() != mob.getWorld());
+                if (!mob.isValid() || mob.isDead() || now >= minion.expires() || ownerGone) {
+                    dismiss(mob);
                     return true;
                 }
-                follow(minion.entity(), owner);
+                if (order != null && order.getWorld() == mob.getWorld() && order.getLocation().distanceSquared(mob.getLocation()) < COMMAND_RANGE * COMMAND_RANGE) {
+                    if (mob.getTarget() != order) {
+                        mob.setTarget(order);
+                    }
+                } else if (owner != null) {
+                    follow(mob, owner);
+                }
                 return false;
             });
-            return entry.getValue().isEmpty();
+            if (entry.getValue().isEmpty()) {
+                commanded.remove(ownerId);
+                return true;
+            }
+            return false;
         });
     }
 
@@ -126,18 +189,6 @@ public final class MinionService implements Listener {
             minion.getWorld().spawnParticle(Particle.SOUL, minion.getLocation().add(0, 1, 0), 10, 0.2, 0.5, 0.2, 0.02);
             minion.remove();
         }
-    }
-
-    private void dismissAll(UUID owner) {
-        List<Minion> minions = byOwner.remove(owner);
-        if (minions != null) {
-            minions.forEach(m -> dismiss(m.entity()));
-        }
-    }
-
-    /** Removes every minion (plugin disable). */
-    public void shutdown() {
-        new ArrayList<>(byOwner.keySet()).forEach(this::dismissAll);
     }
 
     @EventHandler
@@ -163,7 +214,8 @@ public final class MinionService implements Listener {
         if (owner == null || e.getTarget() == null) {
             return;
         }
-        if (!mayAttack(e.getTarget())) {
+        boolean ordered = e.getTarget() == commanded.get(owner);
+        if (!ordered && !mayPickOnItsOwn(e.getTarget())) {
             e.setCancelled(true);
         }
     }
@@ -172,9 +224,9 @@ public final class MinionService implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onOwnerFight(EntityDamageByEntityEvent e) {
         Entity damager = source(e.getDamager());
-        if (damager instanceof Player owner && e.getEntity() instanceof LivingEntity victim && mayAttack(victim)) {
+        if (damager instanceof Player owner && byOwner.containsKey(owner.getUniqueId()) && e.getEntity() instanceof LivingEntity victim) {
             command(owner.getUniqueId(), victim);
-        } else if (e.getEntity() instanceof Player owner && damager instanceof LivingEntity attacker && mayAttack(attacker)) {
+        } else if (e.getEntity() instanceof Player owner && byOwner.containsKey(owner.getUniqueId()) && damager instanceof LivingEntity attacker) {
             command(owner.getUniqueId(), attacker);
         }
     }
@@ -207,19 +259,16 @@ public final class MinionService implements Listener {
         }
     }
 
-    private void command(UUID owner, LivingEntity target) {
-        List<Minion> minions = byOwner.get(owner);
-        if (minions != null) {
-            for (Minion minion : minions) {
-                if (minion.entity() != target) {
-                    minion.entity().setTarget(target);
-                }
-            }
+    /** What an owner may send minions after: anything alive except players, other minions, decoys and the owner's own pets. */
+    private static boolean mayBeCommanded(UUID owner, @Nullable LivingEntity target) {
+        if (target == null || target instanceof Player || target instanceof ArmorStand || Keys.minionOwner(target) != null) {
+            return false;
         }
+        return !(target instanceof Tameable pet && pet.getOwner() != null && owner.equals(pet.getOwner().getUniqueId()));
     }
 
-    /** Minions fight hostile mobs and bosses only: never players, villagers, animals or other minions. */
-    private static boolean mayAttack(@Nullable Entity target) {
+    /** What minions attack without orders: hostile mobs and bosses only. */
+    private static boolean mayPickOnItsOwn(@Nullable Entity target) {
         if (target == null || target instanceof Player || Keys.minionOwner(target) != null) {
             return false;
         }

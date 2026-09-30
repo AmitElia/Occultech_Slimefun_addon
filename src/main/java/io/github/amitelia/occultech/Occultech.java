@@ -60,6 +60,7 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         rituals = new RitualService(this, bosses, hooks);
         servitors = new ServitorService(this);
         minions = new MinionService(this);
+        servitors.setRituals(rituals);
         registrar = new ContentRegistrar(this, catalog, rituals);
         registrar.registerAll();
         registrar.problems().forEach(problem -> getLogger().warning("Content problem: " + problem));
