@@ -29,8 +29,10 @@ final class CodexMenu {
 
     private static final int[] LIST_SLOTS = listSlots();
     private static final int CENTER = 22;
-    private static final int[] BOWL_SLOTS = { 13, 21, 23, 31 };
-    private static final int[] CANDLE_SLOTS = { 12, 14, 30, 32 };
+    // first the four sides, then the four corners (used when a ritual has more than 4 offerings)
+    private static final int[] BOWL_SLOTS = { 13, 21, 23, 31, 12, 14, 30, 32 };
+    private static final int VIEW_ROWS = 5;
+    private static final int VIEW_COLUMNS = 7;
 
     private final RitualService rituals;
 
@@ -41,7 +43,7 @@ final class CodexMenu {
     void openHome(Player player) {
         ChestMenu menu = menu("&5Occult Codex", 27);
         button(menu, 11, MenuUtils.icon(Material.LODESTONE, "&5Summoning Circles", "&7How to lay out each circle.", "", "&eClick to open"),
-            () -> openCircle(player, 0, null));
+            () -> openCircleList(player));
         button(menu, 13, MenuUtils.icon(Material.ENCHANTED_BOOK, "&dCrafting Rituals", "&7Items made on the altar.", "", "&eClick to open"),
             () -> openRitualList(player, false));
         button(menu, 15, MenuUtils.icon(Material.WITHER_SKELETON_SKULL, "&cSummoning Rituals", "&7Bosses you can call into a circle.", "", "&eClick to open"),
@@ -52,13 +54,38 @@ final class CodexMenu {
         menu.open(player);
     }
 
-    /**
-     * @param check a live check of an altar's circle to mark missing pieces, or null to just show the layout
-     */
-    void openCircle(Player player, int tier, @Nullable RitualService.CircleCheck check) {
-        CirclePattern pattern = Circles.forTier(tier);
-        ChestMenu menu = menu("&5Initiate's Circle &8(5x5)", 54);
+    private void openCircleList(Player player) {
+        ChestMenu menu = menu("&5Summoning Circles", 27);
         back(menu, player);
+        for (int tier = 0; tier <= Circles.highestTier(); tier++) {
+            int t = tier;
+            int size = Circles.forTier(tier).radius() * 2 + 1;
+            button(menu, 11 + tier * 2, MenuUtils.icon(tier == 0 ? Material.LODESTONE : Material.AMETHYST_BLOCK, "&5" + Circles.name(tier),
+                "&7" + size + "x" + size + ", tier " + tier, "", "&eClick to see the layout"), () -> openCircle(player, t, null));
+        }
+        menu.open(player);
+    }
+
+    void openCircle(Player player, int tier, @Nullable RitualService.CircleCheck check) {
+        openCircle(player, tier, check, 0);
+    }
+
+    /**
+     * @param check     a live check of an altar's circle to mark missing pieces, or null to just show the layout
+     * @param rowOffset first pattern row shown (big circles scroll: the view is 5 rows tall)
+     */
+    void openCircle(Player player, int tier, @Nullable RitualService.CircleCheck check, int rowOffset) {
+        CirclePattern pattern = Circles.forTier(tier);
+        int size = pattern.radius() * 2 + 1;
+        ChestMenu menu = menu("&5" + Circles.name(tier) + " &8(" + size + "x" + size + ")", 54);
+        back(menu, player);
+        int maxOffset = Math.max(0, size - VIEW_ROWS);
+        if (rowOffset > 0) {
+            button(menu, 3, MenuUtils.icon(Material.SPECTRAL_ARROW, "&7Scroll up"), () -> openCircle(player, tier, check, rowOffset - 1));
+        }
+        if (rowOffset < maxOffset) {
+            button(menu, 5, MenuUtils.icon(Material.SPECTRAL_ARROW, "&7Scroll down"), () -> openCircle(player, tier, check, rowOffset + 1));
+        }
 
         Set<String> missingCells = new HashSet<>();
         if (check != null) {
@@ -69,13 +96,15 @@ final class CodexMenu {
         }
 
         int r = pattern.radius();
+        int leftColumn = 1 + (VIEW_COLUMNS - Math.min(size, VIEW_COLUMNS)) / 2;
         for (int dz = -r; dz <= r; dz++) {
             for (int dx = -r; dx <= r; dx++) {
                 String glyph = pattern.glyphAt(dx, dz);
-                int slot = (dz + r + 1) * 9 + (dx + r + 2);
-                if (glyph == null) {
+                int row = dz + r - rowOffset;
+                if (glyph == null || row < 0 || row >= VIEW_ROWS || dx + r >= VIEW_COLUMNS) {
                     continue;
                 }
+                int slot = (row + 1) * 9 + leftColumn + dx + r;
                 String name = nameOf(glyph);
                 ItemStack icon = missingCells.contains(dx + "," + dz)
                     ? MenuUtils.icon(Material.RED_STAINED_GLASS_PANE, "&cMissing: " + name, "&7Place a " + name + " here.")
@@ -131,13 +160,14 @@ final class CodexMenu {
                     (p, s, i, a) -> false);
             }
         }
-        for (int slot : CANDLE_SLOTS) {
-            menu.addItem(slot, MenuUtils.icon(Material.WHITE_CANDLE, "&eTallow Candle"), (p, s, i, a) -> false);
+        if (recipe.inPlace()) {
+            menu.addItem(CENTER, withLore(itemOf(recipe.center(), 1), "", "&5This altar itself: leave its slot empty.", "&5The altar is upgraded in place."),
+                (p, s, i, a) -> false);
         }
 
         menu.addItem(24, MenuUtils.icon(Material.SPECTRAL_ARROW, "&7becomes"), (p, s, i, a) -> false);
         menu.addItem(25, recipe.isSummon() ? bossIcon(recipe) : itemOf(recipe.outputId(), recipe.outputAmount()), (p, s, i, a) -> false);
-        menu.addItem(49, MenuUtils.icon(Material.LODESTONE, "&5Needs: " + circleName(recipe.circle()),
+        menu.addItem(49, MenuUtils.icon(Material.LODESTONE, "&5Needs: " + Circles.name(recipe.circle()) + " or larger",
             "&7Open the Circles page", "&7to see the layout."), (p, s, i, a) -> false);
         menu.open(player);
     }
@@ -163,12 +193,12 @@ final class CodexMenu {
             case "VOLLEY" -> Material.SKELETON_SPAWN_EGG;
             case "WITCH_COVEN" -> Material.WITCH_SPAWN_EGG;
             case "GELATINOUS_SOVEREIGN" -> Material.SLIME_SPAWN_EGG;
+            case "THE_UNBOUND" -> Material.VINDICATOR_SPAWN_EGG;
+            case "NIGHT_MATRIARCH" -> Material.PHANTOM_SPAWN_EGG;
+            case "MIRRORED_MAGUS" -> Material.PILLAGER_SPAWN_EGG;
+            case "ARCHEVOKER" -> Material.EVOKER_SPAWN_EGG;
             default -> Material.ZOMBIE_SPAWN_EGG;
         };
-    }
-
-    private static String circleName(int tier) {
-        return tier == 0 ? "Initiate's Circle" : "Tier " + tier + " circle";
     }
 
     private static ItemStack itemOf(@Nullable String key, int amount) {

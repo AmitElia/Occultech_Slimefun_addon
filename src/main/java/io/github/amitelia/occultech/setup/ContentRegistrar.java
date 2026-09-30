@@ -24,7 +24,12 @@ import io.github.amitelia.occultech.content.ItemCatalog;
 import io.github.amitelia.occultech.content.ItemCatalog.ItemDef;
 import io.github.amitelia.occultech.content.ItemCatalog.RecipeDef;
 import io.github.amitelia.occultech.content.ItemKeys;
+import io.github.amitelia.occultech.items.BoneScepter;
 import io.github.amitelia.occultech.items.BroodEgg;
+import io.github.amitelia.occultech.items.FrenzyIdol;
+import io.github.amitelia.occultech.items.ProducerBlock;
+import io.github.amitelia.occultech.items.ScryingMirror;
+import io.github.amitelia.occultech.items.ServitorShrine;
 import io.github.amitelia.occultech.items.OccultCodex;
 import io.github.amitelia.occultech.items.OccultItem;
 import io.github.amitelia.occultech.items.OfferingBowl;
@@ -45,7 +50,7 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
  */
 public final class ContentRegistrar {
 
-    public static final int IMPLEMENTED_TIER = 0;
+    public static final int IMPLEMENTED_TIER = 1;
     private static final double ARENA_RADIUS_BASE = 12;
 
     private static final int[] BOWL_DISPLAY_SLOTS = { 1, 3, 5, 7, 0, 2, 6, 8 };
@@ -192,12 +197,18 @@ public final class ContentRegistrar {
         }
 
         SlimefunItem item = switch (def.id()) {
-            case "INITIATE_ALTAR" -> new RitualAltar(group, stack, type, grid, output, rituals);
+            case "INITIATE_ALTAR", "BOUND_ALTAR" -> new RitualAltar(group, stack, type, grid, output, rituals);
             case "OFFERING_BOWL" -> new OfferingBowl(group, stack, type, grid, output, rituals);
             case "OCCULT_CODEX" -> new OccultCodex(group, stack, type, grid, output, rituals, plugin);
             case "BROOD_EGG" -> new BroodEgg(group, stack, type, grid, output, rituals, plugin.getConfig().getInt("brood-egg.seconds-per-string", 20));
             // placeable circle pieces are plain Slimefun blocks
-            case "CHALK_GLYPH", "TALLOW_CANDLE" -> new SlimefunItem(group, stack, type, grid, output);
+            case "CHALK_GLYPH", "TALLOW_CANDLE", "BOUND_GLYPH" -> new SlimefunItem(group, stack, type, grid, output);
+            case "SERVITOR_SHRINE" -> new ServitorShrine(group, stack, type, grid, output, rituals, plugin.servitors());
+            case "FRENZY_IDOL" -> new FrenzyIdol(group, stack, type, grid, output, rituals, plugin.servitors());
+            case "SCRYING_MIRROR" -> new ScryingMirror(group, stack, type, grid, output, rituals);
+            case "PHANTOM_ROOST" -> new ProducerBlock(group, stack, type, grid, output, rituals, Material.PHANTOM_MEMBRANE, "membranes",
+                plugin.getConfig().getInt("phantom-roost.seconds-per-membrane", 90), Material.BONE_BLOCK);
+            case "BONE_SCEPTER" -> new BoneScepter(group, stack, type, grid, output, plugin.minions());
             default -> new OccultItem(group, stack, type, grid, output);
         };
         item.register(plugin);
@@ -246,8 +257,10 @@ public final class ContentRegistrar {
             offerings.put(ItemKeys.fromCatalog(entry.getKey()), entry.getValue());
         }
 
-        rituals.addRecipe(RitualRecipe.crafting(ItemKeys.slimefunId(def.id()), Math.max(1, recipe.out()),
-            ItemKeys.fromCatalog(recipe.center()), Map.copyOf(offerings), recipe.circle()));
+        String center = ItemKeys.fromCatalog(recipe.center());
+        rituals.addRecipe(recipe.inPlace()
+            ? RitualRecipe.upgrade(ItemKeys.slimefunId(def.id()), center, Map.copyOf(offerings), recipe.circle())
+            : RitualRecipe.crafting(ItemKeys.slimefunId(def.id()), Math.max(1, recipe.out()), center, Map.copyOf(offerings), recipe.circle()));
         return grid;
     }
 

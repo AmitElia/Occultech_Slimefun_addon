@@ -203,7 +203,10 @@ public final class BossService implements Listener {
         if (damager instanceof Tameable pet && pet.getOwner() instanceof Player player) {
             return player;
         }
-        return null;
+        // necromancy minions (and their arrows) fight for their owner
+        Entity source = damager instanceof Projectile p && p.getShooter() instanceof Entity shooter ? shooter : damager;
+        UUID owner = Keys.minionOwner(source);
+        return owner == null ? null : Bukkit.getPlayer(owner);
     }
 
     // ------------------------------------------------------------------ damage & targeting
@@ -261,7 +264,29 @@ public final class BossService implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onTarget(EntityTargetLivingEntityEvent e) {
-        if (Keys.isSummoned(e.getEntity()) && e.getTarget() != null && !(e.getTarget() instanceof Player)) {
+        Entity target = e.getTarget();
+        if (!Keys.isSummoned(e.getEntity()) || target == null || target instanceof Player) {
+            return;
+        }
+        // players' necromancy minions are fair game; so are the fight's own extras (e.g. the Unbound's thralls)
+        boolean minion = Keys.minionOwner(target) != null;
+        boolean sameFight = Keys.isSummoned(target) && java.util.Objects.equals(Keys.fightOf(target), Keys.fightOf(e.getEntity()));
+        if (!minion && !sameFight) {
+            e.setCancelled(true);
+        }
+    }
+
+    /** Vexes and fangs an evoker boss creates on its own become part of its fight. */
+    @EventHandler(ignoreCancelled = true)
+    public void onSpawn(org.bukkit.event.entity.EntitySpawnEvent e) {
+        Entity owner = null;
+        if (e.getEntity() instanceof org.bukkit.entity.Vex vex) {
+            owner = vex.getSummoner();
+        } else if (e.getEntity() instanceof org.bukkit.entity.EvokerFangs fangs) {
+            owner = fangs.getOwner();
+        }
+        BossFight fight = fightOf(owner);
+        if (fight != null && !Keys.isSummoned(e.getEntity()) && !fight.adopt(e.getEntity())) {
             e.setCancelled(true);
         }
     }
@@ -361,7 +386,7 @@ public final class BossService implements Listener {
         e.setDroppedExp(0);
         BossFight fight = fightOf(e.getEntity());
         if (fight != null) {
-            fight.onEntityDeath(e.getEntity());
+            fight.onEntityDeath(e.getEntity(), e.getEntity().getKiller());
         }
     }
 

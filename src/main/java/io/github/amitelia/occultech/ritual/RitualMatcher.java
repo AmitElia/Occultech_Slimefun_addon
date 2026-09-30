@@ -36,8 +36,22 @@ public final class RitualMatcher {
 
     @Nonnull
     public static Optional<Match> match(@Nonnull Collection<RitualRecipe> recipes, @Nullable String centerKey, @Nonnull List<Bowl> bowls, int circleTier) {
+        return match(recipes, centerKey, null, bowls, circleTier);
+    }
+
+    /**
+     * @param altarId the altar block's own id, for in-place upgrade rituals (which need an empty altar slot)
+     */
+    @Nonnull
+    public static Optional<Match> match(@Nonnull Collection<RitualRecipe> recipes, @Nullable String centerKey, @Nullable String altarId,
+        @Nonnull List<Bowl> bowls, int circleTier) {
         for (RitualRecipe recipe : recipes) {
-            boolean centerMatches = recipe.center() == null ? centerKey == null : recipe.center().equals(centerKey);
+            boolean centerMatches;
+            if (recipe.inPlace()) {
+                centerMatches = centerKey == null && recipe.center() != null && recipe.center().equals(altarId);
+            } else {
+                centerMatches = recipe.center() == null ? centerKey == null : recipe.center().equals(centerKey);
+            }
             if (recipe.circle() <= circleTier && centerMatches) {
                 int[] take = assign(recipe, bowls);
                 if (take != null) {

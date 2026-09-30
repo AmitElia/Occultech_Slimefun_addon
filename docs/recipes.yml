@@ -18,6 +18,7 @@
 # Weapons use item durability (never Slimefun energy); they stop working at 1 durability instead of breaking,
 # and are repaired in an anvil with the listed boss drop. Mending is disabled. See docs/mechanics.md.
 #   material : vanilla item used for the look (required for tiers that are implemented in code)
+#   in_place : RITUAL whose center is the altar block itself (altar left empty); the result replaces the altar block
 #   alt_recipes : optional extra routes to the same item (e.g. a machine that automates it). Costs use `recipe`.
 #
 # Progression rules used here
@@ -49,10 +50,10 @@ bosses:
   WITCH_COVEN:          {tier: 0, kind: lesser, base: "3x WITCH", drop: COVEN_BREW_BASE, drops: 3, offerings: {mc:GLOWSTONE_DUST: 4, mc:REDSTONE: 4, mc:SUGAR: 4, GRAVE_SALT: 2}, mob_drops: {mc:REDSTONE: "2-6", mc:GLOWSTONE_DUST: "2-6", mc:SUGAR: "1-4", mc:GUNPOWDER: "1-3", mc:GLASS_BOTTLE: "1-3"}, xp: 50}
   GELATINOUS_SOVEREIGN: {tier: 0, kind: major,  base: SLIME,      drop: SOVEREIGN_GEL,   drops: 3, catalyst: SOVEREIGN_CATALYST, offerings: {mc:SLIME_BLOCK: 2, GRAVE_SALT: 4, TALLOW_CANDLE: 2}, mob_drops: {mc:SLIME_BALL: "8-16", mc:SLIME_BLOCK: "0-2"}, xp: 100}
   # ---- Tier 1 (basic diamond)
-  THE_UNBOUND:          {tier: 1, kind: lesser, base: VINDICATOR, drop: FRENZIED_EDGE,   drops: 3, offerings: {mc:IRON_AXE: 1, mc:EMERALD: 4, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}}
-  NIGHT_MATRIARCH:      {tier: 1, kind: lesser, base: PHANTOM,    drop: DUSK_MEMBRANE,   drops: 3, offerings: {mc:PHANTOM_MEMBRANE: 4, mc:FEATHER: 8, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}}
-  MIRRORED_MAGUS:       {tier: 1, kind: lesser, base: ILLUSIONER, drop: MIRROR_DUST,     drops: 3, offerings: {mc:GLASS_PANE: 8, mc:ENDER_EYE: 1, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}}
-  ARCHEVOKER:           {tier: 1, kind: major,  base: EVOKER,     drop: EVOKERS_SIGIL,   drops: 3, catalyst: ARCHEVOKER_EFFIGY, offerings: {mc:EMERALD_BLOCK: 2, SPIRIT_ESSENCE: 6, TALLOW_CANDLE: 4}}
+  THE_UNBOUND:          {tier: 1, kind: lesser, base: VINDICATOR, drop: FRENZIED_EDGE,   drops: 3, offerings: {mc:IRON_AXE: 1, mc:EMERALD: 4, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}, mob_drops: {mc:IRON_INGOT: "2-5", mc:EMERALD: "1-3"}, xp: 80}
+  NIGHT_MATRIARCH:      {tier: 1, kind: lesser, base: PHANTOM,    drop: DUSK_MEMBRANE,   drops: 3, offerings: {mc:PHANTOM_MEMBRANE: 4, mc:FEATHER: 8, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}, mob_drops: {mc:PHANTOM_MEMBRANE: "2-4"}, xp: 80}
+  MIRRORED_MAGUS:       {tier: 1, kind: lesser, base: ILLUSIONER, drop: MIRROR_DUST,     drops: 3, offerings: {mc:GLASS_PANE: 8, mc:ENDER_EYE: 1, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}, mob_drops: {mc:ARROW: "8-16", mc:LAPIS_LAZULI: "4-8"}, xp: 80}
+  ARCHEVOKER:           {tier: 1, kind: major,  base: EVOKER,     drop: EVOKERS_SIGIL,   drops: 3, catalyst: ARCHEVOKER_EFFIGY, offerings: {mc:EMERALD_BLOCK: 2, SPIRIT_ESSENCE: 6, TALLOW_CANDLE: 4}, mob_drops: {mc:EMERALD: "3-6", mc:BOOK: "1-3"}, xp: 160}
   # ---- Tier 2 (max-enchanted netherite)
   ABYSSAL_WARDEN:       {tier: 2, kind: lesser, base: GUARDIAN,   drop: ABYSSAL_LENS,    drops: 3, offerings: {mc:PRISMARINE_SHARD: 16, mc:PRISMARINE_CRYSTALS: 8, SPIRIT_ESSENCE: 12, TIDE_GLASS: 2}, condition: water}
   TIDEBREAKER:          {tier: 2, kind: lesser, base: "DROWNED on ZOMBIE_NAUTILUS", drop: NAUTILUS_CORE, drops: 3, offerings: {mc:NAUTILUS_SHELL: 2, mc:KELP: 16, SPIRIT_ESSENCE: 12, TIDE_GLASS: 2}, condition: water, min_mc: "1.21.11"}
@@ -71,6 +72,10 @@ researches:
   CHALK_AND_CIRCLES: {id: 0, name: "Chalk and Circles", cost: 8,  items: [RITUAL_CHALK, GRAVE_SALT, TALLOW_CANDLE, SOUL_ASH, OCCULT_INK, CHALK_GLYPH, OCCULT_CODEX]}
   WARDED_RITES:      {id: 1, name: "Warded Rites",      cost: 12, items: [WARDED_SILVER, INITIATES_SIGIL, OFFERING_BOWL, INITIATE_ALTAR]}
   TROPHY_CRAFT:      {id: 2, name: "Trophy Craft",      cost: 15, items: [BINDING_THREAD, QUILLSHOT_BOW, WARDING_CHARM, SOVEREIGN_CATALYST]}
+  BOUND_ARTS:        {id: 3, name: "Bound Arts",        cost: 20, items: [BOUND_STEEL, SPIRIT_ESSENCE, BOUND_CHALK, BOUND_GLYPH, RESONANT_CRYSTAL, BOUND_SIGIL, BOUND_ALTAR]}
+  BOUND_TROPHIES:    {id: 4, name: "Bound Trophies",    cost: 25, items: [ARCHEVOKER_EFFIGY, FRENZY_CLEAVER, DUSKWING_CHARM, MIRROR_WARD]}
+  NECROMANCY:        {id: 5, name: "Necromancy",        cost: 30, items: [BONE_SCEPTER]}
+  SERVITUDE:         {id: 6, name: "Servitude",         cost: 35, items: [SERVITOR_SHRINE, HARVEST_CONTRACT, GATHER_CONTRACT, WARD_CONTRACT]}
 
 items:
   # =====================================================================
@@ -133,60 +138,64 @@ items:
   # TIER 1 - BOUND (basic diamond gear; gate: Sovereign Gel)
   # =====================================================================
   BOUND_STEEL:
-    {tier: 1, cat: material, name: Bound Steel, purpose: "Tier-1 structural metal",
+    {tier: 1, material: NETHERITE_SCRAP, cat: material, name: Bound Steel, purpose: "Tier-1 structural metal",
      recipe: {type: SMELTERY, out: 2, in: {sf:STEEL_INGOT: 4, sf:DAMASCUS_STEEL_INGOT: 2, SOUL_ASH: 2, sf:REINFORCED_ALLOY_INGOT: 1}}}
   SPIRIT_ESSENCE:
-    {tier: 1, cat: material, name: Spirit Essence, purpose: "Tier-1+ summon offering and crafting ingredient (automated by the Soul Condenser). Never a running fuel",
+    {tier: 1, material: POPPED_CHORUS_FRUIT, cat: material, name: Spirit Essence, purpose: "Tier-1+ summon offering and crafting ingredient (automated by the Soul Condenser). Never a running fuel",
      recipe: {type: RITUAL, circle: 1, out: 4, center: sf:ENDER_LUMP_3, in: {SOUL_ASH: 4, GRAVE_SALT: 4, mc:GHAST_TEAR: 1}},
      alt_recipes: [{type: SOUL_CONDENSER, out: 4, in: {mc:SOUL_SAND: 8, SOUL_ASH: 2, mc:GHAST_TEAR: 1}}]}
   BOUND_CHALK:
-    {tier: 1, cat: material, name: Bound Chalk, purpose: "Draws Bound, Abyssal and Hollow glyphs",
+    {tier: 1, material: PURPLE_DYE, cat: material, name: Bound Chalk, purpose: "Draws Bound, Abyssal and Hollow glyphs",
      recipe: {type: MAGIC_WORKBENCH, out: 4, in: {RITUAL_CHALK: 4, SPIRIT_ESSENCE: 1, mc:AMETHYST_SHARD: 4}}}
   BOUND_GLYPH:
-    {tier: 1, cat: infrastructure, name: Bound Glyph, purpose: "Placeable tier-1 circle mark",
+    {tier: 1, material: PURPLE_CARPET, cat: infrastructure, name: Bound Glyph, purpose: "Placeable tier-1 circle mark",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 8, in: {BOUND_CHALK: 4, OCCULT_INK: 2}}}
   RESONANT_CRYSTAL:
-    {tier: 1, cat: material, name: Resonant Crystal, purpose: "Focus for tier-1 sigils and weapons",
+    {tier: 1, material: AMETHYST_CLUSTER, cat: material, name: Resonant Crystal, purpose: "Focus for tier-1 sigils and weapons",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {sf:SYNTHETIC_SAPPHIRE: 1, SPIRIT_ESSENCE: 2, mc:AMETHYST_SHARD: 4, sf:MAGIC_LUMP_3: 2}}}
   BOUND_SIGIL:
-    {tier: 1, cat: component, name: Bound Sigil, purpose: "Tier-1 core component",
+    {tier: 1, material: SHULKER_SHELL, cat: component, name: Bound Sigil, purpose: "Tier-1 core component",
      recipe: {type: ANCIENT_ALTAR, out: 1, in: {INITIATES_SIGIL: 1, BOUND_STEEL: 2, RESONANT_CRYSTAL: 2, sf:ANCIENT_RUNE_ENDER: 1, sf:ANCIENT_RUNE_LIGHTNING: 1, SPIRIT_ESSENCE: 2}}}
   BOUND_ALTAR:
-    {tier: 1, cat: infrastructure, name: Bound Altar, purpose: "Center of the 7x7 circle",
-     recipe: {type: RITUAL, circle: 0, out: 1, center: INITIATE_ALTAR, in: {BOUND_SIGIL: 3, SOVEREIGN_GEL: 4, BOUND_STEEL: 8, sf:REINFORCED_ALLOY_INGOT: 8}}}
+    {tier: 1, material: AMETHYST_BLOCK, cat: infrastructure, name: Bound Altar, purpose: "Center of the 7x7 circle. Made by a ritual on the Initiate's Altar itself (leave it empty): the altar upgrades in place",
+     recipe: {type: RITUAL, circle: 0, out: 1, center: INITIATE_ALTAR, in_place: true, in: {BOUND_SIGIL: 3, SOVEREIGN_GEL: 4, BOUND_STEEL: 8, sf:REINFORCED_ALLOY_INGOT: 8}}}
   # tier-1 boss drops
-  FRENZIED_EDGE:   {tier: 1, cat: boss_drop, name: Frenzied Edge, purpose: "Berserker melee weapons", recipe: {type: BOSS_DROP, boss: THE_UNBOUND}}
-  DUSK_MEMBRANE:   {tier: 1, cat: boss_drop, name: Dusk Membrane, purpose: "Movement items", recipe: {type: BOSS_DROP, boss: NIGHT_MATRIARCH}}
-  MIRROR_DUST:     {tier: 1, cat: boss_drop, name: Mirror Dust, purpose: "Decoy and illusion items", recipe: {type: BOSS_DROP, boss: MIRRORED_MAGUS}}
-  PHANTOM_ROOST:   {tier: 1, cat: labor, name: Phantom Roost, purpose: "Bonus drop. Placed, slowly produces Phantom Membranes into a store cargo/Networks can pull from", recipe: {type: BOSS_DROP, boss: NIGHT_MATRIARCH, chance: 0.15}}
-  SCRYING_MIRROR:  {tier: 1, cat: utility, name: Scrying Mirror, purpose: "Bonus drop. Link it to an altar; shows that circle's ritual and fight status (and boss health) from afar", recipe: {type: BOSS_DROP, boss: MIRRORED_MAGUS, chance: 0.15}}
-  FRENZY_IDOL:     {tier: 1, cat: labor, name: Frenzy Idol, purpose: "Bonus drop. Placed, Servitor Shrines within 8 blocks work 50% faster", recipe: {type: BOSS_DROP, boss: THE_UNBOUND, chance: 0.15}}
-  EVOKERS_SIGIL:   {tier: 1, cat: boss_drop, name: Evoker's Sigil, purpose: "GATE -> tier 2 (Abyssal Altar, powered machines); necromancy line", recipe: {type: BOSS_DROP, boss: ARCHEVOKER}}
+  FRENZIED_EDGE:   {tier: 1, material: FLINT, cat: boss_drop, name: Frenzied Edge, purpose: "Berserker melee weapons", recipe: {type: BOSS_DROP, boss: THE_UNBOUND}}
+  DUSK_MEMBRANE:   {tier: 1, material: PHANTOM_MEMBRANE, cat: boss_drop, name: Dusk Membrane, purpose: "Movement items", recipe: {type: BOSS_DROP, boss: NIGHT_MATRIARCH}}
+  MIRROR_DUST:     {tier: 1, material: LIGHT_GRAY_DYE, cat: boss_drop, name: Mirror Dust, purpose: "Decoy and illusion items", recipe: {type: BOSS_DROP, boss: MIRRORED_MAGUS}}
+  PHANTOM_ROOST:   {tier: 1, material: BONE_BLOCK, cat: labor, name: Phantom Roost, purpose: "Bonus drop. Placed, slowly produces Phantom Membranes into a store cargo/Networks can pull from", recipe: {type: BOSS_DROP, boss: NIGHT_MATRIARCH, chance: 0.15}}
+  SCRYING_MIRROR:  {tier: 1, material: TINTED_GLASS, cat: utility, name: Scrying Mirror, purpose: "Bonus drop. Link it to an altar; shows that circle's ritual and fight status (and boss health) from afar", recipe: {type: BOSS_DROP, boss: MIRRORED_MAGUS, chance: 0.15}}
+  FRENZY_IDOL:     {tier: 1, material: CHISELED_RESIN_BRICKS, cat: labor, name: Frenzy Idol, purpose: "Bonus drop. Placed, Servitor Shrines within 8 blocks work 50% faster", recipe: {type: BOSS_DROP, boss: THE_UNBOUND, chance: 0.15}}
+  EVOKERS_SIGIL:   {tier: 1, material: EMERALD, cat: boss_drop, name: Evoker's Sigil, purpose: "GATE -> tier 2 (Abyssal Altar, powered machines); necromancy line", recipe: {type: BOSS_DROP, boss: ARCHEVOKER}}
   ARCHEVOKER_EFFIGY:
-    {tier: 1, cat: catalyst, name: Archevoker's Effigy, purpose: "Summons the Archevoker",
+    {tier: 1, material: CARVED_PUMPKIN, cat: catalyst, name: Archevoker's Effigy, purpose: "Summons the Archevoker",
      recipe: {type: RITUAL, circle: 1, out: 1, center: mc:TOTEM_OF_UNDYING, in: {FRENZIED_EDGE: 1, DUSK_MEMBRANE: 1, MIRROR_DUST: 1, mc:EMERALD_BLOCK: 2, SPIRIT_ESSENCE: 4}}}
   # tier-1 rewards
   FRENZY_CLEAVER:
-    {tier: 1, cat: weapon, name: Frenzy Cleaver, purpose: "Each hit within 3s stacks attack speed (max 5 stacks). Durability 1500, repair: Frenzied Edge",
+    {tier: 1, material: DIAMOND_AXE, durability: 1500, cat: weapon, name: Frenzy Cleaver, purpose: "Each hit within 3s stacks attack speed (max 5 stacks). Durability 1500, repair: Frenzied Edge",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:DIAMOND_AXE: 1, FRENZIED_EDGE: 3, BOUND_STEEL: 2, BOUND_SIGIL: 1, SOVEREIGN_GEL: 1, RESONANT_CRYSTAL: 1}}}
   DUSKWING_CHARM:
-    {tier: 1, cat: charm, name: Duskwing Charm, purpose: "Double jump, and no fall damage after it (cooldown)",
+    {tier: 1, material: TURTLE_SCUTE, cat: charm, name: Duskwing Charm, purpose: "Double jump, and no fall damage after it (cooldown)",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {DUSK_MEMBRANE: 4, BINDING_THREAD: 2, BOUND_STEEL: 1, sf:ANCIENT_RUNE_AIR: 2}}}
   MIRROR_WARD:
-    {tier: 1, cat: charm, name: Mirror Ward, purpose: "Below 30% HP: spawns a decoy that draws mob aggro for 5s (60s cooldown)",
+    {tier: 1, material: GLASS_PANE, cat: charm, name: Mirror Ward, purpose: "Below 30% HP: spawns a decoy that draws mob aggro for 5s (60s cooldown)",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {MIRROR_DUST: 4, WARDING_CHARM: 1, RESONANT_CRYSTAL: 2, BINDING_THREAD: 2}}}
   BONE_SCEPTER:
-    {tier: 1, cat: weapon, name: Bone Scepter, purpose: "Necromancy: raises 2 skeleton archers for 30s. Durability 64 summons, repair: Grave Salt",
+    {tier: 1, material: BONE, durability: 64, cat: weapon, name: Bone Scepter, purpose: "Necromancy: raises 2 skeleton archers for 30s. Durability 64 summons, repair: Grave Salt",
      recipe: {type: RITUAL, circle: 1, out: 1, center: mc:BLAZE_ROD, in: {EVOKERS_SIGIL: 1, mc:BONE_BLOCK: 8, SPIRIT_ESSENCE: 4, BOUND_SIGIL: 1, mc:SKELETON_SKULL: 1, SOVEREIGN_GEL: 1}}}
   SERVITOR_SHRINE:
-    {tier: 1, cat: labor, name: Servitor Shrine, purpose: "Houses one bound spirit that works a 9x9 area around it (crops stay normal blocks). No fuel: the contract is the cost",
-     recipe: {type: ANCIENT_ALTAR, out: 1, in: {BOUND_SIGIL: 1, BOUND_STEEL: 3, SOVEREIGN_GEL: 1, SPIRIT_ESSENCE: 2, mc:LODESTONE: 1, BINDING_THREAD: 1}}}
+    {tier: 1, material: PURPUR_PILLAR, cat: labor, name: Servitor Shrine, purpose: "Houses one bound spirit that works a 9x9 area around it (crops stay normal blocks). No fuel: the contract is the cost",
+     recipe: {type: RITUAL, circle: 1, out: 1, center: mc:LODESTONE, in: {BOUND_SIGIL: 4, EVOKERS_SIGIL: 2, BOUND_STEEL: 12, RESONANT_CRYSTAL: 6, SPIRIT_ESSENCE: 24, SOVEREIGN_GEL: 2, BINDING_THREAD: 8, sf:ANDROID_MEMORY_CORE: 1}}}
   HARVEST_CONTRACT:
-    {tier: 1, cat: labor, name: "Contract: Harvest", purpose: "Shrine spirit harvests and replants mature crops, nether wart, cocoa and berries into the shrine store",
-     recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 2, OCCULT_INK: 2, BINDING_THREAD: 2, mc:GOLDEN_HOE: 1, SPIRIT_ESSENCE: 2}}}
+    {tier: 1, material: PAPER, cat: labor, name: "Contract: Harvest", purpose: "Shrine spirit harvests and replants mature crops, nether wart, cocoa and berries into the shrine store",
+     recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 1, OCCULT_INK: 2, BINDING_THREAD: 2, mc:GOLDEN_HOE: 1, SPIRIT_ESSENCE: 2, RESONANT_CRYSTAL: 1}}}
   GATHER_CONTRACT:
-    {tier: 1, cat: labor, name: "Contract: Gather", purpose: "Shrine spirit collects dropped items into an adjacent chest",
-     recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 2, OCCULT_INK: 2, BINDING_THREAD: 2, mc:HOPPER: 1, SPIRIT_ESSENCE: 2}}}
+    {tier: 1, material: PAPER, cat: labor, name: "Contract: Gather", purpose: "Shrine spirit collects dropped items into an adjacent chest",
+     recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 1, OCCULT_INK: 2, BINDING_THREAD: 2, mc:HOPPER: 1, SPIRIT_ESSENCE: 2, RESONANT_CRYSTAL: 1}}}
+
+  WARD_CONTRACT:
+    {tier: 1, material: PAPER, cat: labor, name: "Contract: Ward", purpose: "Shrine spirit stops hostile mobs from spawning naturally in its area",
+     recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 1, OCCULT_INK: 2, BINDING_THREAD: 2, sf:ANCIENT_RUNE_EARTH: 1, SPIRIT_ESSENCE: 2, RESONANT_CRYSTAL: 1}}}
 
   # =====================================================================
   # TIER 2 - ABYSSAL (max-enchanted netherite; gate: Evoker's Sigil) - powered machines from here

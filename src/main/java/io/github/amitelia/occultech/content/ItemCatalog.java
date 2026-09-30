@@ -26,7 +26,7 @@ public final class ItemCatalog {
      * @param inputs catalog keys ({@code mc:X}, {@code sf:X} or an Occultech id) to amounts, in file order
      */
     public record RecipeDef(String type, int out, @Nullable String center, int circle, Map<String, Integer> inputs, @Nullable String boss,
-        double chance) {}
+        double chance, boolean inPlace) {}
 
     public record ItemDef(String id, int tier, String category, String name, String purpose, @Nullable String material, int durability, RecipeDef recipe) {
 
@@ -131,7 +131,8 @@ public final class ItemCatalog {
 
     private static RecipeDef recipe(Map<String, Object> r) {
         return new RecipeDef(str(r.get("type")), integer(r.get("out"), 1), (String) r.get("center"), integer(r.get("circle"), 0),
-            amounts(r.get("in")), (String) r.get("boss"), r.get("chance") instanceof Number n ? n.doubleValue() : 1.0);
+            amounts(r.get("in")), (String) r.get("boss"), r.get("chance") instanceof Number n ? n.doubleValue() : 1.0,
+            Boolean.TRUE.equals(r.get("in_place")));
     }
 
     /** "min-max" (or a single number) per key. */

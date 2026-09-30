@@ -50,6 +50,7 @@ final class SelfTest {
     private static final String CATALYST = ItemKeys.slimefunId("SOVEREIGN_CATALYST");
     private static final String ACTIVE_KEY = "occultech_active_fight";
     private static final List<String> BOSSES = List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "GELATINOUS_SOVEREIGN");
+    private static final List<String> TIER1_BOSSES = List.of("THE_UNBOUND", "NIGHT_MATRIARCH", "MIRRORED_MAGUS", "ARCHEVOKER");
 
     private record Step(long delay, Runnable action) {}
 
@@ -64,6 +65,14 @@ final class SelfTest {
     private Block altar;
     private Chunk chunk;
     private BossFight currentFight;
+    private Block bound;
+    private Block testAltar;
+    private Block shrine;
+    private Block wart;
+    private Chunk chunk2;
+    private Chunk chunk3;
+    private int diamondsBefore;
+    private org.bukkit.entity.Item testDrop;
     private Block broodEgg;
     private java.util.Set<java.util.UUID> slimesBefore = java.util.Set.of();
 
@@ -98,6 +107,29 @@ final class SelfTest {
         }
         then(0, this::refundOnInterruption);
         then(5, this::crashRecovery);
+
+        // ---- tier 1
+        then(0, this::buildUpgradeCircle);
+        then(5, this::startAltarUpgrade);
+        then(RitualService.DURATION_TICKS + 20L, this::altarUpgraded);
+        then(0, this::buildBoundRing);
+        then(5, this::boundCircleComplete);
+        then(0, this::spiritEssenceRitual);
+        then(RitualService.DURATION_TICKS + 20L, this::spiritEssenceResult);
+        for (String bossId : TIER1_BOSSES) {
+            then(0, () -> summonTier1(bossId));
+            then(60, () -> checkFightRunning(bossId));
+            then(0, this::killCurrentFight);
+            then(10, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
+        }
+        then(0, this::buildShrine);
+        then(5, this::startHarvest);
+        then(70, this::harvested);
+        then(0, this::startGather);
+        then(70, this::gathered);
+        then(0, this::startWard);
+        then(30, this::warded);
+        then(0, this::scryingMirror);
         next();
     }
 
@@ -113,7 +145,8 @@ final class SelfTest {
         check("no content problems", registrar.problems().isEmpty(), String.join("; ", registrar.problems()));
         check("researches registered", registrar.researchCount() == catalog.researches().size(), registrar.researchCount() + " registered");
         long summons = rituals.recipes().stream().filter(RitualRecipe::isSummon).count();
-        check("4 summoning rituals registered", summons == BOSSES.size(), summons + " summons");
+        int expectedSummons = BOSSES.size() + TIER1_BOSSES.size();
+        check(expectedSummons + " summoning rituals registered", summons == expectedSummons, summons + " summons");
     }
 
     private void buildCircle() {
@@ -278,6 +311,175 @@ final class SelfTest {
         check("crash marker cleared", BlockStorage.getLocationInfo(altar.getLocation(), ACTIVE_KEY) == null, "marker left");
     }
 
+    // ------------------------------------------------------------------ tier 1 steps
+
+    private void buildUpgradeCircle() {
+        World world = Bukkit.getWorlds().get(0);
+        int x = world.getSpawnLocation().getBlockX() - 24;
+        int z = world.getSpawnLocation().getBlockZ() + 30;
+        chunk2 = world.getChunkAt(x >> 4, z >> 4);
+        chunk2.addPluginChunkTicket(plugin);
+        bound = world.getBlockAt(x, world.getHighestBlockYAt(x, z) + 1, z);
+        DebugWorld.buildCircle(bound, 0, this::remember);
+    }
+
+    private void startAltarUpgrade() {
+        RitualRecipe upgrade = rituals.recipes().stream().filter(RitualRecipe::inPlace).findFirst().orElse(null);
+        check("altar-upgrade ritual registered", upgrade != null, "missing");
+        if (upgrade == null) {
+            return;
+        }
+        fillAt(bound, upgrade);
+        check("upgrade ritual starts with an empty altar", rituals.begin(null, bound) == RitualService.Outcome.STARTED, "did not start");
+    }
+
+    private void altarUpgraded() {
+        check("Initiate's Altar upgraded in place to a Bound Altar", Circles.BOUND_ALTAR.equals(BlockStorage.checkID(bound)),
+            String.valueOf(BlockStorage.checkID(bound)));
+    }
+
+    private void buildBoundRing() {
+        io.github.amitelia.occultech.ritual.CirclePattern pattern = Circles.forTier(1);
+        for (int dz = -3; dz <= 3; dz++) {
+            for (int dx = -3; dx <= 3; dx++) {
+                if (Math.abs(dx) == 3 || Math.abs(dz) == 3) {
+                    DebugWorld.placeSlimefun(bound.getRelative(dx, 0, dz), pattern.glyphAt(dx, dz), this::remember);
+                }
+            }
+        }
+    }
+
+    private void boundCircleComplete() {
+        Optional<RitualService.CircleCheck> check = rituals.checkCircle(bound);
+        check("7x7 Bound circle detected", check.isPresent() && check.get().tier() == 1 && check.get().complete(),
+            check.map(c -> "tier " + c.tier() + ", " + c.missing().size() + " missing").orElse("-"));
+        check("Bound circle has 8 offering bowls", check.isPresent() && check.get().pattern().positionsOf(Circles.OFFERING_BOWL, 0).size() == 8, "wrong");
+    }
+
+    private void spiritEssenceRitual() {
+        RitualRecipe recipe = rituals.recipes().stream().filter(r -> ItemKeys.slimefunId("SPIRIT_ESSENCE").equals(r.outputId())).findFirst().orElse(null);
+        check("Spirit Essence ritual registered", recipe != null, "missing");
+        if (recipe != null) {
+            fillAt(bound, recipe);
+            check("Spirit Essence ritual starts on the Bound circle", rituals.begin(null, bound) == RitualService.Outcome.STARTED, "did not start");
+        }
+    }
+
+    private void spiritEssenceResult() {
+        BlockMenu menu = BlockStorage.getInventory(bound);
+        ItemStack out = menu == null ? null : menu.getItemInSlot(RitualAltar.CENTER_SLOT);
+        SlimefunItem item = out == null || out.getType().isAir() ? null : SlimefunItem.getByItem(out);
+        check("ritual produced 4 Spirit Essence", item != null && item.getId().equals(ItemKeys.slimefunId("SPIRIT_ESSENCE")) && out.getAmount() == 4,
+            item == null ? "nothing" : item.getId() + " x" + out.getAmount());
+        DebugWorld.setAltarCenter(bound, null);
+    }
+
+    private void summonTier1(String bossId) {
+        snapshotSlimes();
+        BossSpec spec = rituals.spec(bossId).orElseThrow();
+        testAltar = bound;
+        currentFight = bosses.summon(bossId, spec, bound, null);
+        check(ContentRegistrar.title(bossId) + " spawns", !currentFight.bosses().isEmpty(), "no entities");
+    }
+
+    private void buildShrine() {
+        testAltar = altar;
+        shrine = altar.getRelative(12, 0, 0);
+        // the shrine may sit in the next chunk: keep it loaded (nobody is online during the test)
+        chunk3 = shrine.getChunk();
+        chunk3.addPluginChunkTicket(plugin);
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                Block soil = shrine.getRelative(dx, -1, dz);
+                remember(soil);
+                soil.setType(Material.SOUL_SAND, false);
+                Block above = shrine.getRelative(dx, 0, dz);
+                remember(above);
+                above.setType(Material.AIR, false);
+            }
+        }
+        DebugWorld.placeSlimefun(shrine, ItemKeys.slimefunId("SERVITOR_SHRINE"), this::remember);
+        BlockStorage.addBlockInfo(shrine, "occultech_owner", new java.util.UUID(0, 0).toString());
+        wart = shrine.getRelative(2, 0, 0);
+        wart.setType(Material.NETHER_WART, false);
+        org.bukkit.block.data.Ageable age = (org.bukkit.block.data.Ageable) wart.getBlockData();
+        age.setAge(age.getMaximumAge());
+        wart.setBlockData(age, false);
+    }
+
+    private void startHarvest() {
+        setContract("HARVEST_CONTRACT");
+    }
+
+    private void harvested() {
+        org.bukkit.block.data.Ageable age = wart.getBlockData() instanceof org.bukkit.block.data.Ageable a ? a : null;
+        check("Harvest contract replants the wart", wart.getType() == Material.NETHER_WART && age != null && age.getAge() == 0,
+            wart.getType() + " age " + (age == null ? "-" : age.getAge()));
+        check("Harvest contract stores the crop", storeCount(Material.NETHER_WART) > 0, "store empty");
+    }
+
+    private void startGather() {
+        // clear stray items (e.g. left by an earlier interrupted run) so we measure only our drop
+        shrine.getWorld().getNearbyEntities(shrine.getLocation(), 8, 4, 8, e -> e instanceof org.bukkit.entity.Item).forEach(Entity::remove);
+        diamondsBefore = storeCount(Material.DIAMOND);
+        setContract("GATHER_CONTRACT");
+        testDrop = shrine.getWorld().dropItem(shrine.getLocation().add(2.5, 0.5, 1.5), new ItemStack(Material.DIAMOND, 3));
+        testDrop.setPickupDelay(0);
+    }
+
+    private void gathered() {
+        int gained = storeCount(Material.DIAMOND) - diamondsBefore;
+        check("Gather contract collects exactly the dropped items", gained == 3, gained + " diamonds gained");
+        check("gathered item entity is gone", !testDrop.isValid(), "still on the ground");
+    }
+
+    private void startWard() {
+        setContract("WARD_CONTRACT");
+    }
+
+    private void warded() {
+        check("Ward contract protects its area", plugin.servitors().isWarded(shrine.getLocation().add(5, 0, 5)), "not warded");
+        check("Ward contract doesn't reach far", !plugin.servitors().isWarded(shrine.getLocation().add(20, 0, 0)), "warded too far");
+    }
+
+    private void scryingMirror() {
+        Block mirror = altar.getRelative(-6, 0, 0);
+        DebugWorld.placeSlimefun(mirror, ItemKeys.slimefunId("SCRYING_MIRROR"), this::remember);
+        BlockStorage.addBlockInfo(mirror, "occultech_link", altar.getWorld().getName() + ";" + altar.getX() + ";" + altar.getY() + ";" + altar.getZ());
+        String status = io.github.amitelia.occultech.items.ScryingMirrorAccess.status(rituals, mirror);
+        check("Scrying Mirror reads its linked circle", status.contains("Circle complete"), ChatColor.stripColor(status));
+    }
+
+    private void setContract(String id) {
+        BlockMenu menu = BlockStorage.getInventory(shrine);
+        if (menu != null) {
+            menu.replaceExistingItem(io.github.amitelia.occultech.items.ServitorShrine.CONTRACT_SLOT, SlimefunItem.getById(ItemKeys.slimefunId(id)).getItem().clone());
+        }
+    }
+
+    private int storeCount(Material type) {
+        BlockMenu menu = BlockStorage.getInventory(shrine);
+        int count = 0;
+        for (int slot : io.github.amitelia.occultech.items.ServitorShrine.STORE) {
+            ItemStack item = menu == null ? null : menu.getItemInSlot(slot);
+            if (item != null && item.getType() == type) {
+                count += item.getAmount();
+            }
+        }
+        return count;
+    }
+
+    private void remember(Block block) {
+        previous.putIfAbsent(block, block.getBlockData());
+    }
+
+    private void fillAt(Block at, RitualRecipe recipe) {
+        Block saved = altar;
+        altar = at;
+        fill(recipe);
+        altar = saved;
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private void snapshotSlimes() {
@@ -285,7 +487,8 @@ final class SelfTest {
     }
 
     private void fill(RitualRecipe recipe) {
-        DebugWorld.setAltarCenter(altar, recipe.center() == null ? null : DebugWorld.item(recipe.center(), 1));
+        boolean centerItem = recipe.center() != null && !recipe.inPlace();
+        DebugWorld.setAltarCenter(altar, centerItem ? DebugWorld.item(recipe.center(), 1) : null);
         RitualService.CircleCheck check = rituals.checkCircle(altar).orElseThrow();
         List<int[]> bowls = check.pattern().positionsOf(Circles.OFFERING_BOWL, check.rotation());
         bowls.forEach(offset -> DebugWorld.setBowl(altar.getRelative(offset[0], 0, offset[1]), null));
@@ -316,7 +519,8 @@ final class SelfTest {
     }
 
     private List<Entity> nearby() {
-        return List.copyOf(altar.getWorld().getNearbyEntities(altar.getLocation(), 20, 12, 20));
+        Block center = testAltar == null ? altar : testAltar;
+        return List.copyOf(center.getWorld().getNearbyEntities(center.getLocation(), 22, 24, 22));
     }
 
     private void finish() {
@@ -327,6 +531,12 @@ final class SelfTest {
         previous.forEach((block, data) -> block.setBlockData(data, false));
         if (chunk != null) {
             chunk.removePluginChunkTicket(plugin);
+        }
+        if (chunk2 != null) {
+            chunk2.removePluginChunkTicket(plugin);
+        }
+        if (chunk3 != null) {
+            chunk3.removePluginChunkTicket(plugin);
         }
         say((failed == 0 ? "&a" : "&c") + "[Occultech] Self-test finished: " + passed + " passed, " + failed + " failed.");
     }

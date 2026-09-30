@@ -1,7 +1,11 @@
 package io.github.amitelia.occultech.boss;
 
+import javax.annotation.Nullable;
+
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 
 /**
  * One boss's behavior for one fight. Created per fight, so it can hold fight state in plain fields.
@@ -30,6 +34,14 @@ public abstract class BossBehavior {
     public boolean usesAntiPillar() {
         return true;
     }
+
+    /** How far above/below the altar the boss may be before it's pulled back. Flying bosses need more. */
+    public double verticalLeash() {
+        return 8;
+    }
+
+    /** An extra mob of this fight died ({@code killer} is the player responsible, if any). */
+    public void onAddDeath(Entity entity, @Nullable Player killer) {}
 
     /** True every {@code interval} ticks (interval must be a multiple of the step). */
     protected boolean every(int interval) {

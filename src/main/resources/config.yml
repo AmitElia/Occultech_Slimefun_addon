@@ -12,3 +12,7 @@ bosses:
 brood-egg:
   # Seconds between strings. Only counts while the chunk is loaded; no catch-up for offline time.
   seconds-per-string: 20
+
+phantom-roost:
+  # Seconds between phantom membranes (same rules as the Brood Egg).
+  seconds-per-membrane: 90

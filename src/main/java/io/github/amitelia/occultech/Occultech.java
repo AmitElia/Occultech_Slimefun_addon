@@ -11,10 +11,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import io.github.amitelia.occultech.boss.BossService;
 import io.github.amitelia.occultech.boss.tier0.Tier0Bosses;
+import io.github.amitelia.occultech.boss.tier1.Tier1Bosses;
 import io.github.amitelia.occultech.content.ItemCatalog;
 import io.github.amitelia.occultech.debug.OccultechCommand;
+import io.github.amitelia.occultech.items.GearListener;
+import io.github.amitelia.occultech.items.MinionService;
 import io.github.amitelia.occultech.items.OccultechFightHooks;
 import io.github.amitelia.occultech.items.RitualService;
+import io.github.amitelia.occultech.items.ServitorService;
 import io.github.amitelia.occultech.items.WeaponListener;
 import io.github.amitelia.occultech.setup.ContentRegistrar;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
@@ -26,6 +30,8 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     private ItemCatalog catalog;
     private BossService bosses;
     private RitualService rituals;
+    private ServitorService servitors;
+    private MinionService minions;
     private ContentRegistrar registrar;
 
     @Override
@@ -50,13 +56,17 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         bosses.setHealthScaling(getConfig().getDouble("bosses.health-multiplier", 1.0),
             getConfig().getDouble("bosses.health-per-extra-player", 0.25));
         Tier0Bosses.all().forEach(bosses::register);
+        Tier1Bosses.all().forEach(bosses::register);
         rituals = new RitualService(this, bosses, hooks);
+        servitors = new ServitorService(this);
+        minions = new MinionService(this);
         registrar = new ContentRegistrar(this, catalog, rituals);
         registrar.registerAll();
         registrar.problems().forEach(problem -> getLogger().warning("Content problem: " + problem));
 
         bosses.start();
         getServer().getPluginManager().registerEvents(new WeaponListener(this), this);
+        getServer().getPluginManager().registerEvents(new GearListener(this), this);
         getCommand("occultech").setExecutor(new OccultechCommand(this));
 
         getLogger().info("Occultech enabled: " + registrar.stacks().size() + " items, " + rituals.recipes().size()
@@ -70,6 +80,12 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         }
         if (bosses != null) {
             bosses.shutdown();
+        }
+        if (servitors != null) {
+            servitors.shutdown();
+        }
+        if (minions != null) {
+            minions.shutdown();
         }
         instance = null;
     }
@@ -92,6 +108,16 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     @Nonnull
     public RitualService rituals() {
         return rituals;
+    }
+
+    @Nonnull
+    public ServitorService servitors() {
+        return servitors;
+    }
+
+    @Nonnull
+    public MinionService minions() {
+        return minions;
     }
 
     @Nonnull

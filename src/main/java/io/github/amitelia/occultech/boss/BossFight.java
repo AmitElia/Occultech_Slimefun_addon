@@ -392,9 +392,12 @@ public final class BossFight {
         lastBossHit = elapsed;
     }
 
-    void onEntityDeath(Entity entity) {
-        bosses.remove(entity);
+    void onEntityDeath(Entity entity, @Nullable Player killer) {
+        boolean boss = bosses.remove(entity);
         extras.remove(entity);
+        if (!boss && !ended) {
+            behavior.onAddDeath(entity, killer);
+        }
     }
 
     void tick() {
@@ -430,6 +433,7 @@ public final class BossFight {
         }
 
         leash();
+        leashAdds();
         antiPillar(inArena);
         applyHazards();
         extras.removeIf(e -> !e.isValid());
@@ -520,13 +524,35 @@ public final class BossFight {
             Location at = boss.getLocation();
             double dx = at.getX() - center.getX();
             double dz = at.getZ() - center.getZ();
-            boolean outside = dx * dx + dz * dz > Math.pow(spec.arenaRadius() + 1.5, 2) || Math.abs(at.getY() - center.getY()) > 8;
+            boolean outside = dx * dx + dz * dz > Math.pow(spec.arenaRadius() + 1.5, 2) || Math.abs(at.getY() - center.getY()) > behavior.verticalLeash();
             if (outside || at.getWorld() != center.getWorld()) {
                 boss.teleport(center.clone().add(0, 1, 0));
                 heal(boss, 0.02);
                 boss.getWorld().spawnParticle(Particle.REVERSE_PORTAL, boss.getLocation(), 40, 0.5, 1, 0.5, 0.05);
             }
         }
+    }
+
+    /** Extra mobs that wander (or phase, like vexes) out of the arena are brought back. */
+    private void leashAdds() {
+        double limit = Math.pow(spec.arenaRadius() + 3, 2);
+        for (Entity extra : extras) {
+            if (extra instanceof LivingEntity living && !living.isDead()
+                && (living.getWorld() != center.getWorld() || living.getLocation().distanceSquared(center) > limit)) {
+                living.teleport(center.clone().add(0, 1, 0));
+            }
+        }
+    }
+
+    /** Takes over an entity the boss spawned itself (e.g. an evoker's vexes). False if the extra-mob cap is reached. */
+    boolean adopt(Entity entity) {
+        if (entity instanceof LivingEntity && liveAdds() >= MAX_ADDS) {
+            return false;
+        }
+        tag(entity);
+        entity.setPersistent(false);
+        extras.add(entity);
+        return true;
     }
 
     private void antiPillar(List<Player> inArena) {

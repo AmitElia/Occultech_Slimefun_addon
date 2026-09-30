@@ -44,13 +44,26 @@ cargo and Networks can pull from it but not insert.
 
 Health values are before group scaling. Balance is untested with real players; tune after playtests.
 
-## Tier 1 · Bound (decided, not implemented)
+## Tier 1 · Bound (implemented)
 - Balanced for basic diamond gear; tuned for **solo first**, groups handled by health scaling.
 - 7x7 circle wrapping the tier-0 circle (8 bowls, 8 candles, 16 chalk + 16 bound glyphs). The Initiate's Altar is
   upgraded in place by ritual into the Bound Altar.
 - Mini-bosses: The Unbound, Night Matriarch (**any time**, never burns, ~20% stronger at night), Mirrored Magus.
   Gate: Archevoker. Bonus drops (15%): Frenzy Idol, Phantom Roost, Scrying Mirror.
 - Both the Servitor Shrine and the Bone Scepter (necromancy) ship in tier 1.
+
+| Boss | Base | Health | Mechanics | Drop |
+|------|------|-------:|-----------|------|
+| The Unbound | Vindicator ("Johnny") | 320 | Speeds up as it's hurt; red-wedge telegraphed cleave; husk thralls every 20s - it attacks thralls near it and is **sated** (stunned, +50% damage taken) for 3s after devouring one | Frenzied Edge; 15% Frenzy Idol |
+| Night Matriarch | giant Phantom | 260 | Dark-circle telegraphed dives, then **stunned 2s on the ground**; small phantoms join; +20% damage and faster dives at night; never burns | Dusk Membrane; 15% Phantom Roost |
+| Mirrored Magus | Illusioner | 220 | Every 15s 3 decoys (can't cast) and a blink; the real one sparkles; hitting a decoy makes you glow and it blinks again | Mirror Dust; 15% Scrying Mirror |
+| Archevoker | Evoker (gate) | 700 | Fang patterns (ring / line / spiral) drawn 1s ahead, faster below 50%; its vexes are adopted, capped and leashed; 3 phylacteries let it cheat death once at 40% - break them first | Evoker's Sigil |
+
+- **Servitor Shrine** is the tier-1 capstone: a Bound-circle ritual that needs 2 Evoker's Sigils (~6.7k raw). Max 4 per
+  chunk. Contracts: Harvest, Gather, Ward.
+- **Bone Scepter**: 2 skeleton archers for 30s, 20s cooldown, 64 uses (durability).
+- **Gear**: Frenzy Cleaver (+0.2 attack speed per stack, max 5), Duskwing Charm (double jump, no fall damage after it,
+  4s cooldown), Mirror Ward (decoy below 30% HP, 60s cooldown). Mending never repairs Occultech gear.
 
 ### Servitor Shrine
 - **Its own block, placed next to your farm.** It works a 9x9 area around it (±1 block vertically); crops stay normal

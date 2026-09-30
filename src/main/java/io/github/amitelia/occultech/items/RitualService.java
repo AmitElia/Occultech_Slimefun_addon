@@ -177,7 +177,8 @@ public final class RitualService {
         }
 
         ItemStack centerItem = altarMenu.getItemInSlot(RitualAltar.CENTER_SLOT);
-        Optional<RitualMatcher.Match> match = RitualMatcher.match(recipes, MenuUtils.keyOf(centerItem), bowls, check.get().tier());
+        Optional<RitualMatcher.Match> match = RitualMatcher.match(recipes, MenuUtils.keyOf(centerItem), BlockStorage.checkID(altar), bowls,
+            check.get().tier());
         if (match.isEmpty()) {
             tell(player, "&7The circle stays silent: nothing answers to these offerings.");
             return Outcome.NO_MATCH;
@@ -193,7 +194,7 @@ public final class RitualService {
 
         // Take everything before anything else happens, so the inputs can never be taken back out.
         List<Taken> taken = new ArrayList<>();
-        if (recipe.center() != null) {
+        if (recipe.center() != null && !recipe.inPlace()) {
             taken.add(new Taken(altarMenu, RitualAltar.CENTER_SLOT, one(centerItem)));
             altarMenu.consumeItem(RitualAltar.CENTER_SLOT, 1);
         }
@@ -324,6 +325,10 @@ public final class RitualService {
             if (output == null) {
                 return;
             }
+            if (recipe.inPlace()) {
+                upgradeAltar(output, withEffects);
+                return;
+            }
             ItemStack result = output.getItem().clone();
             result.setAmount(recipe.outputAmount());
 
@@ -339,6 +344,19 @@ public final class RitualService {
                 altar.getWorld().spawnParticle(Particle.END_ROD, center(), 20, 0.2, 0.6, 0.2, 0.02);
                 altar.getWorld().playSound(center(), Sound.ENTITY_EVOKER_CAST_SPELL, 1F, 1F);
                 tell(player(), "&dThe ritual is complete.");
+            }
+        }
+
+        /** The altar block itself becomes the result (e.g. Initiate's Altar -> Bound Altar). Its slot is empty by rule. */
+        private void upgradeAltar(SlimefunItem output, boolean withEffects) {
+            holograms.clear(altar);
+            BlockStorage.clearBlockInfo(altar);
+            altar.setType(output.getItem().getType());
+            BlockStorage.store(altar, output.getId());
+            if (withEffects) {
+                altar.getWorld().spawnParticle(Particle.END_ROD, center(), 60, 0.4, 0.8, 0.4, 0.08);
+                altar.getWorld().playSound(center(), Sound.BLOCK_END_PORTAL_SPAWN, 0.6F, 1.4F);
+                tell(player(), "&dThe altar transforms into a " + output.getItemName() + "&d. Expand your circle to match it.");
             }
         }
 

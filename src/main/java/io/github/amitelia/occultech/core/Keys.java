@@ -17,6 +17,9 @@ public final class Keys {
     /** The fight (UUID string) a summoned entity belongs to. */
     public static final NamespacedKey FIGHT = new NamespacedKey("occultech", "fight");
 
+    /** Owner (player UUID string) of a necromancy minion. Minions are not SUMMONED: they fight for players. */
+    public static final NamespacedKey MINION_OWNER = new NamespacedKey("occultech", "minion_owner");
+
     /** Marks hologram displays above bowls, altars and other blocks (never saved with the world). */
     public static final NamespacedKey HOLOGRAM = new NamespacedKey("occultech", "hologram");
 
@@ -27,6 +30,12 @@ public final class Keys {
 
     public static boolean isSummoned(@Nullable Entity entity) {
         return entity != null && entity.getPersistentDataContainer().has(SUMMONED, PersistentDataType.BYTE);
+    }
+
+    @Nullable
+    public static java.util.UUID minionOwner(@Nullable Entity entity) {
+        String owner = entity == null ? null : entity.getPersistentDataContainer().get(MINION_OWNER, PersistentDataType.STRING);
+        return owner == null ? null : java.util.UUID.fromString(owner);
     }
 
     @Nullable
