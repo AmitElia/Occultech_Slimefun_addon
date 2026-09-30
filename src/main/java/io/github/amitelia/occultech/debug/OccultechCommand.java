@@ -83,6 +83,28 @@ public final class OccultechCommand implements TabExecutor {
             }
             return true;
         }
+        if (args.length == 2 && args[0].equalsIgnoreCase("iteminfo")) {
+            io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem item = io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem.getById(args[1].toUpperCase());
+            if (item == null) {
+                sender.sendMessage("No Slimefun item " + args[1]);
+                return true;
+            }
+            org.bukkit.inventory.ItemStack stack = item.getItem();
+            sender.sendMessage(item.getId() + " (" + stack.getType() + ", " + item.getClass().getSimpleName() + ")");
+            stack.getEnchantments().forEach((e, level) -> sender.sendMessage("  enchant " + e.getKey().getKey() + " " + level));
+            var meta = stack.getItemMeta();
+            if (meta != null) {
+                if (meta.hasAttributeModifiers()) {
+                    meta.getAttributeModifiers().forEach((attribute, modifier) -> sender.sendMessage("  attribute " + attribute.getKey().getKey() + " "
+                        + modifier.getOperation() + " " + modifier.getAmount() + " " + modifier.getSlotGroup()));
+                }
+                sender.sendMessage("  unbreakable " + meta.isUnbreakable());
+                if (meta.hasLore()) {
+                    meta.getLore().forEach(line -> sender.sendMessage("  lore " + org.bukkit.ChatColor.stripColor(line)));
+                }
+            }
+            return true;
+        }
         if (args.length == 4 && args[0].equalsIgnoreCase("inspect")) {
             Block block = blockAt(sender, args);
             if (block != null) {

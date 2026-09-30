@@ -25,7 +25,7 @@ Full item and recipe list: [recipes.yml](recipes.yml) (source) → [items.md](it
 | 0 · Initiate | iron gear, little or no enchanting | Brood Mother, Volley, Witch Coven | **Gelatinous Sovereign** → Sovereign Gel | 100 - 1k | 5×5 |
 | 1 · Bound | basic diamond gear | The Unbound, Night Matriarch, Mirrored Magus | **Archevoker** → Evoker's Sigil | 1k - 10k | 7×7 |
 | 2 · Abyssal | max-enchanted netherite | Abyssal Warden, Tidebreaker*, Blaze Choir, Tempest | **Drowned Elder** → Elder Scale | 10k - 100k | 9×9 |
-| 3 · Hollow | InfinityExpansion2 gear | Hollow Warlord, Heartwood Horror, Dread Lancer*, Corrupted Colossus | **Hollow Wither** → Hollow Heart | 100k - ~1M | 11×11 |
+| 3 · Hollow | InfinityExpansion2 gear | Hollow Warlord, Heartwood Horror, Dread Riders*, Corrupted Colossus, Doppelganger* | **Gallus, the Hollow Jockey** → Hollow Heart + Gallus Wishbone | 100k - ~1M | 11×11 |
 
 \* needs MC 1.21.11+ mobs, so it can only be tested after the 26.2 port. Still in the pool for later: Stormcaller, Warband Captain, Dune Caravan.
 

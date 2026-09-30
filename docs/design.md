@@ -134,10 +134,63 @@ Sea creatures are "puppets": no vanilla goals and no gravity, moved by the boss 
 | Tempest | breeze with its own AI; wind-charge fan; squall ring closes in from the arena edge to 5 blocks (outside hurts); wind burst; two small breezes at half health |
 | Drowned Elder | Mining Fatigue II pressure; beams at up to three players; two gliding guardians every 20s with small beams; Tidal Surge at half health: three waves roll out - jump over each |
 
-## Later tiers
-| Tier | Boss | Base mob | Idea |
-|------|------|----------|------|
-| 1 | Archevoker | Evoker | circle-shaped fang patterns, phylactery totem |
-| 2 | Drowned Elder | Elder Guardian | mining fatigue aura, summons guardians |
-| 3 | Hollow Wither | Wither | phase shift at 50% HP, skull barrages |
+## Tier 3 · Hollow (planned, not implemented)
+Balanced for InfinityExpansion2 gear; the final tier. 11x11 circle, arena radius 24, raw cost 100k - ~1M.
+Data is in recipes.yml (not registered while `IMPLEMENTED_TIER` is 2).
+
+### Mini-bosses
+| Boss | Base | Fight | Drop -> purpose |
+|------|------|-------|-----------------|
+| Hollow Warlord | Wither Skeleton, netherite gear | wither-aura sweeps, bodyguard squad, speeds up as it weakens | Warlord's Brand -> Hollow armor, Lich's Phylactery |
+| Heartwood Horror | Creaking (no real creaking heart) | only moves while nobody looks at it; invulnerable until its heart markers (display entities) are broken, so someone must look away | Heartwood Resin -> Heartwood Aegis, Watchful Eyeblossom, Resin Tile |
+| Dread Riders | Outrider: Skeleton on a Skeleton Horse; Vanguard: Zombie on a Zombie Horse with a spear | see below | Lancer's Pennant (Vanguard) -> Dreadlance; Outrider's Fletching -> Stormstring Bow |
+| Corrupted Colossus | Iron Golem | warned shockwave slams; the tech-meets-occult boss | Corrupted Circuit -> Hollow Assembler, Servitor Nexus |
+| Doppelganger | Mannequin (player model) | see boss-ideas.md: wears its target's skin, mirror stance, echo shadows, reflection window, shattered mirror at 50% | Mirror Visage -> Aura Talisman |
+
+**Dread Riders.** Both very fast; each rider has its own health, the horses can't be hurt; both leashed to the arena.
+- *Outrider* (fragile, evasive): circles the arena edge 12-20 blocks from its target. Snipe: an aiming line locks on,
+  then a heavy shot ends in a lightning strike; arrow rain on a marked circle; lightning-charged volleys.
+  Its lightning is **visual only** (flash and thunder, plugin damage): never fires, never charges creepers or turns
+  pigs, villagers or other mobs.
+- *Vanguard* (tanky, about half damage taken): hard-hitting spear, warned lance charges (stunned 2s if cut short), and
+  Intercept - charges anyone who gets within 8 blocks of the Outrider.
+- When one dies the other enrages and takes a piece of its partner's kit (Outrider dead: the Vanguard throws spears;
+  Vanguard dead: the Outrider fires faster and closer). Solo: juggle both; group: tank the Vanguard, focus the Outrider.
+
+### Gate: Gallus, the Hollow Jockey
+A chicken the size of a ghast ridden by a baby-zombie knight in hollow armor (scripted puppets, like the Tidebreaker).
+Summoned with the Hollow Effigy (one drop of each mini-boss). Fight length 6-8 minutes, group-scaled.
+1. **The Joust (100-66%)**: charges and spear jabs; wing leap (warned landing ring, it never takes fall damage); egg
+   barrage - custom eggs (vanilla eggs would hatch chickens) leave splat zones, some crack into capped chick jockeys.
+2. **Unhorsed (66-33%)**: the rider falls - a slow, tanky chicken that keeps laying eggs and a tiny, fast, hard-hitting
+   rider. The rider tries to **remount every ~20 seconds** (a warned run back to the chicken); a successful remount heals
+   the chicken, so knock the rider away when it tries. Killing the rider here is optional but rewarding (below).
+3. **The Hollowing (33-0%)**: the chicken turns undead and flies above the arena, laying Hollow Eggs (display entities)
+   around the circle; eggs not broken in time hatch weak **echoes** of earlier gate bosses (Sovereign, Archevoker,
+   Drowned Elder) with one signature attack each. At 10% it shrinks to a normal chicken and goes frantic.
+   - **The rider in phase 3:** if it survived phase 2 it climbs back on for good and rides the flying chicken, diving
+     down every so often to strike players who are breaking eggs, then being carried up again. If it was killed in
+     phase 2, the chicken fights phase 3 alone (and can't be healed) - the reward for managing the rider well.
+
+### Rewards
+- Hollow Heart (2 per win) -> pinnacle gear; Gallus Wishbone (1 per win) -> the final talismans. ~3-5 wins per capstone.
+- **Hollow armor**: like Infinity armor but a little worse - Infinity is netherite with Protection XX (one piece already
+  reaches the damage-reduction cap), unbreakable and soulbound; Hollow is netherite with Protection V (the cap needs the
+  full set), Unbreaking V, repairable, not soulbound. Unique effects Infinity doesn't have: Crown - immune to Darkness and
+  Blindness; Cuirass - immune to Wither, Thorns V; Greaves - immune to Slowness; Sabatons - no fall damage. 4/4: -25%
+  damage from summoned creatures and faint soul wisps drifting off the armor (subtle).
+- **Dreadlance**: every hit heals 15% of the damage dealt (capped per second). **Stormstring Bow**: arrows call visual
+  lightning on the mob hit and arc to 2 more hostile mobs; never players or pets, never fires.
+- Soulfire Censer, Lich's Phylactery, Heartwood Aegis (as before).
+- **Servitor Nexus**: links up to 8 shrines within 24 blocks - one shared store (cargo/Networks), shared supplies,
+  empower all at once, and an overview menu showing every linked shrine's contract, area and status, with contract
+  swapping. Shrines show "Servitor Nexus: linked" in their range readout.
+- **Final talismans** (work from the inventory, only ever affect the carrier):
+  Hollow Halo (a ring of light over your head, toggle and colors), Wishbone Talisman (half size, toggle),
+  Aura Talisman (walking trail: prismatic sparks, petals, soul wisps, or off), Gallus Egg (a big rideable chicken for its
+  owner only: movement keys steer, jump flaps, slow glide; it vanishes on dismount or logout).
+- Cosmetics: Watchful Eyeblossom, Resin Tile (Heartwood Resin). Trophy Board is already in tier 0.
+- Cut: Hollow Wither (replaced by Gallus; the wither theme lives on in the Hollow Warlord), Dread Lancer (now the Dread
+  Riders), Gallus Wing, Hollow Anvil and Ritual of Dawn (other addons cover anvils/enchanting).
+
 See [boss-ideas.md](boss-ideas.md) for the full pool.

@@ -50,7 +50,7 @@ The **MC** column shows the Minecraft version that added the mob. The local test
 ## Mounted and cavalry
 | Name | Base | Gimmick | Unique drop and its purpose | MC |
 |---|---|---|---|---|
-| Dread Lancer | armored Zombie on a Zombie Horse, with a spear | Lance charges across the arena, warned by a particle line. At 50% HP the rider is unhorsed: the horse fights as a second enemy and the rider becomes faster on foot | *Lancer's Pennant*: used in charge and mobility weapons | 1.21.11+ |
+| Dread Riders (tier 3, chosen) | Outrider: Skeleton on a Skeleton Horse; Vanguard: Zombie on a Zombie Horse with a spear | Fast duo: the Outrider snipes with visual-only lightning, the Vanguard tanks, charges and intercepts anyone chasing the archer. Kill one and the other enrages. Details in design.md | *Lancer's Pennant* (Dreadlance), *Outrider's Fletching* (Stormstring Bow) | 1.21.11+ |
 | Dune Caravan | Camel Husk carrying a Husk and a Parched archer | Two riders with two roles: the husk charges, the Parched shoots slowness arrows. Kill the camel to split them up | *Sunbaked Hide*: used for armor upgrades | 1.21.11+ |
 | Tidebreaker | Drowned on a Zombie Nautilus, with a trident | Water-arena fight (the circle must be near water, checked when summoning). Diving ram charges and trident volleys | *Nautilus Core*: used in ocean-tier machines | 1.21.11+ |
 | Stormcaller | Skeleton Horseman | Calls lightning, marked on the ground before it strikes (visual only, damage from the plugin, no fire). Spawns horsemen in waves | *Stormglass Shard*: charges weapon abilities | any |
@@ -79,6 +79,10 @@ The **MC** column shows the Minecraft version that added the mob. The local test
 | Brood Mother | giant Spider | Egg sacs (display entities) hatch cave spiders unless broken. Web zones are shown with particles and give slowness; no real cobwebs are placed | *Brood Silk*: used in trap or utility items | any |
 | Blaze Choir | 3 Blazes | Circle the altar with rotating shields. Their fireballs are custom projectiles that start no fires | *Choir Ember*: used as fuel for powered ritual machines | any |
 | Corrupted Colossus | Iron Golem | The tech-meets-occult boss for the "Occultech" name. Warned shockwave slams | *Corrupted Circuit*: used in Occultech machines (a separate item, not a Basic Circuit Board substitute) | any |
+
+## Final boss (decided): Gallus, the Hollow Jockey
+A ghast-sized chicken ridden by a baby-zombie knight; three phases (Joust, Unhorsed, Hollowing). Full design in
+design.md. Replaces the Hollow Wither.
 
 ## Player-model boss (decided: tier-3 mini-boss, not started)
 **The Doppelganger** - a Mannequin (26.2 player-model entity) wearing the skin of the player it targets, with cosmetic

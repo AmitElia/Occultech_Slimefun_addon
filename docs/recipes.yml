@@ -66,9 +66,10 @@ bosses:
   # ---- Tier 3 (Infinity gear)
   HOLLOW_WARLORD:       {tier: 3, kind: lesser, base: WITHER_SKELETON, drop: WARLORDS_BRAND, drops: 3, offerings: {mc:NETHERITE_SCRAP: 2, mc:BONE_BLOCK: 8, HOLLOW_ESSENCE: 16, CHOIR_EMBER: 2}}
   HEARTWOOD_HORROR:     {tier: 3, kind: lesser, base: CREAKING,   drop: HEARTWOOD_RESIN, drops: 3, offerings: {mc:PALE_OAK_LOG: 16, mc:RESIN_CLUMP: 8, HOLLOW_ESSENCE: 16, CHOIR_EMBER: 2}, min_mc: "1.21.4"}
-  DREAD_LANCER:         {tier: 3, kind: lesser, base: "ZOMBIE on ZOMBIE_HORSE", drop: LANCERS_PENNANT, drops: 3, offerings: {mc:IRON_BLOCK: 4, mc:HAY_BLOCK: 8, HOLLOW_ESSENCE: 16, CHOIR_EMBER: 2}, min_mc: "1.21.11"}
+  DREAD_RIDERS:         {tier: 3, kind: lesser, base: "SKELETON on SKELETON_HORSE + ZOMBIE on ZOMBIE_HORSE", drop: LANCERS_PENNANT, drops: 3, offerings: {mc:IRON_BLOCK: 4, mc:HAY_BLOCK: 8, mc:ARROW: 32, HOLLOW_ESSENCE: 16, CHOIR_EMBER: 2}, min_mc: "1.21.11"}
   CORRUPTED_COLOSSUS:   {tier: 3, kind: lesser, base: IRON_GOLEM, drop: CORRUPTED_CIRCUIT, drops: 3, offerings: {mc:IRON_BLOCK: 8, sf:ADVANCED_CIRCUIT_BOARD: 2, HOLLOW_ESSENCE: 16, CHOIR_EMBER: 2}}
-  HOLLOW_WITHER:        {tier: 3, kind: major,  base: WITHER,     drop: HOLLOW_HEART,    drops: 2, catalyst: HOLLOW_EFFIGY, offerings: {mc:SOUL_SOIL: 16, HOLLOW_ESSENCE: 32, CHOIR_EMBER: 4}}
+  DOPPELGANGER:         {tier: 3, kind: lesser, base: MANNEQUIN,  drop: MIRROR_VISAGE,   drops: 3, offerings: {mc:GLASS_PANE: 32, mc:ARMOR_STAND: 2, MIRROR_DUST: 4, HOLLOW_ESSENCE: 16, CHOIR_EMBER: 2}, min_mc: "1.21.9"}
+  GALLUS:               {tier: 3, kind: major,  base: "giant CHICKEN ridden by a baby ZOMBIE", drop: HOLLOW_HEART, drops: 2, catalyst: HOLLOW_EFFIGY, offerings: {mc:EGG: 16, mc:FEATHER: 32, HOLLOW_ESSENCE: 32, CHOIR_EMBER: 4}, mob_drops: {mc:FEATHER: "16-32", mc:EGG: "4-8", mc:COOKED_CHICKEN: "4-8"}, xp: 800}
 
 # Slimefun researches. `id` is added to research base id 262000 and must NEVER change once released.
 researches:
@@ -368,27 +369,30 @@ items:
   # tier-3 boss drops
   WARLORDS_BRAND:    {tier: 3, cat: boss_drop, name: Warlord's Brand, purpose: "Hollow armor and necromancy", recipe: {type: BOSS_DROP, boss: HOLLOW_WARLORD}}
   HEARTWOOD_RESIN:   {tier: 3, cat: boss_drop, name: Heartwood Resin, purpose: "Regeneration and sustain items", recipe: {type: BOSS_DROP, boss: HEARTWOOD_HORROR}}
-  LANCERS_PENNANT:   {tier: 3, cat: boss_drop, name: Lancer's Pennant, purpose: "Charge weapons", recipe: {type: BOSS_DROP, boss: DREAD_LANCER}}
+  LANCERS_PENNANT:   {tier: 3, cat: boss_drop, name: Lancer's Pennant, purpose: "The Dreadlance (from the Vanguard)", recipe: {type: BOSS_DROP, boss: DREAD_RIDERS}}
+  OUTRIDERS_FLETCHING: {tier: 3, cat: boss_drop, name: Outrider's Fletching, purpose: "The Stormstring Bow (from the Outrider)", recipe: {type: BOSS_DROP, boss: DREAD_RIDERS, chance: 1.0}}
   CORRUPTED_CIRCUIT: {tier: 3, cat: boss_drop, name: Corrupted Circuit, purpose: "Tier-3 machines and the Servitor Nexus", recipe: {type: BOSS_DROP, boss: CORRUPTED_COLOSSUS}}
-  HOLLOW_HEART:      {tier: 3, cat: boss_drop, name: Hollow Heart, purpose: "Pinnacle items only", recipe: {type: BOSS_DROP, boss: HOLLOW_WITHER}}
+  MIRROR_VISAGE:     {tier: 3, cat: boss_drop, name: Mirror Visage, purpose: "Illusion cosmetics: the Aura Talisman", recipe: {type: BOSS_DROP, boss: DOPPELGANGER}}
+  HOLLOW_HEART:      {tier: 3, cat: boss_drop, name: Hollow Heart, purpose: "Pinnacle gear only", recipe: {type: BOSS_DROP, boss: GALLUS}}
+  GALLUS_WISHBONE:   {tier: 3, cat: boss_drop, name: Gallus Wishbone, purpose: "Final talismans: Wishbone Talisman, Aura Talisman, Gallus Egg", recipe: {type: BOSS_DROP, boss: GALLUS, chance: 1.0}}
   HOLLOW_EFFIGY:
-    {tier: 3, cat: catalyst, name: Hollow Effigy, purpose: "Summons the Hollow Wither",
-     recipe: {type: RITUAL, circle: 3, out: 1, center: mc:NETHER_STAR, in: {WARLORDS_BRAND: 1, HEARTWOOD_RESIN: 1, LANCERS_PENNANT: 1, CORRUPTED_CIRCUIT: 1, mc:WITHER_ROSE: 8, HOLLOW_ESSENCE: 16}}}
+    {tier: 3, cat: catalyst, name: Hollow Effigy, purpose: "Summons Gallus, the Hollow Jockey",
+     recipe: {type: RITUAL, circle: 3, out: 1, center: mc:NETHER_STAR, in: {WARLORDS_BRAND: 1, HEARTWOOD_RESIN: 1, LANCERS_PENNANT: 1, CORRUPTED_CIRCUIT: 1, MIRROR_VISAGE: 1, mc:FEATHER: 16, HOLLOW_ESSENCE: 16}}}
   # tier-3 rewards (Hollow Assembler 6x6 = up to 36 items)
   HOLLOW_HELMET:
-    {tier: 3, cat: armor, name: Hollow Crown, purpose: "Hollow set (4/4: wither immunity, lifesteal vs summoned creatures)",
+    {tier: 3, material: NETHERITE_HELMET, enchants: {PROTECTION: 5, UNBREAKING: 5}, durability: 1200, repair: WARLORDS_BRAND, cat: armor, name: Hollow Crown, purpose: "Netherite, Protection V (Infinity: XX), not unbreakable or soulbound. Immune to Darkness and Blindness. Set (4/4): wither immunity, -25% damage from summoned creatures, faint soul wisps",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {ABYSSAL_HELMET: 1, HOLLOW_INGOT: 16, WARLORDS_BRAND: 4, HEARTWOOD_RESIN: 2, HOLLOW_CRYSTAL: 4, HOLLOW_SIGIL: 2}}}
   HOLLOW_CHESTPLATE:
-    {tier: 3, cat: armor, name: Hollow Cuirass, purpose: "Hollow set",
+    {tier: 3, material: NETHERITE_CHESTPLATE, enchants: {PROTECTION: 5, UNBREAKING: 5, THORNS: 5}, durability: 1500, repair: WARLORDS_BRAND, cat: armor, name: Hollow Cuirass, purpose: "Netherite, Protection V (Infinity: XX), not unbreakable or soulbound. Thorns V. Immune to Wither",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {ABYSSAL_CHESTPLATE: 1, HOLLOW_INGOT: 22, WARLORDS_BRAND: 5, HEARTWOOD_RESIN: 2, HOLLOW_CRYSTAL: 4, HOLLOW_SIGIL: 2}}}
   HOLLOW_LEGGINGS:
-    {tier: 3, cat: armor, name: Hollow Greaves, purpose: "Hollow set",
+    {tier: 3, material: NETHERITE_LEGGINGS, enchants: {PROTECTION: 5, UNBREAKING: 5}, durability: 1400, repair: WARLORDS_BRAND, cat: armor, name: Hollow Greaves, purpose: "Netherite, Protection V (Infinity: XX), not unbreakable or soulbound. Immune to Slowness",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {ABYSSAL_LEGGINGS: 1, HOLLOW_INGOT: 20, WARLORDS_BRAND: 5, HEARTWOOD_RESIN: 2, HOLLOW_CRYSTAL: 4, HOLLOW_SIGIL: 2}}}
   HOLLOW_BOOTS:
-    {tier: 3, cat: armor, name: Hollow Sabatons, purpose: "Hollow set",
+    {tier: 3, material: NETHERITE_BOOTS, enchants: {PROTECTION: 5, UNBREAKING: 5, FEATHER_FALLING: 4}, durability: 1200, repair: WARLORDS_BRAND, cat: armor, name: Hollow Sabatons, purpose: "Netherite, Protection V (Infinity: XX), not unbreakable or soulbound. No fall damage",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {ABYSSAL_BOOTS: 1, HOLLOW_INGOT: 16, WARLORDS_BRAND: 4, HEARTWOOD_RESIN: 2, HOLLOW_CRYSTAL: 4, HOLLOW_SIGIL: 2}}}
   DREADLANCE:
-    {tier: 3, cat: weapon, name: Dreadlance, purpose: "Spear: charged lunge through enemies; damage scales with distance. Durability 2000, repair: Lancer's Pennant",
+    {tier: 3, material: NETHERITE_SPEAR, durability: 2000, repair: LANCERS_PENNANT, cat: weapon, name: Dreadlance, purpose: "Spear: charged lunge through enemies. Every hit heals you for 15% of the damage dealt (capped per second)",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {LANCERS_PENNANT: 8, HOLLOW_INGOT: 16, HOLLOW_CRYSTAL: 4, TEMPEST_CORE: 4, HOLLOW_HEART: 1, HOLLOW_SIGIL: 2}}}
   SOULFIRE_CENSER:
     {tier: 3, cat: weapon, name: Soulfire Censer, purpose: "Upgraded Wyrmbreath: longer blue soul-fire cone, 5s bursts without overheating. Durability 3000, repair: Choir Ember",
@@ -396,6 +400,32 @@ items:
   LICHS_PHYLACTERY:
     {tier: 3, cat: weapon, name: Lich's Phylactery, purpose: "Necromancy: commands up to 4 Hollow Knights that follow you until killed. Durability 256 summons, repair: Warlord's Brand",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {GRAVE_LANTERN: 1, WARLORDS_BRAND: 8, HOLLOW_INGOT: 14, HOLLOW_ESSENCE: 6, HOLLOW_HEART: 2, HOLLOW_SIGIL: 2}}}
+  STORMSTRING_BOW:
+    {tier: 3, material: BOW, durability: 1500, repair: OUTRIDERS_FLETCHING, cat: weapon, name: Stormstring Bow, purpose: "Arrows call down lightning on the mob they hit and arc to 2 more hostile mobs. Visual lightning only: never starts fires or changes mobs. Never hits players or pets",
+     recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {QUILLSHOT_BOW: 1, OUTRIDERS_FLETCHING: 8, HOLLOW_INGOT: 12, TEMPEST_CORE: 4, HOLLOW_CRYSTAL: 4, HOLLOW_SIGIL: 2}}}
+  SERVITOR_NEXUS:
+    {tier: 3, material: CONDUIT, cat: labor, name: Servitor Nexus, purpose: "Links up to 8 Servitor Shrines within 24 blocks: one shared 54-slot store (cargo/Networks), shared supplies, one Spirit Essence empowers all, and an overview menu to see and swap every contract",
+     recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {CORRUPTED_CIRCUIT: 4, HOLLOW_INGOT: 8, ABYSSAL_TETHER: 1, HOLLOW_CRYSTAL: 2, HOLLOW_ESSENCE: 8, HOLLOW_SIGIL: 1}}}
+  # final rewards (Gallus): talismans work from the inventory and only ever affect their carrier
+  HOLLOW_HALO:
+    {tier: 3, material: GOLD_NUGGET, cat: charm, name: Hollow Halo, purpose: "Cosmetic: a slowly turning ring of light over your head while it's in your inventory (only yours, one at a time). Right-click: on/off and color",
+     recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {HOLLOW_HEART: 1, mc:GOLD_BLOCK: 4, HOLLOW_CRYSTAL: 4, mc:GLOWSTONE: 8, SPIRIT_ESSENCE: 16}}}
+  WISHBONE_TALISMAN:
+    {tier: 3, material: BONE, cat: charm, name: Wishbone Talisman, purpose: "While in your inventory you are half size. Right-click toggles it",
+     recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {GALLUS_WISHBONE: 4, HOLLOW_INGOT: 4, mc:FEATHER: 8, HOLLOW_CRYSTAL: 2, sf:COMMON_TALISMAN: 1}}}
+  AURA_TALISMAN:
+    {tier: 3, material: AMETHYST_SHARD, cat: charm, name: Aura Talisman, purpose: "Cosmetic: a light particle trail as you walk while it's in your inventory. Right-click: trail style (prismatic sparks, petals, soul wisps) or off",
+     recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {GALLUS_WISHBONE: 2, MIRROR_VISAGE: 2, PRISMATIC_NETHERRACK: 4, HOLLOW_CRYSTAL: 2, sf:COMMON_TALISMAN: 1}}}
+  GALLUS_EGG:
+    {tier: 3, material: EGG, cat: charm, name: Gallus Egg, purpose: "Right-click: hatch a big rideable chicken for you alone. Steer with movement keys, flap to jump, glide down slowly. It vanishes when you dismount or log out",
+     recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {GALLUS_WISHBONE: 3, mc:SADDLE: 1, mc:EGG: 16, HOLLOW_INGOT: 4, TEMPEST_CORE: 2}}}
+  # tier-3 cosmetics (Heartwood Horror)
+  WATCHFUL_EYEBLOSSOM:
+    {tier: 3, material: CLOSED_EYEBLOSSOM, cat: decoration, name: Watchful Eyeblossom, purpose: "Decoration: opens when someone walks near and closes when they leave; faint glowing motes drift toward the nearest player",
+     recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:CLOSED_EYEBLOSSOM: 2, HEARTWOOD_RESIN: 1, mc:RESIN_CLUMP: 4, SPIRIT_ESSENCE: 1}}}
+  RESIN_TILE:
+    {tier: 3, material: RESIN_BRICKS, cat: decoration, name: Resin Tile, purpose: "Decoration: amber drips and a faint trail where you walk (quiet while sneaking)",
+     recipe: {type: MAGIC_WORKBENCH, out: 4, in: {mc:RESIN_BRICKS: 4, HEARTWOOD_RESIN: 1, mc:RESIN_CLUMP: 2}}}
   HEARTWOOD_AEGIS:
     {tier: 3, cat: charm, name: Heartwood Aegis, purpose: "Shield: blocking heals you over time; regeneration aura for nearby allies",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {mc:SHIELD: 1, HEARTWOOD_RESIN: 8, HOLLOW_INGOT: 14, HOLLOW_CRYSTAL: 4, MIRROR_WARD: 1, HOLLOW_HEART: 1, HOLLOW_SIGIL: 2}}}
