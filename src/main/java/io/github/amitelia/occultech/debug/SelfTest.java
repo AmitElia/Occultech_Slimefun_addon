@@ -865,6 +865,14 @@ final class SelfTest {
         int before = decorations.paletteOf(jar);
         decorations.cyclePalette(jar, io.github.amitelia.occultech.items.DecorationService.Kind.WISP_JAR);
         check("right-click cycles a decoration's palette", decorations.paletteOf(jar) == (before + 1) % 4, before + " -> " + decorations.paletteOf(jar));
+
+        Block coral = bound.getRelative(-8, 0, -6);
+        DebugWorld.placeSlimefun(coral, ItemKeys.slimefunId("EVERLIVING_CORAL"), this::remember);
+        decorations.cyclePalette(coral, io.github.amitelia.occultech.items.DecorationService.Kind.EVERLIVING_CORAL);
+        check("Everliving Coral's palette swaps the coral type", coral.getType() == Material.BRAIN_CORAL, String.valueOf(coral.getType()));
+        for (String id : List.of("CHIMING_TILE", "MOONLIT_LILY", "WITCHCAP", "TIDAL_TILE", "PRISMATIC_NETHERRACK")) {
+            check(ContentRegistrar.title(id) + " registered", SlimefunItem.getById(ItemKeys.slimefunId(id)) != null, "missing");
+        }
     }
 
     private void setContract(String id) {

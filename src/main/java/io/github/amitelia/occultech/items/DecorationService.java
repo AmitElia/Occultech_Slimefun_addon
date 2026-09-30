@@ -76,7 +76,27 @@ public final class DecorationService {
             Palette.colors("&fWhite", Color.fromRGB(235, 240, 245)),
             Palette.colors("&bSky", Color.fromRGB(150, 210, 255)),
             Palette.colors("&aMint", Color.fromRGB(160, 255, 210)),
-            Palette.colors("&dLilac", Color.fromRGB(210, 170, 255)));
+            Palette.colors("&dLilac", Color.fromRGB(210, 170, 255))),
+        MOONLIT_LILY(
+            Palette.colors("&fSilver stars", Color.fromRGB(235, 240, 255)),
+            Palette.colors("&eGolden stars", Color.fromRGB(255, 215, 110)),
+            Palette.colors("&bIce stars", Color.fromRGB(150, 220, 255))),
+        WITCHCAP(
+            Palette.colors("&cRed &7& &agreen", Color.fromRGB(215, 40, 50), Color.fromRGB(70, 210, 70)),
+            Palette.colors("&5Violet &7& &6gold", Color.fromRGB(150, 60, 220), Color.fromRGB(255, 200, 60)),
+            Palette.colors("&9Blue &7& &fwhite", Color.fromRGB(60, 110, 255), Color.fromRGB(235, 240, 255))),
+        /** Palettes swap the block itself between the five corals. */
+        EVERLIVING_CORAL(
+            new Palette("&bTube coral", new Color[0], new Material[] { Material.TUBE_CORAL }, new String[0]),
+            new Palette("&dBrain coral", new Color[0], new Material[] { Material.BRAIN_CORAL }, new String[0]),
+            new Palette("&5Bubble coral", new Color[0], new Material[] { Material.BUBBLE_CORAL }, new String[0]),
+            new Palette("&cFire coral", new Color[0], new Material[] { Material.FIRE_CORAL }, new String[0]),
+            new Palette("&eHorn coral", new Color[0], new Material[] { Material.HORN_CORAL }, new String[0])),
+        /** Palettes are hue ranges (start, span) for the fire's color cycle. */
+        PRISMATIC_NETHERRACK(
+            Palette.colors("&cR&6a&ei&an&bb&9o&dw", Color.WHITE),
+            Palette.colors("&aAu&bro&5ra", Color.WHITE),
+            Palette.colors("&cDusk &5embers", Color.WHITE));
 
         private final Palette[] palettes;
 
@@ -86,6 +106,11 @@ public final class DecorationService {
 
         public int paletteCount() {
             return palettes.length;
+        }
+
+        /** Palettes that are block types: right-click swaps the block itself. */
+        boolean swapsBlock() {
+            return this == EVERLIVING_CORAL;
         }
     }
 
@@ -117,6 +142,10 @@ public final class DecorationService {
     public String cyclePalette(Block block, Kind kind) {
         int next = (paletteOf(block) + 1) % kind.palettes.length;
         BlockStorage.addBlockInfo(block, PALETTE_KEY, String.valueOf(next));
+        if (kind.swapsBlock()) {
+            // no physics: coral out of water must not be updated into dead coral
+            block.setType(kind.palettes[next].parts()[0], false);
+        }
         Decoration decoration = decorations.get(block.getLocation());
         if (decoration != null) {
             clearParts(decoration);
@@ -181,6 +210,10 @@ public final class DecorationService {
                 case OCCULT_ORRERY -> orrery(center, decoration, palette);
                 case SOULFIRE_BRAZIER -> brazier(center, index == 0);
                 case BOTTLED_GALE -> gale(center, palette);
+                case MOONLIT_LILY -> lily(center, decoration, palette);
+                case WITCHCAP -> witchcap(center, palette);
+                case EVERLIVING_CORAL -> coral(center);
+                case PRISMATIC_NETHERRACK -> prismaticFire(at.getBlock(), index);
             }
             return false;
         });
@@ -302,6 +335,100 @@ public final class DecorationService {
             double radius = 0.05 + height * 0.35;
             double angle = spin + i * 1.1;
             world.spawnParticle(Particle.DUST, center.clone().add(Math.cos(angle) * radius, 0.55 + height, Math.sin(angle) * radius), 1, 0, 0, 0, 0, dust);
+        }
+    }
+
+    /** Five star motes circling the flower and a little moon on a wider orbit; extra twinkles at night. */
+    private void lily(Location center, Decoration decoration, Palette palette) {
+        World world = center.getWorld();
+        Particle.DustOptions star = new Particle.DustOptions(palette.colors()[0], 0.45F);
+        double spin = ticks * 0.07;
+        for (int i = 0; i < 5; i++) {
+            double angle = spin + Math.PI * 2 * i / 5;
+            double height = 0.15 + Math.sin(spin * 2 + i) * 0.12;
+            world.spawnParticle(Particle.DUST, center.clone().add(Math.cos(angle) * 0.55, height, Math.sin(angle) * 0.55), 1, 0, 0, 0, 0, star);
+        }
+        long time = world.getTime();
+        if (time > 12500 && time < 23500 && ThreadLocalRandom.current().nextInt(4) == 0) {
+            world.spawnParticle(Particle.END_ROD, center.clone().add(0, 0.5, 0), 1, 0.4, 0.3, 0.4, 0.002);
+        }
+        if (decoration.parts.isEmpty()) {
+            decoration.parts.add(world.spawn(center, TextDisplay.class, d -> {
+                prepare(d);
+                d.setText(MenuUtils.color("&e☽"));
+                d.setBillboard(Display.Billboard.CENTER);
+                d.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+                d.setBrightness(new Display.Brightness(15, 15));
+                d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(0.9F, 0.9F, 0.9F), new AxisAngle4f()));
+            }));
+        }
+        if (ticks % ORBIT_STEP_TICKS == 0) {
+            double angle = -ticks / (double) ORBIT_STEP_TICKS * (Math.PI / 10);
+            decoration.parts.get(0).teleport(center.clone().add(Math.cos(angle) * 0.85, 0.55, Math.sin(angle) * 0.85));
+        }
+    }
+
+    /** A bubbling brew: two-colored bubbles rise and pop, with a quiet bubble now and then. */
+    private static void witchcap(Location center, Palette palette) {
+        World world = center.getWorld();
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        Color[] colors = palette.colors();
+        Location top = center.clone().add(0, 0.1, 0);
+        for (int i = 0; i < 2; i++) {
+            Color color = colors[random.nextInt(colors.length)];
+            world.spawnParticle(Particle.ENTITY_EFFECT, top.clone().add(random.nextDouble(-0.2, 0.2), random.nextDouble(0.1), random.nextDouble(-0.2, 0.2)),
+                1, 0, 0, 0, 1, color);
+        }
+        if (random.nextInt(3) == 0) {
+            Color from = colors[0];
+            Color to = colors[colors.length - 1];
+            world.spawnParticle(Particle.DUST_COLOR_TRANSITION, top.clone().add(random.nextDouble(-0.25, 0.25), 0.3 + random.nextDouble(0.4),
+                random.nextDouble(-0.25, 0.25)), 1, 0, 0, 0, 0, new Particle.DustTransition(from, to, 0.6F));
+        }
+        if (random.nextInt(5) == 0) {
+            world.spawnParticle(Particle.BUBBLE_POP, top.clone().add(0, 0.5, 0), 1, 0.15, 0.1, 0.15, 0.01);
+        }
+        if (random.nextInt(60) == 0) {
+            world.playSound(center, org.bukkit.Sound.BLOCK_BUBBLE_COLUMN_BUBBLE_POP, 0.4F, 0.8F + random.nextFloat() * 0.4F);
+        }
+    }
+
+    /** A thin stream of bubbles and a faint glow. */
+    private static void coral(Location center) {
+        World world = center.getWorld();
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        world.spawnParticle(Particle.BUBBLE_POP, center.clone().add(random.nextDouble(-0.1, 0.1), 0.3 + random.nextDouble(1.2), random.nextDouble(-0.1, 0.1)),
+            1, 0, 0.05, 0, 0.01);
+        if (random.nextInt(6) == 0) {
+            world.spawnParticle(Particle.GLOW, center, 1, 0.3, 0.3, 0.3, 0);
+        }
+    }
+
+    /**
+     * Rainbow fire: only while fire burns on top. Vanilla fire can't be recolored, so hue-cycling flames are drawn over
+     * it. Neighbouring blocks are offset in hue so a pit of them ripples like rainbow glass.
+     */
+    private void prismaticFire(Block block, int palette) {
+        Block above = block.getRelative(0, 1, 0);
+        if (above.getType() != Material.FIRE && above.getType() != Material.SOUL_FIRE) {
+            return;
+        }
+        // hue range per palette: rainbow (full circle), aurora (green-violet), dusk embers (red-violet)
+        float start = palette == 1 ? 0.3F : palette == 2 ? 0.75F : 0F;
+        float span = palette == 0 ? 1F : 0.4F;
+        float phase = (float) ((ticks * 0.01 + (block.getX() + block.getZ()) * 0.06) % 1.0);
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        Location base = above.getLocation().add(0.5, 0.1, 0.5);
+        for (int i = 0; i < 4; i++) {
+            float hue = (start + span * ((phase + i * 0.05F) % 1F)) % 1F;
+            java.awt.Color rgb = java.awt.Color.getHSBColor(hue, 0.85F, 1F);
+            Color color = Color.fromRGB(rgb.getRed(), rgb.getGreen(), rgb.getBlue());
+            Location point = base.clone().add(random.nextDouble(-0.35, 0.35), random.nextDouble(0.7), random.nextDouble(-0.35, 0.35));
+            if (i % 2 == 0) {
+                block.getWorld().spawnParticle(Particle.DUST, point, 1, 0, 0, 0, 0, new Particle.DustOptions(color, 1.1F));
+            } else {
+                block.getWorld().spawnParticle(Particle.ENTITY_EFFECT, point, 1, 0, 0, 0, 1, color);
+            }
         }
     }
 

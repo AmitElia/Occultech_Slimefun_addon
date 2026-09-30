@@ -27,7 +27,9 @@ import io.github.amitelia.occultech.content.ItemKeys;
 import io.github.amitelia.occultech.items.AbyssalAnchor;
 import io.github.amitelia.occultech.items.BoneScepter;
 import io.github.amitelia.occultech.items.ChoirBell;
+import io.github.amitelia.occultech.items.CosmeticListener;
 import io.github.amitelia.occultech.items.DecorationBlock;
+import io.github.amitelia.occultech.items.StepTile;
 import io.github.amitelia.occultech.items.DecorationService;
 import io.github.amitelia.occultech.items.GuardianEye;
 import io.github.amitelia.occultech.items.HeldWeapons;
@@ -298,8 +300,12 @@ public final class ContentRegistrar {
                 "prismarine", plugin.getConfig().getInt("pearl-bed.seconds-per-item", 60), Material.PRISMARINE);
             case "EMBER_BRAZIER" -> new ProducerBlock(group, stack, type, grid, output, rituals, List.of(Material.BLAZE_POWDER), "blaze powder",
                 plugin.getConfig().getInt("ember-brazier.seconds-per-item", 60), Material.MAGMA_BLOCK);
-            case "WISP_JAR", "ABYSSAL_LANTERN", "RUNE_OBELISK", "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "BOTTLED_GALE" ->
+            case "WISP_JAR", "ABYSSAL_LANTERN", "RUNE_OBELISK", "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "BOTTLED_GALE", "MOONLIT_LILY", "WITCHCAP",
+                "EVERLIVING_CORAL", "PRISMATIC_NETHERRACK" ->
                 new DecorationBlock(group, stack, type, grid, output, plugin.decorations(), DecorationService.Kind.valueOf(def.id()));
+            case "CHIMING_TILE" -> new StepTile(group, stack, type, grid, output, List.of(Material.AMETHYST_BLOCK));
+            case "TIDAL_TILE" -> new StepTile(group, stack, type, grid, output, List.copyOf(CosmeticListener.CORAL_BLOCKS.stream()
+                .sorted().toList()));
             case "WYRMBREATH", "GUARDIANS_GAZE" -> new OccultItem(group, stack, type, grid, output);
             case "ABYSSAL_ANCHOR" -> new AbyssalAnchor(group, stack, type, grid, output, plugin);
             case "CHOIR_BELL" -> new ChoirBell(group, stack, type, grid, output);

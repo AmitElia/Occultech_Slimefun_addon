@@ -108,6 +108,20 @@ Health values are before group scaling. Balance is untested with real players; t
 - The 9x9 Abyssal circle comes from upgrading the Bound Altar in place (like Initiate -> Bound).
 - Crafting rituals keep the center item's enchantments (an enchanted netherite helmet stays enchanted as an Abyssal Helm).
 
+### Cosmetics by tier (implemented for tiers 0-2)
+Visual only, never change other blocks, animate only near players; tiles have no ticker (nothing runs until stepped on).
+| Tier | Block | Effect | Made with |
+|------|-------|--------|-----------|
+| 0 | Chiming Amethyst Tile | pentatonic chime + sparkle underfoot, quiet while sneaking | amethyst, Warded Silver |
+| 1 | Moonlit Lily | star motes and a little moon orbit it, twinkles at night | Dusk Membrane (Night Matriarch) |
+| 1 | Witchcap | crimson fungus bubbling red and green like a brew | Coven Brew Base (Witch Coven) |
+| 2 | Everliving Coral | never dries out of water, bubble stream; right-click cycles the five corals | Tide Glass |
+| 2 | Tidal Coral Tile | never dries, splash underfoot; right-click cycles coral blocks | Tide Glass |
+| 2 | Prismatic Netherrack | lit fire shimmers through hue-cycling colors (particles over vanilla fire) | Choir Ember (Blaze Choir) |
+| 3 (planned) | Watchful Eyeblossom | opens when someone is near, particles drift toward them | Heartwood Resin (Heartwood Horror, creaking) |
+| 3 (planned) | Resin Tile | amber drips underfoot | Heartwood Resin |
+Breaking the block under a decorative flower drops the Occultech item, never a plain vanilla flower.
+
 ### Tier-2 bosses (implemented)
 Health attributes cap at 1024, so tier-2 bosses have modest health and thick hides: minis take a third of the damage
 dealt (~900-1000 effective health solo), the Drowned Elder a fifth (~2500). Group scaling still applies.

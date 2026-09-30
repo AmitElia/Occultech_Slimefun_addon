@@ -52,6 +52,15 @@ final class MenuUtils {
         return sfItem != null ? sfItem.getId() : ItemKeys.vanilla(item.getType().name());
     }
 
+    /** "TUBE_CORAL_BLOCK" -> "Tube Coral Block". */
+    static String pretty(org.bukkit.Material material) {
+        StringBuilder out = new StringBuilder();
+        for (String word : material.name().split("_")) {
+            out.append(out.isEmpty() ? "" : " ").append(word.charAt(0)).append(word.substring(1).toLowerCase());
+        }
+        return out.toString();
+    }
+
     static String color(String text) {
         return ChatColor.translateAlternateColorCodes('&', text);
     }

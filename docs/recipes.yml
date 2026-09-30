@@ -83,7 +83,9 @@ researches:
   ABYSSAL_WARDROBE:  {id: 9, name: "Abyssal Wardrobe",  cost: 45, items: [ABYSSAL_HELMET, ABYSSAL_CHESTPLATE, ABYSSAL_LEGGINGS, ABYSSAL_BOOTS]}
   DEEP_NECROMANCY:   {id: 10, name: "Deep Necromancy",  cost: 45, items: [GRAVE_LANTERN]}
   DEEP_SERVITUDE:    {id: 11, name: "Deep Servitude",   cost: 50, items: [ABYSSAL_TETHER]}
-  DECORATIONS:       {id: 12, name: "Occult Decor",     cost: 15, items: [WISP_JAR, ABYSSAL_LANTERN, RUNE_OBELISK, OCCULT_ORRERY, SOULFIRE_BRAZIER]}
+  DECORATIONS:       {id: 12, name: "Occult Decor",     cost: 15, items: [WISP_JAR, ABYSSAL_LANTERN, RUNE_OBELISK, OCCULT_ORRERY, SOULFIRE_BRAZIER, EVERLIVING_CORAL, TIDAL_TILE, PRISMATIC_NETHERRACK]}
+  HUMBLE_DECOR:      {id: 13, name: "Humble Decor",     cost: 6,  items: [CHIMING_TILE]}
+  TWILIGHT_DECOR:    {id: 14, name: "Twilight Decor",   cost: 10, items: [MOONLIT_LILY, WITCHCAP]}
   SERVITUDE:         {id: 6, name: "Servitude",         cost: 35, items: [SERVITOR_SHRINE, HARVEST_CONTRACT, GATHER_CONTRACT, WARD_CONTRACT, BREWER_CONTRACT, SHEPHERD_CONTRACT, BEEKEEPER_CONTRACT, ACOLYTE_CONTRACT]}
 
 items:
@@ -142,6 +144,11 @@ items:
   WARDING_CHARM:
     {tier: 0, material: RABBIT_FOOT, cat: charm, name: Warding Charm, purpose: "In inventory: -15% damage from summoned creatures",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {COVEN_BREW_BASE: 3, BINDING_THREAD: 2, WARDED_SILVER: 2, sf:COMMON_TALISMAN: 1, OCCULT_INK: 1}}}
+
+  # tier-0 cosmetic
+  CHIMING_TILE:
+    {tier: 0, material: AMETHYST_BLOCK, cat: decoration, name: Chiming Amethyst Tile, purpose: "Decoration: chimes softly and sparkles when walked on (quiet while sneaking)",
+     recipe: {type: ENHANCED_CRAFTING_TABLE, out: 4, in: {mc:AMETHYST_BLOCK: 4, mc:AMETHYST_SHARD: 4, WARDED_SILVER: 1}}}
 
   # =====================================================================
   # TIER 1 - BOUND (basic diamond gear; gate: Sovereign Gel)
@@ -217,6 +224,14 @@ items:
   WARD_CONTRACT:
     {tier: 1, material: PAPER, cat: labor, name: "Contract: Ward", purpose: "Shrine spirit stops hostile mobs from spawning naturally in its area",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 1, OCCULT_INK: 2, BINDING_THREAD: 2, sf:ANCIENT_RUNE_EARTH: 1, SPIRIT_ESSENCE: 2, RESONANT_CRYSTAL: 1}}}
+
+  # tier-1 cosmetics
+  MOONLIT_LILY:
+    {tier: 1, material: LILY_OF_THE_VALLEY, cat: decoration, name: Moonlit Lily, purpose: "Decoration: tiny stars and a little moon circle the flower, brighter at night. Right-click to change the stars' color",
+     recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:LILY_OF_THE_VALLEY: 2, DUSK_MEMBRANE: 1, mc:GLOWSTONE_DUST: 4, SPIRIT_ESSENCE: 1}}}
+  WITCHCAP:
+    {tier: 1, material: CRIMSON_FUNGUS, cat: decoration, name: Witchcap, purpose: "Decoration: a fungus that bubbles like a witch's brew, red and green. Right-click to change the brew",
+     recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:CRIMSON_FUNGUS: 2, COVEN_BREW_BASE: 1, mc:GLASS_BOTTLE: 2, SPIRIT_ESSENCE: 1}}}
 
   # =====================================================================
   # TIER 2 - ABYSSAL (max-enchanted netherite; gate: Evoker's Sigil) - powered machines from here
@@ -312,6 +327,16 @@ items:
   SOULFIRE_BRAZIER:
     {tier: 2, material: SOUL_LANTERN, cat: decoration, name: Soulfire Brazier, purpose: "Decoration: a crackling bowl of flame particles with drifting embers. Gives light, never burns anything. Right-click: soul (blue) or ember (orange) flames",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:IRON_BARS: 3, mc:SOUL_SOIL: 2, CHOIR_EMBER: 1, SOUL_ASH: 2, SPIRIT_ESSENCE: 1}}}
+
+  EVERLIVING_CORAL:
+    {tier: 2, material: TUBE_CORAL, cat: decoration, name: Everliving Coral, purpose: "Decoration: coral that never dries out, with a thin stream of bubbles. Right-click to change the coral (tube, brain, bubble, fire, horn)",
+     recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:TUBE_CORAL: 2, TIDE_GLASS: 1, mc:PRISMARINE_CRYSTALS: 2, SPIRIT_ESSENCE: 1}}}
+  TIDAL_TILE:
+    {tier: 2, material: TUBE_CORAL_BLOCK, cat: decoration, name: Tidal Coral Tile, purpose: "Decoration: a coral block that never dries out and splashes when walked on (quiet while sneaking). Right-click to change the coral",
+     recipe: {type: MAGIC_WORKBENCH, out: 4, in: {mc:TUBE_CORAL_BLOCK: 4, TIDE_GLASS: 1, mc:PRISMARINE_SHARD: 4}}}
+  PRISMATIC_NETHERRACK:
+    {tier: 2, material: NETHERRACK, cat: decoration, name: Prismatic Netherrack, purpose: "Decoration: set it alight and its fire shimmers through every color of the rainbow. Burns forever like netherrack",
+     recipe: {type: MAGIC_WORKBENCH, out: 4, in: {mc:NETHERRACK: 4, CHOIR_EMBER: 1, mc:GLOWSTONE_DUST: 2, TIDE_GLASS: 1}}}
 
   # =====================================================================
   # TIER 3 - HOLLOW (Infinity gear; gate: Elder Scale)

@@ -80,6 +80,17 @@ The **MC** column shows the Minecraft version that added the mob. The local test
 | Blaze Choir | 3 Blazes | Circle the altar with rotating shields. Their fireballs are custom projectiles that start no fires | *Choir Ember*: used as fuel for powered ritual machines | any |
 | Corrupted Colossus | Iron Golem | The tech-meets-occult boss for the "Occultech" name. Warned shockwave slams | *Corrupted Circuit*: used in Occultech machines (a separate item, not a Basic Circuit Board substitute) | any |
 
+## Player-model boss (decided: tier-3 mini-boss, not started)
+**The Doppelganger** - a Mannequin (26.2 player-model entity) wearing the skin of the player it targets, with cosmetic
+copies of their armor and weapon (never their items). A Mannequin has no AI, so an invisible, invulnerable mob does the
+pathfinding and melee while the Mannequin is the body that takes hits and holds the health.
+- *Mirror stance*: fights like your held weapon (sword -> combos, bow -> volleys, Wyrmbreath -> fire cone), read at phase changes.
+- *Echo*: records ~5s of your movement; shadows replay the path and hurt whoever stands where you were.
+- *Reflection window*: glows as a warning, hits taken during the glow are partly reflected. The counter is to stop attacking.
+- *Wears the top damage dealer's face* in groups and focuses them, so a group can rotate a tank.
+- *Shattered mirror* at 50%: one reflection per player, each wearing that player's skin; everyone breaks their own.
+Drop idea: *Mirror Visage*.
+
 ## Cut or on hold
 - **Voidwalker (Enderman):** cut. Taking held items breaks rule 5 (risk of duplication or lost items), and teleporting endermen are hard to keep in an arena.
 - **Siege Captain:** replaced by *Warband Captain* (no block breaking).

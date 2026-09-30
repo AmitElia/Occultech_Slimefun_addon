@@ -125,7 +125,7 @@ final class Showcase {
             z += length;
         }
         int servitorStart = z;
-        int end = z + 50;
+        int end = z + 58;
 
         loadArea(oz + 1, end + 1);
         layFloor(oz + 2, end, segments, servitorStart);
@@ -468,7 +468,47 @@ final class Showcase {
             }
         });
         Block ward = world.getBlockAt(ox - 14, y, startZ + 36);
-        shrine(ward, "WARD_CONTRACT", "&5Contract: Ward\n&7No hostile mobs spawn within 8 blocks.\n&8(showcase spawning is off anyway)", Map.of());
+        shrine(ward, "WARD_CONTRACT", "&5Contract: Ward &3+ Abyssal Tether\n&7No hostile mobs spawn within 12 blocks\n&7(8 without the tether).\n&8(showcase spawning is off anyway)", Map.of());
+        fills.add(() -> {
+            BlockMenu menu = BlockStorage.getInventory(ward);
+            SlimefunItem tether = SlimefunItem.getById(ItemKeys.slimefunId("ABYSSAL_TETHER"));
+            if (menu != null && tether != null) {
+                menu.replaceExistingItem(ServitorShrine.UPGRADE_SLOT, tether.getItem().clone());
+            }
+        });
+
+        // tier-2 curios and powered machines along the walkway
+        demoBlock(world.getBlockAt(ox - 5, y, startZ + 15), "GUARDIAN_EYE", "&3Guardian Eye\n&7Beams hostile mobs within 12 blocks.\n&6Frenzied by the idol: 1.5x damage.");
+        demoBlock(world.getBlockAt(ox + 5, y, startZ + 15), "PEARL_BED", "&bPearl Bed\n&7Grows prismarine shards and crystals.");
+        demoBlock(world.getBlockAt(ox - 5, y, startZ + 21), "EMBER_BRAZIER", "&6Ember Brazier\n&7Makes blaze powder.");
+        demoBlock(world.getBlockAt(ox + 5, y, startZ + 21), "WIND_CHIME", "&bWind Chime\n&7Speed II and Jump Boost II within 32 blocks.\n&7Chimes softly now and then.");
+        demoBlock(world.getBlockAt(ox - 5, y, startZ + 27), "OCCULT_FORGE", "&cOccult Forge &8(machine)\n&7Needs Slimefun power to run.\n&7Flames while it works.");
+        demoBlock(world.getBlockAt(ox + 5, y, startZ + 27), "SOUL_CONDENSER", "&cSoul Condenser &8(machine)\n&7Needs Slimefun power to run.\n&7Souls drift while it works.");
+
+        // decoration gallery across the end of the hall
+        title(new Location(world, ox + 0.5, floorY + 5, startZ + 41.5), "&d&lDECORATIONS\n&7Right-click one to change its look");
+        String[] decorations = { "WISP_JAR", "ABYSSAL_LANTERN", "RUNE_OBELISK", "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "BOTTLED_GALE" };
+        for (int i = 0; i < decorations.length; i++) {
+            String id = decorations[i];
+            demoBlock(world.getBlockAt(ox - 10 + i * 4, y, startZ + 45), id, "&d" + ContentRegistrar.title(id) + " &8(tier 2)\n&7Right-click: next palette");
+        }
+
+        // cosmetics from every tier: flowers need soil, the netherrack is lit, tiles are laid in the floor to walk on
+        setBlock(world.getBlockAt(ox - 10, y - 1, startZ + 50), Material.GRASS_BLOCK);
+        demoBlock(world.getBlockAt(ox - 10, y, startZ + 50), "MOONLIT_LILY", "&fMoonlit Lily &8(tier 1)\n&7Right-click: star color");
+        setBlock(world.getBlockAt(ox - 5, y - 1, startZ + 50), Material.GRASS_BLOCK);
+        demoBlock(world.getBlockAt(ox - 5, y, startZ + 50), "WITCHCAP", "&cWitchcap &8(tier 1)\n&7Right-click: brew colors");
+        demoBlock(world.getBlockAt(ox + 5, y, startZ + 50), "EVERLIVING_CORAL", "&bEverliving Coral &8(tier 2)\n&7Never dries. Right-click: coral type");
+        Block netherrack = world.getBlockAt(ox + 10, y, startZ + 50);
+        demoBlock(netherrack, "PRISMATIC_NETHERRACK", "&dPrismatic Netherrack &8(tier 2)\n&7Light it: rainbow fire. Right-click: palette");
+        setBlock(netherrack.getRelative(0, 1, 0), Material.FIRE);
+        for (int dx = -6; dx <= 6; dx++) {
+            if (dx != 0) {
+                DebugWorld.placeSlimefun(world.getBlockAt(ox + dx, y - 1, startZ + 54), ItemKeys.slimefunId(dx < 0 ? "CHIMING_TILE" : "TIDAL_TILE"), this::record);
+            }
+        }
+        label(new Location(world, ox - 3.5, y + 1.6, startZ + 54.5), "&dChiming Amethyst Tile &8(tier 0)\n&7Walk on it (sneak to stay quiet)");
+        label(new Location(world, ox + 4.5, y + 1.6, startZ + 54.5), "&bTidal Coral Tile &8(tier 2)\n&7Walk on it. Right-click: coral");
 
         // east column: brewer, shepherd, beekeeper
         Block brewer = world.getBlockAt(ox + 14, y, startZ + 8);
