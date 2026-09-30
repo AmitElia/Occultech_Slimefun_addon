@@ -184,7 +184,7 @@ for b in bosses.values():
     for k in list(b["offerings"]) + ([b["catalyst"]] if b.get("catalyst") else []):
         used[ref(k)[1]] += 1
 for iid, item in items.items():
-    if item["cat"] not in ("weapon", "armor", "charm", "utility", "labor", "machine") and used[iid] == 0 \
+    if item["cat"] not in ("weapon", "armor", "charm", "utility", "labor", "machine", "decoration") and used[iid] == 0 \
             and item["cat"] != "infrastructure":
         problems.append(f"{iid}: material is never used")
 

@@ -87,6 +87,22 @@ Health values are before group scaling. Balance is untested with real players; t
   ingredients into brewing stands (T2), Shepherd/Beekeeper (T2), Acolyte - keeps a circle's bowls stocked with a chosen
   ritual's offerings from a chest, never starts rituals itself (T2). Servitor Nexus (T3) links shrines and widens areas.
 
+## Tier 2 · Abyssal (planned, not implemented)
+- Balanced for max-enchanted netherite. First **powered machines** (Occult Forge, Soul Condenser); **rituals never use
+  power** but cost more (mini-boss summons ~1.1k raw, the Drowned Elder ~4.6k, 3-13% of the 9x9 circle).
+- Ocean bosses fight **on land with custom movement** (no ponds). Mini-bosses: Abyssal Warden, Tidebreaker, Blaze Choir,
+  Tempest. Gate: Drowned Elder -> Elder Scale.
+- Bonus drops (15%): Guardian Eye (sentry beam vs hostile mobs; a Frenzy Idol within 8 makes it 1.5x stronger, never
+  stacking), Pearl Bed (prismarine), Ember Brazier (blaze powder), Bottled Gale (decoration).
+- Gear: Wyrmbreath, Guardian's Gaze, Grave Lantern, **Abyssal Anchor** (chain-hook pull weapon), **Choir Bell**
+  (burning shockwave talisman that staggers summoned creatures), **Wind Chime** (placed: Speed II + Jump Boost II
+  within 8). Tempest Treads and Nautilus Harness were dropped.
+- Abyssal armor: netherite-level defense; helm Water Breathing, chest Thorns V, legs Conduit Power in water, boots
+  Dolphin's Grace; 4/4: -20% damage from summoned creatures.
+- **Abyssal Tether** (moved from tier 3's Servitor Nexus): shrine range upgrade in its own slot - 15x15, Ward/Acolyte 25x25.
+- **Decorations** (visual effects only, never change blocks, animate only with a player within 24 blocks):
+  Wisp Jar, Abyssal Lantern, Rune Obelisk, Tide Fountain, Occult Orrery, Aurora Beacon, Soulfire Brazier, Bottled Gale.
+
 ## Later tiers
 | Tier | Boss | Base mob | Idea |
 |------|------|----------|------|
