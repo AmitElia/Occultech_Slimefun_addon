@@ -50,7 +50,7 @@ bosses:
   GELATINOUS_SOVEREIGN: {tier: 0, kind: major,  base: SLIME,      drop: SOVEREIGN_GEL,   drops: 3, catalyst: SOVEREIGN_CATALYST, offerings: {mc:SLIME_BLOCK: 2, GRAVE_SALT: 4, TALLOW_CANDLE: 2}, mob_drops: {mc:SLIME_BALL: "8-16", mc:SLIME_BLOCK: "0-2"}, xp: 100}
   # ---- Tier 1 (basic diamond)
   THE_UNBOUND:          {tier: 1, kind: lesser, base: VINDICATOR, drop: FRENZIED_EDGE,   drops: 3, offerings: {mc:IRON_AXE: 1, mc:EMERALD: 4, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}}
-  NIGHT_MATRIARCH:      {tier: 1, kind: lesser, base: PHANTOM,    drop: DUSK_MEMBRANE,   drops: 3, offerings: {mc:PHANTOM_MEMBRANE: 4, mc:FEATHER: 8, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}, condition: night}
+  NIGHT_MATRIARCH:      {tier: 1, kind: lesser, base: PHANTOM,    drop: DUSK_MEMBRANE,   drops: 3, offerings: {mc:PHANTOM_MEMBRANE: 4, mc:FEATHER: 8, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}}
   MIRRORED_MAGUS:       {tier: 1, kind: lesser, base: ILLUSIONER, drop: MIRROR_DUST,     drops: 3, offerings: {mc:GLASS_PANE: 8, mc:ENDER_EYE: 1, SPIRIT_ESSENCE: 3, GRAVE_SALT: 4}}
   ARCHEVOKER:           {tier: 1, kind: major,  base: EVOKER,     drop: EVOKERS_SIGIL,   drops: 3, catalyst: ARCHEVOKER_EFFIGY, offerings: {mc:EMERALD_BLOCK: 2, SPIRIT_ESSENCE: 6, TALLOW_CANDLE: 4}}
   # ---- Tier 2 (max-enchanted netherite)
@@ -136,7 +136,7 @@ items:
     {tier: 1, cat: material, name: Bound Steel, purpose: "Tier-1 structural metal",
      recipe: {type: SMELTERY, out: 2, in: {sf:STEEL_INGOT: 4, sf:DAMASCUS_STEEL_INGOT: 2, SOUL_ASH: 2, sf:REINFORCED_ALLOY_INGOT: 1}}}
   SPIRIT_ESSENCE:
-    {tier: 1, cat: material, name: Spirit Essence, purpose: "Tier-1+ ritual fuel and servitor upkeep (automated by the Soul Condenser)",
+    {tier: 1, cat: material, name: Spirit Essence, purpose: "Tier-1+ summon offering and crafting ingredient (automated by the Soul Condenser). Never a running fuel",
      recipe: {type: RITUAL, circle: 1, out: 4, center: sf:ENDER_LUMP_3, in: {SOUL_ASH: 4, GRAVE_SALT: 4, mc:GHAST_TEAR: 1}},
      alt_recipes: [{type: SOUL_CONDENSER, out: 4, in: {mc:SOUL_SAND: 8, SOUL_ASH: 2, mc:GHAST_TEAR: 1}}]}
   BOUND_CHALK:
@@ -158,6 +158,9 @@ items:
   FRENZIED_EDGE:   {tier: 1, cat: boss_drop, name: Frenzied Edge, purpose: "Berserker melee weapons", recipe: {type: BOSS_DROP, boss: THE_UNBOUND}}
   DUSK_MEMBRANE:   {tier: 1, cat: boss_drop, name: Dusk Membrane, purpose: "Movement items", recipe: {type: BOSS_DROP, boss: NIGHT_MATRIARCH}}
   MIRROR_DUST:     {tier: 1, cat: boss_drop, name: Mirror Dust, purpose: "Decoy and illusion items", recipe: {type: BOSS_DROP, boss: MIRRORED_MAGUS}}
+  PHANTOM_ROOST:   {tier: 1, cat: labor, name: Phantom Roost, purpose: "Bonus drop. Placed, slowly produces Phantom Membranes into a store cargo/Networks can pull from", recipe: {type: BOSS_DROP, boss: NIGHT_MATRIARCH, chance: 0.15}}
+  SCRYING_MIRROR:  {tier: 1, cat: utility, name: Scrying Mirror, purpose: "Bonus drop. Link it to an altar; shows that circle's ritual and fight status (and boss health) from afar", recipe: {type: BOSS_DROP, boss: MIRRORED_MAGUS, chance: 0.15}}
+  FRENZY_IDOL:     {tier: 1, cat: labor, name: Frenzy Idol, purpose: "Bonus drop. Placed, Servitor Shrines within 8 blocks work 50% faster", recipe: {type: BOSS_DROP, boss: THE_UNBOUND, chance: 0.15}}
   EVOKERS_SIGIL:   {tier: 1, cat: boss_drop, name: Evoker's Sigil, purpose: "GATE -> tier 2 (Abyssal Altar, powered machines); necromancy line", recipe: {type: BOSS_DROP, boss: ARCHEVOKER}}
   ARCHEVOKER_EFFIGY:
     {tier: 1, cat: catalyst, name: Archevoker's Effigy, purpose: "Summons the Archevoker",
@@ -176,10 +179,10 @@ items:
     {tier: 1, cat: weapon, name: Bone Scepter, purpose: "Necromancy: raises 2 skeleton archers for 30s. Durability 64 summons, repair: Grave Salt",
      recipe: {type: RITUAL, circle: 1, out: 1, center: mc:BLAZE_ROD, in: {EVOKERS_SIGIL: 1, mc:BONE_BLOCK: 8, SPIRIT_ESSENCE: 4, BOUND_SIGIL: 1, mc:SKELETON_SKULL: 1, SOVEREIGN_GEL: 1}}}
   SERVITOR_SHRINE:
-    {tier: 1, cat: labor, name: Servitor Shrine, purpose: "Houses one bound spirit that works a 7x7 area; uses Spirit Essence",
+    {tier: 1, cat: labor, name: Servitor Shrine, purpose: "Houses one bound spirit that works a 9x9 area around it (crops stay normal blocks). No fuel: the contract is the cost",
      recipe: {type: ANCIENT_ALTAR, out: 1, in: {BOUND_SIGIL: 1, BOUND_STEEL: 3, SOVEREIGN_GEL: 1, SPIRIT_ESSENCE: 2, mc:LODESTONE: 1, BINDING_THREAD: 1}}}
   HARVEST_CONTRACT:
-    {tier: 1, cat: labor, name: "Contract: Harvest", purpose: "Shrine spirit harvests and replants mature crops and nether wart",
+    {tier: 1, cat: labor, name: "Contract: Harvest", purpose: "Shrine spirit harvests and replants mature crops, nether wart, cocoa and berries into the shrine store",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:PAPER: 2, OCCULT_INK: 2, BINDING_THREAD: 2, mc:GOLDEN_HOE: 1, SPIRIT_ESSENCE: 2}}}
   GATHER_CONTRACT:
     {tier: 1, cat: labor, name: "Contract: Gather", purpose: "Shrine spirit collects dropped items into an adjacent chest",

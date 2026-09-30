@@ -44,6 +44,26 @@ cargo and Networks can pull from it but not insert.
 
 Health values are before group scaling. Balance is untested with real players; tune after playtests.
 
+## Tier 1 · Bound (decided, not implemented)
+- Balanced for basic diamond gear; tuned for **solo first**, groups handled by health scaling.
+- 7x7 circle wrapping the tier-0 circle (8 bowls, 8 candles, 16 chalk + 16 bound glyphs). The Initiate's Altar is
+  upgraded in place by ritual into the Bound Altar.
+- Mini-bosses: The Unbound, Night Matriarch (**any time**, never burns, ~20% stronger at night), Mirrored Magus.
+  Gate: Archevoker. Bonus drops (15%): Frenzy Idol, Phantom Roost, Scrying Mirror.
+- Both the Servitor Shrine and the Bone Scepter (necromancy) ship in tier 1.
+
+### Servitor Shrine
+- **Its own block, placed next to your farm.** It works a 9x9 area around it (±1 block vertically); crops stay normal
+  blocks you can see and walk through. A bound spirit (display entity, never a real mob) floats to each plot it works.
+- **No fuel.** Spirit Essence is a crafting cost (shrine + contracts), never a running upkeep. Balance comes from speed
+  (1 action every ~2s), area, and caps per chunk/player instead.
+- **Contracts** go in the shrine's slot and decide the job; swap them any time. Output goes into the shrine's own
+  store (cargo/Networks can pull) or an adjacent container.
+- Only works in loaded chunks, only where the owner may build, stops when its store is full.
+- Contract ideas: Harvest (T1), Gather (T1), Ward - no hostile spawns in the area (T1), Brewer's Aid - feeds wart and
+  ingredients into brewing stands (T2), Shepherd/Beekeeper (T2), Acolyte - keeps a circle's bowls stocked with a chosen
+  ritual's offerings from a chest, never starts rituals itself (T2). Servitor Nexus (T3) links shrines and widens areas.
+
 ## Later tiers
 | Tier | Boss | Base mob | Idea |
 |------|------|----------|------|
