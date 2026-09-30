@@ -182,7 +182,8 @@ final class SelfTest {
 
     private void buildCircle() {
         World world = Bukkit.getWorlds().get(0);
-        int x = world.getSpawnLocation().getBlockX() + 24;
+        // west of the showcase hallway, so the two never overlap
+        int x = world.getSpawnLocation().getBlockX() - 48;
         int z = world.getSpawnLocation().getBlockZ() + 24;
         chunk = world.getChunkAt(x >> 4, z >> 4);
         chunk.addPluginChunkTicket(plugin);
@@ -346,8 +347,8 @@ final class SelfTest {
 
     private void buildUpgradeCircle() {
         World world = Bukkit.getWorlds().get(0);
-        int x = world.getSpawnLocation().getBlockX() - 24;
-        int z = world.getSpawnLocation().getBlockZ() + 30;
+        int x = world.getSpawnLocation().getBlockX() - 48;
+        int z = world.getSpawnLocation().getBlockZ() + 64;
         chunk2 = world.getChunkAt(x >> 4, z >> 4);
         chunk2.addPluginChunkTicket(plugin);
         bound = world.getBlockAt(x, world.getHighestBlockYAt(x, z) + 1, z);

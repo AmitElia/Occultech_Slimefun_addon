@@ -96,12 +96,15 @@ Health values are before group scaling. Balance is untested with real players; t
   stacking), Pearl Bed (prismarine), Ember Brazier (blaze powder), Bottled Gale (decoration).
 - Gear: Wyrmbreath, Guardian's Gaze, Grave Lantern, **Abyssal Anchor** (chain-hook pull weapon), **Choir Bell**
   (burning shockwave talisman that staggers summoned creatures), **Wind Chime** (placed: Speed II + Jump Boost II
-  within 8). Tempest Treads and Nautilus Harness were dropped.
+  within 32 blocks; a soft random chime every 10-25s, never constant). Tempest Treads and Nautilus Harness were dropped.
 - Abyssal armor: netherite-level defense; helm Water Breathing, chest Thorns V, legs Conduit Power in water, boots
   Dolphin's Grace; 4/4: -20% damage from summoned creatures.
 - **Abyssal Tether** (moved from tier 3's Servitor Nexus): shrine range upgrade in its own slot - 15x15, Ward/Acolyte 25x25.
-- **Decorations** (visual effects only, never change blocks, animate only with a player within 24 blocks):
-  Wisp Jar, Abyssal Lantern, Rune Obelisk, Tide Fountain, Occult Orrery, Aurora Beacon, Soulfire Brazier, Bottled Gale.
+- **Decorations** (visual effects only, never change blocks, animate only with a player within 24 blocks, right-click
+  palettes where they fit): Wisp Jar (firefly-bush style, wisps up to 10 blocks out), Abyssal Lantern, Rune Obelisk,
+  Occult Orrery, Soulfire Brazier, Bottled Gale. Orbiting parts use display-entity interpolation (the client animates;
+  the server sends one update every few seconds). Cut as not multiplayer friendly: Aurora Beacon (sky-wide particle
+  ribbon), Tide Fountain (constant heavy particle arcs).
 
 ## Later tiers
 | Tier | Boss | Base mob | Idea |
