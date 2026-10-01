@@ -291,3 +291,24 @@ boundsteel, parchment, emerald, dusk.
   Warded Silver) - players learn the shape once.
 - Low-contrast emblems on light materials disappear at 1x; check them in the set view.
 
+### Session D review round (user)
+"The flowers are fantastic, the contracts are incredible." Fix list, all done:
+- **Bound Chalk** - a sharpened cone tip at the drawing end; the stroke is the chalk's own violet (a fresh glint runs
+  along it, 4 frames).
+- **Archevoker's Effigy** - now a reskin of the totem's familiar shape (big head, arms out, body narrowing to a point;
+  our own pixels): grey-green illager face, heavy brow, long nose, emerald eyes, dark robe, gold collar, trim and cuffs.
+- **Resonant Crystal** - one double-pointed crystal, exactly symmetric (no more crown): lit, front and shadow faces,
+  ridges, a humming spirit core, mirrored ripples.
+- **Bone Scepter** - the big round skull looked comical; now a hand-drawn angular skull (dark sockets with a spark,
+  nose, teeth) on a jointed rod with a bone collar.
+- **Mirror Ward** - exactly symmetric heater shield, a centred ghost in the glass, a shine band sliding down.
+- **Scrying Mirror** - now a scrying orb: a glass ball of turning violet mist with an eye opening, a glass highlight,
+  on a silver claw stand.
+- **Bound Sigil** - a silver medallion carrying the Bound sigil (ring, clamped triangle, spirit at its heart), exactly
+  symmetric. The first try filled the small triangle in (thick lines merging); crisp 1 px mirrored lines fixed it.
+
+**Lessons:** match a familiar vanilla shape when the item replaces one (the totem); everything symmetric by nature
+(shields, crystals, medallions) must be *exactly* symmetric - `mirror_silhouette` enforces it; at 16 px a small shape
+drawn with thick lines fills in - use 1 px lines; look at the 16x zoom when the review sheet and the pixel data
+disagree (the sheet is downscaled when viewed).
+

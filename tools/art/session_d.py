@@ -30,6 +30,23 @@ def bar(icon, ramp, a=(1.4, 9.4), b=(10.0, 3.6), c=(13.8, 5.8), h=3.0, tones=(4,
     return top, left, right, d
 
 
+def pixmap(icon, rows, x0, y0, colours):
+    """Hand-placed pixels: rows of letters, each letter a colour (any other character is left alone)."""
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch in colours:
+                put(icon, [(x0 + x, y0 + y)], colours[ch])
+
+
+def mirror_silhouette(icon):
+    """Pixels whose mirror partner is empty get cleared, so the silhouette is exactly symmetric."""
+    w = icon.w
+    for y in range(icon.h):
+        for x in range(w):
+            if icon.img.getpixel((x, y))[3] and not icon.img.getpixel((w - 1 - x, y))[3]:
+                icon.img.putpixel((x, y), (0, 0, 0, 0))
+
+
 # ================================================================== D1: materials and the core component
 
 def bound_steel(frame=0):
@@ -49,11 +66,11 @@ def bound_steel(frame=0):
 
 
 def bound_chalk(frame=0):
-    """Violet chalk (the Ritual Chalk's shape: a stick drawing a stroke), held by a silver band; the stroke it draws
-    glows spirit cyan."""
+    """Violet chalk held by a silver band, sharpened to a point at its drawing end; the stroke it leaves is the chalk's
+    own violet, with a glint where it is still fresh (animated)."""
     icon = Icon(16)
-    vi, ir, sp = RAMPS["violet"], RAMPS["iron"], RAMPS["spirit"]
-    a, b = (4.6, 10.4), (11.4, 3.6)
+    vi, ir = RAMPS["violet"], RAMPS["iron"]
+    a, b = (5.4, 9.6), (11.4, 3.6)
     vx, vy = b[0] - a[0], b[1] - a[1]
     ll = vx * vx + vy * vy
 
@@ -61,81 +78,87 @@ def bound_chalk(frame=0):
         return ((p[0] + 0.5 - a[0]) * vx + (p[1] + 0.5 - a[1]) * vy) / ll
 
     stick = icon.capsule(a, b, 2.6)
-    stick = Part({p: n for p, n in stick.normals.items() if -0.14 < t_of(p) < 1.12})
+    stick = Part({p: n for p, n in stick.normals.items() if 0.0 <= t_of(p) < 1.12})
     icon.paint(stick, vi, bias=0.18)
-    put(icon, [p for p in stick.keys() if t_of(p) < -0.03], vi[5])
     put(icon, [p for p in stick.keys() if t_of(p) > 1.02], vi[3])
+    # the sharpened tip: a cone from the stick's end to a point, its lit and shadowed halves
+    n = (0.7071 * 2.6, 0.7071 * 2.6)
+    base_l, base_r, tip = (a[0] - n[0], a[1] - n[1]), (a[0] + n[0], a[1] + n[1]), (2.4, 12.6)
+    lit = icon.facet([base_l, a, tip], (0, 0, 1)) - stick
+    dark = icon.facet([a, base_r, tip], (0, 0, 1)) - stick - lit
+    icon.paint(lit, vi, outline=False, flat=4)
+    icon.paint(dark, vi, outline=False, flat=2)
+    icon.outline(stick | lit | dark, vi, over=False)
+    put(icon, [(2, 12), (3, 12)], vi[5])
     band = [p for p in stick.keys() if 0.55 < t_of(p) < 0.72]
     put(icon, band, ir[4])
     put(icon, [p for p in band if p[0] + p[1] < 15], ir[5])
-    put(icon, [(6, 7), (5, 9)], vi[4])
-    stroke = [(1, 14), (2, 14), (3, 15), (4, 15), (5, 15), (6, 15), (7, 14), (8, 14), (9, 13)]
-    put(icon, stroke, sp[4] if frame % 2 == 0 else sp[3])
-    put(icon, [(2, 15), (8, 13)], sp[5])
-    put(icon, [(1, 12), (2, 11)], vi[5])
+    put(icon, [(7, 6), (6, 8)], vi[4])
+    # the stroke: from the tip, the chalk's own violet; a fresh glint travels along it
+    stroke = [(2, 13), (1, 14), (2, 15), (3, 15), (4, 15), (5, 15), (6, 15), (7, 14), (8, 14), (9, 14), (10, 13)]
+    put(icon, stroke, vi[4])
+    put(icon, [stroke[(frame * 3 + 2) % len(stroke)]], vi[5])
+    put(icon, [(0, 12), (1, 11)], vi[3])
     return icon
-
 
 def resonant_crystal(frame=0):
-    """A cluster of three violet crystal shards, each split into a lit and a shadowed face, a cyan core of resonance;
-    sound rings ripple out from it (animated)."""
+    """One double-pointed crystal floating upright (exactly symmetric outline): three faces - lit, front, shadow - with
+    hard ridges, a spirit core humming inside; ripples of resonance spread from it on both sides (animated)."""
     icon = Icon(16)
     vi, sp = RAMPS["violet"], RAMPS["spirit"]
-    # a dark rock the crystals grow from
-    rock = cut(icon.sphere(8.0, 15.6, 6.6, squash=0.5), lambda x, y: y <= 15)
-    icon.paint(rock, RAMPS["ash"], bias=0.05)
-    shards = [  # (base-left, base-right, tip): narrow shards leaning outward, the big centre one in front
-        ((2.4, 13.6), (6.6, 13.8), (1.4, 6.0)),
-        ((9.4, 13.8), (13.6, 13.6), (14.6, 7.2)),
-        ((5.6, 14.4), (10.4, 14.4), (8.0, 0.8)),
+    top, bot = (8.0, 0.6), (8.0, 15.4)
+    L, R, y0, y1 = 3.8, 12.2, 4.6, 11.4
+    faces = [
+        ([top, (L, y0), (L, y1), bot, (6.4, y1), (6.4, y0)], 4),      # left face, lit
+        ([top, (6.4, y0), (6.4, y1), bot, (9.6, y1), (9.6, y0)], 3),  # front face
+        ([top, (9.6, y0), (9.6, y1), bot, (R, y1), (R, y0)], 2),      # right face, in shadow
     ]
     whole = Part({})
-    for (l, r, tip) in shards:
-        mid = ((l[0] + r[0]) / 2, (l[1] + r[1]) / 2)
-        left = icon.facet([l, mid, tip], (0, 0, 1)) - whole
-        right = icon.facet([mid, r, tip], (0, 0, 1)) - whole - left
-        icon.paint(left, vi, outline=False, flat=4)
-        icon.paint(right, vi, outline=False, flat=2)
-        put(icon, [p for p in line_px(mid, tip) if p in left.normals or p in right.normals], vi[5])
-        whole = whole | left | right
-    icon.outline(whole, vi, over=False)
-    # the resonant core glowing inside the big shard
-    put(icon, [(7, 10), (8, 10), (7, 11), (8, 11), (8, 9)], sp[4] if frame % 2 else sp[3])
-    put(icon, [(8, 10)], sp[5])
-    # resonance: arcs ripple out round the tip of the big shard (frame 0 at rest), mirrored exactly
-    k = frame % 4
-    if k:
-        r = 2.0 + k * 1.5
-        for deg in (-45, -22, 0, 22):
+    for pts, idx in faces:
+        part = icon.facet(pts, (0, 0, 1)) - whole
+        icon.paint(part, vi, outline=False, flat=idx)
+        whole = whole | part
+    icon.outline(whole, vi)
+    for x in (6, 9):   # ridges
+        put(icon, [(x, y) for y in range(5, 11)], vi[5] if x == 6 else vi[3])
+    put(icon, [(7, 2), (6, 3)], vi[5])
+    hum = frame % 4
+    put(icon, [(7, 7), (8, 7), (7, 8), (8, 8)], sp[4] if hum % 2 else sp[3])
+    put(icon, [(7, 6), (8, 9)] if hum in (1, 2) else [], sp[5])
+    if hum:   # ripples on both sides, mirrored exactly
+        r = 5.0 + hum * 1.0
+        for deg in (-30, -10, 10, 30):
             x = math.floor(8 + r * math.cos(math.radians(deg)))
-            y = math.floor(3.6 + r * math.sin(math.radians(deg)))
+            y = math.floor(8 + r * math.sin(math.radians(deg)))
             for p in ((x, y), (15 - x, y)):
-                if p not in whole.normals and 0 <= p[0] < 16 and 0 <= p[1] < 16:
-                    put(icon, [p], sp[4], 250 - k * 50)
+                if p not in whole.normals and 0 <= p[0] < 16:
+                    put(icon, [p], sp[4], 250 - hum * 50)
     return icon
-
 
 def bound_sigil(frame=0):
-    """The tier-1 core component: a silver triangle plaque (the Bound sigil's shape; Initiate's was a diamond), a
-    violet triangle cut into it, clamps at its corners and a bound spirit glowing at its heart."""
+    """The tier-1 core component: a silver medallion carrying the Bound sigil (Session B) - a violet ring, a triangle
+    clamped to it at its three corners, a bound spirit glowing at its heart. Exactly symmetric. Animated: the spirit
+    pulses, a twinkle."""
     icon = Icon(16)
-    ir, vi, sp = RAMPS["iron"], RAMPS["violet"], RAMPS["spirit"]
-    plaque = icon.polygon([(8.0, 0.6), (15.6, 14.6), (0.4, 14.6)], bevel=2.0)
-    icon.paint(plaque, ir, bias=0.0)
-    tri = icon.tubes([((8.0, 4.4), (12.6, 12.6)), ((12.6, 12.6), (3.4, 12.6)), ((3.4, 12.6), (8.0, 4.4))], 0.7)
-    for p in tri.keys():
-        put(icon, [p], vi[3] if frame % 4 in (0, 3) else vi[4])
-    # the cut's lower lip catches the light
-    put(icon, [(x, 13) for x in range(4, 13)], ir[5])
-    for (x, y) in ((8, 2), (14, 13), (1, 13)):
-        put(icon, [(x, y)], RAMPS["boundsteel"][1])
-    spirit = icon.sphere(8.0, 10.0, 1.9)
-    icon.paint(spirit, sp, bias=[0.1, 0.35, 0.25, 0.0][frame % 4], outline_ramp=[vi[0], vi[1]])
-    icon.twinkle(13, 2, [0, 1, 3, 1][frame % 4], sp)
+    ir, vi, sp, st = RAMPS["iron"], RAMPS["violet"], RAMPS["spirit"], RAMPS["boundsteel"]
+    rim = icon.ring(8.0, 8.0, 7.4, 5.6)
+    icon.paint(rim, ir, bias=0.1)
+    face = icon.sphere(8.0, 8.0, 5.7)
+    face = Part({p: _norm((n[0] * 0.3, n[1] * 0.3, n[2])) for p, n in face.normals.items()})
+    icon.paint(face, RAMPS["ink"], outline=False, flat=1)
+    put(icon, [p for p in face.keys() if p[0] + p[1] < 10], RAMPS["ink"][2])   # a little light on the upper left
+    # the triangle as crisp 1 px lines (thick lines filled the small triangle in), mirrored for exact symmetry
+    left = line_px((7, 3), (3, 11)) + [(x, 11) for x in range(3, 8)]
+    tri = left + [(15 - x, y) for (x, y) in left]
+    put(icon, tri, vi[5] if frame % 4 in (1, 2) else vi[4])
+    put(icon, [(7, 2), (8, 2), (2, 11), (13, 11)], ir[5])   # the clamps at the corners
+    spirit = icon.sphere(8.0, 8.4, 1.6)
+    icon.paint(spirit, sp, bias=[0.1, 0.35, 0.25, 0.0][frame % 4], outline=False)
+    mirror_silhouette(icon)
+    icon.twinkle(14, 1, [0, 1, 2, 1][frame % 4], sp)
     return icon
 
-
-D1 = [("Bound Steel", bound_steel, 4), ("Bound Chalk", bound_chalk, 2), ("Resonant Crystal", resonant_crystal, 4),
+D1 = [("Bound Steel", bound_steel, 4), ("Bound Chalk", bound_chalk, 4), ("Resonant Crystal", resonant_crystal, 4),
       ("Bound Sigil", bound_sigil, 4)]
 
 
@@ -251,30 +274,54 @@ def evokers_sigil(frame=0):
     return icon
 
 
+TOTEM = [  # the totem's outline (a big head, arms out, a body narrowing to a point) - our own pixels, its shape
+    "................",
+    ".....######.....",
+    "....########....",
+    "....########....",
+    "....########....",
+    "....########....",
+    "....########....",
+    "....########....",
+    ".##############.",
+    ".##############.",
+    "..############..",
+    "....########....",
+    "....########....",
+    ".....######.....",
+    ".....######.....",
+    "......####......",
+]
+
+
 def archevokers_effigy(frame=0):
-    """A small carved effigy of the Archevoker: grey-green face with the illager's heavy brow and long nose, a dark
-    robe with gold trim, arms raised mid-spell; its eyes and the spell between its hands glow (animated)."""
+    """A reskin of the totem's familiar shape as the Archevoker: a grey-green illager face with the heavy brow and long
+    nose, eyes glowing emerald, a dark robe with outstretched sleeves and gold trim. Animated: the eyes flare."""
     icon = Icon(16)
     skin, robe, gd, em = RAMPS["ash"], RAMPS["ink"], RAMPS["gold"], RAMPS["emerald"]
-    body = icon.polygon([(5.0, 8.4), (11.0, 8.4), (13.0, 15.4), (3.0, 15.4)], bevel=1.4)
-    icon.paint(body, robe, bias=0.25)
-    put(icon, [(8, y) for y in range(9, 16)], gd[3])
-    put(icon, [(x, 15) for x in range(4, 13)], gd[2])
-    for side in (-1, 1):   # arms raised to the sides
-        arm = icon.capsule((8 + side * 2.6, 9.4), (8 + side * 5.6, 5.2), 1.1)
-        icon.paint(arm, robe, bias=0.15, outline_over=False)
-    head = icon.box(5.0, 2.0, 11.0, 8.6, bevel=1.4)
-    icon.paint(head, skin + [skin[-1]], bias=0.35, outline_ramp=[robe[0], robe[1]], outline_over=False)
-    put(icon, [(5, 4), (6, 4), (7, 4), (8, 4), (9, 4), (10, 4)], robe[1])   # the heavy brow
-    put(icon, [(8, 5), (8, 6), (8, 7), (7, 7)], skin[2])                     # the long nose
-    glow = em[5] if frame % 4 in (1, 2) else em[4]
-    put(icon, [(6, 5), (10, 5)], glow)
-    # the spell held between the raised hands
-    spark = [[(2, 3)], [(2, 3), (13, 3)], [(13, 3), (2, 2)], [(13, 2)]][frame % 4]
-    put(icon, spark, em[4])
-    icon.twinkle(8, 0, [0, 1, 1, 0][frame % 4], em)
+    mask = {(x, y) for y, row in enumerate(TOTEM) for x, c in enumerate(row) if c == "#"}
+    head = Part({p: n for p, n in icon.box(4.0, 1.0, 12.0, 8.0, bevel=1.6).normals.items() if p in mask})
+    body = Part({p: n for p, n in icon.polygon([(1, 8), (15, 8), (15, 10), (12, 11), (11, 16), (5, 16), (4, 11), (1, 10)],
+                                               bevel=1.6).normals.items() if p in mask and p[1] >= 8})
+    icon.paint(body, robe, bias=0.3, outline=False)
+    icon.paint(head, skin + [skin[-1]], bias=0.42, outline=False)
+    icon.outline(head | body, [robe[0], robe[1]])
+    # face: hair line, the heavy brow, glowing eyes, the long nose
+    put(icon, [(x, 1) for x in range(5, 11)], robe[2])
+    put(icon, [(x, 3) for x in range(5, 11)], robe[1])
+    eye = em[5] if frame % 4 in (1, 2) else em[4]
+    put(icon, [(6, 4), (9, 4)], eye)
+    put(icon, [(7, 4), (8, 4)], skin[2])
+    put(icon, [(7, 5), (8, 5), (7, 6), (8, 6), (7, 7), (8, 7)], skin[2])
+    put(icon, [(7, 5), (7, 6)], skin[3])
+    # gold collar and trim down the robe, cuffs at the sleeve ends
+    put(icon, [(x, 8) for x in range(4, 12)], gd[3])
+    put(icon, [(7, y) for y in range(9, 15)] + [(8, y) for y in range(9, 15)], gd[2])
+    put(icon, [(7, 9), (8, 9)], gd[4])
+    put(icon, [(1, 8), (1, 9), (14, 8), (14, 9)], gd[3])
+    if frame % 4 == 2:
+        put(icon, [(0, 7), (15, 7)], em[4])
     return icon
-
 
 D2 = [("Frenzied Edge", frenzied_edge, 4), ("Dusk Membrane", dusk_membrane, 1), ("Mirror Dust", mirror_dust, 4),
       ("Evoker's Sigil", evokers_sigil, 4), ("Archevoker's Effigy", archevokers_effigy, 4)]
@@ -310,31 +357,41 @@ def frenzy_cleaver(frame=0):
     return icon
 
 
+SKULL = [
+    "..###..",
+    ".#####.",
+    "#######",
+    "#KK#KK#",
+    "#Kc#cK#",
+    ".##K##.",
+    ".#.#.#.",
+]
+
+
 def bone_scepter(frame=0):
-    """A staff of bones (vertebrae knuckles along it) crowned with a skull whose sockets burn spirit cyan; a wisp
-    rises from it (animated)."""
+    """A necromancer's scepter: a jointed bone rod, a bone collar, and on top a hand-drawn skull, sockets dark with a
+    spirit-cyan spark burning in each; a wisp rises (animated)."""
     icon = Icon(16)
-    bone, sp = RAMPS["bone"], RAMPS["spirit"]
-    staff = icon.tubes([((1.4, 14.6), (10.0, 6.0))], 0.95)
-    icon.paint(staff, bone, bias=-0.05)
-    for (x, y) in staff.keys():   # vertebrae: dark joints between the bones
+    bone, sp, ink = RAMPS["bone"], RAMPS["spirit"], RAMPS["ink"]
+    rod = icon.tubes([((1.4, 14.6), (9.6, 6.4))], 0.95)
+    icon.paint(rod, bone, bias=-0.05)
+    for (x, y) in rod.keys():
         if (x + (15 - y)) % 4 == 0:
             put(icon, [(x, y)], bone[1])
-    skull = icon.sphere(11.6, 4.6, 3.6, squash=0.92)
-    icon.paint(skull, bone, bias=0.12, outline_over=False)
-    jaw = icon.box(9.6, 7.0, 13.6, 8.8, bevel=0.8)
-    icon.paint(jaw, bone, bias=-0.1, outline_over=False)
-    put(icon, [(10, 8), (12, 8)], bone[1])   # teeth gaps
+    collar = icon.sphere(10.0, 7.6, 1.7, squash=0.7)
+    icon.paint(collar, bone, bias=0.0, outline_over=False)
+    x0, y0 = 8, 0
+    mask = {(x0 + x, y0 + y) for y, row in enumerate(SKULL) for x, c in enumerate(row) if c != "."}
+    for (x, y) in mask:   # light from the top left: lighter left half, darker right
+        put(icon, [(x, y)], bone[4] if x < x0 + 3 else bone[3] if x == x0 + 3 else bone[2])
+    put(icon, [(x0 + 2, y0), (x0 + 1, y0 + 1)], bone[5])
     glow = sp[5] if frame % 4 in (1, 2) else sp[4]
-    # deep sockets (dark) with a burning point in each, a cheekbone shadow, the nose
-    put(icon, [(9, 3), (10, 3), (9, 4), (10, 4), (12, 3), (13, 3), (12, 4), (13, 4)], RAMPS["ink"][0])
-    put(icon, [(10, 4), (13, 4)], glow)
-    put(icon, [(9, 5), (13, 5)], bone[2])
-    put(icon, [(11, 5), (11, 6)], RAMPS["ink"][0])
-    wisp = [[(14, 1)], [(14, 1), (13, 0)], [(13, 0), (12, 0)], []][frame % 4]
+    pixmap(icon, SKULL, x0, y0, {"K": ink[0], "c": glow})
+    put(icon, [(x0 + 3, y0 + 5)], ink[1])
+    icon.outline(Part({p: (0, 0, 1) for p in mask}), [bone[0], bone[1]], over=False)
+    wisp = [[(15, 2)], [(15, 1), (14, 0)], [(15, 0)], []][frame % 4]
     put(icon, wisp, sp[4], 200)
     return icon
-
 
 def duskwing_charm(frame=0):
     """A violet gem hung on a small loop, two dusk wings spread from it; the wings beat (animated)."""
@@ -357,55 +414,51 @@ def duskwing_charm(frame=0):
     return icon
 
 
+GHOST = [".####.", "######", "#K##K#", "######", "######", "#.##.#"]
+
+
 def mirror_ward(frame=0):
-    """A heater shield of mirror glass in a silver rim; the glass shows a faint violet ghost - the decoy it conjures -
-    and a glint sweeps across it (animated)."""
+    """An exactly symmetric heater shield of mirror glass in a silver rim; the decoy it conjures shows in the glass as a
+    small violet ghost; a band of shine slides down the glass (animated)."""
     icon = Icon(16)
     ir, gl, vi = RAMPS["iron"], RAMPS["glass"], RAMPS["violet"]
-    outline_pts = [(1.6, 1.2), (14.4, 1.2), (14.4, 7.0), (8.0, 15.4), (1.6, 7.0)]
-    rim = icon.polygon(outline_pts, bevel=1.4)
+    rim = icon.polygon([(1.5, 1.5), (14.5, 1.5), (14.5, 7.2), (8.0, 15.2), (1.5, 7.2)], bevel=1.4)
     icon.paint(rim, ir, bias=0.1)
-    glass = icon.facet([(3.2, 2.8), (12.8, 2.8), (12.8, 6.6), (8.0, 13.0), (3.2, 6.6)], (0, 0, 1))
+    glass = icon.facet([(3.2, 3.2), (12.8, 3.2), (12.8, 6.8), (8.0, 12.8), (3.2, 6.8)], (0, 0, 1))
     for (x, y) in glass.keys():
-        put(icon, [(x, y)], gl[4] if y < 6 else gl[3])
-    # the reflected decoy: a small ghost
-    put(icon, [(7, 5), (8, 5), (6, 6), (7, 6), (8, 6), (9, 6), (6, 7), (7, 7), (8, 7), (9, 7), (6, 8), (8, 8)], vi[3])
-    put(icon, [(7, 6), (9, 6)], vi[1])
-    sweep = frame % 4
-    for k in range(-1, 2):
-        put(icon, [p for p in line_px((3 + sweep * 3 + k, 9), (6 + sweep * 3 + k, 3)) if p in glass.normals],
-            gl[5], 230 if k == 0 else 150)
+        put(icon, [(x, y)], gl[4] if x < 8 else gl[3])
+    shine = 3 + frame * 2
+    put(icon, [p for p in glass.keys() if p[1] in (shine, shine + 1)], gl[5])
+    pixmap(icon, GHOST, 5, 4, {"#": vi[3], "K": vi[0]})
+    put(icon, [(7, 1), (8, 1)], RAMPS["spirit"][4])
+    mirror_silhouette(icon)
     return icon
-
 
 def scrying_mirror(frame=0):
-    """An oval mirror of black glass in an ornate frame on a little stand; violet mist turns in it and an eye opens
-    and closes (animated)."""
+    """A scrying orb: a glass ball dark with turning violet mist, an eye opening in its depths, a bright highlight on
+    the glass; it rests in a silver claw stand. Animated: the mist turns, the eye opens and closes."""
     icon = Icon(16)
     ir, vi, sp, ink = RAMPS["iron"], RAMPS["violet"], RAMPS["spirit"], RAMPS["ink"]
-    foot = icon.box(4.6, 13.4, 11.4, 15.4, bevel=0.8)
-    icon.paint(foot, ir, bias=0.0)
-    stem = icon.box(7.0, 11.6, 9.0, 13.6, bevel=0.5)
-    icon.paint(stem, ir, bias=0.0, outline_over=False)
-    frame_part = icon.sphere(8.0, 6.6, 6.2, squash=1.0)
-    frame_part = Part({p: n for p, n in frame_part.normals.items()})
-    icon.paint(frame_part, vi, bias=0.05, outline_ramp=[vi[0], vi[1]], outline_over=False)
-    glass = icon.sphere(8.0, 6.6, 4.4, squash=1.08)
-    for (x, y) in glass.keys():
-        put(icon, [(x, y)], ink[1] if (x + y + frame) % 5 else ink[3])
-    put(icon, [(5, 3), (5, 4), (6, 3)], ink[4])   # the glass catches the light
-    for (x, y) in ((8, 0), (2, 6), (14, 6)):      # ornaments on the frame
-        put(icon, [(x, y)], sp[4])
+    base = icon.box(4.4, 13.2, 11.6, 15.6, bevel=0.9)
+    icon.paint(base, ir, bias=0.0)
+    orb = icon.sphere(8.0, 7.0, 5.9)
+    icon.paint(orb, ink, bias=0.1, outline_ramp=[vi[0], vi[1]])
+    for (x, y) in orb.keys():   # mist turning inside
+        a = math.atan2(y + 0.5 - 7.0, x + 0.5 - 8.0) + frame * math.pi / 2
+        d = math.hypot(x + 0.5 - 8.0, y + 0.5 - 7.0)
+        if 2.0 < d < 5.0 and math.sin(a * 2 + d) > 0.55:
+            put(icon, [(x, y)], vi[3])
+    for (x0, y0, x1, y1) in ((3.6, 10.6, 5.0, 13.4), (12.4, 10.6, 11.0, 13.4), (8.0, 12.2, 8.0, 13.4)):   # the claws
+        put(icon, line_px((x0, y0), (x1, y1)), ir[4])
+    put(icon, [(4, 4), (5, 3), (4, 5), (6, 3)], gl := RAMPS["glass"][5])
+    put(icon, [(11, 10), (12, 9)], vi[4])
     open_ = [1, 2, 2, 0][frame % 4]
     if open_ == 0:
-        put(icon, [(6, 7), (7, 7), (8, 7), (9, 7), (10, 7)], vi[4])
+        put(icon, [(6, 7), (7, 7), (8, 7), (9, 7)], vi[4])
     else:
-        put(icon, [(6, 7), (10, 7), (7, 6), (8, 6), (9, 6), (7, 8), (8, 8), (9, 8)], vi[4])
-        put(icon, [(8, 7)] if open_ == 1 else [(8, 7), (7, 7), (9, 7)], sp[5])
-        if open_ == 2:
-            put(icon, [(8, 7)], ink[0])
+        put(icon, [(6, 7), (9, 7), (7, 6), (8, 6), (7, 8), (8, 8)], vi[4])
+        put(icon, [(7, 7), (8, 7)], sp[5] if open_ == 2 else sp[4])
     return icon
-
 
 D3 = [("Frenzy Cleaver", frenzy_cleaver, 4), ("Bone Scepter", bone_scepter, 4), ("Duskwing Charm", duskwing_charm, 4),
       ("Mirror Ward", mirror_ward, 4), ("Scrying Mirror", scrying_mirror, 4)]
