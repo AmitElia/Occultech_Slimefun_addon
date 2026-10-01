@@ -4,6 +4,8 @@ The look we aim for: chunky, readable, lightly hand-made pixel art in the spirit
 designs, never copied art.
 
 ## Rules
+0. **Bold beats literal.** A striking, simple shape wins over an accurate symbol (the Hollow Sigil's bold star was
+   preferred to a "proper" pentacle).
 1. **Silhouette first.** Every icon has a shape you can recognise filled solid black. A flask is not enough - the Spirit
    Essence's flask has a ghost escaping it.
 2. **Readable at 1x** (16 px in an inventory slot). Details that blur into a blob at 1x are cut or simplified - a

@@ -5,7 +5,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 
 | Session | Content | Status |
 |---|---|---|
-| **A** | Style guide, toolkit, 3 test icons (Ritual Chalk, Spirit Essence, Hollow Sigil) | **Done** - awaiting review |
+| **A** | Style guide, toolkit, 3 test icons (Ritual Chalk, Spirit Essence, Hollow Sigil) | **Done** - reviewed |
 | B | Sigils and glyphs: pentagram, hexagram, tier sigils, 24 runes, footprints, crown pieces (64/128 px, exactly symmetric) | Next |
 | C | Tier-0 item icons | - |
 | D | Tier-1 item icons | - |
@@ -48,7 +48,13 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
   carry everything (lesson for sessions C-F).
 - The ghost's face is two dark pixels; it works, but faces at this size are fragile.
 
+**Review (user):** v2 was the best overall - keep the v2 Hollow Sigil (bold star on a glowing ring) and the v2 Spirit
+Essence (round little ghost); take the v4 Ritual Chalk. Final set: `review-final.png`.
+
 **Lessons carried forward**
+- A bold, simple silhouette beats a "correct" symbol: the badge-like star was preferred over the literal pentacle
+  (circle across the arms). Favour striking shapes over symbolic accuracy.
+- My own checklist judged v3/v4 better than the user did - when two versions both pass, show both and let the user pick.
 - Build the silhouette first, then shade; check it in the silhouette column before adding detail.
 - Avoid accessories that change what an object *is* (the twine made chalk into a scroll).
 - Outlines must never cross other parts.

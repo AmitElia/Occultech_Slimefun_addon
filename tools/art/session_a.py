@@ -66,13 +66,12 @@ def spirit_essence():
     # glass glint
     icon.pixels([(4, 8), (4, 9), (5, 7)], RAMPS["glass"][5])
     # the spirit escaping round the cork: a thick tendril rising right into a little ghost
-    # tail: thickest near the ghost, thinning down into the cork
-    icon.pixels([(9, 3), (10, 4)], RAMPS["spirit"][2])
-    icon.pixels([(10, 3), (11, 3), (11, 4)], RAMPS["spirit"][3])
-    ghost = icon.sphere(13.0, 2.7, 2.5, squash=0.9)
-    icon.paint(ghost, RAMPS["spirit"], bias=0.28)
+    # (chosen: v2) a short tendril into a round little ghost
+    icon.pixels([(9, 3), (10, 3), (10, 2), (11, 2)], RAMPS["spirit"][3])
+    icon.pixels([(9, 2), (10, 1)], RAMPS["spirit"][4])
+    ghost = icon.sphere(13.3, 2.6, 2.4)
+    icon.paint(ghost, RAMPS["spirit"], bias=0.25)
     icon.pixels([(12, 2), (14, 2)], RAMPS["spirit"][0])
-    icon.pixels([(13, 4)], RAMPS["spirit"][1])
     return icon
 
 
@@ -87,13 +86,11 @@ def star_points(cx, cy, r_out, r_in, n=5, rot=-math.pi / 2):
 
 def hollow_sigil():
     icon = Icon(16)
+    # (chosen: v2) the bold star sits on top of a glowing ring
+    ring = icon.ring(8.0, 8.4, 5.6, 4.5)
+    icon.paint(ring, RAMPS["hollowcy"], bias=0.05)
     star = icon.polygon(star_points(8.0, 8.4, 7.7, 3.0), bevel=1.3)
-    icon.paint(star, RAMPS["bone"], bias=0.05)
-    # the pentacle's circle runs across the arms, glowing hollow-cyan
-    ring = icon.ring(8.0, 8.4, 6.0, 5.1)
-    icon.paint(ring, RAMPS["hollowcy"], bias=0.1, outline_ramp=RAMPS["sculk"], outline_over=False)
-    # sculk cracks in the old bone
-    icon.pixels([(7, 3), (11, 9)], RAMPS["sculk"][2])
+    icon.paint(star, RAMPS["bone"], bias=0.1)
     core = icon.sphere(8.0, 8.6, 1.7)
     icon.paint(core, RAMPS["crimson"], bias=0.2, outline_ramp=RAMPS["sculk"])
     return icon
