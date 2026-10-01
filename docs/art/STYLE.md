@@ -36,6 +36,8 @@ living light; chromatic ramps; glowing inlay; the twinkle; hard facets; everythi
     have no dark outline, little glow, and are animated (flicker, life cycle) rather than a single static frame.
 11. **Magic moves and twinkles.** Magical items get an animated version (glint sweep, twinkles taking turns) and carry
     the twinkle motif clear of their outline. Materials stay dark and calm so the magic is what you notice.
+12. **Books look like Minecraft books.** Every book icon uses the vanilla book's pose and silhouette (`BookFrame` in
+    `session_c.py`); only the cover, fittings and emblem change. Held books also get a 3D model (Session G).
 
 ## Toolkit (`tools/art/`)
 - `palettes.py` - ramps and tier families, the light direction.

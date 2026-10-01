@@ -11,7 +11,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | D | Tier-1 item icons | - |
 | E | Tier-2 item icons | - |
 | F | Tier-3 item icons | - |
-| G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg) | - |
+| G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg) **and held 3D models** (first: the Occult Codex as a 3D book - see *Notes for G*) | - |
 | H | Menu backgrounds | - |
 | I | Effect sprites (motes, embers, shards, shockwave rings, beams) | - |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
@@ -194,7 +194,7 @@ moves. New ramps: gel, leather, brew. New review view: `review.inventory` (a tie
 | Sovereign Gel | a glossy drop of royal slime, bubbles and a gold fleck inside, wobbles | 4 |
 | Sovereign's Catalyst | a cube of gel with a gold crown suspended inside, a glint and a twinkle | 4 |
 | Initiate's Sigil | a diamond plaque of carved bone, the sigil cut in and glowing ember | 4 |
-| Occult Codex | a leather tome, banded spine, iron corners, glowing circle on the cover, ribbon | 4 |
+| Occult Codex | a spellbook in the vanilla book pose: overhanging leather covers, iron corner guards, an ember jewel in an iron bezel, a clasp over the pages (redone after review) | 4 |
 | Warding Charm | a silver amulet on a beaded cord loop, a warding eye that glows and blinks | 4 |
 | Quillshot Bow | dark wood, silver recurve tips, ember in the grip; vanilla bow layout; full draw shows three arrows | 4 states |
 
@@ -226,4 +226,26 @@ moves. New ramps: gel, leather, brew. New review view: `review.inventory` (a tie
 - Symmetric pairs of bright dots on a round shape read as a face. Break the symmetry or avoid pairs.
 - Check the whole tier together in slots: twins and low-contrast icons only show up side by side.
 - When a shape doesn't fit 16 px (a fan of arrows), find a simpler sign for the same idea (parallel arrows).
+
+### Session C follow-up: books (user review)
+"The codex and other books should have a very similar silhouette to Minecraft books (an isometric view of the book).
+Items that can be held, like the Occult Codex, need a rendering texture in the shape of a book. Draw inspiration from
+Iron's Spells 'n Spellbooks for the codex. Focus on item icons for now; keep note of it for the block texture sessions."
+
+- **Icon redone:** the codex now lies in the vanilla book's pose (cover a tilted parallelogram, white page block along
+  the front edge, spine on the left) via `BookFrame` in `session_c.py`, which maps cover coordinates to the screen so
+  everything on the cover sits in its perspective. Iron's Spells traits: thick covers overhanging the page block, iron
+  corner guards, a jewel (ember gem in an iron bezel) as the emblem, a strap and clasp over the page edge.
+- Iterations: v1 too steep and short (a blob) with a huge emblem (read as a sun); v2 vanilla proportions, clean pages
+  with one page line, but the small emblem ring read as a "P" and the leather was pink; v3 jewel in a bezel, darker
+  leather, twinkle moved clear of the cover. Pass.
+- Rule for every future book (tier 1-3 tomes, grimoires...): use `BookFrame` - same pose and silhouette as vanilla
+  books, only cover material, fittings and emblem change.
+
+### Notes for G (block and model sessions)
+- **Held book model for the Occult Codex** (and any later held book): a 3D model in Iron's Spells' manner - two thick
+  cover cuboids overhanging a page-block cuboid, a rounded spine, raised corner guards, the jewel and the clasp as small
+  elements - with its own texture sheet in the codex's palette (leather, iron, bone pages, ember jewel). The item model
+  definition picks by display context (`minecraft:select` on `minecraft:display_context`): `gui` (and `ground`) show
+  the 2D icon, hands/head/fixed show the 3D book. Same pattern for any other held item that needs a real shape.
 

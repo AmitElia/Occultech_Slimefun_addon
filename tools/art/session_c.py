@@ -351,31 +351,85 @@ def line_px(a, b):
             y0 += sy
 
 
+class BookFrame:
+    """A closed book lying flat, seen from above-front like the vanilla book icon: the cover is a tilted
+    parallelogram, the page block shows along the front edge, the spine along the left. cover(u, v) maps cover
+    coordinates (0..1, u along the front edge, v from the spine-top toward the front) to the screen."""
+
+    def __init__(self, tl=(0.8, 4.8), tr=(12.0, 1.2), bl=(3.6, 10.6), thick=3.2):
+        self.tl, self.tr, self.bl = tl, tr, bl
+        self.br = (tr[0] + bl[0] - tl[0], tr[1] + bl[1] - tl[1])
+        self.thick = thick
+        ux, uy = tr[0] - tl[0], tr[1] - tl[1]
+        vx, vy = bl[0] - tl[0], bl[1] - tl[1]
+        self.det = ux * vy - uy * vx
+        self.u, self.v = (ux, uy), (vx, vy)
+
+    def cover(self, u, v):
+        return (self.tl[0] + u * self.u[0] + v * self.v[0], self.tl[1] + u * self.u[1] + v * self.v[1])
+
+    def uv(self, x, y):
+        """Cover coordinates of a pixel centre."""
+        dx, dy = x + 0.5 - self.tl[0], y + 0.5 - self.tl[1]
+        return ((dx * self.v[1] - dy * self.v[0]) / self.det, (self.u[0] * dy - self.u[1] * dx) / self.det)
+
+    def down(self, p, d):
+        return (p[0], p[1] + d)
+
+
 def occult_codex(frame=0):
-    """A thick leather-bound book: a banded spine, iron corners, the page block showing, a crimson ribbon, and the
-    Initiate circle tooled into the cover glowing ember. Animated: the circle pulses, a twinkle."""
+    """The Occult Codex as a spellbook in the vanilla book's pose (lying flat, cover tilted, pages along the front),
+    built the way Iron's Spells' spellbooks are: thick leather covers overhanging the page block, iron corner guards,
+    a raised ember emblem with a gem at its heart, a strap and clasp over the page edge. Animated: the emblem pulses,
+    a twinkle comes and goes."""
     icon = Icon(16)
     lea, bone, ir, em = RAMPS["leather"], RAMPS["bone"], RAMPS["iron"], RAMPS["ember"]
-    pages = icon.box(4.4, 12.2, 14.6, 15.0, bevel=0.6)
-    icon.paint(pages, bone, bias=0.1)
-    put(icon, [(x, 14) for x in range(6, 14, 2)], bone[2])
-    cover = icon.box(4.0, 0.8, 14.8, 13.2, bevel=1.4)
-    icon.paint(cover, lea, bias=0.05, outline_over=False)
-    spine = icon.capsule((2.8, 2.2), (2.8, 13.4), 1.9)
-    icon.paint(spine, lea, bias=-0.05, outline_over=False)
-    for y in (4, 8, 12):
-        put(icon, [(2, y), (3, y)], lea[4])
-    for (x, y) in ((13, 1), (13, 12), (5, 1), (5, 12)):
-        put(icon, [(x, y)], ir[4])
-    put(icon, [(14, 1), (14, 2), (14, 12), (14, 11)], ir[3])
+    b = BookFrame()
+    t = b.thick
+    # the back cover's edge, then the page block (inset: the covers overhang it), then the spine
+    back = icon.facet([b.down(b.bl, t - 1.0), b.down(b.br, t - 1.0), b.down(b.br, t), b.down(b.bl, t)], (0, 0.8, 0.6))
+    icon.paint(back, lea, outline=False, flat=1)
+    p0, p1 = b.cover(0.05, 1.0), b.cover(0.97, 1.0)
+    pages = icon.facet([p0, p1, b.down(p1, t - 1.0), b.down(p0, t - 1.0)], (0.1, 0.9, 0.45))
+    icon.paint(pages, bone, outline=False, flat=4)
+    p2, p3 = b.down(p0, t * 0.55), b.down(p1, t * 0.55)   # one page line along the block
+    put(icon, [p for p in line_px(p2, p3) if p in pages.normals], bone[3])
+    put(icon, [p for p in line_px(b.down(p0, 0.6), b.down(p1, 0.6)) if p in pages.normals], bone[5])
+    spine = icon.facet([b.tl, b.bl, b.down(b.bl, t), b.down(b.tl, t)], (-0.9, 0.3, 0.4))
+    icon.paint(spine, lea, outline=False, flat=2)
+    cover = icon.polygon([b.tl, b.tr, b.br, b.bl], bevel=1.3)
+    icon.paint(cover, lea, bias=-0.06, outline=False)
+    icon.outline(cover | spine | pages | back, lea)
+    # spine bands
+    for v in (0.25, 0.55, 0.85):
+        x, y = b.cover(0.0, v)
+        put(icon, [(round(x - 0.6), round(y + 1.0)), (round(x - 0.6), round(y + 2.0))], lea[4])
+    # iron corner guards: the cover's corners in cover space
+    for (x, y) in cover.keys():
+        u, v = b.uv(x, y)
+        cu, cv = min(u, 1 - u), min(v, 1 - v)
+        if cu + cv < 0.17:
+            put(icon, [(x, y)], ir[4] if u < 0.5 and v < 0.5 else ir[3] if u < 0.5 or v < 0.5 else ir[2])
+    # the emblem: a raised ring with a gem at its heart, marks at the four points
     pulse = frame % 4 in (1, 2)
-    ring = icon.ring(9.0, 7.0, 3.7, 2.6)
-    for p in ring.keys():
-        put(icon, [p], em[4] if pulse else em[3])
-    put(icon, [(9, 6), (9, 7), (8, 6), (8, 7)], em[5] if pulse else em[4])
-    put(icon, [(8, 1), (13, 6), (8, 11), (4, 6)], em[2])
-    put(icon, [(11, 13), (11, 14), (11, 15), (12, 15)], RAMPS["crimson"][3])
-    icon.twinkle(14, 14, [0, 1, 2, 1][frame % 4], em)
+    for (x, y) in cover.keys():
+        u, v = b.uv(x, y)
+        d = ((u - 0.5) ** 2 + ((v - 0.5) * 0.85) ** 2) ** 0.5
+        if 0.12 <= d < 0.21:   # the iron bezel
+            put(icon, [(x, y)], ir[4] if v < 0.5 else ir[2])
+        elif d < 0.12:        # the jewel
+            put(icon, [(x, y)], em[4] if pulse else em[3])
+    gx, gy = b.cover(0.47, 0.47)
+    put(icon, [(math.floor(gx), math.floor(gy))], em[5])
+    # a strap and clasp over the page edge, near the front right
+    for (x, y) in list(cover.keys()) + list(pages.keys()):
+        u, v = b.uv(x, y)
+        if 0.74 <= u <= 0.84 and v >= 0.78:
+            put(icon, [(x, y)], lea[2] if (x, y) in pages.normals else lea[3])
+    cx, cy = b.cover(0.79, 1.0)
+    put(icon, [(round(cx), round(cy) + 1), (round(cx), round(cy) + 2)], ir[5])
+    put(icon, [(round(cx) + 1, round(cy) + 1)], ir[3])
+    icon.twinkle(4, 1, [0, 1, 2, 1][frame % 4], em)
     return icon
 
 
