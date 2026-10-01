@@ -26,7 +26,11 @@ designs, never copied art.
    | 2 Abyssal | deep teal, prismarine | sea glow |
    | 3 Hollow | sculk black-teal, old bone | hollow cyan, crimson |
 8. **Symmetry where it belongs.** Sigils, glyphs and runes are exactly symmetric (checked by the toolkit); objects are
-   not.
+   not. Shading follows the light, so only the silhouette is mirrored.
+9. **No flat shortcuts.** Every asset - sigils and decals included - gets ramps, light and volume. Don't make art
+   grayscale "so the game can tint it"; draw a coloured version per tier instead (Session B round 1 was rejected for this).
+10. **Light sprites are emissive.** Particles (flames, sparkles, motes) are coloured by heat, not by the top-left light,
+    have no dark outline, little glow, and are animated (flicker, life cycle) rather than a single static frame.
 
 ## Toolkit (`tools/art/`)
 - `palettes.py` - ramps and tier families, the light direction.
@@ -43,3 +47,5 @@ designs, never copied art.
 - [ ] Outlines in the object's own tones, not across other parts?
 - [ ] Values: does it still read in grayscale?
 - [ ] Symmetric if it's a sigil/glyph?
+- [ ] Does it look like a *finished* texture next to Session A's icons (not a placeholder)?
+- [ ] Particles: animated, emissive colours, readable at 1x in every frame?

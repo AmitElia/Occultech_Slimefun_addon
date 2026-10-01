@@ -6,7 +6,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | Session | Content | Status |
 |---|---|---|
 | **A** | Style guide, toolkit, 3 test icons (Ritual Chalk, Spirit Essence, Hollow Sigil) | **Done** - reviewed |
-| **B** | Sigils and glyphs: pentagram, hexagram, tier sigils, 24 runes, footprints, crown pieces | **Done** - awaiting review (A vs B sigil style) |
+| **B** | Sigils, runes, footprints, gems/crown/halo, animated soul flame and sparkle | **Round 2 done** - awaiting review |
 | C | Tier-0 item icons | - |
 | D | Tier-1 item icons | - |
 | E | Tier-2 item icons | - |
@@ -59,36 +59,59 @@ Essence (round little ghost); take the v4 Ritual Chalk. Final set: `review-final
 - Avoid accessories that change what an object *is* (the twine made chalk into a scroll).
 - Outlines must never cross other parts.
 
-## Session B - sigils and glyphs (2026-10-01)
-**Delivered:** `tools/art/glyphkit.py` (8x supersampled masks -> crisp pixels by coverage, mirroring for exact symmetry,
-grayscale styling so the game's text colour tints it), `session_b.py` (sigils) and `session_b_glyphs.py` (runes,
-footprints, crown pieces). Outputs in [session-b/](session-b/): `review-sigils-v2.png`, `review-runes-v3.png`,
-`review-pieces-v4.png` are final. Everything that should be symmetric measures 0 pixels off.
+## Session B - sigils and## Session B - sigils and glyphs (2026-10-01)
 
-**Why grayscale:** a font glyph's colours are multiplied by the text colour, so one white glyph serves every tier
-(ember / violet / teal / crimson columns on the sheets show the result).
+### Round 1 - rejected
+Built a separate glyph toolkit (`glyphkit.py`) that made everything **flat grayscale** so the game's text colour could
+tint one glyph for every tier. Sigils (2 versions), 24 runes (3 versions), footprints and crown pieces (4 versions).
+Outputs kept in [session-b/round1/](session-b/round1/).
+
+**User review:** the runes are nice and the paw prints are liked; everything else failed - sigils "lack volume and
+are very flat" (the very first 64 px sample was nicer), soul flame and sparkle "boring", gem/halo/crown "nowhere near a
+finished item texture", boot and bare prints disliked. Redo the session and relearn Session A's style.
+
+**What went wrong (my diagnosis)**
+- I let a technical convenience (tintable grayscale) override every rule in STYLE.md: no ramps, no light, no volume,
+  no accent. Session A's icons worked precisely because of those rules.
+- My self-critique only checked *readability and symmetry* (rules 1, 2, 8) - so it passed assets that ignored rules 3-6.
+  Checking a subset of the checklist is not checking.
+- The first sample was liked for things I then dropped: colour, a value hierarchy (bright figure over a darker ring),
+  small marks in the circle's band, a glowing core.
+
+### Round 2 - rebuilt in the Session A style
+**Toolkit:** `pixelkit.py` gained `tubes` (line art as shaded tubes - raised, glowing inlay), `facet` (flat gem faces),
+`ellipse_ring` (a torus seen at an angle), `glow` (soft bloom) and non-square canvases; `review.big_sheet` shows large
+assets at 1x/2x and on dark, light and a stone floor. `session_b.py` = sigils, pieces, particles;
+`session_b_glyphs.py` = runes and footprints (kept glyph style - those were liked).
+
+**Final outputs** in [session-b/](session-b/): `review-sigils-r2v2.png`, `review-pieces-r2v3.png`,
+`review-particles-r2v3.png` (+ `preview-*.gif` animations), `review-prints-r2v3.png`, `review-runes-final.png`.
 
 **Iterations and self-critique**
-- **Sigils v1** - pentagram A's thin inner ring was noise and its ticks merged; Initiate had a stray x in the centre;
-  Bound didn't read; the Abyssal waves were thin; the Hollow spikes were tiny. **v2** fixed all of them.
-- **Runes v1** - most read at 1x and as a line of text, but five looked like Latin letters or digits (bone `I`, twin
-  `n`, bind `X`, chain `8`) and hook/thorn were near-twins. **v2**: bind -> hourglass, bone -> forked ends, chain ->
-  two links, hook -> a real hook. New problem: twin now looked like gate. **v3**: twin -> open cup with a dot. Pass.
-- **Pieces v1** - bare-foot and paw toes merged into a bar; crown band's gem holes were 1-px noise and its spikes read as
-  candles; soul flame read as a light bulb; sparkle as a plus; the gem's hole made a donut. **v2** fixed crown, gem.
-  **v3**: toes that are smaller than r~1.5 collapse into `+` shapes at 16 px - toes are now fewer and bigger (big toe +
-  one blob; paw toes spread apart); the flame's mirrored side lick became cat ears, removed. **v4**: the sparkle went
-  through two failed tries (thin diagonal rays fall under 50% coverage; 1-px rays + outlines = noise) and ended as a
-  four-point star *without* the dark outline - it's a light sprite, the glow carries it.
+- **Sigils r2v1** - six sigils (pentagram, hexagram, one per tier) each in its tier ramp: tube-shaded rings with marks
+  in the band, the figure layered above with dark separation only where it crosses the ring, a shaded core, glow.
+  Failed: glow too strong (the inside became haze, dirty on light); hexagram's wood ring muddy; Initiate's candles read
+  as bottles; Bound's bottom chain made an orb-on-a-stand; Hollow's spike crown barely cleared the ring.
+  **r2v2** fixed all five. Silhouette asymmetry 0 on all six (shading follows the light, so only coverage is mirrored).
+- **Pieces r2v1** - gem facets lit by normals were too close in value (mush, nubs at the girdle); the crown's bevel
+  striped the points into flames; the halo's glow filled the hole (a plate). **r2v2**: facet tones art-directed (lit
+  top-left, dark right, refracted light bottom-right), crown shows the inside of its back band between solid points,
+  the halo's hole stays empty. **r2v3**: T1 gem violet (spirit cyan was too close to T2 seaglow).
+- **Particles r2v1** - animated now (soul flame 4 frames, sparkle 5-frame life). The flame's open mouth was cute, its
+  body squat; the sparkle's peak frame filled into a diamond. **r2v2/3**: taller flame with a sharp swaying tip, tall
+  hollow eye slits (a stare, not a smile); peak sparkle without glow and with diagonals detached from the centre.
+- **Prints r2v1** - hand-drawn pixel maps now (geometry fails at this size). The boot's tread holes made a skull;
+  the bare foot's deep arch read as a sock. **r2v2/3**: boot = lugged sole edges + separate heel; bare foot = gentle
+  inner arch, toes arcing up to the big toe. Paw unchanged.
 
 **Honest remaining weaknesses**
-- The boot print reads as a keyhole on its own; in a trail of alternating left/right prints it reads as steps.
-- Some runes are still close to known glyphs (ascend/descend are arrows, crown is a `W`) - fine for meaning at a glance.
-- The sparkle disappears on light backgrounds (in-world it is always over a scene and glows).
-
-**Open choice for the user:** pentagram/hexagram **A (lines)** vs **B (bold)** - per Session A's lesson both are shown.
+- Footprints and runes are still flat glyphs (by choice, they were liked) - they don't share the sigils' volume.
+- The crown's side points are a little post-like; the Bound chains are subtle.
+- Sigils are coloured per tier now, so a recolour means a new texture (no free tinting) - acceptable, there are few.
 
 **Lessons carried forward**
-- At 16 px, round features under ~3 px across become `+` shapes; use fewer, bigger blobs.
-- Mirrored asymmetric details double up (the flame lick became two ears) - design the half, then look at the whole.
-- Light sprites (sparkles, motes) skip the dark outline; objects keep it.
+- Every asset passes the *whole* checklist, including palette, light and volume - no shortcut is worth flat art.
+- When the user liked an earlier sample, list what exactly made it work and keep those things.
+- Art-direct values by hand (facet tones) when computed lighting gives mush; hand-draw pixels when geometry fails (prints).
+- Particles are worth animating; emissive things get heat-coloured ramps, no outline, little glow.
+- At 16 px, round features under ~3 px across become `+` shapes; mirrored asymmetric details double up.

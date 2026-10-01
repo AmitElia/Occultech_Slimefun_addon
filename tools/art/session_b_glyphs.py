@@ -1,4 +1,4 @@
-"""Session B, part 2: runes (an original Occultech alphabet), footprints and crown pieces."""
+"""Session B: runes (an original Occultech alphabet) and footprints - flat glyphs with outline and glow (the paw and the runes were kept from round 1)."""
 import math
 import os
 import sys
@@ -7,7 +7,36 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, os.path.dirname(__file__))
 from glyphkit import Glyph, asymmetry, style, tint  # noqa: E402
-from session_b import OUT, TINTS, sheet  # noqa: E402
+from session_b import OUT  # noqa: E402
+
+TINTS = {"T0 ember": (255, 170, 90), "T1 violet": (190, 130, 255), "T2 teal": (90, 225, 210), "T3 crimson": (235, 60, 70)}
+
+
+def sheet(items, path, scale=2):
+    """items: [(name, image)]. Each row: native 1x, on dark and light, then tinted per tier on dark; with asymmetry."""
+    biggest = max(max(i.width, i.height) for _, i in items)
+    cell = biggest * scale
+    pad = 10
+    cols = ["1x", "dark", "light"] + list(TINTS)
+    width = 200 + len(cols) * (cell + pad)
+    height = 28 + len(items) * (cell + pad)
+    out = Image.new("RGB", (width, height), (30, 28, 36))
+    d = ImageDraw.Draw(out)
+    for c, title in enumerate(cols):
+        d.text((200 + c * (cell + pad), 8), title, fill=(200, 200, 210))
+    for r, (name, img) in enumerate(items):
+        y = 28 + r * (cell + pad)
+        d.text((8, y + cell // 2 - 12), name, fill=(232, 232, 240))
+        d.text((8, y + cell // 2 + 2), f"asymmetry: {asymmetry(img)}", fill=(150, 150, 165))
+        views = [(img, 1, (24, 22, 30)), (img, scale, (24, 22, 30)), (img, scale, (214, 208, 198))]
+        views += [(tint(img, t), scale, (24, 22, 30)) for t in TINTS.values()]
+        for c, (im, s, bg) in enumerate(views):
+            panel = Image.new("RGB", (cell, cell), bg)
+            big = im.resize((im.width * s, im.height * s), Image.NEAREST)
+            panel.paste(big, ((cell - big.width) // 2, (cell - big.height) // 2), big)
+            out.paste(panel, (200 + c * (cell + pad), y))
+    out.save(path)
+    return path
 
 # ------------------------------------------------------------------ runes (16 x 16)
 # (name, strokes, symmetric). Strokes are polylines in 16 px space; the centre staff is x = 8.
@@ -74,21 +103,51 @@ def rune(strokes):
     return g
 
 
-# ------------------------------------------------------------------ footprints (16 x 16) and crown pieces
+# ------------------------------------------------------------------ footprints (16 x 16, left foot; the right is mirrored)
+# Hand-drawn: at 16 px a footprint lives or dies by single pixels. Same styling as the paw (which was kept).
 
-def footprint_boot():
-    g = Glyph(16)
-    g.d.ellipse((4.0 * 8, 1.0 * 8, 10.6 * 8, 9.6 * 8), fill=255)
-    g.d.ellipse((5.0 * 8, 10.4 * 8, 10.2 * 8, 15.0 * 8), fill=255)
-    return g
+BOOT = """
+.......####.....
+.....#######....
+....#########...
+.....#######....
+....#########...
+.....#######....
+....#########...
+.....#######....
+......######....
+.......####.....
+................
+......#####.....
+.....#######....
+......#####.....
+.....#######....
+......#####.....
+"""
+
+BARE = """
+..........##....
+.......##.###...
+....##.##.###...
+....##..........
+................
+....#######.....
+....########....
+....########....
+....#######.....
+.....#####......
+.....#####......
+.....######.....
+.....######.....
+.....######.....
+......####......
+................
+"""
 
 
-def footprint_bare():
-    g = Glyph(16)
-    g.d.ellipse((4.4 * 8, 6.0 * 8, 10.6 * 8, 15.2 * 8), fill=255)
-    g.disc(5.6, 3.0, 1.8)
-    g.d.ellipse((8.6 * 8, 1.6 * 8, 12.8 * 8, 4.8 * 8), fill=255)
-    return g
+def bitmap(text):
+    rows = text.strip().split()
+    return [[c == "#" for c in r] for r in rows]
 
 
 def footprint_paw():
@@ -96,53 +155,11 @@ def footprint_paw():
     g.d.ellipse((4.6 * 8, 8.8 * 8, 11.4 * 8, 14.8 * 8), fill=255)
     for (x, y) in ((2.8, 7.0), (5.6, 3.4), (10.4, 3.4), (13.2, 7.0)):
         g.disc(x, y, 1.45)
-    return g
+    return g.pixels(mirror=True)
 
 
-def crown_band():
-    g = Glyph(32, 16)
-    g.polygon([(2, 15), (30, 15), (30, 11.5), (2, 11.5)])
-    g.polygon([(2, 15), (30, 15), (30, 9), (2, 9)])
-    for x, h in ((4.0, 5.5), (10.0, 3.5), (16.0, 2.5), (22.0, 3.5), (28.0, 5.5)):
-        g.polygon([(x - 3.4, 9.5), (x + 3.4, 9.5), (x, h + 1.0)])
-        g.disc(x, h, 1.6)
-    g.erase_polygon([(16, 10.2), (17.6, 12), (16, 13.8), (14.4, 12)])
-    return g
-
-
-def soul_flame():
-    g = Glyph(16)
-    g.disc(8, 10.6, 4.2)
-    g.polygon([(3.9, 9.8), (12.1, 9.8), (8, 0.4)])
-    g.erase_disc(8, 11.4, 1.9)
-    g.erase_polygon([(6.3, 10.8), (9.7, 10.8), (8, 6.4)])
-    return g
-
-
-def sparkle():
-    g = Glyph(16)
-    # a light sprite: no dark outline (see PIECES), the glow carries the twinkle
-    g.polygon([(8, 0.4), (9.0, 7.0), (15.6, 8), (9.0, 9.0), (8, 15.6), (7.0, 9.0), (0.4, 8), (7.0, 7.0)])
-    return g
-
-
-def gem():
-    g = Glyph(16)
-    g.polygon([(5.0, 2.0), (11.0, 2.0), (14.5, 6.0), (8, 14.5), (1.5, 6.0)])
-    g.erase_polygon([(3.5, 5.6), (12.5, 5.6), (12.5, 6.6), (3.5, 6.6)])
-    return g
-
-
-def halo_ring():
-    g = Glyph(32, 16)
-    g.d.ellipse((2 * 8, 4 * 8, 30 * 8, 12.5 * 8), fill=255)
-    g.d.ellipse((4.6 * 8, 5.9 * 8, 27.4 * 8, 10.6 * 8), fill=0)
-    return g
-
-
-PIECES = [("footprint boot", footprint_boot, False), ("footprint bare", footprint_bare, False), ("footprint paw", footprint_paw, True),
-          ("crown band", crown_band, True), ("soul flame", soul_flame, True), ("sparkle", sparkle, True, False), ("gem", gem, True),
-          ("halo ring", halo_ring, True)]
+PRINTS = [("footprint boot", lambda: bitmap(BOOT), True), ("footprint bare", lambda: bitmap(BARE), True),
+          ("footprint paw", footprint_paw, False)]
 
 
 def rune_sheet(runes, path, scale=4):
@@ -181,14 +198,14 @@ if __name__ == "__main__":
             img.save(os.path.join(OUT, "rune_" + name + ".png"))
             made.append((name, img))
         print(rune_sheet(made, os.path.join(OUT, f"review-runes-{version}.png")))
-    elif which == "pieces":
+    elif which == "prints":
         made = []
-        for name, make, symmetric, *flags in PIECES:
-            img = style(make().pixels(mirror=symmetric), outline=flags[0] if flags else True)
+        for name, make, mirrored in PRINTS:
+            img = style(make())
             img.save(os.path.join(OUT, name.replace(" ", "_") + ".png"))
             made.append((name, img))
-            if name.startswith("footprint") and not symmetric:
+            if mirrored:
                 right = img.transpose(Image.FLIP_LEFT_RIGHT)
                 right.save(os.path.join(OUT, name.replace(" ", "_") + "_right.png"))
                 made.append((name + " (right)", right))
-        print(sheet(made, os.path.join(OUT, f"review-pieces-{version}.png"), scale=4))
+        print(sheet(made, os.path.join(OUT, f"review-prints-{version}.png"), scale=4))

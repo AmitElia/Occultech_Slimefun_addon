@@ -44,15 +44,16 @@ class Part:
 
 
 class Icon:
-    def __init__(self, size=16):
-        self.size = size
-        self.img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    def __init__(self, size=16, height=None):
+        self.size = self.w = size
+        self.h = height or size
+        self.img = Image.new("RGBA", (self.w, self.h), (0, 0, 0, 0))
 
     # ------------------------------------------------------------------ shapes (pixel centers at +0.5)
 
     def _cells(self):
-        for y in range(self.size):
-            for x in range(self.size):
+        for y in range(self.h):
+            for x in range(self.w):
                 yield x, y, x + 0.5, y + 0.5
 
     def sphere(self, cx, cy, r, squash=1.0):
@@ -108,6 +109,41 @@ class Icon:
                 out[(x, y)] = (0.0, 0.0, 1.0)
         return Part(out)
 
+    def tubes(self, segments, r):
+        """Line art as rounded tubes: each pixel takes the normal of its nearest segment (a raised, glowing inlay)."""
+        out = {}
+        for x, y, px, py in self._cells():
+            best = None
+            for (ax, ay), (bx, by) in segments:
+                vx, vy = bx - ax, by - ay
+                ll = vx * vx + vy * vy or 1
+                t = max(0.0, min(1.0, ((px - ax) * vx + (py - ay) * vy) / ll))
+                dx, dy = px - (ax + t * vx), py - (ay + t * vy)
+                d = math.hypot(dx, dy)
+                if best is None or d < best[0]:
+                    best = (d, dx, dy)
+            d, dx, dy = best
+            if d <= r:
+                out[(x, y)] = _norm((dx / r, dy / r, math.sqrt(max(0.0, 1 - (d / r) ** 2))))
+        return Part(out)
+
+    def facet(self, points, normal):
+        """A flat face of a cut gem: one normal for the whole polygon."""
+        n = _norm(normal)
+        return Part({(x, y): n for x, y, px, py in self._cells() if _inside(points, px, py)})
+
+    def ellipse_ring(self, cx, cy, rx, ry, width, tilt=0.55):
+        """A torus seen at an angle (a halo): the band curves across its width, the far side tilts away."""
+        out = {}
+        for x, y, px, py in self._cells():
+            dx, dy = (px - cx) / rx, (py - cy) / ry
+            d = math.hypot(dx, dy)
+            band = (d - 1.0) * min(rx, ry) / (width / 2)
+            if abs(band) <= 1 and d:
+                ux, uy = dx / d, dy / d
+                out[(x, y)] = _norm((ux * band, uy * band * tilt - (1 - tilt) * 0.3, math.sqrt(max(0.0, 1 - band * band))))
+        return Part(out)
+
     def ring(self, cx, cy, r_out, r_in):
         """A torus seen from above: normals curve across the band."""
         out = {}
@@ -144,7 +180,7 @@ class Icon:
         for (x, y) in cells:
             for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                 q = (x + dx, y + dy)
-                if q not in cells and 0 <= q[0] < self.size and 0 <= q[1] < self.size:
+                if q not in cells and 0 <= q[0] < self.w and 0 <= q[1] < self.h:
                     edge.add((q, (dx, dy)))
         for (q, (dx, dy)) in edge:
             lit_side = dx < 0 or dy < 0
@@ -154,8 +190,27 @@ class Icon:
 
     def pixels(self, coords, color):
         for (x, y) in coords:
-            if 0 <= x < self.size and 0 <= y < self.size:
+            if 0 <= x < self.w and 0 <= y < self.h:
                 self.img.putpixel((x, y), color)
+
+    def glow(self, color, radius=3.0, strength=0.5):
+        """Soft bloom on empty pixels around everything painted so far (alpha falls off with distance)."""
+        solid = [(x, y) for y in range(self.h) for x in range(self.w) if self.img.getpixel((x, y))[3] == 255]
+        rr = int(math.ceil(radius))
+        best = {}
+        for (sx, sy) in solid:
+            for dy in range(-rr, rr + 1):
+                for dx in range(-rr, rr + 1):
+                    q = (sx + dx, sy + dy)
+                    if 0 <= q[0] < self.w and 0 <= q[1] < self.h:
+                        d = math.hypot(dx, dy)
+                        if d <= radius and d < best.get(q, 99):
+                            best[q] = d
+        for q, d in best.items():
+            if self.img.getpixel(q)[3] == 0:
+                a = int(255 * strength * (1 - (d - 1) / radius) ** 1.5) if d > 1 else int(255 * strength)
+                if a > 6:
+                    self.img.putpixel(q, color[:3] + (min(255, a),))
 
     def clear(self, coords):
         for (x, y) in coords:
@@ -163,8 +218,14 @@ class Icon:
 
     def mirror_check(self):
         """Pixels that differ from the horizontal mirror image (0 = perfectly symmetric)."""
-        w = self.size
-        return sum(1 for y in range(w) for x in range(w // 2) if self.img.getpixel((x, y)) != self.img.getpixel((w - 1 - x, y)))
+        w = self.w
+        return sum(1 for y in range(self.h) for x in range(w // 2) if self.img.getpixel((x, y)) != self.img.getpixel((w - 1 - x, y)))
+
+    def silhouette_asymmetry(self):
+        """Like mirror_check but only compares coverage (shading follows the top-left light, so it is never mirrored)."""
+        w = self.w
+        return sum(1 for y in range(self.h) for x in range(w // 2)
+                   if (self.img.getpixel((x, y))[3] > 0) != (self.img.getpixel((w - 1 - x, y))[3] > 0))
 
     def save(self, path):
         self.img.save(path)
