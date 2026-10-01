@@ -9,7 +9,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **B** | Sigils, runes, gems/crown/halo, animated soul flame and sparkle, step marks, paw | **Done** - approved, cleaned up |
 | **C** | Tier-0 item icons (15 + bow states; the 8 placed blocks move to G) | **Done** - codex redone after review |
 | **D** | Tier-1 item icons (23; the 6 placed blocks move to G) | **Done** - fixed after review |
-| **E** | Tier-2 item icons (26: materials, drops, weapons, armor, decor objects) | **Done** - awaiting review |
+| **E** | Tier-2 item icons (26: materials, drops, weapons, armor, decor objects) | **Done** - fixed after review |
 | F | Tier-3 item icons | - |
 | G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg; tier-1 blocks: Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil; tier-2 blocks: Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack) **and held 3D models** (first: the Occult Codex as a 3D book - see *Notes for G*) | - |
 | H | Menu backgrounds | - |
@@ -248,6 +248,8 @@ Iron's Spells 'n Spellbooks for the codex. Focus on item icons for now; keep not
   elements - with its own texture sheet in the codex's palette (leather, iron, bone pages, ember jewel). The item model
   definition picks by display context (`minecraft:select` on `minecraft:display_context`): `gui` (and `ground`) show
   the 2D icon, hands/head/fixed show the 3D book. Same pattern for any other held item that needs a real shape.
+- **Scepters (Wyrmbreath, Guardian's Gaze):** held 3D models following their icons - rod, collar, three claw prongs
+  (one behind, two in front) round the orb/eye; the orb glows (emissive) and the eye can turn.
 - **Abyssal Anchor held model:** the icon is upright (an anchor only reads upright); in the hand it should be a 3D
   anchor held by its ring, flukes as the head, with the spectral chain - same display-context switch as the codex.
 - **Abyssal armor worn texture:** the icons are done (Session E); the worn look needs an `equippable` asset layer
@@ -351,4 +353,22 @@ cross rune on an obelisk).
   with a model later.
 - Spirals and coils: use nested shapes, not lines.
 - A "familiar" silhouette must survive our recolour: a dark narrow-capped lantern stops being a lantern.
+
+### Session E review round (user)
+"Great work on the rest." Fixed:
+- **Abyssal Sigil** - now the Abyssal sigil of Session B as a medallion: an abyssal ring, a dark face, a sea-glow eye
+  (blinks), waves low beneath it; exactly symmetric. (So the core components are the three tier sigils: Initiate's
+  diamond plaque, the Bound medallion, the Abyssal medallion.)
+- **Choir Ember** - was flat; now a bevelled crystal flame shaded by the light, a gold spine ridge, a white-hot core
+  showing through that pulses, a soft glow.
+- **Wyrmbreath** - the dragon head looked goofy; now a fire scepter: a gold rod with ember bands and a collar, three
+  gold dragon-claw prongs cradling a blazing red orb, flames rising. First try was one orange blob (ember orb in gold
+  claws) - a crimson orb and dark edges where the front prongs cross it fixed that.
+- **Guardian's Gaze** - drawn as its future 3D model would look: the same scepter build in prismarine and gold, the
+  guardian's spikes become orange-tipped claw prongs cradling a glossy eyeball that looks about.
+- Both scepters share `scepter()`: back prong behind the head, front prongs over it - the layering a 3D held model
+  will have (noted for Session G with the codex and anchor).
+
+**Lesson:** for held items, design the icon as a view of the 3D object (what's behind, what's in front) - it reads
+as more solid, and the held model in G can follow it directly.
 

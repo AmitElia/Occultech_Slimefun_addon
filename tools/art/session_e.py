@@ -76,23 +76,27 @@ def tide_glass(frame=0):
 
 
 def abyssal_sigil(frame=0):
-    """The tier-2 core component: a drop-shaped plaque of abyssal metal (T0 diamond, T1 medallion, T2 drop) carrying
-    the Abyssal sigil - an eye over waves in sea glow, a pearl for its pupil. Animated: the eye blinks, a twinkle."""
+    """The tier-2 core component: a medallion carrying the Abyssal sigil (Session B) - an abyssal ring round a dark
+    face, a sea-glow eye watching from it, waves below. Exactly symmetric. Animated: the eye blinks, a twinkle."""
     icon = Icon(16)
-    ab, sg, bone = RAMPS["abyss"], RAMPS["seaglow"], RAMPS["chalk"]
-    drop = icon.sphere(8.0, 9.6, 5.8) | icon.polygon([(3.0, 7.0), (13.0, 7.0), (8.0, 0.4)], bevel=1.6)
-    icon.paint(drop, ab, bias=0.1)
-    face = icon.sphere(8.0, 9.4, 3.8)
-    for p in face.keys():
-        put(icon, [p], ab[1])
+    ab, sg = RAMPS["abyss"], RAMPS["seaglow"]
+    rim = icon.ring(8.0, 8.0, 7.4, 5.6)
+    icon.paint(rim, ab, bias=0.25)
+    face = icon.sphere(8.0, 8.0, 5.7)
+    icon.paint(face, ab, outline=False, flat=0)
+    put(icon, [p for p in face.keys() if p[0] + p[1] < 10], ab[1])
     blink = frame % 4 == 3
     if blink:
-        put(icon, [(x, 9) for x in range(5, 11)], sg[3])
+        put(icon, [(x, 7) for x in range(4, 12)], sg[3])
     else:
-        put(icon, [(5, 9), (10, 9), (6, 8), (7, 8), (8, 8), (9, 8), (6, 10), (7, 10), (8, 10), (9, 10)], sg[3])
-        put(icon, [(7, 9), (8, 9)], bone[5])
+        lids = [(4, 7), (5, 6), (6, 5), (7, 5), (8, 5), (9, 5), (10, 6), (11, 7),
+                (5, 8), (6, 9), (7, 9), (8, 9), (9, 9), (10, 8)]
+        put(icon, lids, sg[3])
+        put(icon, [(6, 7), (7, 6), (8, 6), (9, 7), (7, 8), (8, 8), (6, 6), (9, 6)], sg[1])
+        put(icon, [(7, 7), (8, 7)], sg[5] if frame % 4 == 1 else sg[4])
+    put(icon, [(5, 11), (6, 12), (7, 11), (8, 11), (9, 12), (10, 11)], sg[2])   # the waves, gentle and low
     mirror_silhouette(icon)
-    icon.twinkle(13, 2, [0, 1, 3, 1][frame % 4], sg)
+    icon.twinkle(14, 1, [0, 1, 2, 1][frame % 4], sg)
     return icon
 
 
@@ -200,19 +204,23 @@ def nautilus_core(frame=0):
 
 
 def choir_ember(frame=0):
-    """A flame crystallised mid-flicker: a faceted ember shaped like a flame (lit and shadow facets, gold to deep red),
-    sparks drifting off it (animated)."""
+    """A flame crystallised mid-flicker, with real volume: a bevelled crystal shaded by the light (lit left, shadowed
+    right), a gold ridge down its spine, a white-hot core showing through, a soft glow and sparks (animated)."""
     icon = Icon(16)
     em, gd = RAMPS["ember"], RAMPS["gold"]
-    outline_pts = [(8.0, 0.6), (11.2, 5.4), (13.0, 4.0), (13.4, 9.6), (11.0, 14.6), (5.0, 14.6), (2.6, 9.6), (3.4, 5.2),
-                   (5.4, 6.4)]
-    flame = icon.polygon(outline_pts, bevel=1.0)
-    for (x, y) in flame.keys():   # facets: lit left, hot middle, dark right
-        f = 4 if x < 6 else 5 if x < 9 and y > 6 else 3 if x < 10 else 2
-        put(icon, [(x, y)], em[f])
-    put(icon, line_px((8.0, 1.0), (7.0, 13.0)), gd[5])
-    put(icon, [(x, 14) for x in range(5, 11)], em[1])
-    icon.outline(flame, [em[0], em[1]], over=False)
+    outline_pts = [(8.0, 0.6), (11.0, 5.2), (12.8, 3.8), (13.4, 9.6), (11.2, 14.6), (4.8, 14.6), (2.6, 9.6), (3.4, 5.0),
+                   (5.2, 6.4)]
+    flame = icon.polygon(outline_pts, bevel=3.2)
+    icon.paint(flame, em, bias=-0.05, outline_ramp=[em[0], em[1]])
+    pulse = [0.0, 0.2, 0.35, 0.15][frame % 4]
+    core = icon.sphere(7.6, 10.2, 2.6, squash=1.3)
+    for (x, y) in core.keys():
+        d = math.hypot(x + 0.5 - 7.6, (y + 0.5 - 10.2) / 1.3)
+        put(icon, [(x, y)], em[5] if d < 1.0 + pulse * 2 else em[4])
+    put(icon, line_px((8.0, 1.6), (7.6, 7.4)), gd[5])           # the spine ridge
+    put(icon, line_px((11.6, 5.6), (11.0, 10.0)), gd[4])         # a side ridge
+    put(icon, [(5, 7), (4, 8), (5, 6)], em[5])                    # light on the lit facet
+    icon.glow(em[3], radius=1.4, strength=0.28)
     sparks = [[(14, 2)], [(14, 1), (1, 4)], [(1, 3)], [(15, 6)]][frame % 4]
     put(icon, sparks, gd[4])
     return icon
@@ -265,61 +273,70 @@ E2 = [("Abyssal Lens", abyssal_lens, 4), ("Nautilus Core", nautilus_core, 4), ("
 
 # ================================================================== E3: weapons and the Choir Bell
 
-DRAGON = [  # x 6..15, y 0..8: horns, head, ember eye, open jaws (the fire goes in the gap), neck
-    "..kk......",
-    "...kk.....",
-    ".HHHH.....",
-    "HHHHHHHH..",
-    "HHeHHHHHHn",
-    "HHHH......",
-    "HHHtjjjj..",
-    ".HHH......",
-    "..HH......",
-]
+def scepter(icon, rod_ramp, band_ramp, prong_ramp, tip_colour):
+    """The shared scepter build, drawn as its future 3D model would look: a shaded rod with bands and a collar, three
+    claw prongs from the collar - one behind the head, two in front - cradling whatever sits at (10.6, 5.2).
+    Returns a function that paints the front prongs (call it after the head)."""
+    rod = icon.tubes([((1.4, 14.6), (8.2, 7.8))], 0.95)
+    icon.paint(rod, rod_ramp, bias=0.05)
+    for (x, y) in rod.keys():
+        if (x + (15 - y)) in (6, 7, 12):
+            put(icon, [(x, y)], band_ramp[4] if x + y < 15 else band_ramp[3])
+    collar = icon.sphere(8.6, 7.4, 1.8)
+    icon.paint(collar, band_ramp, bias=0.15, outline_over=False)
+
+    def prong(points, over=False):
+        part = icon.tubes(list(zip(points, points[1:])), 0.75)
+        icon.paint(part, prong_ramp, bias=0.15, outline_over=over)
+        tip = points[-1]
+        put(icon, [(math.floor(tip[0]), math.floor(tip[1]))], tip_colour)
+
+    prong([(8.6, 7.4), (11.0, 3.4), (12.6, 1.2)])              # the back prong, behind the head
+
+    def front():
+        prong([(8.6, 7.4), (7.2, 5.2), (7.0, 2.8), (7.8, 1.4)], over=True)    # in front: a dark edge separates
+        prong([(8.6, 7.4), (11.2, 8.4), (13.4, 7.8), (14.6, 6.4)], over=True)  # them from the head behind
+    return front
 
 
 def wyrmbreath(frame=0):
-    """A gold rod with ember bands, crowned with a crimson dragon's head - bone horns, an ember eye, jaws open on a
-    tongue of fire that flickers (animated)."""
+    """A fire scepter: a gold rod with ember bands and a collar, three gold dragon-claw prongs cradling a blazing ember
+    orb; flames rise from it and flicker (animated)."""
     icon = Icon(16)
-    gd, em, cr, bone = RAMPS["gold"], RAMPS["ember"], RAMPS["crimson"], RAMPS["bone"]
-    rod = icon.tubes([((1.4, 14.6), (8.0, 8.0))], 1.0)
-    icon.paint(rod, gd, bias=0.0)
-    for (x, y) in rod.keys():
-        if (x + (15 - y)) % 5 == 0:
-            put(icon, [(x, y)], em[3])
-    mask = {(6 + x, y) for y, row in enumerate(DRAGON) for x, c in enumerate(row) if c in "Hejtn"}
-    for (x, y) in mask:
-        put(icon, [(x, y)], cr[4] if y <= 3 and x < 11 else cr[3] if x < 11 else cr[2])
-    pixmap(icon, DRAGON, 6, 0, {"k": bone[4], "e": em[5], "j": cr[1], "t": bone[5], "n": cr[1]})
-    icon.outline(Part({p: (0, 0, 1) for p in mask}), [cr[0], cr[0]], over=False)
-    flick = frame % 4
-    tongue = [(10, 5), (11, 5), (12, 5), (13, 5), (14, 5), (15, 5)]
-    put(icon, tongue[: 4 + flick % 3], em[4])
-    put(icon, tongue[:2], em[5])
-    put(icon, [(14, 4 + (flick % 2) * 2), (15, 4 if flick in (1, 2) else 6)], em[3])
+    gd, em = RAMPS["gold"], RAMPS["ember"]
+    front = scepter(icon, gd, em, gd, gd[5])
+    cr = RAMPS["crimson"]
+    pulse = [0.15, 0.3, 0.2, 0.35][frame % 4]
+    orb = icon.sphere(10.6, 5.2, 2.9)
+    icon.paint(orb, cr, bias=pulse, outline_ramp=[cr[0], cr[0]], outline_over=False)   # a blazing red orb in gold claws
+    put(icon, [(10, 5), (11, 5), (10, 6)], em[4])
+    put(icon, [(9, 4)], em[5])
+    front()
+    # flames licking up off the orb
+    k = frame % 4
+    for (x, h, ph) in ((9, 2, 0), (11, 3, 1), (12, 2, 2)):
+        hh = h + [0, 1, 0, 1][(k + ph) % 4]
+        for i in range(hh):
+            put(icon, [(x + (1 if i == hh - 1 and (k + ph) % 2 else 0), 2 - i)], em[4] if i < hh - 1 else em[3])
+    icon.glow(em[3], radius=1.3, strength=0.22)
     return icon
 
 
 def guardians_gaze(frame=0):
-    """A pale prismarine wand topped with a guardian's eye: a teal orb with a big orange eye and a slit pupil that
-    looks about, three short orange-tipped spikes (animated)."""
+    """The guardian's scepter: a prismarine rod with gold bands, the guardian's spikes become three orange-tipped claw
+    prongs cradling a glossy eyeball whose orange iris looks about (animated)."""
     icon = Icon(16)
-    ab, wd, em, sg = RAMPS["abyss"], RAMPS["wind"], RAMPS["ember"], RAMPS["seaglow"]
-    rod = icon.tubes([((1.4, 14.6), (8.0, 8.0))], 0.8)
-    icon.paint(rod, wd, bias=0.0)
-    for (dx, dy) in ((0, -1), (1, 0), (0.7071, -0.7071)):   # three short spikes
-        tip = (10.4 + dx * 5.4, 5.6 + dy * 5.4)
-        put(icon, line_px((10.4 + dx * 4.0, 5.6 + dy * 4.0), tip), ab[4])
-        put(icon, [(round(tip[0]), round(tip[1]))], em[4])
-    orb = icon.sphere(10.4, 5.6, 4.0)
-    icon.paint(orb, ab, bias=0.2, outline_ramp=[ab[0], ab[1]], outline_over=False)
+    ab, gd, em, wd = RAMPS["abyss"], RAMPS["gold"], RAMPS["ember"], RAMPS["wind"]
+    front = scepter(icon, ab, gd, ab, em[4])
+    eye = icon.sphere(10.6, 5.2, 3.0)
+    icon.paint(eye, wd, bias=0.1, outline_ramp=[ab[0], ab[1]], outline_over=False)
     lx, ly = [(0, 0), (1, 0), (0, 1), (-1, 0)][frame % 4]
-    iris = [(x + lx, y + ly) for x in (9, 10, 11) for y in (5, 6, 7)]
+    iris = [(x + lx, y + ly) for x in (10, 11) for y in (4, 5, 6)] + [(9 + lx, 5 + ly), (12 + lx, 5 + ly)]
     put(icon, iris, em[4])
-    put(icon, [(9 + lx, 5 + ly)], em[5])
-    put(icon, [(10 + lx, 6 + ly)], ab[0])   # one round pupil (a slit split the iris into two "eyes")
-    put(icon, [(8, 3)], sg[5])
+    put(icon, [(10 + lx, 4 + ly)], em[5])
+    put(icon, [(11 + lx, 5 + ly)], RAMPS["ink"][0])
+    put(icon, [(9, 3)], wd[5])
+    front()
     return icon
 
 
