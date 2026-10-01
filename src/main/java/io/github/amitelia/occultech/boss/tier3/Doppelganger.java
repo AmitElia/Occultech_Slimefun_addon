@@ -161,6 +161,11 @@ public final class Doppelganger extends BossBehavior {
         if (!alive(target)) {
             return;
         }
+        if (every(40)) {
+            // the target may have changed armor or weapon mid-fight: keep copying it
+            dress(body, target);
+            stance = stanceFor(target);
+        }
         if (every(5)) {
             trail.addLast(target.getLocation());
             while (trail.size() > ECHO_SAMPLES) {

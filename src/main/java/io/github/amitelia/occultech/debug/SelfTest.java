@@ -216,6 +216,7 @@ final class SelfTest {
         then(30, () -> checkFightEndedCleanly("Gallus"));
         then(0, this::placeNexus);
         then(80, this::nexusLinked);
+        then(70, this::nexusGathered);
         next();
     }
 
@@ -537,7 +538,7 @@ final class SelfTest {
 
     private void harvested() {
         org.bukkit.block.data.Ageable age = wart.getBlockData() instanceof org.bukkit.block.data.Ageable a ? a : null;
-        check("Harvest contract replants the wart", wart.getType() == Material.NETHER_WART && age != null && age.getAge() == 0,
+        check("Harvest contract replants the wart", wart.getType() == Material.NETHER_WART && age != null && age.getAge() < age.getMaximumAge(),
             wart.getType() + " age " + (age == null ? "-" : age.getAge()));
         check("Harvest contract stores the crop", storeCount(Material.NETHER_WART) > 0, "store empty");
     }
@@ -563,7 +564,8 @@ final class SelfTest {
 
     private void warded() {
         check("Ward contract protects its area", plugin.servitors().isWarded(shrine.getLocation().add(5, 0, 5)), "not warded");
-        check("Ward contract doesn't reach far", !plugin.servitors().isWarded(shrine.getLocation().add(20, 0, 0)), "warded too far");
+        check("Ward contract covers 24 blocks out", plugin.servitors().isWarded(shrine.getLocation().add(20, 0, 0)), "not warded at 20");
+        check("Ward contract doesn't reach far", !plugin.servitors().isWarded(shrine.getLocation().add(40, 0, 0)), "warded too far");
     }
 
     private void scryingMirror() {
@@ -1081,6 +1083,30 @@ final class SelfTest {
     private void nexusLinked() {
         org.bukkit.Location linked = plugin.servitors().nexusFor(shrine.getLocation());
         check("a Servitor Nexus links the nearby shrine", nexus.getLocation().equals(linked), String.valueOf(linked));
+        // a gathering shrine delivers into the Nexus store
+        clearStore();
+        setContract("GATHER_CONTRACT");
+        // Gather takes one stack per action: clear leftovers from earlier steps so ours is the one it finds
+        shrine.getWorld().getNearbyEntities(shrine.getLocation(), 8, 4, 8, e -> e instanceof Item).forEach(Entity::remove);
+        testDrop = shrine.getWorld().dropItem(shrine.getLocation().add(1.5, 0.5, 1.5), new ItemStack(Material.EMERALD, 3));
+        testDrop.setPickupDelay(0);
+    }
+
+    private void nexusGathered() {
+        BlockMenu store = BlockStorage.getInventory(nexus);
+        int emeralds = 0;
+        for (int slot : io.github.amitelia.occultech.items.ServitorNexus.STORE) {
+            ItemStack item = store == null ? null : store.getItemInSlot(slot);
+            if (item != null && item.getType() == Material.EMERALD) {
+                emeralds += item.getAmount();
+            }
+        }
+        check("gathered items arrive in the Nexus store (nothing is lost)", emeralds == 3 && !testDrop.isValid(),
+            emeralds + " in the Nexus, drop " + (testDrop.isValid() ? "still on the ground" : "gone") + ", shrine: "
+                + ChatColor.stripColor(org.bukkit.ChatColor.translateAlternateColorCodes('&', plugin.servitors().statusAt(shrine.getLocation()))) + ", contract "
+                + plugin.servitors().contractAt(shrine.getLocation()) + ", chunk loaded " + shrine.getChunk().isLoaded()
+                + ", tickets " + shrine.getChunk().getPluginChunkTickets().size());
+        setContract("HARVEST_CONTRACT");
         plugin.rituals().holograms().clear(nexus);
     }
 

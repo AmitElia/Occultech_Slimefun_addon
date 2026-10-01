@@ -66,6 +66,7 @@ public final class Tidebreaker extends BossBehavior {
         mount = fight.spawnExtra(ZombieNautilus.class, start, n -> {
             Abyss.puppet(n);
             n.setInvulnerable(true);
+            io.github.amitelia.occultech.core.Keys.setUnhittable(n, true);
             n.setRemoveWhenFarAway(false);
             BossFight.setAttribute(n, Attribute.SCALE, 1.6);
         });

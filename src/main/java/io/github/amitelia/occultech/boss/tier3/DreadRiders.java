@@ -123,6 +123,7 @@ public final class DreadRiders extends BossBehavior {
         Abyss.puppet(horse);
         horse.setGravity(true);
         horse.setInvulnerable(true);
+        Keys.setUnhittable(horse, true);
         horse.setTamed(true);
         BossFight.setAttribute(horse, Attribute.SCALE, 1.2);
     }

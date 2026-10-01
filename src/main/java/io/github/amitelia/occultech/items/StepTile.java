@@ -29,7 +29,7 @@ public class StepTile extends SlimefunItem {
                 int current = looks.indexOf(block.getType());
                 Material next = looks.get((current + 1) % looks.size());
                 // no physics: coral out of water must not be updated into dead coral
-                block.setType(next, false);
+                block.setBlockData(next.createBlockData(), false);
                 e.getPlayer().sendActionBar(MenuUtils.color("&d" + getItemName() + "&7: " + MenuUtils.pretty(next)));
             }));
         }

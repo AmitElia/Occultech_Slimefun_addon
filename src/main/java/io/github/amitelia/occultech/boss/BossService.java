@@ -251,6 +251,11 @@ public final class BossService implements Listener {
         if (!Keys.isSummoned(victim)) {
             return;
         }
+        if (Keys.isUnhittable(victim)) {
+            // mounts and protected riders: nothing hurts them, not even creative players (who ignore invulnerability)
+            e.setCancelled(true);
+            return;
+        }
         if (!(e instanceof EntityDamageByEntityEvent byEntity)) {
             // environment can't hurt summoned creatures (walls, lava, falls, cramming, drowning...)
             if (e.getCause() != DamageCause.KILL && e.getCause() != DamageCause.WORLD_BORDER) {

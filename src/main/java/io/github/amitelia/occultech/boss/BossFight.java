@@ -56,6 +56,12 @@ import io.github.amitelia.occultech.core.Keys;
  */
 public final class BossFight {
 
+    /**
+     * Held weapons (Wyrmbreath, Gaze, Censer, Stormstring) deal small damage many times a second; boss armor is tuned for
+     * big single hits, so these count this much more against bosses.
+     */
+    private static final double HELD_WEAPON_BONUS = 2.5;
+
     public enum Result { VICTORY, ABANDONED, TIMEOUT, UNLOADED, SHUTDOWN, ERROR }
 
     private static final int ABANDON_TICKS = 30 * 20;
@@ -379,7 +385,8 @@ public final class BossFight {
     }
 
     double onBossDamagedByPlayer(LivingEntity boss, Player player, double amount) {
-        double modified = behavior.modifyIncomingDamage(boss, amount);
+        double raw = Keys.HELD_WEAPON_HIT.get() ? amount * HELD_WEAPON_BONUS : amount;
+        double modified = behavior.modifyIncomingDamage(boss, raw);
         behavior.onDamagedBy(boss, player, modified);
         if (player.getGameMode() == GameMode.CREATIVE) {
             tainted.add(player.getUniqueId());

@@ -186,6 +186,15 @@ public final class GearListener implements Listener {
         spawnDecoy(player);
     }
 
+    /** Tools and weapons that look like blocks (the Gaze is an end rod, the Censer a soul torch) are never placed. */
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onPlace(org.bukkit.event.block.BlockPlaceEvent e) {
+        SlimefunItem item = SlimefunItem.getByItem(e.getItemInHand());
+        if (item instanceof io.github.thebusybiscuit.slimefun4.core.attributes.NotPlaceable && item.getId().startsWith(ItemKeys.PREFIX)) {
+            e.setCancelled(true);
+        }
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void onMend(PlayerItemMendEvent e) {
         SlimefunItem item = SlimefunItem.getByItem(e.getItem());

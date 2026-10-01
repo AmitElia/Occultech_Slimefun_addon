@@ -278,15 +278,22 @@ public final class HeldWeapons implements Listener {
      */
     static void hurt(LivingEntity target, double amount, Player player) {
         target.setNoDamageTicks(0);
-        target.damage(amount, player);
+        Keys.HELD_WEAPON_HIT.set(true);
+        try {
+            target.damage(amount, player);
+        } finally {
+            Keys.HELD_WEAPON_HIT.set(false);
+        }
     }
 
     // ------------------------------------------------------------------ helpers
 
     /** Creatures only: never players, other players' minions or armor stands. */
     private static boolean validTarget(Player shooter, LivingEntity target) {
+        // mounts can't be hurt, and the Gaze must lock onto the rider, not the horse under it
         return target != shooter && !(target instanceof Player) && !(target instanceof org.bukkit.entity.ArmorStand)
-            && Keys.minionOwner(target) == null && !target.isDead();
+            && Keys.minionOwner(target) == null && !target.isDead() && !Keys.isUnhittable(target)
+            && !target.getPersistentDataContainer().has(Keys.HOLOGRAM);
     }
 
     private static boolean hasLineOfSight(Location eye, LivingEntity target) {

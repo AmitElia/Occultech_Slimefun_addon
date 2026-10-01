@@ -23,6 +23,24 @@ public final class Keys {
     /** Marks hologram displays above bowls, altars and other blocks (never saved with the world). */
     public static final NamespacedKey HOLOGRAM = new NamespacedKey("occultech", "hologram");
 
+    /** A fight creature nothing may hurt, not even creative players (mounts, a rider before its phase). */
+    public static final NamespacedKey UNHITTABLE = new NamespacedKey("occultech", "unhittable");
+
+    /** Damage that comes from an Occultech held weapon (set while it deals damage; read by the boss engine). */
+    public static final ThreadLocal<Boolean> HELD_WEAPON_HIT = ThreadLocal.withInitial(() -> false);
+
+    public static boolean isUnhittable(@Nullable Entity entity) {
+        return entity != null && entity.getPersistentDataContainer().has(UNHITTABLE, PersistentDataType.BYTE);
+    }
+
+    public static void setUnhittable(Entity entity, boolean unhittable) {
+        if (unhittable) {
+            entity.getPersistentDataContainer().set(UNHITTABLE, PersistentDataType.BYTE, (byte) 1);
+        } else {
+            entity.getPersistentDataContainer().remove(UNHITTABLE);
+        }
+    }
+
     /** Owner (player UUID string) of a fight creature only its owner may hurt (the Doppelganger's reflections). */
     public static final NamespacedKey OWNED_BY = new NamespacedKey("occultech", "owned_by");
 

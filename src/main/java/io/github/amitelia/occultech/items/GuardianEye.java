@@ -28,15 +28,16 @@ import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 
 /**
  * Guardian Eye (rare Abyssal Warden drop): a sentry that fires a guardian beam at the nearest hostile mob within 12
- * blocks (line of sight) every 2 seconds. A Frenzy Idol within 8 blocks makes it 1.5x stronger (never stacks).
+ * blocks (line of sight) about twice a second. A Frenzy Idol within 8 blocks makes it 1.5x stronger (never stacks).
  * Never targets players, pets, minions or summoned bosses.
  */
 public class GuardianEye extends SlimefunItem {
 
     public static final double RANGE = 12;
-    public static final double DAMAGE = 6;
+    public static final double DAMAGE = 10;
     public static final double IDOL_MULTIPLIER = 1.5;
-    private static final long INTERVAL_MS = 2000;
+    /** About every Slimefun block tick (~0.6s). */
+    private static final long INTERVAL_MS = 500;
     private static final Particle.DustOptions BEAM = new Particle.DustOptions(Color.fromRGB(110, 230, 220), 1.1F);
     private static final Particle.DustOptions FRENZIED = new Particle.DustOptions(Color.fromRGB(255, 150, 60), 1.3F);
 
@@ -76,7 +77,7 @@ public class GuardianEye extends SlimefunItem {
         });
     }
 
-    /** Damage per shot: 6, or 9 with a Frenzy Idol nearby. */
+    /** Damage per shot: 10, or 15 with a Frenzy Idol nearby. */
     public static double damage(boolean frenzied) {
         return frenzied ? DAMAGE * IDOL_MULTIPLIER : DAMAGE;
     }

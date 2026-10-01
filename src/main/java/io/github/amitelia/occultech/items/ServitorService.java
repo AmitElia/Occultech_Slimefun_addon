@@ -62,22 +62,24 @@ public final class ServitorService implements Listener {
 
     /** The jobs a shrine can do, by contract item. */
     public enum Contract {
-        HARVEST("HARVEST_CONTRACT", "Harvesting", 4),
-        GATHER("GATHER_CONTRACT", "Gathering", 4),
-        WARD("WARD_CONTRACT", "Warding", 8),
-        BREWER("BREWER_CONTRACT", "Tending brews", 4),
-        SHEPHERD("SHEPHERD_CONTRACT", "Shearing", 4),
-        BEEKEEPER("BEEKEEPER_CONTRACT", "Keeping bees", 4),
-        ACOLYTE("ACOLYTE_CONTRACT", "Serving the altar", 8);
+        HARVEST("HARVEST_CONTRACT", "Harvesting", 4, 7),
+        GATHER("GATHER_CONTRACT", "Gathering", 4, 7),
+        WARD("WARD_CONTRACT", "Warding", 24, 32),
+        BREWER("BREWER_CONTRACT", "Tending brews", 4, 7),
+        SHEPHERD("SHEPHERD_CONTRACT", "Shearing", 4, 7),
+        BEEKEEPER("BEEKEEPER_CONTRACT", "Keeping bees", 4, 7),
+        ACOLYTE("ACOLYTE_CONTRACT", "Serving the altar", 8, 12);
 
         public final String itemId;
         public final String label;
         public final int radius;
+        private final int tetheredRadius;
 
-        Contract(String id, String label, int radius) {
+        Contract(String id, String label, int radius, int tetheredRadius) {
             this.itemId = ItemKeys.slimefunId(id);
             this.label = label;
             this.radius = radius;
+            this.tetheredRadius = tetheredRadius;
         }
 
         @Nullable
@@ -90,9 +92,9 @@ public final class ServitorService implements Listener {
             return null;
         }
 
-        /** Work radius; an Abyssal Tether extends 4 to 7 and 8 to 12. */
+        /** Work radius; an Abyssal Tether widens it (4 -> 7, Acolyte 8 -> 12, Ward 24 -> 32). */
         public int radius(boolean tethered) {
-            return tethered ? (radius >= 8 ? 12 : 7) : radius;
+            return tethered ? tetheredRadius : radius;
         }
     }
 
@@ -124,6 +126,7 @@ public final class ServitorService implements Listener {
         /** The linked Nexus's menu this tick, or null. */
         BlockMenu nexus;
         String status = "&7Idle";
+        double patrol;
     }
 
     private final Map<Location, Shrine> shrines = new HashMap<>();
@@ -154,6 +157,9 @@ public final class ServitorService implements Listener {
         Location nexusAt = links.get(block.getLocation());
         shrine.nexus = nexusAt == null ? null : BlockStorage.getInventory(nexusAt);
         shrine.status = status(block, menu, store, shrine, now);
+        if (shrine.nexus != null && shrine.contract != null && shrine.contract != Contract.WARD) {
+            shrine.status += " &3-> Nexus"; // output goes to the Nexus store, so say so
+        }
         return shrine.status;
     }
 
@@ -166,6 +172,7 @@ public final class ServitorService implements Listener {
             return "&7Idle &8- &7insert a contract";
         }
         if (shrine.contract == Contract.WARD) {
+            patrol(block, shrine);
             return "&aWarding &7(no hostile spawns within " + Contract.WARD.radius(shrine.tethered) + ")" + (shrine.tethered ? " &3(tethered)" : "");
         }
         boolean producer = shrine.contract != Contract.BREWER && shrine.contract != Contract.ACOLYTE;
@@ -696,6 +703,16 @@ public final class ServitorService implements Listener {
         moveSpirit(shrine, at);
         at.getWorld().spawnParticle(Particle.SOUL, at.clone().add(0.5, 0.8, 0.5), 4, 0.2, 0.2, 0.2, 0.01);
         at.getWorld().playSound(at, sound, 0.6F, 1.3F);
+    }
+
+    /** The Ward's spirit walks the edge of its area. */
+    private static void patrol(Block shrineBlock, Shrine shrine) {
+        shrine.patrol += 0.12;
+        double reach = shrine.contract.radius(shrine.tethered) * 0.7;
+        moveSpirit(shrine, shrineBlock.getLocation().add(Math.cos(shrine.patrol) * reach, 1, Math.sin(shrine.patrol) * reach));
+        if (shrine.spirit != null && shrine.spirit.isValid()) {
+            shrine.spirit.getWorld().spawnParticle(Particle.SOUL, shrine.spirit.getLocation(), 1, 0.1, 0.1, 0.1, 0.01);
+        }
     }
 
     private static void rest(Shrine shrine, Block shrineBlock) {

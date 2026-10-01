@@ -211,12 +211,15 @@ public final class MinionService implements Listener {
         });
     }
 
+    /** Followers keep a loose escort: they close in once more than 9 blocks away, stopping about 5 blocks short. */
     private static void follow(Mob minion, Player owner) {
         double distance = minion.getLocation().distanceSquared(owner.getLocation());
-        if (distance > 16 * 16) {
-            minion.teleport(owner.getLocation());
-        } else if (distance > 25 && minion.getTarget() == null) {
-            minion.getPathfinder().moveTo(owner, 1.2);
+        if (distance > 28 * 28) {
+            minion.teleport(owner.getLocation().add(owner.getLocation().getDirection().setY(0).normalize().multiply(-4)));
+        } else if (distance > 9 * 9 && minion.getTarget() == null) {
+            org.bukkit.util.Vector back = minion.getLocation().toVector().subtract(owner.getLocation().toVector()).setY(0);
+            Location spot = owner.getLocation().add(back.lengthSquared() > 0.01 ? back.normalize().multiply(5) : new org.bukkit.util.Vector());
+            minion.getPathfinder().moveTo(spot, 1.2);
         }
     }
 

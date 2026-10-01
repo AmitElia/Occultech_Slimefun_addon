@@ -72,8 +72,8 @@ public class ServitorShrine extends SlimefunItem {
                 addItem(INFO_SLOT, MenuUtils.icon(Material.HEART_OF_THE_SEA, "&5Servitor Shrine",
                     "&7Put a &fContract &7in the top slot;", "&7swap it any time to change the job.",
                     "", "&7Harvest, Gather, Shepherd, Beekeeper,", "&7Brewer's Aid: 9x9 around the shrine",
-                    "&7Ward, Acolyte: 17x17", "", "&7Middle slot: &3Abyssal Tether &7widens",
-                    "&7these to 15x15 and 25x25.", "", "&7The store below holds output and supplies;",
+                    "&7Acolyte: 17x17, Ward: 49x49", "", "&7Middle slot: &3Abyssal Tether &7widens",
+                    "&7these to 15x15, 25x25 and 65x65.", "", "&7The store below holds output and supplies;",
                     "&7cargo and Networks can use it."), (p, s, i, a) -> false);
                 addItem(EMPOWER_SLOT, empowerIcon(), (p, s, i, a) -> false);
                 addItem(RANGE_SLOT, MenuUtils.icon(Material.SPYGLASS, "&bWork area", "&7Insert a contract."), (p, s, i, a) -> false);

@@ -470,7 +470,7 @@ final class Showcase {
             }
         });
         Block ward = world.getBlockAt(ox - 14, y, startZ + 36);
-        shrine(ward, "WARD_CONTRACT", "&5Contract: Ward &3+ Abyssal Tether\n&7No hostile mobs spawn within 12 blocks\n&7(8 without the tether).\n&8(showcase spawning is off anyway)", Map.of());
+        shrine(ward, "WARD_CONTRACT", "&5Contract: Ward &3+ Abyssal Tether\n&7No hostile mobs spawn within 32 blocks\n&7(24 without the tether). Its spirit patrols the edge.\n&8(showcase spawning is off anyway)", Map.of());
         fills.add(() -> {
             BlockMenu menu = BlockStorage.getInventory(ward);
             SlimefunItem tether = SlimefunItem.getById(ItemKeys.slimefunId("ABYSSAL_TETHER"));

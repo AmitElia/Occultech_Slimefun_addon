@@ -30,13 +30,13 @@ import io.github.amitelia.occultech.boss.tier2.Abyss;
  * damage - shown by soul chains to each guard. Kill the guards, then the Warlord.</li>
  * <li>It grows faster as it weakens.</li>
  * </ul>
- * Health attributes cap at 1024, so it takes a tenth of the damage dealt.
+ * Health attributes cap at 1024, so it takes about a fifth of the damage dealt (~2200 effective health solo).
  */
 public final class HollowWarlord extends BossBehavior {
 
     private static final double HEALTH = 400;
-    private static final double ARMOR = 0.1;
-    private static final double GUARDED = 0.5;
+    private static final double ARMOR = 0.18;
+    private static final double GUARDED = 0.6;
     private static final double MELEE = 45;
     private static final double SWEEP_DAMAGE = 55;
     private static final double SWEEP_RADIUS = 4.5;

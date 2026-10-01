@@ -30,6 +30,8 @@ public final class Abyss {
      */
     public static void puppet(org.bukkit.entity.Mob mob) {
         org.bukkit.Bukkit.getMobGoals().removeAllGoals(mob);
+        // unaware: no goals, look or body-turn controls (they would spin the body against our facing), physics still on
+        mob.setAware(false);
         mob.setGravity(false);
         mob.setTarget(null);
     }
@@ -86,6 +88,7 @@ public final class Abyss {
         }
         Location facing = mob.getLocation().setDirection(look);
         mob.setRotation(facing.getYaw(), facing.getPitch());
+        mob.setBodyYaw(facing.getYaw());
     }
 
     /** Top of the first solid block at or below {@code at} (up to 8 down), or the location's own height. */

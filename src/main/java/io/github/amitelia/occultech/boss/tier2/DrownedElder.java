@@ -159,7 +159,7 @@ public final class DrownedElder extends BossBehavior {
         if (!waveStarts.isEmpty() && waveCenter != null) {
             Abyss.glide(elder, waveCenter, 0.12, 3, 0);
         } else if (chase != null && chase.isValid() && chase.getWorld() == elder.getWorld()) {
-            Abyss.glide(elder, chase.getLocation(), 0.12, 2.5, 7);
+            Abyss.glide(elder, chase.getLocation(), 0.1, 2.5, 9);
         } else {
             Abyss.glide(elder, fight.center(), 0.1, 2.5, 0);
         }

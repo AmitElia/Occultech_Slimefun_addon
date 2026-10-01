@@ -45,17 +45,20 @@ public class BoneScepter extends OccultItem {
             e.cancel();
             Player player = e.getPlayer();
             ItemStack scepter = e.getItem();
+            if (cap > 0 && minions.count(player) > 0) {
+                // a capped escort toggles: use it again to send the knights back
+                minions.dismissAll(player.getUniqueId());
+                player.sendMessage(ChatColor.GRAY + "Your knights return to the dark.");
+                player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SKELETON_DEATH, 0.6F, 1.4F);
+                return;
+            }
             long now = System.currentTimeMillis();
             long ready = cooldowns.getOrDefault(player.getUniqueId(), 0L);
             if (now < ready) {
                 player.sendMessage(ChatColor.GRAY + "The bones need " + ((ready - now) / 1000 + 1) + "s more to settle.");
                 return;
             }
-            int raise = cap > 0 ? Math.min(count, cap - minions.count(player)) : count;
-            if (raise <= 0) {
-                player.sendMessage(ChatColor.GRAY + "Your knights are all at your side already.");
-                return;
-            }
+            int raise = cap > 0 ? Math.min(count, cap) : count;
             if (!useDurability(scepter)) {
                 player.sendMessage(ChatColor.RED + "The scepter is spent. Repair it before calling the dead again.");
                 player.playSound(player.getLocation(), Sound.BLOCK_BONE_BLOCK_BREAK, 1F, 0.6F);

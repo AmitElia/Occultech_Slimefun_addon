@@ -160,7 +160,11 @@ public final class DecorationService {
         BlockStorage.addBlockInfo(block, PALETTE_KEY, String.valueOf(next));
         if (kind.swapsBlock()) {
             // no physics: coral out of water must not be updated into dead coral
-            block.setType(kind.palettes[next].parts()[0], false);
+            org.bukkit.block.data.BlockData data = kind.palettes[next].parts()[0].createBlockData();
+            if (data instanceof org.bukkit.block.data.Waterlogged wet) {
+                wet.setWaterlogged(false); // a coral's default state holds a water source
+            }
+            block.setBlockData(data, false);
         }
         Decoration decoration = decorations.get(block.getLocation());
         if (decoration != null) {

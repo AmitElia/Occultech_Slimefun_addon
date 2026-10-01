@@ -123,7 +123,9 @@ public final class Gallus extends BossBehavior {
             BossFight.setAttribute(z, Attribute.MAX_HEALTH, RIDER_HEALTH);
             z.setHealth(RIDER_HEALTH);
             BossFight.setAttribute(z, Attribute.ATTACK_DAMAGE, RIDER_MELEE);
-            BossFight.setAttribute(z, Attribute.SCALE, 1.4);
+            BossFight.setAttribute(z, Attribute.SCALE, 2.6);
+            // it can't be killed while mounted in phase 1: the split in phase 2 is where it can fall
+            Keys.setUnhittable(z, true);
         });
         if (rider != null) {
             gallus.addPassenger(rider);
@@ -336,6 +338,9 @@ public final class Gallus extends BossBehavior {
 
     private void unhorse() {
         phase = 2;
+        if (rider != null) {
+            Keys.setUnhittable(rider, false);
+        }
         nextRemount = fight.elapsed() + 300;
         if (riderMounted()) {
             gallus.removePassenger(rider);

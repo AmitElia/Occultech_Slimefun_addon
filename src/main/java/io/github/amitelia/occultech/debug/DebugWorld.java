@@ -35,6 +35,11 @@ final class DebugWorld {
         }
         recorder.record(block);
         block.setType(item.getItem().getType());
+        // coral, conduits, chains, rods... are "waterlogged" by default when set from code
+        if (block.getBlockData() instanceof org.bukkit.block.data.Waterlogged wet && wet.isWaterlogged()) {
+            wet.setWaterlogged(false);
+            block.setBlockData(wet, false);
+        }
         BlockStorage.store(block, id);
         return true;
     }

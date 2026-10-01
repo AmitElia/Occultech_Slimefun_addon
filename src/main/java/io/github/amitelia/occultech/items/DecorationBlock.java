@@ -37,6 +37,10 @@ public class DecorationBlock extends SlimefunItem {
         });
 
         addItemHandler((BlockUseHandler) e -> {
+            org.bukkit.Material held = e.getItem() == null ? org.bukkit.Material.AIR : e.getItem().getType();
+            if (held == org.bukkit.Material.FLINT_AND_STEEL || held == org.bukkit.Material.FIRE_CHARGE) {
+                return; // lighting it (Prismatic Netherrack), not changing its look
+            }
             e.cancel();
             e.getClickedBlock().ifPresent(block -> {
                 String palette = decorations.cyclePalette(block, kind);
