@@ -65,7 +65,9 @@ public final class MinionService implements Listener {
         /** Bone Scepter (tier 1): skeleton archers. */
         SKELETON_ARCHER,
         /** Grave Lantern (tier 2): wither skeleton knights with swords and armor, 40 HP. */
-        WITHER_KNIGHT
+        WITHER_KNIGHT,
+        /** Lich's Phylactery (tier 3): hollow knights in netherite, 80 HP, that stay until killed. */
+        HOLLOW_KNIGHT
     }
 
     /** @param anchor a fixed spot to guard when there is no online owner (self-test only), else null */
@@ -132,7 +134,15 @@ public final class MinionService implements Listener {
         for (int i = 0; i < count; i++) {
             double angle = ThreadLocalRandom.current().nextDouble(Math.PI * 2);
             Location at = around.clone().add(Math.cos(angle) * 1.5, 0, Math.sin(angle) * 1.5);
-            Mob minion = kind == Kind.WITHER_KNIGHT ? at.getWorld().spawn(at, WitherSkeleton.class, s -> {
+            Mob minion = kind == Kind.HOLLOW_KNIGHT ? at.getWorld().spawn(at, WitherSkeleton.class, s -> {
+                prepare(s, owner, ChatColor.DARK_AQUA + ownerName + "'s Hollow Knight");
+                s.getEquipment().setItemInMainHand(new ItemStack(Material.NETHERITE_SWORD));
+                s.getEquipment().setHelmet(new ItemStack(Material.NETHERITE_HELMET));
+                s.getEquipment().setChestplate(new ItemStack(Material.NETHERITE_CHESTPLATE));
+                s.getAttribute(Attribute.MAX_HEALTH).setBaseValue(80);
+                s.setHealth(80);
+                s.getAttribute(Attribute.ATTACK_DAMAGE).setBaseValue(20);
+            }) : kind == Kind.WITHER_KNIGHT ? at.getWorld().spawn(at, WitherSkeleton.class, s -> {
                 prepare(s, owner, ChatColor.DARK_GRAY + ownerName + "'s Wither Knight");
                 s.getEquipment().setItemInMainHand(new ItemStack(Material.IRON_SWORD));
                 s.getEquipment().setChestplate(new ItemStack(Material.CHAINMAIL_CHESTPLATE));

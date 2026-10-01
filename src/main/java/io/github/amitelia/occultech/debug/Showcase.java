@@ -78,17 +78,19 @@ final class Showcase {
     private static final int PEDESTAL_SPACING = 3;
     private static final int[] PEDESTAL_COLUMNS = { -6, -9, -12 };
     private static final int WEST_EDGE = -24;
-    private static final int EAST_EDGE = 52;
+    private static final int EAST_EDGE = 58;
     private static final Map<Integer, List<String>> BOSS_ORDER = Map.of(
         0, List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "GELATINOUS_SOVEREIGN"),
         1, List.of("THE_UNBOUND", "NIGHT_MATRIARCH", "MIRRORED_MAGUS", "ARCHEVOKER"),
-        2, List.of("ABYSSAL_WARDEN", "TIDEBREAKER", "BLAZE_CHOIR", "TEMPEST", "DROWNED_ELDER"));
+        2, List.of("ABYSSAL_WARDEN", "TIDEBREAKER", "BLAZE_CHOIR", "TEMPEST", "DROWNED_ELDER"),
+        3, List.of("HOLLOW_WARLORD", "HEARTWOOD_HORROR", "DREAD_RIDERS", "CORRUPTED_COLOSSUS", "DOPPELGANGER", "GALLUS"));
     private static final Map<Integer, List<String>> CRAFT_DEMOS = Map.of(
         0, List.of("craft:SOVEREIGN_CATALYST", "upgrade:BOUND_ALTAR"),
         1, List.of("craft:SPIRIT_ESSENCE"),
-        2, List.of("upgrade:ABYSSAL_ALTAR"));
-    private static final Material[] PEDESTALS = { Material.CHISELED_POLISHED_BLACKSTONE, Material.PURPUR_PILLAR, Material.PRISMARINE_BRICKS };
-    private static final Material[] RINGS = { Material.PEARLESCENT_FROGLIGHT, Material.VERDANT_FROGLIGHT, Material.OCHRE_FROGLIGHT };
+        2, List.of("upgrade:ABYSSAL_ALTAR"),
+        3, List.of("upgrade:HOLLOW_ALTAR"));
+    private static final Material[] PEDESTALS = { Material.CHISELED_POLISHED_BLACKSTONE, Material.PURPUR_PILLAR, Material.PRISMARINE_BRICKS, Material.CHISELED_DEEPSLATE };
+    private static final Material[] RINGS = { Material.PEARLESCENT_FROGLIGHT, Material.VERDANT_FROGLIGHT, Material.OCHRE_FROGLIGHT, Material.CRYING_OBSIDIAN };
 
     private final Occultech plugin;
     private final CommandSender sender;
@@ -483,6 +485,8 @@ final class Showcase {
         demoBlock(world.getBlockAt(ox - 5, y, startZ + 21), "EMBER_BRAZIER", "&6Ember Brazier\n&7Makes blaze powder.");
         demoBlock(world.getBlockAt(ox + 5, y, startZ + 21), "WIND_CHIME", "&bWind Chime\n&7Speed II and Jump Boost II within 32 blocks.\n&7Chimes softly now and then.");
         demoBlock(world.getBlockAt(ox - 5, y, startZ + 27), "OCCULT_FORGE", "&cOccult Forge &8(machine)\n&7Needs Slimefun power to run.\n&7Flames while it works.");
+        demoBlock(world.getBlockAt(ox - 5, y, startZ + 33), "HOLLOW_ASSEMBLER", "&8Hollow Assembler &8(machine)\n&7Needs Slimefun power.\n&7Assembles tier-3 gear from 9 input slots.");
+        demoBlock(world.getBlockAt(ox, y, startZ + 22), "SERVITOR_NEXUS", "&3Servitor Nexus &8(tier 3)\n&7Links the shrines around it: shared store,\n&7empower all, and an overview of every shrine.");
         demoBlock(world.getBlockAt(ox + 5, y, startZ + 27), "SOUL_CONDENSER", "&cSoul Condenser &8(machine)\n&7Needs Slimefun power to run.\n&7Souls drift while it works.");
 
         // decoration gallery across the end of the hall
@@ -498,6 +502,12 @@ final class Showcase {
         demoBlock(world.getBlockAt(ox - 10, y, startZ + 50), "MOONLIT_LILY", "&fMoonlit Lily &8(tier 1)\n&7Right-click: star color");
         setBlock(world.getBlockAt(ox - 5, y - 1, startZ + 50), Material.GRASS_BLOCK);
         demoBlock(world.getBlockAt(ox - 5, y, startZ + 50), "WITCHCAP", "&cWitchcap &8(tier 1)\n&7Right-click: brew colors");
+        setBlock(world.getBlockAt(ox - 15, y - 1, startZ + 50), Material.GRASS_BLOCK);
+        demoBlock(world.getBlockAt(ox - 15, y, startZ + 50), "WATCHFUL_EYEBLOSSOM", "&6Watchful Eyeblossom &8(tier 3)\n&7Walk close: it opens and watches you");
+        for (int dx = -3; dx <= 3; dx++) {
+            DebugWorld.placeSlimefun(world.getBlockAt(ox + dx, y - 1, startZ + 56), ItemKeys.slimefunId("RESIN_TILE"), this::record);
+        }
+        label(new Location(world, ox + 0.5, y + 1.6, startZ + 56.5), "&6Resin Tile &8(tier 3)\n&7Walk on it");
         demoBlock(world.getBlockAt(ox + 5, y, startZ + 50), "EVERLIVING_CORAL", "&bEverliving Coral &8(tier 2)\n&7Never dries. Right-click: coral type");
         Block netherrack = world.getBlockAt(ox + 10, y, startZ + 50);
         demoBlock(netherrack, "PRISMATIC_NETHERRACK", "&dPrismatic Netherrack &8(tier 2)\n&7Light it: rainbow fire. Right-click: palette");

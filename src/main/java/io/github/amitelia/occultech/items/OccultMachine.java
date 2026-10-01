@@ -22,16 +22,39 @@ import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
  */
 public class OccultMachine extends AContainer {
 
-    private static final int[] INPUTS = { 19, 20, 28, 29 };
+    /** The Forge and Condenser: 4 inputs. */
+    public static final int[] SMALL_INPUTS = { 19, 20, 28, 29 };
+    /** The Hollow Assembler: a 3x3 block of inputs. */
+    public static final int[] LARGE_INPUTS = { 10, 11, 12, 19, 20, 21, 28, 29, 30 };
     private static final int[] OUTPUTS = { 24, 25 };
     private static final int PROGRESS_SLOT = 22;
+
+    private final int[] inputs;
+    /** The layout of the machine being constructed (AContainer builds its menu before our fields are set). */
+    private static int[] pendingInputs;
+
+    private static SlimefunItemStack withPending(SlimefunItemStack item, int[] inputs) {
+        pendingInputs = inputs;
+        return item;
+    }
+
+    private int[] layout() {
+        return inputs != null ? inputs : pendingInputs != null ? pendingInputs : SMALL_INPUTS;
+    }
 
     private final String identifier;
     private final Material progressIcon;
 
     public OccultMachine(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, String identifier,
         Material progressIcon, int capacity, int energyPerTick, int speed) {
-        super(group, item, type, recipe, output);
+        this(group, item, type, recipe, output, identifier, progressIcon, capacity, energyPerTick, speed, SMALL_INPUTS);
+    }
+
+    public OccultMachine(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, String identifier,
+        Material progressIcon, int capacity, int energyPerTick, int speed, int[] inputs) {
+        super(group, withPending(item, inputs), type, recipe, output);
+        this.inputs = inputs;
+        pendingInputs = null;
         this.identifier = identifier;
         this.progressIcon = progressIcon;
         setCapacity(capacity);
@@ -41,8 +64,9 @@ public class OccultMachine extends AContainer {
 
     @Override
     protected void constructMenu(BlockMenuPreset preset) {
-        for (int slot = 0; slot < 36; slot++) {
-            if (!contains(INPUTS, slot) && !contains(OUTPUTS, slot) && slot != PROGRESS_SLOT) {
+        int[] in = layout();
+        for (int slot = 0; slot < 45; slot++) {
+            if (!contains(in, slot) && !contains(OUTPUTS, slot) && slot != PROGRESS_SLOT) {
                 preset.drawBackground(new int[] { slot });
             }
         }
@@ -51,7 +75,7 @@ public class OccultMachine extends AContainer {
 
     @Override
     public int[] getInputSlots() {
-        return INPUTS;
+        return layout();
     }
 
     @Override

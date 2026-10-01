@@ -23,6 +23,9 @@ public final class Keys {
     /** Marks hologram displays above bowls, altars and other blocks (never saved with the world). */
     public static final NamespacedKey HOLOGRAM = new NamespacedKey("occultech", "hologram");
 
+    /** Owner (player UUID string) of a fight creature only its owner may hurt (the Doppelganger's reflections). */
+    public static final NamespacedKey OWNED_BY = new NamespacedKey("occultech", "owned_by");
+
     /** Damage (double) a fight's projectile deals to a player, replacing vanilla's (e.g. tridents, small fireballs). */
     public static final NamespacedKey DAMAGE = new NamespacedKey("occultech", "damage");
 

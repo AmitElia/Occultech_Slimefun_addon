@@ -31,6 +31,9 @@ public abstract class BossBehavior {
      */
     public void move() {}
 
+    /** A player's hit landed on a boss entity (after {@link #modifyIncomingDamage}); e.g. to reflect damage. */
+    public void onDamagedBy(LivingEntity boss, Player player, double damage) {}
+
     /** Adjust damage a boss entity takes from a player (e.g. shields). */
     public double modifyIncomingDamage(LivingEntity boss, double damage) {
         return damage;

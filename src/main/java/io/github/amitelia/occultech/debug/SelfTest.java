@@ -52,6 +52,7 @@ final class SelfTest {
     private static final List<String> BOSSES = List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "GELATINOUS_SOVEREIGN");
     private static final List<String> TIER1_BOSSES = List.of("THE_UNBOUND", "NIGHT_MATRIARCH", "MIRRORED_MAGUS", "ARCHEVOKER");
     private static final List<String> TIER2_BOSSES = List.of("ABYSSAL_WARDEN", "TIDEBREAKER", "BLAZE_CHOIR", "TEMPEST", "DROWNED_ELDER");
+    private static final List<String> TIER3_BOSSES = List.of("HOLLOW_WARLORD", "HEARTWOOD_HORROR", "DREAD_RIDERS", "CORRUPTED_COLOSSUS", "DOPPELGANGER");
 
     private record Step(long delay, Runnable action) {}
 
@@ -189,6 +190,32 @@ final class SelfTest {
         then(30, this::tethered);
         then(0, this::decorationPalette);
         then(60, this::trophyShown);
+
+        // ---- tier 3
+        then(0, this::tier3Items);
+        then(0, this::startHollowUpgrade);
+        then(RitualService.DURATION_TICKS + 20L, this::hollowUpgraded);
+        then(0, this::clearForHollowRing);
+        then(20, this::buildHollowRing);
+        then(20, this::hollowCircleComplete);
+        for (String bossId : TIER3_BOSSES) {
+            then(0, () -> summonTier1(bossId));
+            then(60, () -> checkFightRunning(bossId));
+            then(0, () -> checkMovement(bossId));
+            then(0, this::killCurrentFight);
+            then(30, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
+        }
+        then(0, () -> summonTier1("GALLUS"));
+        then(60, () -> checkFightRunning("GALLUS"));
+        then(0, () -> checkMovement("GALLUS"));
+        then(0, () -> setGallusHealth(0.6));
+        then(20, this::gallusUnhorsed);
+        then(0, () -> setGallusHealth(0.3));
+        then(20, this::gallusHollowed);
+        then(0, this::killCurrentFight);
+        then(30, () -> checkFightEndedCleanly("Gallus"));
+        then(0, this::placeNexus);
+        then(80, this::nexusLinked);
         next();
     }
 
@@ -204,7 +231,7 @@ final class SelfTest {
         check("no content problems", registrar.problems().isEmpty(), String.join("; ", registrar.problems()));
         check("researches registered", registrar.researchCount() == catalog.researches().size(), registrar.researchCount() + " registered");
         long summons = rituals.recipes().stream().filter(RitualRecipe::isSummon).count();
-        int expectedSummons = BOSSES.size() + TIER1_BOSSES.size() + TIER2_BOSSES.size();
+        int expectedSummons = BOSSES.size() + TIER1_BOSSES.size() + TIER2_BOSSES.size() + TIER3_BOSSES.size() + 1;
         check(expectedSummons + " summoning rituals registered", summons == expectedSummons, summons + " summons");
     }
 
@@ -466,6 +493,10 @@ final class SelfTest {
                 check("Blaze Choir circles the altar in the air", orbiting, "positions off the orbit");
             }
             case "TIDEBREAKER" -> check("Tidebreaker stays on its nautilus", first.getVehicle() != null, "dismounted");
+            case "DREAD_RIDERS" -> check("both Dread Riders ride their horses", currentFight.bosses().stream().allMatch(b -> b.getVehicle() != null),
+                "a rider is on foot");
+            case "GALLUS" -> check("Gallus starts with its knight in the saddle", !first.getPassengers().isEmpty(), "no rider");
+            case "DOPPELGANGER" -> check("the Doppelganger is a player model", first instanceof org.bukkit.entity.Mannequin, String.valueOf(first.getType()));
             case "NIGHT_MATRIARCH" -> {
                 org.bukkit.Location anchor = first instanceof org.bukkit.entity.Phantom phantom ? phantom.getAnchorLocation() : null;
                 check("Night Matriarch circles above its own altar", anchor != null
@@ -939,6 +970,118 @@ final class SelfTest {
         check("Trophy Board shows a small model of the chosen boss", models == 1, models + " models");
         plugin.decorations().remove(trophyBoard);
         plugin.decorations().setAlwaysVisible(false);
+    }
+
+    // ---- tier 3
+
+    private Block nexus;
+
+    private void tier3Items() {
+        ItemStack crown = SlimefunItem.getById(ItemKeys.slimefunId("HOLLOW_HELMET")).getItem();
+        check("Hollow Crown has Protection V", crown.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 5,
+            "protection " + crown.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION));
+        SlimefunItem assembler = SlimefunItem.getById(ItemKeys.slimefunId("HOLLOW_ASSEMBLER"));
+        int recipes = assembler instanceof io.github.amitelia.occultech.items.OccultMachine m ? m.getMachineRecipes().size() : -1;
+        check("Hollow Assembler has its recipes", recipes >= 10, recipes + " recipes");
+        int slots = assembler instanceof io.github.amitelia.occultech.items.OccultMachine m ? m.getInputSlots().length : -1;
+        check("Hollow Assembler has 9 input slots", slots == 9, slots + " slots");
+        SlimefunItem forge = SlimefunItem.getById(ItemKeys.slimefunId("OCCULT_FORGE"));
+        int forgeSlots = forge instanceof io.github.amitelia.occultech.items.OccultMachine m ? m.getInputSlots().length : -1;
+        check("Occult Forge keeps 4 input slots", forgeSlots == 4, forgeSlots + " slots");
+        ItemStack censer = SlimefunItem.getById(ItemKeys.slimefunId("SOULFIRE_CENSER")).getItem();
+        check("Soulfire Censer is holdable", censer.hasData(io.papermc.paper.datacomponent.DataComponentTypes.CONSUMABLE), "no data");
+        for (String id : List.of("HOLLOW_HALO", "WISHBONE_TALISMAN", "AURA_TALISMAN", "GALLUS_EGG", "STORMSTRING_BOW", "DREADLANCE",
+            "SERVITOR_NEXUS", "WATCHFUL_EYEBLOSSOM", "RESIN_TILE", "HOLLOW_GLYPH")) {
+            check(ContentRegistrar.title(id) + " registered", SlimefunItem.getById(ItemKeys.slimefunId(id)) != null, "missing");
+        }
+        check("Abyssal and Hollow Glyphs are placeable",
+            !(SlimefunItem.getById(ItemKeys.slimefunId("ABYSSAL_GLYPH")) instanceof io.github.thebusybiscuit.slimefun4.core.attributes.NotPlaceable)
+                && !(SlimefunItem.getById(ItemKeys.slimefunId("HOLLOW_GLYPH")) instanceof io.github.thebusybiscuit.slimefun4.core.attributes.NotPlaceable),
+            "not placeable");
+    }
+
+    private void startHollowUpgrade() {
+        String hollow = ItemKeys.slimefunId("HOLLOW_ALTAR");
+        RitualRecipe upgrade = rituals.recipes().stream().filter(r -> r.inPlace() && hollow.equals(r.outputId())).findFirst().orElse(null);
+        check("Hollow Altar upgrade ritual registered", upgrade != null, "missing");
+        if (upgrade == null) {
+            return;
+        }
+        testAltar = bound;
+        fillAt(bound, upgrade);
+        check("Hollow upgrade starts on the Abyssal circle", rituals.begin(null, bound) == RitualService.Outcome.STARTED, "did not start");
+    }
+
+    private void hollowUpgraded() {
+        check("Abyssal Altar upgraded in place to a Hollow Altar", ItemKeys.slimefunId("HOLLOW_ALTAR").equals(BlockStorage.checkID(bound)),
+            String.valueOf(BlockStorage.checkID(bound)));
+    }
+
+    private void clearForHollowRing() {
+        io.github.amitelia.occultech.ritual.CirclePattern pattern = Circles.forTier(3);
+        for (int dz = -5; dz <= 5; dz++) {
+            for (int dx = -5; dx <= 5; dx++) {
+                String glyph = pattern.glyphAt(dx, dz);
+                Block block = bound.getRelative(dx, 0, dz);
+                String id = BlockStorage.checkID(block);
+                if ((dx == 0 && dz == 0) || glyph == null || glyph.equals(id) || id == null) {
+                    continue;
+                }
+                remember(block);
+                DebugWorld.emptyMenu(block);
+                BlockStorage.clearBlockInfo(block);
+                block.setType(Material.AIR, false);
+            }
+        }
+    }
+
+    private void buildHollowRing() {
+        io.github.amitelia.occultech.ritual.CirclePattern pattern = Circles.forTier(3);
+        for (int dz = -5; dz <= 5; dz++) {
+            for (int dx = -5; dx <= 5; dx++) {
+                String glyph = pattern.glyphAt(dx, dz);
+                Block block = bound.getRelative(dx, 0, dz);
+                if ((dx == 0 && dz == 0) || glyph == null || glyph.equals(BlockStorage.checkID(block))) {
+                    continue;
+                }
+                DebugWorld.placeSlimefun(block, glyph, this::remember);
+            }
+        }
+    }
+
+    private void hollowCircleComplete() {
+        Optional<RitualService.CircleCheck> check = rituals.checkCircle(bound);
+        check("11x11 Hollow circle detected", check.isPresent() && check.get().tier() == 3 && check.get().complete(),
+            check.map(c -> "tier " + c.tier() + ", " + c.missing().size() + " missing").orElse("-"));
+        check("Hollow circle has 12 offering bowls", check.isPresent() && check.get().pattern().positionsOf(Circles.OFFERING_BOWL, 0).size() == 12, "wrong");
+    }
+
+    private void setGallusHealth(double fraction) {
+        if (currentFight != null && !currentFight.bosses().isEmpty()) {
+            LivingEntity gallus = currentFight.bosses().get(0);
+            gallus.setHealth(gallus.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue() * fraction);
+        }
+    }
+
+    private void gallusUnhorsed() {
+        LivingEntity gallus = currentFight == null || currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+        check("Gallus throws its rider below two thirds", gallus != null && gallus.getPassengers().isEmpty(), "still mounted");
+    }
+
+    private void gallusHollowed() {
+        LivingEntity gallus = currentFight == null || currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+        check("Gallus takes to the air in the Hollowing", gallus != null && !gallus.hasGravity(), "still grounded");
+    }
+
+    private void placeNexus() {
+        nexus = shrine.getRelative(0, 0, 3);
+        DebugWorld.placeSlimefun(nexus, ItemKeys.slimefunId("SERVITOR_NEXUS"), this::remember);
+    }
+
+    private void nexusLinked() {
+        org.bukkit.Location linked = plugin.servitors().nexusFor(shrine.getLocation());
+        check("a Servitor Nexus links the nearby shrine", nexus.getLocation().equals(linked), String.valueOf(linked));
+        plugin.rituals().holograms().clear(nexus);
     }
 
     private void setContract(String id) {

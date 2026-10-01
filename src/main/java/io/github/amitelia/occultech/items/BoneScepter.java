@@ -30,6 +30,15 @@ public class BoneScepter extends OccultItem {
 
     public BoneScepter(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, MinionService minions,
         MinionService.Kind kind, int count, long cooldownMs) {
+        this(group, item, type, recipe, output, minions, kind, count, cooldownMs, LIFETIME_SECONDS, 0);
+    }
+
+    /**
+     * @param lifetimeSeconds how long raised minions stay
+     * @param cap             most minions an owner may have at once (0 = no cap): the item tops up to the cap
+     */
+    public BoneScepter(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, MinionService minions,
+        MinionService.Kind kind, int count, long cooldownMs, int lifetimeSeconds, int cap) {
         super(group, item, type, recipe, output);
 
         addItemHandler((ItemUseHandler) e -> {
@@ -42,13 +51,18 @@ public class BoneScepter extends OccultItem {
                 player.sendMessage(ChatColor.GRAY + "The bones need " + ((ready - now) / 1000 + 1) + "s more to settle.");
                 return;
             }
+            int raise = cap > 0 ? Math.min(count, cap - minions.count(player)) : count;
+            if (raise <= 0) {
+                player.sendMessage(ChatColor.GRAY + "Your knights are all at your side already.");
+                return;
+            }
             if (!useDurability(scepter)) {
                 player.sendMessage(ChatColor.RED + "The scepter is spent. Repair it before calling the dead again.");
                 player.playSound(player.getLocation(), Sound.BLOCK_BONE_BLOCK_BREAK, 1F, 0.6F);
                 return;
             }
             cooldowns.put(player.getUniqueId(), now + cooldownMs);
-            minions.raise(player, kind, count, LIFETIME_SECONDS);
+            minions.raise(player, kind, raise, lifetimeSeconds);
         });
     }
 

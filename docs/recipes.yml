@@ -11,7 +11,7 @@
 #   RITUAL : Occultech. `center` item on the altar + offerings in bowls (a bowl holds a stack).
 #            `circle` = minimum circle tier. Bowl count per circle: 0:4, 1:8, 2:8, 3:12
 #   OCCULT_FORGE / SOUL_CONDENSER : Occultech electric machines (tier 2). Up to 4 inputs, stacks allowed.
-#   HOLLOW_ASSEMBLER : Occultech electric 6x6 workbench (tier 3), 1 item per slot (max 36)
+#   HOLLOW_ASSEMBLER : Occultech electric assembler (tier 3): 9 input slots, stacks allowed (max 36 items in all)
 #   BOSS_DROP : only obtainable from the named boss. `chance` (default 1) = bonus drop rolled per contributor per win,
 #               for extra drops besides the boss's main drop.
 #
@@ -40,7 +40,7 @@ circles:
   0: {INITIATE_ALTAR: 1, CHALK_GLYPH: 16, OFFERING_BOWL: 4, TALLOW_CANDLE: 4}
   1: {BOUND_ALTAR: 1, CHALK_GLYPH: 16, BOUND_GLYPH: 16, OFFERING_BOWL: 8, TALLOW_CANDLE: 8}
   2: {ABYSSAL_ALTAR: 1, CHALK_GLYPH: 16, BOUND_GLYPH: 16, ABYSSAL_GLYPH: 28, OFFERING_BOWL: 8, TALLOW_CANDLE: 12}
-  3: {HOLLOW_ALTAR: 1, CHALK_GLYPH: 16, BOUND_GLYPH: 16, ABYSSAL_GLYPH: 24, HOLLOW_GLYPH: 32, OFFERING_BOWL: 12, TALLOW_CANDLE: 12}
+  3: {HOLLOW_ALTAR: 1, CHALK_GLYPH: 16, BOUND_GLYPH: 16, ABYSSAL_GLYPH: 28, HOLLOW_GLYPH: 32, OFFERING_BOWL: 12, TALLOW_CANDLE: 16}
 
 # kind: lesser = repeatable mini-boss, major = the tier's gate boss (needs a catalyst)
 # drops: guaranteed minimum per win per contributor (small random bonus on top, not counted here)
@@ -87,6 +87,12 @@ researches:
   DECORATIONS:       {id: 12, name: "Occult Decor",     cost: 15, items: [WISP_JAR, ABYSSAL_LANTERN, RUNE_OBELISK, OCCULT_ORRERY, SOULFIRE_BRAZIER, EVERLIVING_CORAL, TIDAL_TILE, PRISMATIC_NETHERRACK]}
   HUMBLE_DECOR:      {id: 13, name: "Humble Decor",     cost: 6,  items: [CHIMING_TILE, TROPHY_BOARD]}
   TWILIGHT_DECOR:    {id: 14, name: "Twilight Decor",   cost: 10, items: [MOONLIT_LILY, WITCHCAP]}
+  HOLLOW_ARTS:       {id: 15, name: "Hollow Arts",      cost: 60, items: [HOLLOW_ESSENCE, HOLLOW_INGOT, HOLLOW_CRYSTAL, HOLLOW_ASSEMBLER, HOLLOW_SIGIL, HOLLOW_GLYPH, HOLLOW_ALTAR, HOLLOW_EFFIGY]}
+  HOLLOW_WARDROBE:   {id: 16, name: "Hollow Wardrobe",  cost: 70, items: [HOLLOW_HELMET, HOLLOW_CHESTPLATE, HOLLOW_LEGGINGS, HOLLOW_BOOTS]}
+  HOLLOW_ARSENAL:    {id: 17, name: "Hollow Arsenal",   cost: 70, items: [DREADLANCE, STORMSTRING_BOW, SOULFIRE_CENSER, LICHS_PHYLACTERY, HEARTWOOD_AEGIS]}
+  HOLLOW_SERVITUDE:  {id: 18, name: "Hollow Servitude", cost: 60, items: [SERVITOR_NEXUS]}
+  FINAL_TALISMANS:   {id: 19, name: "Final Talismans",  cost: 80, items: [HOLLOW_HALO, WISHBONE_TALISMAN, AURA_TALISMAN, GALLUS_EGG]}
+  HOLLOW_DECOR:      {id: 20, name: "Hollow Decor",     cost: 20, items: [WATCHFUL_EYEBLOSSOM, RESIN_TILE]}
   SERVITUDE:         {id: 6, name: "Servitude",         cost: 35, items: [SERVITOR_SHRINE, HARVEST_CONTRACT, GATHER_CONTRACT, WARD_CONTRACT, BREWER_CONTRACT, SHEPHERD_CONTRACT, BEEKEEPER_CONTRACT, ACOLYTE_CONTRACT]}
 
 items:
@@ -346,37 +352,37 @@ items:
   # TIER 3 - HOLLOW (Infinity gear; gate: Elder Scale)
   # =====================================================================
   HOLLOW_ESSENCE:
-    {tier: 3, cat: material, name: Hollow Essence, purpose: "Tier-3 ritual fuel",
+    {tier: 3, material: SCULK_VEIN, cat: material, name: Hollow Essence, purpose: "Tier-3 ritual fuel",
      recipe: {type: SOUL_CONDENSER, out: 2, in: {mc:SOUL_SOIL: 16, SPIRIT_ESSENCE: 4, mc:CRYING_OBSIDIAN: 2}}}
   HOLLOW_INGOT:
-    {tier: 3, cat: material, name: Hollow Ingot, purpose: "Tier-3 structural metal (comparable to an Infinity Ingot)",
+    {tier: 3, material: NETHERITE_INGOT, cat: material, name: Hollow Ingot, purpose: "Tier-3 structural metal (comparable to an Infinity Ingot)",
      recipe: {type: OCCULT_FORGE, out: 1, in: {ABYSSAL_ALLOY: 4, sf:BLISTERING_INGOT_3: 2, mc:NETHERITE_INGOT: 2, HOLLOW_ESSENCE: 4}}}
   HOLLOW_CRYSTAL:
-    {tier: 3, cat: material, name: Hollow Crystal, purpose: "Tier-3 focus",
+    {tier: 3, material: ECHO_SHARD, cat: material, name: Hollow Crystal, purpose: "Tier-3 focus",
      recipe: {type: OCCULT_FORGE, out: 1, in: {RESONANT_CRYSTAL: 4, sf:CARBONADO: 2, HOLLOW_ESSENCE: 4, mc:ECHO_SHARD: 2}}}
   HOLLOW_ASSEMBLER:
-    {tier: 3, cat: machine, name: Hollow Assembler, purpose: "Electric 6x6 workbench for tier-3 gear",
+    {tier: 3, material: CRAFTER, cat: machine, name: Hollow Assembler, purpose: "Electric assembler with 9 input slots: builds tier-3 gear",
      recipe: {type: RITUAL, circle: 2, out: 1, center: OCCULT_FORGE, in: {HOLLOW_INGOT: 4, HOLLOW_CRYSTAL: 2, CORRUPTED_CIRCUIT: 4, ELDER_SCALE: 2, sf:REINFORCED_PLATE: 4, sf:ENERGY_REGULATOR: 2, ABYSSAL_SIGIL: 2}}}
   HOLLOW_SIGIL:
-    {tier: 3, cat: component, name: Hollow Sigil, purpose: "Tier-3 core component",
+    {tier: 3, material: OMINOUS_TRIAL_KEY, cat: component, name: Hollow Sigil, purpose: "Tier-3 core component",
      recipe: {type: ANCIENT_ALTAR, out: 1, in: {ABYSSAL_SIGIL: 1, HOLLOW_INGOT: 2, HOLLOW_CRYSTAL: 2, sf:ANCIENT_RUNE_SOULBOUND: 1, sf:ANCIENT_RUNE_ENCHANTMENT: 1, sf:REINFORCED_PLATE: 2}}}
   HOLLOW_GLYPH:
-    {tier: 3, cat: infrastructure, name: Hollow Glyph, purpose: "Placeable tier-3 circle mark",
+    {tier: 3, material: SCULK, cat: infrastructure, name: Hollow Glyph, purpose: "Placeable tier-3 circle mark",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 8, in: {BOUND_CHALK: 4, HOLLOW_ESSENCE: 1, mc:SOUL_SOIL: 4}}}
   HOLLOW_ALTAR:
-    {tier: 3, cat: infrastructure, name: Hollow Altar, purpose: "Center of the 11x11 circle",
-     recipe: {type: RITUAL, circle: 2, out: 1, center: ABYSSAL_ALTAR, in: {HOLLOW_SIGIL: 2, ELDER_SCALE: 4, HOLLOW_INGOT: 8, HOLLOW_CRYSTAL: 4, sf:NUCLEAR_REACTOR: 1, mc:BEACON: 1}}}
+    {tier: 3, material: CRYING_OBSIDIAN, cat: infrastructure, name: Hollow Altar, purpose: "Center of the 11x11 circle",
+     recipe: {type: RITUAL, circle: 2, out: 1, center: ABYSSAL_ALTAR, in_place: true, in: {HOLLOW_SIGIL: 2, ELDER_SCALE: 4, HOLLOW_INGOT: 8, HOLLOW_CRYSTAL: 4, sf:NUCLEAR_REACTOR: 1, mc:BEACON: 1}}}
   # tier-3 boss drops
-  WARLORDS_BRAND:    {tier: 3, cat: boss_drop, name: Warlord's Brand, purpose: "Hollow armor and necromancy", recipe: {type: BOSS_DROP, boss: HOLLOW_WARLORD}}
-  HEARTWOOD_RESIN:   {tier: 3, cat: boss_drop, name: Heartwood Resin, purpose: "Regeneration and sustain items", recipe: {type: BOSS_DROP, boss: HEARTWOOD_HORROR}}
-  LANCERS_PENNANT:   {tier: 3, cat: boss_drop, name: Lancer's Pennant, purpose: "The Dreadlance (from the Vanguard)", recipe: {type: BOSS_DROP, boss: DREAD_RIDERS}}
-  OUTRIDERS_FLETCHING: {tier: 3, cat: boss_drop, name: Outrider's Fletching, purpose: "The Stormstring Bow (from the Outrider)", recipe: {type: BOSS_DROP, boss: DREAD_RIDERS, chance: 1.0}}
-  CORRUPTED_CIRCUIT: {tier: 3, cat: boss_drop, name: Corrupted Circuit, purpose: "Tier-3 machines and the Servitor Nexus", recipe: {type: BOSS_DROP, boss: CORRUPTED_COLOSSUS}}
-  MIRROR_VISAGE:     {tier: 3, cat: boss_drop, name: Mirror Visage, purpose: "Illusion cosmetics: the Aura Talisman", recipe: {type: BOSS_DROP, boss: DOPPELGANGER}}
-  HOLLOW_HEART:      {tier: 3, cat: boss_drop, name: Hollow Heart, purpose: "Pinnacle gear only", recipe: {type: BOSS_DROP, boss: GALLUS}}
-  GALLUS_WISHBONE:   {tier: 3, cat: boss_drop, name: Gallus Wishbone, purpose: "Final talismans: Wishbone Talisman, Aura Talisman, Gallus Egg", recipe: {type: BOSS_DROP, boss: GALLUS, chance: 1.0}}
+  WARLORDS_BRAND:    {tier: 3, material: WITHER_ROSE, cat: boss_drop, name: Warlord's Brand, purpose: "Hollow armor and necromancy", recipe: {type: BOSS_DROP, boss: HOLLOW_WARLORD}}
+  HEARTWOOD_RESIN:   {tier: 3, material: RESIN_BRICK, cat: boss_drop, name: Heartwood Resin, purpose: "Regeneration and sustain items", recipe: {type: BOSS_DROP, boss: HEARTWOOD_HORROR}}
+  LANCERS_PENNANT:   {tier: 3, material: BLACK_BANNER, cat: boss_drop, name: Lancer's Pennant, purpose: "The Dreadlance (from the Vanguard)", recipe: {type: BOSS_DROP, boss: DREAD_RIDERS}}
+  OUTRIDERS_FLETCHING: {tier: 3, material: LIGHTNING_ROD, cat: boss_drop, name: Outrider's Fletching, purpose: "The Stormstring Bow (from the Outrider)", recipe: {type: BOSS_DROP, boss: DREAD_RIDERS, chance: 1.0}}
+  CORRUPTED_CIRCUIT: {tier: 3, material: COMPARATOR, cat: boss_drop, name: Corrupted Circuit, purpose: "Tier-3 machines and the Servitor Nexus", recipe: {type: BOSS_DROP, boss: CORRUPTED_COLOSSUS}}
+  MIRROR_VISAGE:     {tier: 3, material: PLAYER_HEAD, cat: boss_drop, name: Mirror Visage, purpose: "Illusion cosmetics: the Aura Talisman", recipe: {type: BOSS_DROP, boss: DOPPELGANGER}}
+  HOLLOW_HEART:      {tier: 3, material: CREAKING_HEART, cat: boss_drop, name: Hollow Heart, purpose: "Pinnacle gear only", recipe: {type: BOSS_DROP, boss: GALLUS}}
+  GALLUS_WISHBONE:   {tier: 3, material: BONE, cat: boss_drop, name: Gallus Wishbone, purpose: "Final talismans: Wishbone Talisman, Aura Talisman, Gallus Egg", recipe: {type: BOSS_DROP, boss: GALLUS, chance: 1.0}}
   HOLLOW_EFFIGY:
-    {tier: 3, cat: catalyst, name: Hollow Effigy, purpose: "Summons Gallus, the Hollow Jockey",
+    {tier: 3, material: JACK_O_LANTERN, cat: catalyst, name: Hollow Effigy, purpose: "Summons Gallus, the Hollow Jockey",
      recipe: {type: RITUAL, circle: 3, out: 1, center: mc:NETHER_STAR, in: {WARLORDS_BRAND: 1, HEARTWOOD_RESIN: 1, LANCERS_PENNANT: 1, CORRUPTED_CIRCUIT: 1, MIRROR_VISAGE: 1, mc:FEATHER: 16, HOLLOW_ESSENCE: 16}}}
   # tier-3 rewards (Hollow Assembler 6x6 = up to 36 items)
   HOLLOW_HELMET:
@@ -395,23 +401,23 @@ items:
     {tier: 3, material: NETHERITE_SPEAR, durability: 2000, repair: LANCERS_PENNANT, cat: weapon, name: Dreadlance, purpose: "Spear: charged lunge through enemies. Every hit heals you for 15% of the damage dealt (capped per second)",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {LANCERS_PENNANT: 8, HOLLOW_INGOT: 16, HOLLOW_CRYSTAL: 4, TEMPEST_CORE: 4, HOLLOW_HEART: 1, HOLLOW_SIGIL: 2}}}
   SOULFIRE_CENSER:
-    {tier: 3, cat: weapon, name: Soulfire Censer, purpose: "Upgraded Wyrmbreath: longer blue soul-fire cone, 5s bursts without overheating. Durability 3000, repair: Choir Ember",
+    {tier: 3, material: SOUL_TORCH, durability: 3000, repair: CHOIR_EMBER, cat: weapon, name: Soulfire Censer, purpose: "Upgraded Wyrmbreath: longer blue soul-fire cone, 5s bursts without overheating. Durability 3000, repair: Choir Ember",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {WYRMBREATH: 1, CHOIR_EMBER: 12, HOLLOW_INGOT: 14, HOLLOW_CRYSTAL: 4, HOLLOW_HEART: 1, HOLLOW_SIGIL: 2}}}
   LICHS_PHYLACTERY:
-    {tier: 3, cat: weapon, name: Lich's Phylactery, purpose: "Necromancy: commands up to 4 Hollow Knights that follow you until killed. Durability 256 summons, repair: Warlord's Brand",
+    {tier: 3, material: SKULL_POTTERY_SHERD, durability: 256, repair: WARLORDS_BRAND, cat: weapon, name: Lich's Phylactery, purpose: "Necromancy: commands up to 4 Hollow Knights that follow you until killed. Durability 256 summons, repair: Warlord's Brand",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {GRAVE_LANTERN: 1, WARLORDS_BRAND: 8, HOLLOW_INGOT: 14, HOLLOW_ESSENCE: 6, HOLLOW_HEART: 2, HOLLOW_SIGIL: 2}}}
   STORMSTRING_BOW:
     {tier: 3, material: BOW, durability: 1500, repair: OUTRIDERS_FLETCHING, cat: weapon, name: Stormstring Bow, purpose: "Arrows call down lightning on the mob they hit and arc to 2 more hostile mobs. Visual lightning only: never starts fires or changes mobs. Never hits players or pets",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {QUILLSHOT_BOW: 1, OUTRIDERS_FLETCHING: 8, HOLLOW_INGOT: 12, TEMPEST_CORE: 4, HOLLOW_CRYSTAL: 4, HOLLOW_SIGIL: 2}}}
   SERVITOR_NEXUS:
-    {tier: 3, material: CONDUIT, cat: labor, name: Servitor Nexus, purpose: "Links up to 8 Servitor Shrines within 24 blocks: one shared 54-slot store (cargo/Networks), shared supplies, one Spirit Essence empowers all, and an overview menu to see and swap every contract",
+    {tier: 3, material: CONDUIT, cat: labor, name: Servitor Nexus, purpose: "Links up to 8 Servitor Shrines within 24 blocks: one shared 45-slot store (cargo/Networks), shared supplies, one Spirit Essence empowers all, and an overview menu to see and swap every contract",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {CORRUPTED_CIRCUIT: 4, HOLLOW_INGOT: 8, ABYSSAL_TETHER: 1, HOLLOW_CRYSTAL: 2, HOLLOW_ESSENCE: 8, HOLLOW_SIGIL: 1}}}
   # final rewards (Gallus): talismans work from the inventory and only ever affect their carrier
   HOLLOW_HALO:
     {tier: 3, material: GOLD_NUGGET, cat: charm, name: Hollow Halo, purpose: "Cosmetic: a slowly turning ring of light over your head while it's in your inventory (only yours, one at a time). Right-click: on/off and color",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {HOLLOW_HEART: 1, mc:GOLD_BLOCK: 4, HOLLOW_CRYSTAL: 4, mc:GLOWSTONE: 8, SPIRIT_ESSENCE: 16}}}
   WISHBONE_TALISMAN:
-    {tier: 3, material: BONE, cat: charm, name: Wishbone Talisman, purpose: "While in your inventory you are half size. Right-click toggles it",
+    {tier: 3, material: RABBIT_FOOT, cat: charm, name: Wishbone Talisman, purpose: "While in your inventory you are half size. Right-click toggles it",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {GALLUS_WISHBONE: 4, HOLLOW_INGOT: 4, mc:FEATHER: 8, HOLLOW_CRYSTAL: 2, sf:COMMON_TALISMAN: 1}}}
   AURA_TALISMAN:
     {tier: 3, material: AMETHYST_SHARD, cat: charm, name: Aura Talisman, purpose: "Cosmetic: a light particle trail as you walk while it's in your inventory. Right-click: trail style (prismatic sparks, petals, soul wisps) or off",
@@ -427,5 +433,5 @@ items:
     {tier: 3, material: RESIN_BRICKS, cat: decoration, name: Resin Tile, purpose: "Decoration: amber drips and a faint trail where you walk (quiet while sneaking)",
      recipe: {type: MAGIC_WORKBENCH, out: 4, in: {mc:RESIN_BRICKS: 4, HEARTWOOD_RESIN: 1, mc:RESIN_CLUMP: 2}}}
   HEARTWOOD_AEGIS:
-    {tier: 3, cat: charm, name: Heartwood Aegis, purpose: "Shield: blocking heals you over time; regeneration aura for nearby allies",
+    {tier: 3, material: SHIELD, durability: 2000, repair: HEARTWOOD_RESIN, cat: charm, name: Heartwood Aegis, purpose: "Shield: blocking heals you over time; regeneration aura for nearby allies",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {mc:SHIELD: 1, HEARTWOOD_RESIN: 8, HOLLOW_INGOT: 14, HOLLOW_CRYSTAL: 4, MIRROR_WARD: 1, HOLLOW_HEART: 1, HOLLOW_SIGIL: 2}}}

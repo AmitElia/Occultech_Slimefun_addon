@@ -20,6 +20,8 @@ public final class Circles {
     public static final String BOUND_ALTAR = "OCCULTECH_BOUND_ALTAR";
     public static final String ABYSSAL_GLYPH = "OCCULTECH_ABYSSAL_GLYPH";
     public static final String ABYSSAL_ALTAR = "OCCULTECH_ABYSSAL_ALTAR";
+    public static final String HOLLOW_GLYPH = "OCCULTECH_HOLLOW_GLYPH";
+    public static final String HOLLOW_ALTAR = "OCCULTECH_HOLLOW_ALTAR";
 
     /**
      * Tier 0 (5x5): altar in the middle, bowls on its four sides, candles on the diagonals, chalk ring outside.
@@ -71,8 +73,30 @@ public final class Circles {
         Map.of('c', CHALK_GLYPH, 'b', BOUND_GLYPH, 'a', ABYSSAL_GLYPH, 'K', TALLOW_CANDLE, 'B', OFFERING_BOWL, 'A', ABYSSAL_ALTAR)
     );
 
-    private static final Map<String, Integer> ALTAR_TIERS = Map.of(INITIATE_ALTAR, 0, BOUND_ALTAR, 1, ABYSSAL_ALTAR, 2);
-    private static final List<String> NAMES = List.of("Initiate's Circle", "Bound Circle", "Abyssal Circle");
+    /**
+     * Tier 3 (11x11): the Abyssal circle with a Hollow Altar in the middle, wrapped in a ring of Hollow Glyphs with a
+     * candle on each corner and a bowl in the middle of each side (12 bowls in all).
+     */
+    private static final CirclePattern HOLLOW = new CirclePattern(
+        List.of(
+            "KhhhhBhhhhK",
+            "hKaaaaaaaKh",
+            "haKbbBbbKah",
+            "habcccccbah",
+            "habcKBKcbah",
+            "BaBcBABcBaB",
+            "habcKBKcbah",
+            "habcccccbah",
+            "haKbbBbbKah",
+            "hKaaaaaaaKh",
+            "KhhhhBhhhhK"
+        ),
+        Map.of('c', CHALK_GLYPH, 'b', BOUND_GLYPH, 'a', ABYSSAL_GLYPH, 'h', HOLLOW_GLYPH, 'K', TALLOW_CANDLE, 'B', OFFERING_BOWL,
+            'A', HOLLOW_ALTAR)
+    );
+
+    private static final Map<String, Integer> ALTAR_TIERS = Map.of(INITIATE_ALTAR, 0, BOUND_ALTAR, 1, ABYSSAL_ALTAR, 2, HOLLOW_ALTAR, 3);
+    private static final List<String> NAMES = List.of("Initiate's Circle", "Bound Circle", "Abyssal Circle", "Hollow Circle");
 
     public static int highestTier() {
         return NAMES.size() - 1;
@@ -95,6 +119,9 @@ public final class Circles {
         }
         if (tier == 2) {
             return ABYSSAL;
+        }
+        if (tier == 3) {
+            return HOLLOW;
         }
         throw new IllegalArgumentException("No circle defined for tier " + tier);
     }

@@ -17,6 +17,7 @@ import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
@@ -100,6 +101,8 @@ public final class DecorationService {
             Palette.colors("&cR&6a&ei&an&bb&9o&dw", Color.WHITE),
             Palette.colors("&aAu&bro&5ra", Color.WHITE),
             Palette.colors("&cDusk &5embers", Color.WHITE)),
+        /** Opens when someone is near and closes when they leave (tier 3). */
+        WATCHFUL_EYEBLOSSOM(Palette.colors("&6Watching", Color.fromRGB(255, 150, 40))),
         /** Shows a boss model; its "palette" is the chosen boss (see {@link TrophyBoard}). */
         TROPHY_BOARD(Palette.colors("&6Trophy", Color.WHITE));
 
@@ -228,6 +231,7 @@ public final class DecorationService {
                 case EVERLIVING_CORAL -> coral(center);
                 case PRISMATIC_NETHERRACK -> prismaticFire(at.getBlock(), index);
                 case TROPHY_BOARD -> trophy(center, decoration, at.getBlock());
+                case WATCHFUL_EYEBLOSSOM -> eyeblossom(center, at.getBlock(), palette);
             }
             return false;
         });
@@ -443,6 +447,30 @@ public final class DecorationService {
             } else {
                 block.getWorld().spawnParticle(Particle.ENTITY_EFFECT, point, 1, 0, 0, 0, 1, color);
             }
+        }
+    }
+
+    /** Opens for anyone within 6 blocks (and closes again), sending glowing motes drifting toward them. */
+    private static void eyeblossom(Location center, Block block, Palette palette) {
+        Player near = null;
+        double best = 36;
+        for (Player player : center.getWorld().getNearbyPlayers(center, 6)) {
+            double d = player.getLocation().distanceSquared(center);
+            if (d < best) {
+                near = player;
+                best = d;
+            }
+        }
+        Material want = near != null ? Material.OPEN_EYEBLOSSOM : Material.CLOSED_EYEBLOSSOM;
+        if (block.getType() != want) {
+            // no physics: it's our own block, and the flower must not pop off
+            block.setType(want, false);
+            center.getWorld().playSound(center, near != null ? org.bukkit.Sound.BLOCK_EYEBLOSSOM_OPEN : org.bukkit.Sound.BLOCK_EYEBLOSSOM_CLOSE, 0.6F, 1F);
+        }
+        if (near != null && ThreadLocalRandom.current().nextInt(3) == 0) {
+            Location from = center.clone().add(ThreadLocalRandom.current().nextDouble(-0.2, 0.2), 0.3, ThreadLocalRandom.current().nextDouble(-0.2, 0.2));
+            center.getWorld().spawnParticle(Particle.TRAIL, from, 1, 0, 0, 0, 0,
+                new Particle.Trail(near.getEyeLocation().subtract(0, 0.4, 0), palette.colors()[0], 40));
         }
     }
 

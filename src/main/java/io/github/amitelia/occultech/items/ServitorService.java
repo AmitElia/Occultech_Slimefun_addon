@@ -100,6 +100,9 @@ public final class ServitorService implements Listener {
     static final String OWNER_KEY = "occultech_owner";
     static final String EMPOWERED_KEY = "occultech_empowered_until";
     public static final int MAX_NEARBY = 4;
+    /** A Servitor Nexus links up to this many shrines within this range. */
+    public static final int NEXUS_RANGE = 24;
+    public static final int NEXUS_LINKS = 8;
     public static final int CAP_RADIUS = 12;
     public static final long ACTION_MS = 2000;
     public static final long EMPOWER_MS = 60 * 60 * 1000L;
@@ -118,10 +121,16 @@ public final class ServitorService implements Listener {
         Contract contract;
         boolean tethered;
         ItemDisplay spirit;
+        /** The linked Nexus's menu this tick, or null. */
+        BlockMenu nexus;
+        String status = "&7Idle";
     }
 
     private final Map<Location, Shrine> shrines = new HashMap<>();
     private final Map<Location, Long> idols = new HashMap<>();
+    private final Map<Location, Long> nexuses = new HashMap<>();
+    /** shrine -> its Nexus, recomputed on every sweep and whenever a Nexus appears. */
+    private Map<Location, Location> links = new HashMap<>();
     private RitualService rituals;
 
     public ServitorService(Plugin plugin) {
@@ -142,6 +151,13 @@ public final class ServitorService implements Listener {
         long now = System.currentTimeMillis();
         shrine.contract = Contract.of(MenuUtils.keyOf(menu.getItemInSlot(contractSlot)));
         shrine.tethered = TETHER_ID.equals(MenuUtils.keyOf(menu.getItemInSlot(upgradeSlot)));
+        Location nexusAt = links.get(block.getLocation());
+        shrine.nexus = nexusAt == null ? null : BlockStorage.getInventory(nexusAt);
+        shrine.status = status(block, menu, store, shrine, now);
+        return shrine.status;
+    }
+
+    private String status(Block block, BlockMenu menu, int[] store, Shrine shrine, long now) {
         ensureSpirit(block, shrine);
         sparkle(shrine);
 
@@ -153,7 +169,7 @@ public final class ServitorService implements Listener {
             return "&aWarding &7(no hostile spawns within " + Contract.WARD.radius(shrine.tethered) + ")" + (shrine.tethered ? " &3(tethered)" : "");
         }
         boolean producer = shrine.contract != Contract.BREWER && shrine.contract != Contract.ACOLYTE;
-        if (producer && !hasRoom(menu, store)) {
+        if (producer && !hasRoom(menu, store) && (shrine.nexus == null || !hasRoom(shrine.nexus, ServitorNexus.STORE))) {
             return "&cStore full";
         }
         if (now < shrine.nextAction) {
@@ -228,6 +244,64 @@ public final class ServitorService implements Listener {
     /** Every shrine seen recently (debug listing). */
     public List<Location> shrineLocations() {
         return new ArrayList<>(shrines.keySet());
+    }
+
+    // ------------------------------------------------------------------ Servitor Nexus
+
+    void registerNexus(Location at) {
+        if (nexuses.put(at, System.currentTimeMillis()) == null) {
+            relink();
+        }
+    }
+
+    void removeNexus(Location at) {
+        nexuses.remove(at);
+        relink();
+    }
+
+    /** The Nexus a shrine is linked to, or null. */
+    @Nullable
+    public Location nexusFor(Location shrine) {
+        return links.get(shrine);
+    }
+
+    /** The shrines linked to a Nexus. */
+    public List<Location> linkedTo(Location nexus) {
+        List<Location> linked = new ArrayList<>();
+        links.forEach((shrine, owner) -> {
+            if (owner.equals(nexus)) {
+                linked.add(shrine);
+            }
+        });
+        return linked;
+    }
+
+    /** The last status line of a shrine (overview). */
+    public String statusAt(Location at) {
+        Shrine shrine = shrines.get(at);
+        return shrine == null ? "&8not loaded" : shrine.status;
+    }
+
+    /** Each Nexus claims its nearest unclaimed shrines, up to the link limit. */
+    private void relink() {
+        Map<Location, Location> fresh = new HashMap<>();
+        long now = System.currentTimeMillis();
+        for (Location nexus : nexuses.keySet()) {
+            if (now - nexuses.get(nexus) > SEEN_TIMEOUT_MS * 3) {
+                continue;
+            }
+            List<Location> candidates = new ArrayList<>();
+            for (Location shrine : shrines.keySet()) {
+                if (!fresh.containsKey(shrine) && shrine.getWorld() == nexus.getWorld() && shrine.distanceSquared(nexus) <= NEXUS_RANGE * NEXUS_RANGE) {
+                    candidates.add(shrine);
+                }
+            }
+            candidates.sort(java.util.Comparator.comparingDouble(shrine -> shrine.distanceSquared(nexus)));
+            for (int i = 0; i < Math.min(NEXUS_LINKS, candidates.size()); i++) {
+                fresh.put(candidates.get(i), nexus);
+            }
+        }
+        links = fresh;
     }
 
     /** Self-test: counts a location as a shrine for the placement cap. */
@@ -353,7 +427,7 @@ public final class ServitorService implements Listener {
                 ageable.setAge(0);
             }
             crop.setBlockData(ageable);
-            storeAll(menu, store, drops, crop.getLocation());
+            storeAll(shrine, menu, store, drops, crop.getLocation());
             work(shrine, crop.getLocation(), Sound.BLOCK_CROP_BREAK);
             return;
         }
@@ -371,7 +445,7 @@ public final class ServitorService implements Listener {
             if (item.getPickupDelay() > 0 || ownedByOther || !mayWork(owner, item.getLocation().getBlock())) {
                 continue;
             }
-            ItemStack rest = menu.pushItem(item.getItemStack().clone(), store);
+            ItemStack rest = push(shrine, menu, store, item.getItemStack().clone());
             if (rest == null) {
                 item.remove();
             } else {
@@ -391,13 +465,13 @@ public final class ServitorService implements Listener {
             }
             BrewerInventory inventory = stand.getInventory();
             if ((inventory.getFuel() == null || inventory.getFuel().getType().isAir()) && stand.getFuelLevel() <= 0
-                && takeFromStore(menu, store, Material.BLAZE_POWDER)) {
+                && takeFromStore(shrine, menu, store, Material.BLAZE_POWDER)) {
                 inventory.setFuel(new ItemStack(Material.BLAZE_POWDER));
                 work(shrine, block.getLocation(), Sound.BLOCK_BREWING_STAND_BREW);
                 return;
             }
             boolean empty = inventory.getIngredient() == null || inventory.getIngredient().getType().isAir();
-            if (empty && onlyWaterBottles(inventory) && takeFromStore(menu, store, Material.NETHER_WART)) {
+            if (empty && onlyWaterBottles(inventory) && takeFromStore(shrine, menu, store, Material.NETHER_WART)) {
                 inventory.setIngredient(new ItemStack(Material.NETHER_WART));
                 work(shrine, block.getLocation(), Sound.BLOCK_BREWING_STAND_BREW);
                 return;
@@ -417,7 +491,7 @@ public final class ServitorService implements Listener {
             sheep.setSheared(true);
             DyeColor color = sheep.getColor() == null ? DyeColor.WHITE : sheep.getColor();
             Material wool = Material.matchMaterial(color.name() + "_WOOL");
-            storeAll(menu, store, List.of(new ItemStack(wool == null ? Material.WHITE_WOOL : wool, 1 + (int) (Math.random() * 3))), sheep.getLocation());
+            storeAll(shrine, menu, store, List.of(new ItemStack(wool == null ? Material.WHITE_WOOL : wool, 1 + (int) (Math.random() * 3))), sheep.getLocation());
             work(shrine, sheep.getLocation().getBlock().getLocation(), Sound.ENTITY_SHEEP_SHEAR);
             return;
         }
@@ -432,7 +506,7 @@ public final class ServitorService implements Listener {
             }
             hive.setHoneyLevel(0);
             block.setBlockData(hive);
-            storeAll(menu, store, List.of(new ItemStack(Material.HONEYCOMB, 3)), block.getLocation());
+            storeAll(shrine, menu, store, List.of(new ItemStack(Material.HONEYCOMB, 3)), block.getLocation());
             work(shrine, block.getLocation(), Sound.BLOCK_BEEHIVE_SHEAR);
             return;
         }
@@ -465,7 +539,8 @@ public final class ServitorService implements Listener {
                 bowls.add(altar.getRelative(offset[0], 0, offset[1]));
             }
             for (Map.Entry<String, Integer> offering : last.offerings().entrySet()) {
-                if (restock(menu, store, bowls, offering.getKey(), offering.getValue())) {
+                if (restock(menu, store, bowls, offering.getKey(), offering.getValue())
+                    || (shrine.nexus != null && restock(shrine.nexus, ServitorNexus.STORE, bowls, offering.getKey(), offering.getValue()))) {
                     work(shrine, altar.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME);
                     return;
                 }
@@ -550,6 +625,17 @@ public final class ServitorService implements Listener {
         return any;
     }
 
+    /** Supplies come from the shrine's own store first, then from its Nexus. */
+    private static boolean takeFromStore(Shrine shrine, BlockMenu menu, int[] store, Material type) {
+        return takeFromStore(menu, store, type) || (shrine.nexus != null && takeFromStore(shrine.nexus, ServitorNexus.STORE, type));
+    }
+
+    /** Output goes to the Nexus first (when linked), then the shrine's own store. Returns what didn't fit. */
+    private static ItemStack push(Shrine shrine, BlockMenu menu, int[] store, ItemStack item) {
+        ItemStack rest = shrine.nexus != null ? shrine.nexus.pushItem(item, ServitorNexus.STORE) : item;
+        return rest == null ? null : menu.pushItem(rest, store);
+    }
+
     private static boolean takeFromStore(BlockMenu menu, int[] store, Material type) {
         for (int slot : store) {
             ItemStack item = menu.getItemInSlot(slot);
@@ -561,9 +647,9 @@ public final class ServitorService implements Listener {
         return false;
     }
 
-    private static void storeAll(BlockMenu menu, int[] store, List<ItemStack> items, Location near) {
+    private static void storeAll(Shrine shrine, BlockMenu menu, int[] store, List<ItemStack> items, Location near) {
         for (ItemStack drop : items) {
-            ItemStack rest = menu.pushItem(drop, store);
+            ItemStack rest = push(shrine, menu, store, drop);
             if (rest != null) {
                 near.getWorld().dropItemNaturally(near.clone().add(0.5, 0.5, 0.5), rest);
             }
@@ -661,6 +747,9 @@ public final class ServitorService implements Listener {
             return gone;
         });
         idols.entrySet().removeIf(entry -> now - entry.getValue() > SEEN_TIMEOUT_MS * 3);
+        nexuses.entrySet().removeIf(entry -> now - entry.getValue() > SEEN_TIMEOUT_MS * 3 || !entry.getKey().isChunkLoaded()
+            || BlockStorage.checkID(entry.getKey()) == null);
+        relink();
     }
 
     /** Removes every spirit display (plugin disable). */

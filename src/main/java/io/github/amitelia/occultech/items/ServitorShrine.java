@@ -180,14 +180,16 @@ public class ServitorShrine extends SlimefunItem {
         boolean tethered = servitors.tetheredAt(block.getLocation());
         int radius = contract == null ? 0 : contract.radius(tethered);
         // keyed on the menu instance too: a reloaded chunk brings a fresh menu that needs the readout again
-        String key = System.identityHashCode(menu) + ":" + (contract == null ? "-" : contract.name()) + ":" + tethered;
+        org.bukkit.Location nexus = servitors.nexusFor(block.getLocation());
+        String key = System.identityHashCode(menu) + ":" + (contract == null ? "-" : contract.name()) + ":" + tethered + ":" + nexus;
         if (!key.equals(shownRange.put(block.getLocation(), key))) {
             String area = contract == null ? "&7no contract" : "&f" + (radius * 2 + 1) + "x" + (radius * 2 + 1) + " &7around the shrine";
             menu.replaceExistingItem(RANGE_SLOT, MenuUtils.icon(Material.SPYGLASS, "&bWork area",
                 "&7Contract: &f" + (contract == null ? "none" : contract.label),
                 "&7Area: " + area,
                 "&7Abyssal Tether: " + (tethered ? "&3fitted &7(wider area)" : "&8none"),
-                "&7Servitor Nexus: &8not linked",
+                nexus == null ? "&7Servitor Nexus: &8not linked"
+                    : "&7Servitor Nexus: &3linked &7(" + nexus.getBlockX() + " " + nexus.getBlockY() + " " + nexus.getBlockZ() + ")",
                 "", "&8The area is outlined while this menu is open."));
         }
         if (radius > 0 && menu.hasViewer()) {
@@ -212,7 +214,7 @@ public class ServitorShrine extends SlimefunItem {
             "&7Banks up to 24 hours. Stacks with a", "&7Frenzy Idol (x1.5) for x3.");
     }
 
-    private static boolean takeEssence(Player player) {
+    static boolean takeEssence(Player player) {
         for (ItemStack item : player.getInventory().getContents()) {
             SlimefunItem sfItem = item == null || item.getType().isAir() ? null : SlimefunItem.getByItem(item);
             if (sfItem != null && sfItem.getId().equals(SPIRIT_ESSENCE)) {

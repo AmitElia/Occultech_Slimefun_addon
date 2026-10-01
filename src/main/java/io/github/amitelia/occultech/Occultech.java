@@ -13,6 +13,7 @@ import io.github.amitelia.occultech.boss.BossService;
 import io.github.amitelia.occultech.boss.tier0.Tier0Bosses;
 import io.github.amitelia.occultech.boss.tier1.Tier1Bosses;
 import io.github.amitelia.occultech.boss.tier2.Tier2Bosses;
+import io.github.amitelia.occultech.boss.tier3.Tier3Bosses;
 import io.github.amitelia.occultech.content.ItemCatalog;
 import io.github.amitelia.occultech.debug.OccultechCommand;
 import io.github.amitelia.occultech.items.DecorationService;
@@ -36,6 +37,7 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     private ServitorService servitors;
     private MinionService minions;
     private DecorationService decorations;
+    private io.github.amitelia.occultech.items.TalismanService talismans;
     private ContentRegistrar registrar;
 
     @Override
@@ -62,10 +64,12 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         Tier0Bosses.all().forEach(bosses::register);
         Tier1Bosses.all().forEach(bosses::register);
         Tier2Bosses.all().forEach(bosses::register);
+        Tier3Bosses.all().forEach(bosses::register);
         rituals = new RitualService(this, bosses, hooks);
         servitors = new ServitorService(this);
         minions = new MinionService(this);
         decorations = new DecorationService(this);
+        talismans = new io.github.amitelia.occultech.items.TalismanService(this);
         servitors.setRituals(rituals);
         registrar = new ContentRegistrar(this, catalog, rituals);
         registrar.registerAll();
@@ -75,6 +79,7 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         getServer().getPluginManager().registerEvents(new WeaponListener(this), this);
         getServer().getPluginManager().registerEvents(new GearListener(this), this);
         getServer().getPluginManager().registerEvents(new HeldWeapons(this), this);
+        getServer().getPluginManager().registerEvents(new io.github.amitelia.occultech.items.HollowGearListener(this), this);
         getServer().getPluginManager().registerEvents(new io.github.amitelia.occultech.items.CosmeticListener(decorations), this);
         getCommand("occultech").setExecutor(new OccultechCommand(this));
 
@@ -98,6 +103,9 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         }
         if (decorations != null) {
             decorations.shutdown();
+        }
+        if (talismans != null) {
+            talismans.shutdown();
         }
         instance = null;
     }

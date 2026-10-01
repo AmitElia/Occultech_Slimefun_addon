@@ -47,7 +47,9 @@ public final class HeldWeapons implements Listener {
 
     public static final String WYRMBREATH = ItemKeys.slimefunId("WYRMBREATH");
     public static final String GAZE = ItemKeys.slimefunId("GUARDIANS_GAZE");
-    private static final Set<String> HELD = Set.of(WYRMBREATH, GAZE);
+    /** Tier-3 Wyrmbreath: a longer blue soul-fire cone that runs 5s before it overheats. */
+    public static final String CENSER = ItemKeys.slimefunId("SOULFIRE_CENSER");
+    private static final Set<String> HELD = Set.of(WYRMBREATH, GAZE, CENSER);
 
     private static final double FIRE_RANGE = 6;
     private static final double FIRE_ANGLE = 25;
@@ -99,7 +101,7 @@ public final class HeldWeapons implements Listener {
             UUID id = player.getUniqueId();
             String using = player.hasActiveItem() ? idOf(player.getActiveItem()) : null;
 
-            if (!WYRMBREATH.equals(using)) {
+            if (!WYRMBREATH.equals(using) && !CENSER.equals(using)) {
                 heat.computeIfPresent(id, (k, h) -> h <= 2 ? null : h - 2);
             }
             if (!GAZE.equals(using)) {
@@ -123,8 +125,8 @@ public final class HeldWeapons implements Listener {
                 player.sendMessage(ChatColor.RED + "It is spent. Repair it with a ritual.");
                 continue;
             }
-            if (WYRMBREATH.equals(using)) {
-                breathe(player, now);
+            if (WYRMBREATH.equals(using) || CENSER.equals(using)) {
+                breathe(player, now, CENSER.equals(using));
             } else if (GAZE.equals(using)) {
                 gaze(player);
             }
@@ -133,15 +135,19 @@ public final class HeldWeapons implements Listener {
 
     // ------------------------------------------------------------------ Wyrmbreath
 
-    private void breathe(Player player, long now) {
+    private void breathe(Player player, long now, boolean censer) {
         UUID id = player.getUniqueId();
-        int h = heat.merge(id, 3, Integer::sum);
+        // the Censer heats up slower: 5s of fire before it locks
+        int h = heat.merge(id, censer ? 2 : 3, Integer::sum);
+        double range = censer ? 9 : FIRE_RANGE;
+        double angle = censer ? 30 : FIRE_ANGLE;
+        Particle flame = censer ? Particle.SOUL_FIRE_FLAME : Particle.FLAME;
         if (h >= OVERHEAT) {
             heat.put(id, OVERHEAT);
             lockedUntil.put(id, now + OVERHEAT_LOCK_MS);
             player.clearActiveItem();
             player.getWorld().playSound(player.getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 1F, 0.8F);
-            player.sendActionBar(ChatColor.RED + "Wyrmbreath overheated!");
+            player.sendActionBar(ChatColor.RED + (censer ? "The Censer" : "Wyrmbreath") + " overheated!");
             return;
         }
         player.sendActionBar(heatBar(h));
@@ -152,8 +158,8 @@ public final class HeldWeapons implements Listener {
         Location mouth = eye.clone().add(look.clone().multiply(0.8)).add(0, -0.25, 0);
         for (int i = 0; i < 7; i++) {
             Vector spread = look.clone().add(new Vector(random.nextGaussian(), random.nextGaussian(), random.nextGaussian()).multiply(0.13)).normalize();
-            double speed = 0.35 + random.nextDouble() * 0.25;
-            player.getWorld().spawnParticle(Particle.FLAME, mouth, 0, spread.getX(), spread.getY(), spread.getZ(), speed);
+            double speed = (0.35 + random.nextDouble() * 0.25) * (censer ? 1.4 : 1);
+            player.getWorld().spawnParticle(flame, mouth, 0, spread.getX(), spread.getY(), spread.getZ(), speed);
             if (i % 2 == 0) {
                 player.getWorld().spawnParticle(Particle.SMALL_FLAME, mouth, 0, spread.getX(), spread.getY(), spread.getZ(), speed * 1.2);
             }
@@ -168,13 +174,13 @@ public final class HeldWeapons implements Listener {
         if (tick % 4 != 0) {
             return;
         }
-        for (Entity entity : player.getNearbyEntities(FIRE_RANGE, FIRE_RANGE, FIRE_RANGE)) {
+        for (Entity entity : player.getNearbyEntities(range, range, range)) {
             if (!(entity instanceof LivingEntity target) || !validTarget(player, target)) {
                 continue;
             }
             Vector to = target.getLocation().add(0, target.getHeight() / 2, 0).toVector().subtract(eye.toVector());
-            if (to.length() <= FIRE_RANGE && Math.toDegrees(to.angle(look)) <= FIRE_ANGLE && hasLineOfSight(eye, target)) {
-                hurt(target, 4, player);
+            if (to.length() <= range && Math.toDegrees(to.angle(look)) <= angle && hasLineOfSight(eye, target)) {
+                hurt(target, censer ? 9 : 4, player);
                 target.setFireTicks(Math.max(target.getFireTicks(), 80));
             }
         }

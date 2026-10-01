@@ -40,9 +40,10 @@ public final class CosmeticListener implements Listener {
 
     private static final String CHIMING = ItemKeys.slimefunId("CHIMING_TILE");
     private static final String TIDAL = ItemKeys.slimefunId("TIDAL_TILE");
+    private static final String RESIN = ItemKeys.slimefunId("RESIN_TILE");
     private static final Set<String> NEVER_DRY = Set.of(TIDAL, ItemKeys.slimefunId("EVERLIVING_CORAL"));
     private static final Set<String> FLOWERS = Set.of(ItemKeys.slimefunId("MOONLIT_LILY"), ItemKeys.slimefunId("WITCHCAP"),
-        ItemKeys.slimefunId("EVERLIVING_CORAL"));
+        ItemKeys.slimefunId("EVERLIVING_CORAL"), ItemKeys.slimefunId("WATCHFUL_EYEBLOSSOM"));
     private static final long STEP_COOLDOWN_MS = 250;
     /** A pentatonic scale, so any run of steps sounds pleasant. */
     private static final float[] PENTATONIC = { 0.749F, 0.841F, 1.0F, 1.122F, 1.26F, 1.498F, 1.682F };
@@ -69,7 +70,7 @@ public final class CosmeticListener implements Listener {
         }
         Block under = e.getTo().getBlock().getRelative(BlockFace.DOWN);
         Material type = under.getType();
-        if (type != Material.AMETHYST_BLOCK && !CORAL_BLOCKS.contains(type)) {
+        if (type != Material.AMETHYST_BLOCK && type != Material.RESIN_BRICKS && !CORAL_BLOCKS.contains(type)) {
             return;
         }
         long now = System.currentTimeMillis();
@@ -83,6 +84,9 @@ public final class CosmeticListener implements Listener {
         } else if (TIDAL.equals(id)) {
             lastStep.put(player.getUniqueId(), now);
             splash(under);
+        } else if (RESIN.equals(id)) {
+            lastStep.put(player.getUniqueId(), now);
+            amber(under);
         }
     }
 
@@ -99,6 +103,13 @@ public final class CosmeticListener implements Listener {
         tile.getWorld().playSound(top, Sound.BLOCK_BUBBLE_COLUMN_BUBBLE_POP, 0.7F, 1.2F);
         tile.getWorld().spawnParticle(Particle.SPLASH, top, 8, 0.3, 0.05, 0.3, 0.1);
         tile.getWorld().spawnParticle(Particle.BUBBLE_POP, top, 3, 0.3, 0.1, 0.3, 0.02);
+    }
+
+    private static void amber(Block tile) {
+        var top = tile.getLocation().add(0.5, 1.05, 0.5);
+        tile.getWorld().playSound(top, Sound.BLOCK_HONEY_BLOCK_STEP, 0.6F, 0.8F);
+        tile.getWorld().spawnParticle(Particle.DUST, top, 4, 0.3, 0.05, 0.3, 0, new Particle.DustOptions(Color.fromRGB(230, 130, 30), 0.8F));
+        tile.getWorld().spawnParticle(Particle.FALLING_HONEY, top.clone().add(0, 0.6, 0), 2, 0.3, 0.1, 0.3, 0);
     }
 
     /** Coral dries out when no water touches it; ours never does. */

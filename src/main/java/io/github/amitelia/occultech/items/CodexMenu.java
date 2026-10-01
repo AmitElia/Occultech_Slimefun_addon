@@ -60,7 +60,7 @@ final class CodexMenu {
         for (int tier = 0; tier <= Circles.highestTier(); tier++) {
             int t = tier;
             int size = Circles.forTier(tier).radius() * 2 + 1;
-            button(menu, 11 + tier * 2, MenuUtils.icon(tier == 0 ? Material.LODESTONE : tier == 1 ? Material.AMETHYST_BLOCK : Material.PRISMARINE_BRICKS, "&5" + Circles.name(tier),
+            button(menu, 11 + tier * 2, MenuUtils.icon(tier == 0 ? Material.LODESTONE : tier == 1 ? Material.AMETHYST_BLOCK : tier == 2 ? Material.PRISMARINE_BRICKS : Material.SCULK, "&5" + Circles.name(tier),
                 "&7" + size + "x" + size + ", tier " + tier, "", "&eClick to see the layout"), () -> openCircle(player, t, null));
         }
         menu.open(player);
@@ -75,16 +75,28 @@ final class CodexMenu {
      * @param rowOffset first pattern row shown (big circles scroll: the view is 5 rows tall)
      */
     void openCircle(Player player, int tier, @Nullable RitualService.CircleCheck check, int rowOffset) {
+        openCircle(player, tier, check, rowOffset, 0);
+    }
+
+    /** @param colOffset first pattern column shown (circles wider than 9 scroll sideways) */
+    void openCircle(Player player, int tier, @Nullable RitualService.CircleCheck check, int rowOffset, int colOffset) {
         CirclePattern pattern = Circles.forTier(tier);
         int size = pattern.radius() * 2 + 1;
         ChestMenu menu = menu("&5" + Circles.name(tier) + " &8(" + size + "x" + size + ")", 54);
         back(menu, player);
         int maxOffset = Math.max(0, size - VIEW_ROWS);
         if (rowOffset > 0) {
-            button(menu, 3, MenuUtils.icon(Material.SPECTRAL_ARROW, "&7Scroll up"), () -> openCircle(player, tier, check, rowOffset - 1));
+            button(menu, 3, MenuUtils.icon(Material.SPECTRAL_ARROW, "&7Scroll up"), () -> openCircle(player, tier, check, rowOffset - 1, colOffset));
         }
         if (rowOffset < maxOffset) {
-            button(menu, 5, MenuUtils.icon(Material.SPECTRAL_ARROW, "&7Scroll down"), () -> openCircle(player, tier, check, rowOffset + 1));
+            button(menu, 5, MenuUtils.icon(Material.SPECTRAL_ARROW, "&7Scroll down"), () -> openCircle(player, tier, check, rowOffset + 1, colOffset));
+        }
+        int maxColOffset = Math.max(0, size - VIEW_COLUMNS);
+        if (colOffset > 0) {
+            button(menu, 2, MenuUtils.icon(Material.SPECTRAL_ARROW, "&7Scroll left"), () -> openCircle(player, tier, check, rowOffset, colOffset - 1));
+        }
+        if (colOffset < maxColOffset) {
+            button(menu, 6, MenuUtils.icon(Material.SPECTRAL_ARROW, "&7Scroll right"), () -> openCircle(player, tier, check, rowOffset, colOffset + 1));
         }
 
         Set<String> missingCells = new HashSet<>();
@@ -101,10 +113,11 @@ final class CodexMenu {
             for (int dx = -r; dx <= r; dx++) {
                 String glyph = pattern.glyphAt(dx, dz);
                 int row = dz + r - rowOffset;
-                if (glyph == null || row < 0 || row >= VIEW_ROWS || dx + r >= VIEW_COLUMNS) {
+                int column = dx + r - colOffset;
+                if (glyph == null || row < 0 || row >= VIEW_ROWS || column < 0 || column >= VIEW_COLUMNS) {
                     continue;
                 }
-                int slot = (row + 1) * 9 + leftColumn + dx + r;
+                int slot = (row + 1) * 9 + leftColumn + column;
                 String name = nameOf(glyph);
                 ItemStack icon = missingCells.contains(dx + "," + dz)
                     ? MenuUtils.icon(Material.RED_STAINED_GLASS_PANE, "&cMissing: " + name, "&7Place a " + name + " here.")
@@ -202,6 +215,12 @@ final class CodexMenu {
             case "BLAZE_CHOIR" -> Material.BLAZE_SPAWN_EGG;
             case "TEMPEST" -> Material.BREEZE_SPAWN_EGG;
             case "DROWNED_ELDER" -> Material.ELDER_GUARDIAN_SPAWN_EGG;
+            case "HOLLOW_WARLORD" -> Material.WITHER_SKELETON_SPAWN_EGG;
+            case "HEARTWOOD_HORROR" -> Material.CREAKING_SPAWN_EGG;
+            case "DREAD_RIDERS" -> Material.SKELETON_HORSE_SPAWN_EGG;
+            case "CORRUPTED_COLOSSUS" -> Material.IRON_GOLEM_SPAWN_EGG;
+            case "DOPPELGANGER" -> Material.ARMOR_STAND;
+            case "GALLUS" -> Material.CHICKEN_SPAWN_EGG;
             default -> Material.ZOMBIE_SPAWN_EGG;
         };
     }

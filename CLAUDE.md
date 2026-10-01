@@ -30,7 +30,10 @@ items/           SlimefunItem subclasses + runtime: RitualAltar, OfferingBowl, R
                  FrenzyIdol, ScryingMirror, BoneScepter + MinionService (necromancy, minion kinds), WeaponListener
                  (tier 0 + Abyssal set bonus), GearListener (tier 1 gear, Abyssal armor effects, no Mending),
                  tier 2: OccultMachine (powered AContainer, recipes from recipes.yml), HeldWeapons (Wyrmbreath,
-                 Guardian's Gaze), AbyssalAnchor, ChoirBell, GuardianEye, WindChime, DecorationBlock + DecorationService
+                 Guardian's Gaze, Soulfire Censer), AbyssalAnchor, ChoirBell, GuardianEye, WindChime, DecorationBlock +
+                 DecorationService, cosmetics (StepTile, CosmeticListener, TrophyBoard),
+                 tier 3: HollowGearListener (armor, Dreadlance, Stormstring Bow, Aegis), TalismanService + Talisman,
+                 GallusEgg (steered mount), ServitorNexus (linked shrines; routing lives in ServitorService)
 ritual/          CirclePattern, Circles (layout per tier), RitualMatcher/RitualRecipe - pure Java, unit tested
 core/            Bukkit-only shared bits (PDC Keys: SUMMONED, FIGHT, SHOWCASE, DAMAGE for fight projectiles)
 boss/            engine, Bukkit only: BossService (fights + all anti-abuse event rules), BossFight (one fight:
@@ -38,8 +41,10 @@ boss/            engine, Bukkit only: BossService (fights + all anti-abuse event
                  (per-boss logic), FightHooks (Slimefun side implemented by items/OccultechFightHooks)
 boss/tier0/      BroodMother, Volley, WitchCoven, GelatinousSovereign + Tier0Bosses registry
 boss/tier1/      TheUnbound, NightMatriarch, MirroredMagus, Archevoker + Tier1Bosses registry
-boss/tier2/      AbyssalWarden, Tidebreaker, BlazeChoir, Tempest, DrownedElder + Tier2Bosses; Abyss (land gliding,
-                 dodgeable beams). Health attributes cap at 1024: big bosses use modifyIncomingDamage as armor
+boss/tier2/      AbyssalWarden, Tidebreaker, BlazeChoir, Tempest, DrownedElder + Tier2Bosses; Abyss (public: land gliding,
+                 walking, dodgeable beams, magic damage). Health attributes cap at 1024: big bosses use modifyIncomingDamage as armor
+boss/tier3/      HollowWarlord, HeartwoodHorror, DreadRiders, CorruptedColossus, Doppelganger (Mannequin), Gallus (final
+                 boss, 3 phases) + Tier3Bosses
 debug/           /occultech command: selftest (in-game integration test), showcase [clear]
 ```
 

@@ -36,6 +36,7 @@ public final class WeaponListener implements Listener {
     private static final float FULL_DRAW = 0.95F;
     private static final double WARDING_MULTIPLIER = 0.85;
     private static final double ABYSSAL_SET_MULTIPLIER = 0.8;
+    private static final double HOLLOW_SET_MULTIPLIER = 0.75;
     private static final java.util.List<String> ABYSSAL_SET = java.util.List.of(ItemKeys.slimefunId("ABYSSAL_HELMET"),
         ItemKeys.slimefunId("ABYSSAL_CHESTPLATE"), ItemKeys.slimefunId("ABYSSAL_LEGGINGS"), ItemKeys.slimefunId("ABYSSAL_BOOTS"));
 
@@ -89,6 +90,9 @@ public final class WeaponListener implements Listener {
         }
         if (wearsAbyssalSet(player)) {
             e.setDamage(e.getDamage() * ABYSSAL_SET_MULTIPLIER);
+        }
+        if (HollowGearListener.wearsHollowSet(player)) {
+            e.setDamage(e.getDamage() * HOLLOW_SET_MULTIPLIER);
         }
     }
 

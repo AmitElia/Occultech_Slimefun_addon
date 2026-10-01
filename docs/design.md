@@ -134,9 +134,12 @@ Sea creatures are "puppets": no vanilla goals and no gravity, moved by the boss 
 | Tempest | breeze with its own AI; wind-charge fan; squall ring closes in from the arena edge to 5 blocks (outside hurts); wind burst; two small breezes at half health |
 | Drowned Elder | Mining Fatigue II pressure; beams at up to three players; two gliding guardians every 20s with small beams; Tidal Surge at half health: three waves roll out - jump over each |
 
-## Tier 3 · Hollow (planned, not implemented)
+## Tier 3 · Hollow (implemented)
 Balanced for InfinityExpansion2 gear; the final tier. 11x11 circle, arena radius 24, raw cost 100k - ~1M.
-Data is in recipes.yml (not registered while `IMPLEMENTED_TIER` is 2).
+11x11 Hollow circle: the Abyssal circle wrapped in Hollow Glyphs, 12 bowls; the Abyssal Altar upgrades in place.
+The Hollow Assembler is a powered machine with 9 input slots (cargo/Networks friendly) rather than a hand-filled 6x6
+grid; recipes are count-based like every other Occultech machine. Assembling Hollow armor consumes the Abyssal piece;
+the result has its own enchantments.
 
 ### Mini-bosses
 | Boss | Base | Fight | Drop -> purpose |

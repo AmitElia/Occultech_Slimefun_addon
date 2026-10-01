@@ -20,7 +20,7 @@ import io.github.amitelia.occultech.boss.BossFight;
  * Shared tier-2 mechanics: land "gliding" for sea creatures (they hover over the ground instead of flopping) and
  * dodgeable charged beams.
  */
-final class Abyss {
+public final class Abyss {
 
     private Abyss() {}
 
@@ -28,17 +28,41 @@ final class Abyss {
      * Turns a mob into a puppet the boss script moves: no goals (so vanilla AI never steers it, and guardians never
      * flop), no gravity, but still normal physics so velocity carries it.
      */
-    static void puppet(org.bukkit.entity.Mob mob) {
+    public static void puppet(org.bukkit.entity.Mob mob) {
         org.bukkit.Bukkit.getMobGoals().removeAllGoals(mob);
         mob.setGravity(false);
         mob.setTarget(null);
     }
 
     /**
+     * Moves a walking creature (gravity on) toward {@code toward}: sets the horizontal velocity and keeps the vertical one,
+     * so it still falls and lands. Stops {@code keepDistance} short. Call every tick.
+     */
+    public static void walk(LivingEntity mob, Location toward, double speed, double keepDistance) {
+        Location at = mob.getLocation();
+        Vector flat = toward.toVector().subtract(at.toVector()).setY(0);
+        double distance = flat.length();
+        Vector velocity = new Vector();
+        if (distance > keepDistance + 0.3) {
+            velocity = flat.normalize().multiply(Math.min(speed, (distance - keepDistance) * 0.25));
+        } else if (distance < keepDistance - 1.5 && distance > 0.01) {
+            velocity = flat.normalize().multiply(-speed * 0.5);
+        }
+        velocity.setY(mob.getVelocity().getY());
+        // step up single blocks in the way
+        Block ahead = at.clone().add(velocity.clone().setY(0).normalize().multiply(0.9)).getBlock();
+        if (velocity.lengthSquared() > 0.001 && !ahead.isPassable() && ahead.getRelative(0, 1, 0).isPassable() && mob.isOnGround()) {
+            velocity.setY(0.42);
+        }
+        mob.setVelocity(velocity);
+        face(mob, toward);
+    }
+
+    /**
      * Moves a gravity-less, AI-less creature toward {@code toward}, hovering {@code hover} blocks above the ground and
      * stopping {@code keepDistance} short of it. Called once per boss step; the velocity carries it between steps.
      */
-    static void glide(LivingEntity mob, Location toward, double speed, double hover, double keepDistance) {
+    public static void glide(LivingEntity mob, Location toward, double speed, double hover, double keepDistance) {
         Location at = mob.getLocation();
         Vector flat = toward.toVector().subtract(at.toVector()).setY(0);
         double distance = flat.length();
@@ -55,7 +79,7 @@ final class Abyss {
     }
 
     /** Turns a creature (body and head) to look at a point. */
-    static void face(LivingEntity mob, Location toward) {
+    public static void face(LivingEntity mob, Location toward) {
         Vector look = toward.toVector().subtract(mob.getEyeLocation().toVector());
         if (look.lengthSquared() < 0.01) {
             return;
@@ -65,7 +89,7 @@ final class Abyss {
     }
 
     /** Top of the first solid block at or below {@code at} (up to 8 down), or the location's own height. */
-    static double groundY(Location at) {
+    public static double groundY(Location at) {
         Block block = at.getBlock();
         for (int i = 0; i < 8; i++) {
             if (!block.isPassable()) {
@@ -76,7 +100,7 @@ final class Abyss {
         return at.getY();
     }
 
-    static void line(Location from, Location to, Particle.DustOptions dust, double step) {
+    public static void line(Location from, Location to, Particle.DustOptions dust, double step) {
         Vector direction = to.toVector().subtract(from.toVector());
         double length = direction.length();
         if (length < 0.01) {
@@ -91,7 +115,7 @@ final class Abyss {
     }
 
     /** Players within {@code width} of the segment from {@code from} along {@code direction} for {@code length}. */
-    static List<Player> alongBeam(List<Player> players, Location from, Vector direction, double length, double width) {
+    public static List<Player> alongBeam(List<Player> players, Location from, Vector direction, double length, double width) {
         List<Player> hit = new ArrayList<>();
         Vector origin = from.toVector();
         Vector unit = direction.clone().normalize();
@@ -112,7 +136,7 @@ final class Abyss {
      * Magic damage from a fight creature: ignores armor like the vanilla guardian laser (Protection still counts).
      * Used for beams, whose raw numbers would otherwise vanish into max-enchanted netherite.
      */
-    static void magic(Player player, double amount, LivingEntity source) {
+    public static void magic(Player player, double amount, LivingEntity source) {
         player.damage(amount, org.bukkit.damage.DamageSource.builder(org.bukkit.damage.DamageType.INDIRECT_MAGIC)
             .withCausingEntity(source).withDirectEntity(source).build());
     }
@@ -122,7 +146,7 @@ final class Abyss {
      * the step before it fires (0.25s), so standing still or walking gets you hit and a sideways sprint dodges it.
      * Draw it every step with {@link #step}; it fires once.
      */
-    static final class Beam {
+    public static final class Beam {
         /** Ticks before firing the beam turns white (warning). */
         private static final int WARN_BEFORE = 15;
         /** Ticks before firing the aim stops following (one boss step). */
@@ -137,7 +161,7 @@ final class Abyss {
         private Vector aim;
         private boolean done;
 
-        Beam(LivingEntity source, Player target, int now, int chargeTicks, double damage, Color color) {
+        public Beam(LivingEntity source, Player target, int now, int chargeTicks, double damage, Color color) {
             this.source = source;
             this.target = target;
             this.fireAt = now + chargeTicks;
@@ -146,12 +170,12 @@ final class Abyss {
             source.getWorld().playSound(source.getLocation(), Sound.ENTITY_GUARDIAN_ATTACK, 1.5F, 0.6F);
         }
 
-        boolean done() {
+        public boolean done() {
             return done;
         }
 
         /** Draws the charging beam; fires when due. Returns the players hit on the firing step, else an empty list. */
-        List<Player> step(BossFight fight, int now) {
+        public List<Player> step(BossFight fight, int now) {
             if (done) {
                 return List.of();
             }

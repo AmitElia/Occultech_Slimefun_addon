@@ -380,6 +380,7 @@ public final class BossFight {
 
     double onBossDamagedByPlayer(LivingEntity boss, Player player, double amount) {
         double modified = behavior.modifyIncomingDamage(boss, amount);
+        behavior.onDamagedBy(boss, player, modified);
         if (player.getGameMode() == GameMode.CREATIVE) {
             tainted.add(player.getUniqueId());
         }
@@ -445,6 +446,21 @@ public final class BossFight {
             service.plugin().getLogger().severe("Boss " + spec.id() + " behavior failed: " + e);
             end(Result.ERROR);
         }
+    }
+
+    /** The player who has dealt the most damage so far (online and in the arena), or null. */
+    @Nullable
+    public Player topDamager() {
+        Player best = null;
+        double most = 0;
+        for (Player player : players()) {
+            double dealt = damage.getOrDefault(player.getUniqueId(), 0.0);
+            if (dealt > most) {
+                best = player;
+                most = dealt;
+            }
+        }
+        return best;
     }
 
     /** Every chunk the arena (plus a small margin) overlaps. */

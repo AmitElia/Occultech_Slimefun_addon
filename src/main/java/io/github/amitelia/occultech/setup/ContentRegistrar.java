@@ -61,9 +61,12 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
  */
 public final class ContentRegistrar {
 
-    public static final int IMPLEMENTED_TIER = 2;
+    public static final int IMPLEMENTED_TIER = 3;
     private static final double ARENA_RADIUS_BASE = 18;
     private static final int MACHINE_SECONDS = 8;
+    /** Assembling tier-3 gear takes longer than forging a material. */
+    private static final int ASSEMBLER_SECONDS = 30;
+    private static final java.util.Set<String> MACHINE_IDS = java.util.Set.of("OCCULT_FORGE", "SOUL_CONDENSER", "HOLLOW_ASSEMBLER");
 
     private static final int[] BOWL_DISPLAY_SLOTS = { 1, 3, 5, 7, 0, 2, 6, 8 };
     private static final Pattern MOB_NAME = Pattern.compile("\\b([A-Z][A-Z_]+)\\b");
@@ -124,7 +127,8 @@ public final class ContentRegistrar {
         });
         ItemStack output = stacks.get(def.id()).item().clone();
         output.setAmount(Math.max(1, recipe.out()));
-        machine.registerRecipe(MACHINE_SECONDS, inputs.toArray(ItemStack[]::new), new ItemStack[] { output });
+        int seconds = recipe.type().equals("HOLLOW_ASSEMBLER") ? ASSEMBLER_SECONDS : MACHINE_SECONDS;
+        machine.registerRecipe(seconds, inputs.toArray(ItemStack[]::new), new ItemStack[] { output });
     }
 
     @Nonnull
@@ -291,9 +295,11 @@ public final class ContentRegistrar {
 
     private void registerItem(ItemDef def, ItemGroup group, SlimefunItemStack stack, RecipeType type, ItemStack[] grid, ItemStack output) {
         SlimefunItem item = switch (def.id()) {
-            case "INITIATE_ALTAR", "BOUND_ALTAR", "ABYSSAL_ALTAR" -> new RitualAltar(group, stack, type, grid, output, rituals);
+            case "INITIATE_ALTAR", "BOUND_ALTAR", "ABYSSAL_ALTAR", "HOLLOW_ALTAR" -> new RitualAltar(group, stack, type, grid, output, rituals);
             case "OCCULT_FORGE" -> machine(def, new OccultMachine(group, stack, type, grid, output, "OCCULTECH_OCCULT_FORGE", Material.BLAZE_POWDER, 1024, 16, 1));
             case "SOUL_CONDENSER" -> machine(def, new OccultMachine(group, stack, type, grid, output, "OCCULTECH_SOUL_CONDENSER", Material.SOUL_SAND, 512, 8, 1));
+            case "HOLLOW_ASSEMBLER" -> machine(def, new OccultMachine(group, stack, type, grid, output, "OCCULTECH_HOLLOW_ASSEMBLER", Material.ECHO_SHARD,
+                8192, 128, 1, OccultMachine.LARGE_INPUTS));
             case "GUARDIAN_EYE" -> new GuardianEye(group, stack, type, grid, output, rituals, plugin.servitors());
             case "WIND_CHIME" -> new WindChime(group, stack, type, grid, output, rituals);
             case "PEARL_BED" -> new ProducerBlock(group, stack, type, grid, output, rituals, List.of(Material.PRISMARINE_SHARD, Material.PRISMARINE_SHARD, Material.PRISMARINE_CRYSTALS),
@@ -301,9 +307,20 @@ public final class ContentRegistrar {
             case "EMBER_BRAZIER" -> new ProducerBlock(group, stack, type, grid, output, rituals, List.of(Material.BLAZE_POWDER), "blaze powder",
                 plugin.getConfig().getInt("ember-brazier.seconds-per-item", 60), Material.MAGMA_BLOCK);
             case "WISP_JAR", "ABYSSAL_LANTERN", "RUNE_OBELISK", "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "BOTTLED_GALE", "MOONLIT_LILY", "WITCHCAP",
-                "EVERLIVING_CORAL", "PRISMATIC_NETHERRACK" ->
+                "EVERLIVING_CORAL", "PRISMATIC_NETHERRACK", "WATCHFUL_EYEBLOSSOM" ->
                 new DecorationBlock(group, stack, type, grid, output, plugin.decorations(), DecorationService.Kind.valueOf(def.id()));
             case "TROPHY_BOARD" -> new io.github.amitelia.occultech.items.TrophyBoard(group, stack, type, grid, output, plugin, plugin.decorations());
+            case "RESIN_TILE" -> new StepTile(group, stack, type, grid, output, List.of(Material.RESIN_BRICKS));
+            case "HOLLOW_HALO" -> new io.github.amitelia.occultech.items.Talisman(group, stack, type, grid, output,
+                io.github.amitelia.occultech.items.TalismanService.Kind.HALO);
+            case "WISHBONE_TALISMAN" -> new io.github.amitelia.occultech.items.Talisman(group, stack, type, grid, output,
+                io.github.amitelia.occultech.items.TalismanService.Kind.WISHBONE);
+            case "AURA_TALISMAN" -> new io.github.amitelia.occultech.items.Talisman(group, stack, type, grid, output,
+                io.github.amitelia.occultech.items.TalismanService.Kind.AURA);
+            case "GALLUS_EGG" -> new io.github.amitelia.occultech.items.GallusEgg(group, stack, type, grid, output, plugin);
+            case "LICHS_PHYLACTERY" -> new BoneScepter(group, stack, type, grid, output, plugin.minions(), MinionService.Kind.HOLLOW_KNIGHT, 4,
+                30_000, 6 * 60 * 60, 4);
+            case "SERVITOR_NEXUS" -> new io.github.amitelia.occultech.items.ServitorNexus(group, stack, type, grid, output, rituals, plugin.servitors());
             case "CHIMING_TILE" -> new StepTile(group, stack, type, grid, output, List.of(Material.AMETHYST_BLOCK));
             case "TIDAL_TILE" -> new StepTile(group, stack, type, grid, output, List.copyOf(CosmeticListener.CORAL_BLOCKS.stream()
                 .sorted().toList()));
@@ -315,7 +332,8 @@ public final class ContentRegistrar {
             case "OCCULT_CODEX" -> new OccultCodex(group, stack, type, grid, output, rituals, plugin);
             case "BROOD_EGG" -> new BroodEgg(group, stack, type, grid, output, rituals, plugin.getConfig().getInt("brood-egg.seconds-per-string", 20));
             // placeable circle pieces are plain Slimefun blocks
-            case "CHALK_GLYPH", "TALLOW_CANDLE", "BOUND_GLYPH" -> new SlimefunItem(group, stack, type, grid, output);
+            // circle pieces must be placeable (the default item class is not)
+            case "CHALK_GLYPH", "TALLOW_CANDLE", "BOUND_GLYPH", "ABYSSAL_GLYPH", "HOLLOW_GLYPH" -> new SlimefunItem(group, stack, type, grid, output);
             case "SERVITOR_SHRINE" -> new ServitorShrine(group, stack, type, grid, output, rituals, plugin.servitors());
             case "FRENZY_IDOL" -> new FrenzyIdol(group, stack, type, grid, output, rituals, plugin.servitors());
             case "SCRYING_MIRROR" -> new ScryingMirror(group, stack, type, grid, output, rituals);
@@ -325,7 +343,7 @@ public final class ContentRegistrar {
             default -> new OccultItem(group, stack, type, grid, output);
         };
         item.register(plugin);
-        if ((def.id().equals("OCCULT_FORGE") || def.id().equals("SOUL_CONDENSER")) && !machineTypes.containsKey(def.id())) {
+        if (MACHINE_IDS.contains(def.id()) && !machineTypes.containsKey(def.id())) {
             machineTypes.put(def.id(), new RecipeType(Occultech.key(def.id().toLowerCase()), stack));
         }
     }

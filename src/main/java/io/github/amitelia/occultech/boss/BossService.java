@@ -276,6 +276,12 @@ public final class BossService implements Listener {
             e.setCancelled(true);
             return;
         }
+        String owner = victim.getPersistentDataContainer().get(Keys.OWNED_BY, PersistentDataType.STRING);
+        if (owner != null && !owner.equals(player.getUniqueId().toString())) {
+            // someone else's reflection: everyone breaks their own
+            e.setCancelled(true);
+            return;
+        }
 
         BossFight fight = fightOf(victim);
         if (fight != null && fight.isBoss(victim) && victim instanceof LivingEntity boss) {
