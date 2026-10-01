@@ -10,8 +10,8 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **C** | Tier-0 item icons (15 + bow states; the 8 placed blocks move to G) | **Done** - codex redone after review |
 | **D** | Tier-1 item icons (23; the 6 placed blocks move to G) | **Done** - fixed after review |
 | **E** | Tier-2 item icons (26: materials, drops, weapons, armor, decor objects) | **Done** - fixed after review |
-| F | Tier-3 item icons | - |
-| G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg; tier-1 blocks: Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil; tier-2 blocks: Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack) **and held 3D models** (first: the Occult Codex as a 3D book - see *Notes for G*) | - |
+| **F** | Tier-3 item icons (26 + bow states; Hollow Sigil from A) | **Done** - awaiting review |
+| G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg; tier-1 blocks: Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil; tier-2 blocks: Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack; tier-3 blocks: Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) **and held 3D models** (first: the Occult Codex as a 3D book - see *Notes for G*) | - |
 | H | Menu backgrounds | - |
 | I | Effect sprites (motes, embers, shards, shockwave rings, beams) | - |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
@@ -250,6 +250,9 @@ Iron's Spells 'n Spellbooks for the codex. Focus on item icons for now; keep not
   the 2D icon, hands/head/fixed show the 3D book. Same pattern for any other held item that needs a real shape.
 - **Scepters (Wyrmbreath, Guardian's Gaze):** held 3D models following their icons - rod, collar, three claw prongs
   (one behind, two in front) round the orb/eye; the orb glows (emissive) and the eye can turn.
+- **Tier-3 held models:** Dreadlance (shaft, ringed vamplate, leaf head), Soulfire Censer (orb on chains, swings),
+  Heartwood Aegis (a real shield model, like the vanilla shield's), Stormstring Bow (vanilla bow model + textures).
+- **Hollow armor worn texture:** `equippable` layers in sculk plates with bone crown, ribcage, knee guards, toe caps.
 - **Abyssal Anchor held model:** the icon is upright (an anchor only reads upright); in the hand it should be a 3D
   anchor held by its ring, flukes as the head, with the spectral chain - same display-context switch as the codex.
 - **Abyssal armor worn texture:** the icons are done (Session E); the worn look needs an `equippable` asset layer
@@ -371,4 +374,35 @@ cross rune on an obelisk).
 
 **Lesson:** for held items, design the icon as a view of the 3D object (what's behind, what's in front) - it reads
 as more solid, and the held model in G can follow it directly.
+
+## Session F - tier-3 item icons (2026-10-01)
+**Scope:** 26 icons + the Stormstring Bow's draw states; the Hollow Sigil is Session A's (the user's v2 pick). Blocks
+(Hollow Assembler, Glyph, Altar, Servitor Nexus, Resin Tile) go to Session G. Script: `tools/art/session_f.py
+f1..f5|set`; outputs in [session-f/](session-f/). Tier-3 look: sculk black-teal and old bone, hollow cyan as the
+magic, crimson as the accent; boss drops keep their boss's colours (Heartwood amber, storm, corrupted crimson, Gallus
+gold). New ramp: amber. Held items drawn as views of their 3D models.
+
+| Batch | Icons (all animated) |
+|---|---|
+| F1 materials | Hollow Essence (Spirit Essence's dark sibling: void liquid, a black shade with cyan eyes escaping), Hollow Ingot (the ingot family's black bar with pulsing cyan veins), Hollow Crystal (a jagged dark shard with trapped light, echoes), Hollow Effigy (a sculk-dark jack-o'-lantern with a glowing face and Gallus's crimson comb) |
+| F2 drops | Warlord's Brand (a branding iron, red-hot disc with the Hollow star), Heartwood Resin (amber with an eye that opens), Lancer's Pennant (a waving swallow-tail flag), Outrider's Fletching (three storm feathers, lightning between them), Corrupted Circuit (a chip glitching crimson), Mirror Visage (a mirror mask), Hollow Heart (a beating heartwood heart), Gallus Wishbone |
+| F3 weapons | Dreadlance (lance: ringed vamplate, big blood-edged head, a drip), Soulfire Censer (pierced orb on chains, soul light), Lich's Phylactery (skull-stoppered bulb, a soul turning inside), Stormstring Bow (4 states: sculk and bone, lightning string) |
+| F4 armor | Hollow Crown (bone crown on a sculk helm, visor of light), Cuirass (bone ribcage, crimson heart gem), Greaves (bone knee guards), Sabatons (bone toe caps) |
+| F5 charms and decor | Hollow Halo (B's gold ring, travelling twinkles), Wishbone Talisman (a wishbone necklace, gold wrap, crimson gem), Aura Talisman (a crystal pendant cycling through colours), Gallus Egg (cracking with light, rocking), Heartwood Aegis (heartwood shield, regrowth rune), Watchful Eyeblossom (petals round an eye that opens) |
+
+**Wrong readings caught and fixed:** sculk shading too light everywhere at first (a teal blob, not "Hollow") - Hollow
+Essence too close to Spirit Essence - a teal blob with a flower on top (effigy) - a toy star wand (brand) - a trident,
+then a tulip (fletching) - a spade (heart with a root) - an arrow (lance), a potion bottle (censer), a battery
+(phylactery) - eyes on a box, a solid crown block, a mouth (helm) - a drawing compass / legs (talisman), a potion (aura
+crystal), an onion (eyeblossom).
+
+**Honest remaining weaknesses**
+- The Soulfire Censer is still the busiest weapon at 1x (orb + chains + ring).
+- Heartwood Aegis's grain is dotty rather than flowing.
+- The Hollow Crown's helm is boxy; the crown carries it.
+
+**Lessons carried forward**
+- Check the base material's value first: "black" ramps drawn with mid indices come out mid-tone (sculk read teal).
+- Outlines fill 1 px gaps (crown spikes): draw fine repeated details after outlining.
+- The symmetry pass removes unevenly rounded lines - draw thin lines (cords) after it, mirrored by hand.
 

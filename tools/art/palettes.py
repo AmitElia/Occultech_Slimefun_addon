@@ -38,6 +38,7 @@ RAMPS = {
     "emerald":  hexes("#05231a", "#0b4a33", "#14794d", "#22b06a", "#62e39a", "#cfffe0"),
     "dusk":     hexes("#160a24", "#33174a", "#5e2a6e", "#93407a", "#d0687a", "#f6a88a"),
     "wind":     hexes("#1e3a4a", "#3f6f84", "#78a9b8", "#b4dbe2", "#e2f6f6", "#ffffff"),
+    "amber":    hexes("#2a1206", "#5c2a0a", "#93500f", "#c98420", "#eeb84a", "#fde9a8"),
     "leather":  hexes("#1a0c0e", "#3a1a1c", "#5e2c28", "#87473a", "#ad6c55", "#d39a7c"),
     # accents
     "ember":    hexes("#3a0f05", "#7a2508", "#c4500e", "#f08a1e", "#ffc65a", "#fff3c0"),
