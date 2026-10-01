@@ -126,3 +126,14 @@ def gif(rows, path, ms=120, bg=(24, 22, 30, 255), scale=8):
         frames.append(strip.convert("P", palette=Image.ADAPTIVE))
     frames[0].save(path, save_all=True, append_images=frames[1:], duration=ms, loop=0)
     return path
+
+
+def inventory(icons, path, cols=8, scale=3):
+    """A tier's icons together in inventory slots, as a player sees them - for judging the set's consistency."""
+    rows = (len(icons) + cols - 1) // cols
+    s = 18 * scale
+    out = Image.new("RGB", (cols * s + 16, rows * s + 16), INVENTORY)
+    for i, (name, icon) in enumerate(icons):
+        out.paste(slot(icon, scale), (8 + (i % cols) * s, 8 + (i // cols) * s))
+    out.save(path)
+    return path

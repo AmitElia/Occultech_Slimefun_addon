@@ -6,15 +6,15 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | Session | Content | Status |
 |---|---|---|
 | **A** | Style guide, toolkit, 3 test icons (Ritual Chalk, Spirit Essence, Hollow Sigil) | **Done** - reviewed |
-| **B** | Sigils, runes, gems/crown/halo, animated soul flame and sparkle, step marks, paw | **Round 3 done** - awaiting review |
-| C | Tier-0 item icons | - |
+| **B** | Sigils, runes, gems/crown/halo, animated soul flame and sparkle, step marks, paw | **Done** - approved, cleaned up |
+| **C** | Tier-0 item icons (15 + bow states; the 8 placed blocks move to G) | **Done** - awaiting review |
 | D | Tier-1 item icons | - |
 | E | Tier-2 item icons | - |
 | F | Tier-3 item icons | - |
-| G | Block faces and floor decals | - |
+| G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg) | - |
 | H | Menu backgrounds | - |
-| I | Effect sprites (motes, embers, shards, shockwave rings, beams, footprints) | - |
-| - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | after B |
+| I | Effect sprites (motes, embers, shards, shockwave rings, beams) | - |
+| - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
 
 ## Session A - style and toolkit (2026-10-01)
 **Delivered:** `tools/art/` (palettes, pixelkit, review), [STYLE.md](STYLE.md), and three icons in
@@ -170,4 +170,60 @@ runes|prints`, `session_b_steps.py`; a version argument such as `v2` writes `rev
 | `{ember,frost,ink,blossom}_step_{0..3}.png`, `rune_step_{ascend,bind}_{0..3}.png` | step marks, 4 life frames |
 | `footprint_paw.png`, `rune_*.png` (24) | flat glyphs (kept from round 1) |
 | `review-*.png`, `preview-*.gif` | review sheets and animated previews |
+
+## Session C - tier-0 item icons (2026-10-01)
+**Scope:** the 15 tier-0 items that live in inventories (Ritual Chalk was done in Session A) plus the Quillshot Bow's
+four draw textures. The 8 tier-0 *placed blocks* (Arcane Altar, Arcane Pedestal, Offering Bowl, Chalk Glyph, Initiate's
+Altar, Trophy Board, Chiming Tile, Brood Egg) need block faces and move to Session G. Worked in three batches.
+Script: `tools/art/session_c.py c1|c2|c3|set`; outputs in [session-c/](session-c/).
+
+**Tier-0 look:** humble materials (chalk, bone, wax, iron, wood, ash, leather) with an ember accent; magic glows and
+moves. New ramps: gel, leather, brew. New review view: `review.inventory` (a tier's icons together in slots).
+
+| Item | Design | Frames |
+|---|---|---|
+| Grave Salt | a wooden scoop heaped with coarse salt, grains falling | 1 |
+| Soul Ash | an ash mound with embers breathing in it, a curl of smoke | 4 |
+| Occult Ink | a squat inkwell, near-black ink with a violet sheen, a drip | 1 |
+| Warded Silver | a long silver bar in 3/4 view, a ward groove inlaid in ember | 4 |
+| Binding Thread | a wooden spool of red binding thread, the end trailing to a knot | 1 |
+| Tallow Candle | a stubby cream candle, wax runs, a swaying flame | 4 |
+| Brood Silk | a spindle cocoon hanging from its strand, criss-cross wraps, web | 1 |
+| Fletcher's Quill | a barred hawk quill, ember-dyed tip, iron nib | 1 |
+| Coven Brew Base | a three-legged iron cauldron of sickly glowing brew, bubbles and vapour | 4 |
+| Sovereign Gel | a glossy drop of royal slime, bubbles and a gold fleck inside, wobbles | 4 |
+| Sovereign's Catalyst | a cube of gel with a gold crown suspended inside, a glint and a twinkle | 4 |
+| Initiate's Sigil | a diamond plaque of carved bone, the sigil cut in and glowing ember | 4 |
+| Occult Codex | a leather tome, banded spine, iron corners, glowing circle on the cover, ribbon | 4 |
+| Warding Charm | a silver amulet on a beaded cord loop, a warding eye that glows and blinks | 4 |
+| Quillshot Bow | dark wood, silver recurve tips, ember in the grip; vanilla bow layout; full draw shows three arrows | 4 states |
+
+**Iterations and self-critique** (the recurring failure: *what does it read as?*)
+- **C1 v1:** Soul Ash too low with invisible smoke; Occult Ink read as plum jam; Warded Silver as bread/a cap; Binding
+  Thread as a **mug** (thin flanges + looped end); Tallow Candle too orange. **v2:** taller mound + pale smoke; near-black
+  ink, glass only at its edges; 3/4 ingot; wide flanges, red thread trailing to a knot; creamy tallow. New problems:
+  symmetric embers made a **smiling face** in the ash; the short ingot read as a stone. **v3/v4:** embers in uneven
+  clusters; a long bar; the rune inlay (a checkerboard at first) became a glowing groove with a crossbar.
+- **C2 v1:** silk read as an egg/garlic; the cauldron of yellow brew read as a **pot of gold**; the gel as a cabbage;
+  the crown inside the cube was two orange pixels that read as **eyes**; the sigil medallion as a **cookie**. **v2:**
+  spindle cocoon, witch-green brew with swirl and vapour, a 7 px crown with three points, a dark medallion with solid
+  glowing lines. Still: faint wraps, a halo of glow round the iron pot, the gel still a cabbage. **v3/v4:** darker wraps,
+  no glow on the pot, the gel became a glossy drop (white highlight, reflected-light crescent, bubbles) - whose bubbles
+  then made a face again, moved to one side.
+- **C3 v1:** the codex cover circle was a waffle; the charm's eye a fried egg on "horn" cords; the bow's three arrows a
+  streaky mess. **v2-v5:** clean ring with a hot centre; a closed cord loop, an almond eye with iris and pupil (blinks);
+  the burst became three parallel arrows (a fan doesn't fit in 16 px - side heads landed on the main one).
+- **Set check** (`review-tier0-inventory.png`): Brood Silk vanished on the grey slot -> bone-cream silk; Initiate's Sigil
+  and Warding Charm were twins at 1x (round iron, orange centre) -> the sigil became a **diamond** bone plaque.
+
+**Honest remaining weaknesses**
+- Grave Salt, Binding Thread and Brood Silk are pale; they read, but they are the quietest icons in the set.
+- The Codex fills its whole slot - the heaviest icon of the tier.
+- Animated items need the pack pipeline (an `.mcmeta` per texture); until then, frame 0 is the icon.
+
+**Lessons carried forward**
+- Ask of every icon "what does it read as?" - mug, pot of gold, cookie, cabbage were all real readings.
+- Symmetric pairs of bright dots on a round shape read as a face. Break the symmetry or avoid pairs.
+- Check the whole tier together in slots: twins and low-contrast icons only show up side by side.
+- When a shape doesn't fit 16 px (a fan of arrows), find a simpler sign for the same idea (parallel arrows).
 
