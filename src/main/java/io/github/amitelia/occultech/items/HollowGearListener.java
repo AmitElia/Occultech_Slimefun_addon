@@ -3,6 +3,7 @@ package io.github.amitelia.occultech.items;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -61,6 +62,7 @@ public final class HollowGearListener implements Listener {
     private static final double STORM_DAMAGE = 12;
     private static final double ARC_DAMAGE = 8;
     private static final Particle.DustOptions WISP = new Particle.DustOptions(Color.fromRGB(90, 220, 230), 0.6F);
+    private static final Particle.DustOptions ABYSSAL = new Particle.DustOptions(Color.fromRGB(60, 200, 190), 0.7F);
 
     private final Map<UUID, double[]> lifesteal = new HashMap<>();
     private int ticks;
@@ -72,6 +74,21 @@ public final class HollowGearListener implements Listener {
     private void tick() {
         ticks += 10;
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (ticks % 20 == 0 && WeaponListener.wearsAbyssalSet(player)) {
+                // Abyssal set: bubbles rising around you and a slow teal swirl at your feet
+                ThreadLocalRandom random = ThreadLocalRandom.current();
+                player.getWorld().spawnParticle(Particle.BUBBLE_POP, player.getLocation().add(random.nextDouble(-0.4, 0.4), random.nextDouble(0.2, 1.8),
+                    random.nextDouble(-0.4, 0.4)), 2, 0.05, 0.1, 0.05, 0.02);
+                double a = ticks * 0.05;
+                for (int i = 0; i < 3; i++) {
+                    double angle = a + Math.PI * 2 * i / 3;
+                    player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(Math.cos(angle) * 0.6, 0.1, Math.sin(angle) * 0.6), 1, 0, 0, 0, 0,
+                        ABYSSAL);
+                }
+                if (random.nextInt(4) == 0) {
+                    player.getWorld().spawnParticle(Particle.NAUTILUS, player.getLocation().add(0, 1.2, 0), 3, 0.3, 0.4, 0.3, 0.2);
+                }
+            }
             if (wearsHollowSet(player) && ticks % 20 == 0) {
                 player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1, 0), 2, 0.3, 0.5, 0.3, 0, WISP);
                 player.getWorld().spawnParticle(Particle.SOUL, player.getLocation().add(0, 0.2, 0), 1, 0.2, 0.1, 0.2, 0.005);

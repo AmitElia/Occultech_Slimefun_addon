@@ -22,6 +22,7 @@ import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
  * <li>{@code showcase clear}: remove the showcase and restore the original blocks</li>
  * <li>{@code restock <x> <y> <z> <BOSS_ID>}: refill a circle's altar and bowls for a boss (showcase buttons)</li>
  * <li>{@code inspect <x> <y> <z>}: print a Slimefun block's id and menu contents (debugging)</li>
+ * <li>{@code unlockhalos <player>}: unlock every Hollow Halo style for a player (operators always have them)</li>
  * </ul>
  */
 public final class OccultechCommand implements TabExecutor {
@@ -110,6 +111,18 @@ public final class OccultechCommand implements TabExecutor {
             }
             return true;
         }
+        if (args.length == 2 && args[0].equalsIgnoreCase("unlockhalos")) {
+            org.bukkit.entity.Player target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                sender.sendMessage("No online player " + args[1]);
+            } else {
+                target.getPersistentDataContainer().set(io.github.amitelia.occultech.items.HaloStyle.ALL_UNLOCKED,
+                    org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
+                sender.sendMessage("Unlocked every Hollow Halo style for " + target.getName() + ".");
+                target.sendMessage(org.bukkit.ChatColor.GOLD + "Every Hollow Halo style is now unlocked for you.");
+            }
+            return true;
+        }
         if (args.length == 4 && args[0].equalsIgnoreCase("inspect")) {
             Block block = blockAt(sender, args);
             if (block != null) {
@@ -153,7 +166,7 @@ public final class OccultechCommand implements TabExecutor {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            return List.of("selftest", "showcase", "restock", "inspect");
+            return List.of("selftest", "showcase", "restock", "inspect", "unlockhalos", "iteminfo", "setslot");
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("showcase")) {
             return List.of("clear");

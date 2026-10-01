@@ -44,6 +44,24 @@ cargo and Networks can pull from it but not insert.
 
 Health values are before group scaling. Balance is untested with real players; tune after playtests.
 
+## Arcane Altar (tier 0, implemented)
+Occultech's replacement for Slimefun's Ancient Altar. Every ingredient goes into the altar's 9 input slots (cargo can
+fill it); 8 Arcane Pedestals around it (sides and corners, 2 blocks out) only show floating copies of what's inside, so
+nothing has to be restocked pedestal by pedestal. Infusion takes 3 seconds: the items rise and spiral in, motes stream to
+the altar over a turning sigil, then the result appears. Recipes are shapeless with amounts (an extra item type blocks
+the recipe). It runs Occultech's altar recipes and imports every Slimefun Ancient Altar recipe at startup (runes,
+Essence of Afterlife, talismans...).
+
+## Cosmetic talismans
+- Hollow Halo styles: the Halo is always available; each boss has its own style (Silk Crown, Quill Crown, Coven Crown,
+  Slime Crown, Frenzy Crown, Moon and Stars, Mirror Halo, Soul Crown, Watcher's Halo, Tide Crown, Solar System, Storm
+  Halo, Tidal Crown, Dark Rune Crown, Thorn Crown, Lightning Crown, Corrupted Crown, Little Twin, Hollow Pentagram),
+  unlocked by defeating that boss 5 times. Operators have all; `/occultech unlockhalos <player>` grants all. A locked
+  style never renders (it falls back to the Halo). Styles are display entities following the head, plus a light particle.
+- Aura Talisman: trails (prismatic sparks, petals, soul wisps) or footprints (ember, frost, rune, ink, blossom): flat
+  colored prints that fade over 3s, with a particle burst per step.
+- Abyssal armor (4/4) has a light aura: rising bubbles and a teal swirl at the feet.
+
 ## Tier 1 · Bound (implemented)
 - Balanced for basic diamond gear; tuned for **solo first**, groups handled by health scaling.
 - 7x7 circle wrapping the tier-0 circle (8 bowls, 8 candles, 16 chalk + 16 bound glyphs). The Initiate's Altar is

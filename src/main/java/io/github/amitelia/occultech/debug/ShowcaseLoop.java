@@ -76,6 +76,7 @@ final class ShowcaseLoop {
             try {
                 switch (parts[0]) {
                     case "MACHINE" -> machine(block);
+                    case "ARCANE" -> arcane(block);
                     case "CHARGE" -> charge(block);
                     case "HARVEST" -> ripen(block);
                     case "GATHER" -> scatter(block);
@@ -115,6 +116,25 @@ final class ShowcaseLoop {
                 menu.replaceExistingItem(inputs[i], load);
             }
         }
+    }
+
+    /** Empties the result and, while idle, loads an Occultech altar recipe and starts an infusion. */
+    private void arcane(Block block) {
+        var altar = plugin.registrar().arcaneAltar();
+        BlockMenu menu = BlockStorage.getInventory(block);
+        if (altar == null || menu == null) {
+            return;
+        }
+        menu.replaceExistingItem(io.github.amitelia.occultech.items.ArcaneAltar.OUTPUT, null);
+        var recipe = altar.recipes().stream().filter(r -> r.source().equals("Occultech")).findFirst().orElse(null);
+        if (recipe == null) {
+            return;
+        }
+        int slot = 0;
+        for (var need : recipe.needs().entrySet()) {
+            menu.replaceExistingItem(io.github.amitelia.occultech.items.ArcaneAltar.INPUTS[slot++], DebugWorld.item(need.getKey(), need.getValue()));
+        }
+        altar.tryInfuse(block, menu);
     }
 
     /** Without a generator in the showcase, the machines are kept charged directly. */

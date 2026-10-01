@@ -18,6 +18,10 @@ public class Talisman extends OccultItem {
             e.cancel();
             var hand = e.getHand();
             ItemStack held = e.getPlayer().getInventory().getItem(hand);
+            if (kind == TalismanService.Kind.HALO) {
+                TalismanService.openHaloMenu(e.getPlayer(), held);
+                return;
+            }
             String style = TalismanService.cycle(held, kind);
             e.getPlayer().getInventory().setItem(hand, held);
             e.getPlayer().sendActionBar(MenuUtils.color("&d" + getItemName() + "&7: " + style));

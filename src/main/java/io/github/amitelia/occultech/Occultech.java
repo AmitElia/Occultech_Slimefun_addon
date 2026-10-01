@@ -108,6 +108,9 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         if (talismans != null) {
             talismans.shutdown();
         }
+        if (registrar != null && registrar.arcaneAltar() != null) {
+            registrar.arcaneAltar().shutdown();
+        }
         instance = null;
     }
 

@@ -506,6 +506,7 @@ final class Showcase {
             DebugWorld.placeSlimefun(world.getBlockAt(ox + dx, y - 1, startZ + 56), ItemKeys.slimefunId("RESIN_TILE"), this::record);
         }
         label(new Location(world, ox + 0.5, y + 1.6, startZ + 56.5), "&6Resin Tile &8(tier 3)\n&7Walk on it");
+        demoBlock(world.getBlockAt(ox + 12, y - 1, startZ + 57), "FLOOR_SIGIL", "&5Floor Sigil &8(tier 1)\n&7Right-click it: color, 5x5 or 3x3");
         demoBlock(world.getBlockAt(ox + 5, y, startZ + 50), "EVERLIVING_CORAL", "&bEverliving Coral &8(tier 2)\n&7Never dries. Right-click: coral type");
         Block netherrack = world.getBlockAt(ox + 10, y, startZ + 50);
         demoBlock(netherrack, "PRISMATIC_NETHERRACK", "&dPrismatic Netherrack &8(tier 2)\n&7Light it: rainbow fire. Right-click: palette");
@@ -623,6 +624,14 @@ final class Showcase {
                 loops.add("CHARGE;" + machine.getX() + ";" + machine.getY() + ";" + machine.getZ());
             }
         }
+
+        // the Arcane Altar: everything in the middle, the pedestals only show it; the loop runs an infusion every 10s
+        Block arcane = world.getBlockAt(ox + 13, y, z0 + 5);
+        demoBlock(arcane, "ARCANE_ALTAR", "&5Arcane Altar\n&7All ingredients go in the middle;\n&7the pedestals only show them.");
+        for (int[] o : new int[][] { { 2, 0 }, { 2, 2 }, { 0, 2 }, { -2, 2 }, { -2, 0 }, { -2, -2 }, { 0, -2 }, { 2, -2 } }) {
+            DebugWorld.placeSlimefun(arcane.getRelative(o[0], 0, o[1]), "OCCULTECH_ARCANE_PEDESTAL", this::record);
+        }
+        loops.add("ARCANE;" + arcane.getX() + ";" + arcane.getY() + ";" + arcane.getZ());
 
         // the Servitor Nexus with its own two shrines (far enough from the contract demos not to link them)
         int zn = z0 + 16;

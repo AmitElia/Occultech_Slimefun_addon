@@ -6,6 +6,7 @@
 #
 # Recipe types
 #   ENHANCED_CRAFTING_TABLE / MAGIC_WORKBENCH / ARMOR_FORGE : 3x3, 1 item per slot (max 9)
+#   ARCANE_ALTAR : Occultech's altar (tier 0): shapeless, 9 input slots, stacks allowed
 #   ANCIENT_ALTAR : center + 8 pedestals, 1 item each (max 9)
 #   SMELTERY : Slimefun smeltery, 1 item per slot (max 9)
 #   RITUAL : Occultech. `center` item on the altar + offerings in bowls (a bowl holds a stack).
@@ -86,19 +87,27 @@ researches:
   DEEP_SERVITUDE:    {id: 11, name: "Deep Servitude",   cost: 50, items: [ABYSSAL_TETHER]}
   DECORATIONS:       {id: 12, name: "Occult Decor",     cost: 15, items: [WISP_JAR, ABYSSAL_LANTERN, RUNE_OBELISK, OCCULT_ORRERY, SOULFIRE_BRAZIER, EVERLIVING_CORAL, TIDAL_TILE, PRISMATIC_NETHERRACK]}
   HUMBLE_DECOR:      {id: 13, name: "Humble Decor",     cost: 6,  items: [CHIMING_TILE, TROPHY_BOARD]}
-  TWILIGHT_DECOR:    {id: 14, name: "Twilight Decor",   cost: 10, items: [MOONLIT_LILY, WITCHCAP]}
+  TWILIGHT_DECOR:    {id: 14, name: "Twilight Decor",   cost: 10, items: [MOONLIT_LILY, WITCHCAP, FLOOR_SIGIL]}
   HOLLOW_ARTS:       {id: 15, name: "Hollow Arts",      cost: 60, items: [HOLLOW_ESSENCE, HOLLOW_INGOT, HOLLOW_CRYSTAL, HOLLOW_ASSEMBLER, HOLLOW_SIGIL, HOLLOW_GLYPH, HOLLOW_ALTAR, HOLLOW_EFFIGY]}
   HOLLOW_WARDROBE:   {id: 16, name: "Hollow Wardrobe",  cost: 70, items: [HOLLOW_HELMET, HOLLOW_CHESTPLATE, HOLLOW_LEGGINGS, HOLLOW_BOOTS]}
   HOLLOW_ARSENAL:    {id: 17, name: "Hollow Arsenal",   cost: 70, items: [DREADLANCE, STORMSTRING_BOW, SOULFIRE_CENSER, LICHS_PHYLACTERY, HEARTWOOD_AEGIS]}
   HOLLOW_SERVITUDE:  {id: 18, name: "Hollow Servitude", cost: 60, items: [SERVITOR_NEXUS]}
   FINAL_TALISMANS:   {id: 19, name: "Final Talismans",  cost: 80, items: [HOLLOW_HALO, WISHBONE_TALISMAN, AURA_TALISMAN, GALLUS_EGG]}
   HOLLOW_DECOR:      {id: 20, name: "Hollow Decor",     cost: 20, items: [WATCHFUL_EYEBLOSSOM, RESIN_TILE]}
+  ARCANE_ALTAR:      {id: 21, name: "Arcane Altar",     cost: 5,  items: [ARCANE_ALTAR, ARCANE_PEDESTAL]}
   SERVITUDE:         {id: 6, name: "Servitude",         cost: 35, items: [SERVITOR_SHRINE, HARVEST_CONTRACT, GATHER_CONTRACT, WARD_CONTRACT, BREWER_CONTRACT, SHEPHERD_CONTRACT, BEEKEEPER_CONTRACT, ACOLYTE_CONTRACT]}
 
 items:
   # =====================================================================
   # TIER 0 - INITIATE (iron gear)
   # =====================================================================
+  # the Arcane Altar replaces Slimefun's Ancient Altar for Occultech (and crafts the Ancient Altar's recipes too)
+  ARCANE_ALTAR:
+    {tier: 0, material: ENCHANTING_TABLE, cat: machine, name: Arcane Altar, purpose: "All ingredients go into the altar; 8 Arcane Pedestals around it only show them. A 3-second infusion. Also crafts every Slimefun Ancient Altar recipe",
+     recipe: {type: ENHANCED_CRAFTING_TABLE, out: 1, in: {mc:CHISELED_STONE_BRICKS: 4, mc:AMETHYST_SHARD: 2, mc:BOOK: 1, sf:MAGIC_LUMP_2: 2}}}
+  ARCANE_PEDESTAL:
+    {tier: 0, material: POLISHED_DEEPSLATE_WALL, cat: infrastructure, name: Arcane Pedestal, purpose: "8 of them stand around an Arcane Altar (sides and corners, 2 blocks out) and show its ingredients",
+     recipe: {type: ENHANCED_CRAFTING_TABLE, out: 2, in: {mc:POLISHED_DEEPSLATE: 3, mc:AMETHYST_SHARD: 1, sf:MAGIC_LUMP_1: 1}}}
   RITUAL_CHALK:
     {tier: 0, material: BONE_MEAL, cat: material, name: Ritual Chalk, purpose: "Draws Chalk Glyphs; the base of every circle",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 4, in: {mc:BONE_MEAL: 4, mc:CLAY_BALL: 4, sf:MAGIC_LUMP_1: 1}}}
@@ -128,7 +137,7 @@ items:
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 1, in: {WARDED_SILVER: 3, mc:POLISHED_BLACKSTONE_SLAB: 2, SOUL_ASH: 1}}}
   INITIATE_ALTAR:
     {tier: 0, material: LODESTONE, cat: infrastructure, name: Initiate's Altar, purpose: "Center of the 5x5 circle; checks the pattern and runs rituals",
-     recipe: {type: ANCIENT_ALTAR, out: 1, in: {INITIATES_SIGIL: 2, SOUL_ASH: 2, WARDED_SILVER: 2, sf:ESSENCE_OF_AFTERLIFE: 1, sf:MAGIC_LUMP_3: 2}}}
+     recipe: {type: ARCANE_ALTAR, out: 1, in: {INITIATES_SIGIL: 2, SOUL_ASH: 2, WARDED_SILVER: 2, sf:ESSENCE_OF_AFTERLIFE: 1, sf:MAGIC_LUMP_3: 2}}}
   OCCULT_CODEX:
     {tier: 0, material: BOOK, cat: utility, name: Occult Codex, purpose: "Shows circle patterns; right-click an altar to highlight missing glyphs with particles",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 1, in: {mc:BOOK: 1, OCCULT_INK: 2, RITUAL_CHALK: 1}}}
@@ -181,7 +190,7 @@ items:
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {sf:SYNTHETIC_SAPPHIRE: 1, SPIRIT_ESSENCE: 2, mc:AMETHYST_SHARD: 4, sf:MAGIC_LUMP_3: 2}}}
   BOUND_SIGIL:
     {tier: 1, material: SHULKER_SHELL, cat: component, name: Bound Sigil, purpose: "Tier-1 core component",
-     recipe: {type: ANCIENT_ALTAR, out: 1, in: {INITIATES_SIGIL: 1, BOUND_STEEL: 2, RESONANT_CRYSTAL: 2, sf:ANCIENT_RUNE_ENDER: 1, sf:ANCIENT_RUNE_LIGHTNING: 1, SPIRIT_ESSENCE: 2}}}
+     recipe: {type: ARCANE_ALTAR, out: 1, in: {INITIATES_SIGIL: 1, BOUND_STEEL: 2, RESONANT_CRYSTAL: 2, sf:ANCIENT_RUNE_ENDER: 1, sf:ANCIENT_RUNE_LIGHTNING: 1, SPIRIT_ESSENCE: 2}}}
   BOUND_ALTAR:
     {tier: 1, material: AMETHYST_BLOCK, cat: infrastructure, name: Bound Altar, purpose: "Center of the 7x7 circle. Made by a ritual on the Initiate's Altar itself (leave it empty): the altar upgrades in place",
      recipe: {type: RITUAL, circle: 0, out: 1, center: INITIATE_ALTAR, in_place: true, in: {BOUND_SIGIL: 3, SOVEREIGN_GEL: 4, BOUND_STEEL: 8, sf:REINFORCED_ALLOY_INGOT: 8}}}
@@ -239,6 +248,9 @@ items:
   MOONLIT_LILY:
     {tier: 1, material: LILY_OF_THE_VALLEY, cat: decoration, name: Moonlit Lily, purpose: "Decoration: tiny stars and a little moon circle the flower, brighter at night. Right-click to change the stars' color",
      recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:LILY_OF_THE_VALLEY: 2, DUSK_MEMBRANE: 1, mc:GLOWSTONE_DUST: 4, SPIRIT_ESSENCE: 1}}}
+  FLOOR_SIGIL:
+    {tier: 1, material: CHISELED_TUFF, cat: decoration, name: Floor Sigil, purpose: "Decoration: a slowly turning sigil drawn on the floor around it - circle, five-pointed star and runes. Right-click: color, 5x5 or 3x3",
+     recipe: {type: MAGIC_WORKBENCH, out: 1, in: {RITUAL_CHALK: 4, BOUND_CHALK: 2, SPIRIT_ESSENCE: 1, mc:AMETHYST_SHARD: 2}}}
   WITCHCAP:
     {tier: 1, material: CRIMSON_FUNGUS, cat: decoration, name: Witchcap, purpose: "Decoration: a fungus that bubbles like a witch's brew, red and green. Right-click to change the brew",
      recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:CRIMSON_FUNGUS: 2, COVEN_BREW_BASE: 1, mc:GLASS_BOTTLE: 2, SPIRIT_ESSENCE: 1}}}
@@ -248,10 +260,10 @@ items:
   # =====================================================================
   OCCULT_FORGE:
     {tier: 2, material: BLAST_FURNACE, cat: machine, name: Occult Forge, purpose: "Electric: forges occult alloys",
-     recipe: {type: ANCIENT_ALTAR, out: 1, in: {BOUND_SIGIL: 1, EVOKERS_SIGIL: 1, sf:HEATING_COIL: 2, sf:ELECTRIC_MOTOR: 1, sf:REINFORCED_PLATE: 2, BOUND_STEEL: 2}}}
+     recipe: {type: ARCANE_ALTAR, out: 1, in: {BOUND_SIGIL: 1, EVOKERS_SIGIL: 1, sf:HEATING_COIL: 2, sf:ELECTRIC_MOTOR: 1, sf:REINFORCED_PLATE: 2, BOUND_STEEL: 2}}}
   SOUL_CONDENSER:
     {tier: 2, material: RESPAWN_ANCHOR, cat: machine, name: Soul Condenser, purpose: "Electric: condenses Spirit and Hollow Essence",
-     recipe: {type: ANCIENT_ALTAR, out: 1, in: {BOUND_SIGIL: 1, EVOKERS_SIGIL: 1, sf:ELECTRO_MAGNET: 2, RESONANT_CRYSTAL: 2, sf:MEDIUM_CAPACITOR: 1, BOUND_STEEL: 2}}}
+     recipe: {type: ARCANE_ALTAR, out: 1, in: {BOUND_SIGIL: 1, EVOKERS_SIGIL: 1, sf:ELECTRO_MAGNET: 2, RESONANT_CRYSTAL: 2, sf:MEDIUM_CAPACITOR: 1, BOUND_STEEL: 2}}}
   ABYSSAL_ALLOY:
     {tier: 2, material: PRISMARINE_CRYSTALS, cat: material, name: Abyssal Alloy, purpose: "Tier-2 structural metal",
      recipe: {type: OCCULT_FORGE, out: 1, in: {sf:REINFORCED_ALLOY_INGOT: 4, BOUND_STEEL: 2, mc:PRISMARINE_CRYSTALS: 8, sf:BLISTERING_INGOT_3: 1}}}
@@ -260,7 +272,7 @@ items:
      recipe: {type: OCCULT_FORGE, out: 4, in: {sf:MAGICAL_GLASS: 4, mc:PRISMARINE_SHARD: 16, SPIRIT_ESSENCE: 2}}}
   ABYSSAL_SIGIL:
     {tier: 2, material: NAUTILUS_SHELL, cat: component, name: Abyssal Sigil, purpose: "Tier-2 core component",
-     recipe: {type: ANCIENT_ALTAR, out: 1, in: {BOUND_SIGIL: 1, ABYSSAL_ALLOY: 2, TIDE_GLASS: 2, sf:POWER_CRYSTAL: 2, sf:ANCIENT_RUNE_WATER: 2}}}
+     recipe: {type: ARCANE_ALTAR, out: 1, in: {BOUND_SIGIL: 1, ABYSSAL_ALLOY: 2, TIDE_GLASS: 2, sf:POWER_CRYSTAL: 2, sf:ANCIENT_RUNE_WATER: 2}}}
   ABYSSAL_GLYPH:
     {tier: 2, material: CYAN_CARPET, cat: infrastructure, name: Abyssal Glyph, purpose: "Placeable tier-2 circle mark",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 8, in: {BOUND_CHALK: 4, TIDE_GLASS: 1, mc:PRISMARINE_SHARD: 4}}}
@@ -365,7 +377,7 @@ items:
      recipe: {type: RITUAL, circle: 2, out: 1, center: OCCULT_FORGE, in: {HOLLOW_INGOT: 4, HOLLOW_CRYSTAL: 2, CORRUPTED_CIRCUIT: 4, ELDER_SCALE: 2, sf:REINFORCED_PLATE: 4, sf:ENERGY_REGULATOR: 2, ABYSSAL_SIGIL: 2}}}
   HOLLOW_SIGIL:
     {tier: 3, material: OMINOUS_TRIAL_KEY, cat: component, name: Hollow Sigil, purpose: "Tier-3 core component",
-     recipe: {type: ANCIENT_ALTAR, out: 1, in: {ABYSSAL_SIGIL: 1, HOLLOW_INGOT: 2, HOLLOW_CRYSTAL: 2, sf:ANCIENT_RUNE_SOULBOUND: 1, sf:ANCIENT_RUNE_ENCHANTMENT: 1, sf:REINFORCED_PLATE: 2}}}
+     recipe: {type: ARCANE_ALTAR, out: 1, in: {ABYSSAL_SIGIL: 1, HOLLOW_INGOT: 2, HOLLOW_CRYSTAL: 2, sf:ANCIENT_RUNE_SOULBOUND: 1, sf:ANCIENT_RUNE_ENCHANTMENT: 1, sf:REINFORCED_PLATE: 2}}}
   HOLLOW_GLYPH:
     {tier: 3, material: SCULK, cat: infrastructure, name: Hollow Glyph, purpose: "Placeable tier-3 circle mark",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 8, in: {BOUND_CHALK: 4, HOLLOW_ESSENCE: 1, mc:SOUL_SOIL: 4}}}

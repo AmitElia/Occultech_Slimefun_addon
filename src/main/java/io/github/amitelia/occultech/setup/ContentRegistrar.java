@@ -66,7 +66,8 @@ public final class ContentRegistrar {
     private static final int MACHINE_SECONDS = 8;
     /** Assembling tier-3 gear takes longer than forging a material. */
     private static final int ASSEMBLER_SECONDS = 30;
-    private static final java.util.Set<String> MACHINE_IDS = java.util.Set.of("OCCULT_FORGE", "SOUL_CONDENSER", "HOLLOW_ASSEMBLER");
+    private static final java.util.Set<String> MACHINE_IDS = java.util.Set.of("OCCULT_FORGE", "SOUL_CONDENSER", "HOLLOW_ASSEMBLER", "ARCANE_ALTAR");
+    private io.github.amitelia.occultech.items.ArcaneAltar arcaneAltar;
 
     private static final int[] BOWL_DISPLAY_SLOTS = { 1, 3, 5, 7, 0, 2, 6, 8 };
     private static final Pattern MOB_NAME = Pattern.compile("\\b([A-Z][A-Z_]+)\\b");
@@ -98,6 +99,9 @@ public final class ContentRegistrar {
             }
         }
         registerAltRecipes();
+        if (arcaneAltar != null) {
+            arcaneAltar.importLater();
+        }
         researchCount = OccultechResearches.register(catalog, problems);
         registerSummons();
     }
@@ -129,6 +133,12 @@ public final class ContentRegistrar {
         output.setAmount(Math.max(1, recipe.out()));
         int seconds = recipe.type().equals("HOLLOW_ASSEMBLER") ? ASSEMBLER_SECONDS : MACHINE_SECONDS;
         machine.registerRecipe(seconds, inputs.toArray(ItemStack[]::new), new ItemStack[] { output });
+    }
+
+    /** The Arcane Altar item (its recipes live on it), or null if not registered. */
+    @javax.annotation.Nullable
+    public io.github.amitelia.occultech.items.ArcaneAltar arcaneAltar() {
+        return arcaneAltar;
     }
 
     @Nonnull
@@ -253,6 +263,11 @@ public final class ContentRegistrar {
         if (machineTypes.containsKey(recipe.type())) {
             type = machineTypes.get(recipe.type());
             grid = machineGrid(def, recipe);
+            if (recipe.type().equals("ARCANE_ALTAR") && arcaneAltar != null) {
+                ItemStack result = stack.item().clone();
+                result.setAmount(Math.max(1, recipe.out()));
+                arcaneAltar.addRecipe(grid, result, "Occultech");
+            }
             OccultMachine machine = machines.get(recipe.type());
             if (machine != null) {
                 registerMachineRecipe(def, recipe, machine);
@@ -296,6 +311,8 @@ public final class ContentRegistrar {
     private void registerItem(ItemDef def, ItemGroup group, SlimefunItemStack stack, RecipeType type, ItemStack[] grid, ItemStack output) {
         SlimefunItem item = switch (def.id()) {
             case "INITIATE_ALTAR", "BOUND_ALTAR", "ABYSSAL_ALTAR", "HOLLOW_ALTAR" -> new RitualAltar(group, stack, type, grid, output, rituals);
+            case "ARCANE_ALTAR" -> arcaneAltar = new io.github.amitelia.occultech.items.ArcaneAltar(group, stack, type, grid, output, plugin, rituals);
+            case "ARCANE_PEDESTAL" -> new SlimefunItem(group, stack, type, grid, output);
             case "OCCULT_FORGE" -> machine(def, new OccultMachine(group, stack, type, grid, output, "OCCULTECH_OCCULT_FORGE", Material.BLAZE_POWDER, 1024, 16, 1));
             case "SOUL_CONDENSER" -> machine(def, new OccultMachine(group, stack, type, grid, output, "OCCULTECH_SOUL_CONDENSER", Material.SOUL_SAND, 512, 8, 1));
             case "HOLLOW_ASSEMBLER" -> machine(def, new OccultMachine(group, stack, type, grid, output, "OCCULTECH_HOLLOW_ASSEMBLER", Material.ECHO_SHARD,
@@ -307,7 +324,7 @@ public final class ContentRegistrar {
             case "EMBER_BRAZIER" -> new ProducerBlock(group, stack, type, grid, output, rituals, List.of(Material.BLAZE_POWDER), "blaze powder",
                 plugin.getConfig().getInt("ember-brazier.seconds-per-item", 60), Material.MAGMA_BLOCK);
             case "WISP_JAR", "ABYSSAL_LANTERN", "RUNE_OBELISK", "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "BOTTLED_GALE", "MOONLIT_LILY", "WITCHCAP",
-                "EVERLIVING_CORAL", "PRISMATIC_NETHERRACK", "WATCHFUL_EYEBLOSSOM" ->
+                "EVERLIVING_CORAL", "PRISMATIC_NETHERRACK", "WATCHFUL_EYEBLOSSOM", "FLOOR_SIGIL" ->
                 new DecorationBlock(group, stack, type, grid, output, plugin.decorations(), DecorationService.Kind.valueOf(def.id()));
             case "TROPHY_BOARD" -> new io.github.amitelia.occultech.items.TrophyBoard(group, stack, type, grid, output, plugin, plugin.decorations());
             case "RESIN_TILE" -> new StepTile(group, stack, type, grid, output, List.of(Material.RESIN_BRICKS));

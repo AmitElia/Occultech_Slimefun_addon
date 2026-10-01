@@ -101,6 +101,16 @@ public final class DecorationService {
             Palette.colors("&cR&6a&ei&an&bb&9o&dw", Color.WHITE),
             Palette.colors("&aAu&bro&5ra", Color.WHITE),
             Palette.colors("&cDusk &5embers", Color.WHITE)),
+        /** A turning sigil drawn on the floor, 5x5 or 3x3 (tier 1). Palettes: color and size. */
+        FLOOR_SIGIL(
+            Palette.colors("&5Violet &7(5x5)", Color.fromRGB(170, 90, 255)),
+            Palette.colors("&5Violet &7(3x3)", Color.fromRGB(170, 90, 255)),
+            Palette.colors("&cCrimson &7(5x5)", Color.fromRGB(220, 30, 50)),
+            Palette.colors("&cCrimson &7(3x3)", Color.fromRGB(220, 30, 50)),
+            Palette.colors("&bAbyssal &7(5x5)", Color.fromRGB(60, 210, 220)),
+            Palette.colors("&bAbyssal &7(3x3)", Color.fromRGB(60, 210, 220)),
+            Palette.colors("&6Gold &7(5x5)", Color.fromRGB(255, 200, 70)),
+            Palette.colors("&6Gold &7(3x3)", Color.fromRGB(255, 200, 70))),
         /** Opens when someone is near and closes when they leave (tier 3). */
         WATCHFUL_EYEBLOSSOM(Palette.colors("&6Watching", Color.fromRGB(255, 150, 40))),
         /** Shows a boss model; its "palette" is the chosen boss (see {@link TrophyBoard}). */
@@ -236,6 +246,7 @@ public final class DecorationService {
                 case PRISMATIC_NETHERRACK -> prismaticFire(at.getBlock(), index);
                 case TROPHY_BOARD -> trophy(center, decoration, at.getBlock());
                 case WATCHFUL_EYEBLOSSOM -> eyeblossom(center, at.getBlock(), palette);
+                case FLOOR_SIGIL -> floorSigil(center, decoration, palette, index % 2 == 0 ? 2.4 : 1.4);
             }
             return false;
         });
@@ -450,6 +461,60 @@ public final class DecorationService {
                 block.getWorld().spawnParticle(Particle.DUST, point, 1, 0, 0, 0, 0, new Particle.DustOptions(color, 1.1F));
             } else {
                 block.getWorld().spawnParticle(Particle.ENTITY_EFFECT, point, 1, 0, 0, 0, 1, color);
+            }
+        }
+    }
+
+    /**
+     * A sigil on the floor: an outer circle, a turning five-pointed star, a counter-turning inner circle and five runes
+     * on the points (flat text displays that glide round smoothly).
+     */
+    private void floorSigil(Location center, Decoration decoration, Palette palette, double radius) {
+        World world = center.getWorld();
+        Location floor = center.clone().add(0, 0.52, 0);
+        Color color = palette.colors()[0];
+        Particle.DustOptions ring = new Particle.DustOptions(color, 0.7F);
+        Particle.DustOptions star = new Particle.DustOptions(color.mixColors(Color.WHITE), 0.6F);
+        double spin = ticks * 0.02;
+        int points = (int) (radius * 12);
+        for (int i = 0; i < points; i++) {
+            double a = spin * 0.5 + Math.PI * 2 * i / points;
+            world.spawnParticle(Particle.DUST, floor.clone().add(Math.cos(a) * radius, 0, Math.sin(a) * radius), 1, 0, 0, 0, 0, ring);
+        }
+        for (int i = 0; i < 10; i++) {
+            double a = -spin + Math.PI * 2 * i / 10;
+            world.spawnParticle(Particle.DUST, floor.clone().add(Math.cos(a) * radius * 0.35, 0, Math.sin(a) * radius * 0.35), 1, 0, 0, 0, 0, ring);
+        }
+        for (int i = 0; i < 5; i++) {
+            double a1 = spin + Math.PI * 2 * i / 5;
+            double a2 = spin + Math.PI * 2 * ((i + 2) % 5) / 5;
+            for (double t = 0; t <= 1; t += radius > 2 ? 0.125 : 0.2) {
+                double x = Math.cos(a1) * (1 - t) + Math.cos(a2) * t;
+                double z = Math.sin(a1) * (1 - t) + Math.sin(a2) * t;
+                world.spawnParticle(Particle.DUST, floor.clone().add(x * radius * 0.92, 0, z * radius * 0.92), 1, 0, 0, 0, 0, star);
+            }
+        }
+        if (decoration.parts.isEmpty()) {
+            String runes = "ᚠᚱᛟᚨᛉ";
+            org.joml.Quaternionf flat = new org.joml.Quaternionf().rotateX((float) (-Math.PI / 2));
+            for (int i = 0; i < 5; i++) {
+                String rune = runes.substring(i, i + 1);
+                decoration.parts.add(world.spawn(floor, TextDisplay.class, d -> {
+                    prepare(d);
+                    d.setText(MenuUtils.color("&f") + rune);
+                    d.setBillboard(Display.Billboard.FIXED);
+                    d.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+                    d.setBrightness(new Display.Brightness(15, 15));
+                    d.setGlowing(false);
+                    float s = (float) (radius > 2 ? 1.4 : 1.0);
+                    d.setTransformation(new Transformation(new Vector3f(), flat, new Vector3f(s, s, s), new org.joml.Quaternionf()));
+                }));
+            }
+        }
+        if (ticks % ORBIT_STEP_TICKS == 0) {
+            for (int i = 0; i < decoration.parts.size(); i++) {
+                double a = spin + Math.PI * 2 * i / decoration.parts.size();
+                decoration.parts.get(i).teleport(floor.clone().add(Math.cos(a) * radius * 1.08, 0.01, Math.sin(a) * radius * 1.08));
             }
         }
     }

@@ -214,6 +214,9 @@ final class SelfTest {
         then(20, this::gallusHollowed);
         then(0, this::killCurrentFight);
         then(30, () -> checkFightEndedCleanly("Gallus"));
+        then(0, this::buildArcaneAltar);
+        then(10, this::startArcaneInfusion);
+        then(90, this::arcaneResult);
         then(0, this::placeNexus);
         then(80, this::nexusLinked);
         then(70, this::nexusGathered);
@@ -1073,6 +1076,52 @@ final class SelfTest {
     private void gallusHollowed() {
         LivingEntity gallus = currentFight == null || currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
         check("Gallus takes to the air in the Hollowing", gallus != null && !gallus.hasGravity(), "still grounded");
+    }
+
+    private Block arcane;
+    private io.github.amitelia.occultech.items.ArcaneAltar.ArcaneRecipe arcaneRecipe;
+
+    private void buildArcaneAltar() {
+        io.github.amitelia.occultech.items.ArcaneAltar altarItem = plugin.registrar().arcaneAltar();
+        check("Arcane Altar registered", altarItem != null, "missing");
+        if (altarItem == null) {
+            return;
+        }
+        long imported = altarItem.recipes().stream().filter(r -> !r.source().equals("Occultech")).count();
+        check("Arcane Altar imported Slimefun's Ancient Altar recipes", imported >= 10, imported + " imported");
+        arcane = altar.getRelative(-10, 0, -10);
+        DebugWorld.placeSlimefun(arcane, ItemKeys.slimefunId("ARCANE_ALTAR"), this::remember);
+        for (int[] o : new int[][] { { 2, 0 }, { 2, 2 }, { 0, 2 }, { -2, 2 }, { -2, 0 }, { -2, -2 }, { 0, -2 }, { 2, -2 } }) {
+            DebugWorld.placeSlimefun(arcane.getRelative(o[0], 0, o[1]), ItemKeys.slimefunId("ARCANE_PEDESTAL"), this::remember);
+        }
+        arcaneRecipe = altarItem.recipes().stream().filter(r -> r.source().equals("Occultech")).findFirst().orElse(null);
+    }
+
+    private void startArcaneInfusion() {
+        BlockMenu menu = arcane == null ? null : BlockStorage.getInventory(arcane);
+        if (menu == null || arcaneRecipe == null) {
+            check("Arcane Altar has a menu and an Occultech recipe", false, "menu " + menu + ", recipe " + arcaneRecipe);
+            return;
+        }
+        int slot = 0;
+        for (Map.Entry<String, Integer> need : arcaneRecipe.needs().entrySet()) {
+            menu.replaceExistingItem(io.github.amitelia.occultech.items.ArcaneAltar.INPUTS[slot++], DebugWorld.item(need.getKey(), need.getValue()));
+        }
+        String problem = plugin.registrar().arcaneAltar().tryInfuse(arcane, menu);
+        check("Arcane Altar starts an infusion with the ingredients in the middle", problem == null, String.valueOf(problem));
+    }
+
+    private void arcaneResult() {
+        BlockMenu menu = arcane == null ? null : BlockStorage.getInventory(arcane);
+        ItemStack out = menu == null ? null : menu.getItemInSlot(io.github.amitelia.occultech.items.ArcaneAltar.OUTPUT);
+        boolean ok = out != null && arcaneRecipe != null && out.isSimilar(arcaneRecipe.output());
+        check("Arcane Altar infusion produces the result in about 3s", ok, out == null ? "nothing" : out.getType().toString());
+        boolean emptied = menu != null && java.util.Arrays.stream(io.github.amitelia.occultech.items.ArcaneAltar.INPUTS)
+            .allMatch(s -> menu.getItemInSlot(s) == null || menu.getItemInSlot(s).getType().isAir());
+        check("Arcane Altar used up exactly the recipe's ingredients", emptied, "inputs left over");
+        check("Floor Sigil registered", SlimefunItem.getById(ItemKeys.slimefunId("FLOOR_SIGIL")) != null, "missing");
+        check("every boss has a Hollow Halo style", io.github.amitelia.occultech.items.HaloStyle.values().length >= 19, "too few");
+        plugin.rituals().holograms().clear(arcane);
     }
 
     private void placeNexus() {
