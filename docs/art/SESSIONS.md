@@ -10,7 +10,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **C** | Tier-0 item icons (15 + bow states; the 8 placed blocks move to G) | **Done** - codex redone after review |
 | **D** | Tier-1 item icons (23; the 6 placed blocks move to G) | **Done** - fixed after review |
 | **E** | Tier-2 item icons (26: materials, drops, weapons, armor, decor objects) | **Done** - fixed after review |
-| **F** | Tier-3 item icons (26 + bow states; Hollow Sigil from A) | **Done** - awaiting review |
+| **F** | Tier-3 item icons (25 + bow states + the Aegis shield texture; Hollow Sigil from A) | **Done** - reworked after review |
 | G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg; tier-1 blocks: Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil; tier-2 blocks: Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack; tier-3 blocks: Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) **and held 3D models** (first: the Occult Codex as a 3D book - see *Notes for G*) | - |
 | H | Menu backgrounds | - |
 | I | Effect sprites (motes, embers, shards, shockwave rings, beams) | - |
@@ -251,8 +251,11 @@ Iron's Spells 'n Spellbooks for the codex. Focus on item icons for now; keep not
 - **Scepters (Wyrmbreath, Guardian's Gaze):** held 3D models following their icons - rod, collar, three claw prongs
   (one behind, two in front) round the orb/eye; the orb glows (emissive) and the eye can turn.
 - **Tier-3 held models:** Dreadlance (shaft, ringed vamplate, leaf head), Soulfire Censer (orb on chains, swings),
-  Heartwood Aegis (a real shield model, like the vanilla shield's), Stormstring Bow (vanilla bow model + textures).
-- **Hollow armor worn texture:** `equippable` layers in sculk plates with bone crown, ribcage, knee guards, toe caps.
+  Heartwood Aegis (texture done in Session F: `heartwood_aegis_shield_*.png`, vanilla shield UV layout; for the rune
+  to animate, build it as a regular item model with elements so the texture sits in an animatable atlas),
+  Stormstring Bow (vanilla bow model + textures).
+- **Hollow armor worn texture:** `equippable` layers in the reworked scheme - blackened violet steel plates, aged gold
+  trim, bone crown spikes / ribcage / knee cops / toe caps, hollow-cyan seams, crimson gems (see the F4 icons).
 - **Abyssal Anchor held model:** the icon is upright (an anchor only reads upright); in the hand it should be a 3D
   anchor held by its ring, flukes as the head, with the spectral chain - same display-context switch as the codex.
 - **Abyssal armor worn texture:** the icons are done (Session E); the worn look needs an `equippable` asset layer
@@ -405,4 +408,34 @@ crystal), an onion (eyeblossom).
 - Check the base material's value first: "black" ramps drawn with mid indices come out mid-tone (sculk read teal).
 - Outlines fill 1 px gaps (crown spikes): draw fine repeated details after outlining.
 - The symmetry pass removes unevenly rounded lines - draw thin lines (cords) after it, mirrored by hand.
+
+### Session F review round (user)
+"Good job on the rest." Reworked:
+- **Hollow Crystal** (weird shape) - now a crystal split in two, its halves floating apart with hollow light pouring
+  out of the break, fragments orbiting; dark faces so the light reads. Exactly symmetric.
+- **Hollow Effigy** (no pumpkin, be creative) - a ritual totem: a rooster's skull (Gallus is a rooster) with crimson
+  comb and wattle, open beak, a burning eye socket, on a sculk stake bound with twine and black feathers. First try
+  read as a cute chick - aged bone, a bigger socket and a crack fixed it.
+- **Warlord's Brand** (looked like a downgrade) - forged like a weapon: a thick hexagonal iron head in 3/4 view with
+  its depth showing, spiked corners, the Hollow star raised and white-hot, gold collar, leather grip, bone pommel,
+  heat glow and embers.
+- **Soulfire Censer** (needed an upgrade) - a gothic censer: a caged orb of dark iron with gold filigree, domed spire
+  and finial, soul fire blazing inside the bars and venting, a smoke trail, a gold ring and chain.
+- **Heartwood Resin** (flat) - lit volume, light glowing through its lower side, a specular streak, bubbles, a drip,
+  the eye blurred in the amber's depth.
+- **Hollow Heart** (odd shape) - anatomical: chambers, the aortic arch and great vessels with crimson cut ends, a
+  tapering apex, cyan veins; it beats. Took two passes (a lumpy block first).
+- **Dreadlance** (cooler, ominous) - a black barbed harpoon-blade with a crimson blood channel, smouldering runes on
+  the shaft, a thorned bone vamplate, a tattered ribbon, dripping blood.
+- **Hollow armor** (more detailed, cooler, nicer colours, think 3D) - hand-drawn plate by plate: blackened violet
+  steel (each plate lit on its own), aged gold trim, bone (crown spikes, pauldron spikes, ribcage, knee cops, toe caps),
+  hollow-cyan seams, crimson gems. First pass was too light (it matched tier-1 Bound Steel); darkened a full step.
+- **Heartwood Aegis** (should be a Minecraft shield, a 3D texture) - now a 64x64 texture in the vanilla shield's UV
+  layout (front 12x22 with heartwood grain, thin resin veins, bone rim, gold corner caps, amber boss, a tree-of-
+  regrowth rune that pulses; plank back with leather straps and studs; bone edges; leather handle), 4 frames, with a
+  3D preview (`review-heartwood-aegis.png`, `preview-heartwood-aegis.gif`). Its inventory look is the model itself.
+
+**Lessons:** for hero items, hand-drawn letter maps beat geometry (the armor); a tier's materials must stay a step
+apart in value from the tier below (tier-3 steel vs tier-1 steel); anything that is a vanilla model type (shield,
+bow) is designed as that model's texture, not as an icon.
 

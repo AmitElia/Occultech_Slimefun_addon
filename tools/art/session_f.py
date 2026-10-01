@@ -62,48 +62,75 @@ def hollow_ingot(frame=0):
 
 
 def hollow_crystal(frame=0):
-    """A jagged shard broken from the Hollow, dark and translucent, hollow-cyan light trapped in it; echoes ring out
-    from it (animated)."""
+    """A Hollow crystal split in two: the halves float apart and hollow light pours out of the break between them;
+    two fragments orbit at its sides. Dark translucent faces (lit, front, shadow) with hard ridges. Exactly symmetric.
+    Animated: the halves breathe apart, the light pulses, the fragments bob."""
     icon = Icon(16)
     sc, hc = RAMPS["sculk"], RAMPS["hollowcy"]
-    pts = [(9.6, 0.6), (11.4, 3.4), (13.6, 3.6), (12.2, 7.0), (13.4, 10.6), (10.4, 11.6), (7.6, 15.4), (5.6, 12.6),
-           (2.6, 12.0), (4.2, 8.4), (2.6, 5.6), (6.0, 4.6)]
-    shard = icon.polygon(pts, bevel=1.4)
-    icon.paint(shard, sc, bias=-0.1)
-    for (x, y) in shard.keys():   # a lit fracture plane on the upper left
-        if x + y * 0.4 < 9.0:
-            put(icon, [(x, y)], sc[3])
-    put(icon, line_px((9.6, 1.6), (7.4, 14.0)), sc[4])
-    glow = icon.sphere(7.8, 8.6, 2.6, squash=1.4)
-    for (x, y) in glow.keys():
-        d = math.hypot(x + 0.5 - 7.8, (y + 0.5 - 8.6) / 1.4)
-        put(icon, [(x, y)], hc[5] if d < 0.9 else hc[4] if d < 1.8 and frame % 2 else hc[3] if d < 1.8 else hc[2])
     k = frame % 4
-    if k:
-        r = 5.0 + k * 1.2
-        for deg in (150, 170, 190, 210, -30, -10, 10, 30):
-            x = math.floor(8 + r * math.cos(math.radians(deg)))
-            y = math.floor(9 + r * math.sin(math.radians(deg)))
-            if 0 <= x < 16 and 0 <= y < 16 and icon.img.getpixel((x, y))[3] == 0:
-                put(icon, [(x, y)], hc[4], 250 - k * 55)
+    lift = [0, 0, 1, 0][k]
+    # the light in the break, behind the halves
+    for y in range(6 - lift, 10):
+        for x in range(4, 12):
+            d = abs(x + 0.5 - 8.0)
+            put(icon, [(x, y)], hc[5] if d < 1.5 else hc[4] if d < 3.0 else hc[3])
+    halves = [  # (polygon, ridge)
+        ([(8.0, 0.4 - lift), (12.6, 5.4 - lift), (11.0, 6.6 - lift), (9.6, 6.0 - lift), (8.0, 7.0 - lift), (6.4, 6.0 - lift),
+          (5.0, 6.6 - lift), (3.4, 5.4 - lift)], ((8.0, 1.0 - lift), (8.0, 6.4 - lift))),
+        ([(3.6, 10.4), (5.0, 9.2), (6.6, 9.8), (8.0, 9.0), (9.4, 9.8), (11.0, 9.2), (12.4, 10.4), (8.0, 15.6)],
+         ((8.0, 9.6), (8.0, 15.0))),
+    ]
+    for pts, ridge in halves:
+        part = icon.facet(pts, (0, 0, 1))
+        for (x, y) in part.keys():
+            put(icon, [(x, y)], sc[3] if x < 6 else sc[2] if x < 8 else sc[1])
+        icon.outline(part, [sc[0], sc[0]], over=False)
+        put(icon, [p for p in line_px(*ridge) if p in part.normals], sc[4])
+    put(icon, [(6, 2 - lift), (5, 3 - lift)], hc[4])   # light catching the upper edges
+    put(icon, [(x, 6 - lift) for x in (5, 6, 9, 10)] + [(x, 9) for x in (5, 6, 9, 10)], hc[4])   # the glowing break edges
+    bob = [0, -1, 0, 1][k]
+    for x in (1, 14):   # orbiting fragments
+        put(icon, [(x, 7 + bob), (x, 8 + bob)], sc[4] if x == 1 else sc[3])
+        put(icon, [(x, 6 + bob)], hc[4])
     return icon
 
 
+ROOSTER_SKULL = [  # side view, beak to the right, open: R comb/wattle, B bone, b shade, K hollow, C socket fire, G beak
+    "....RR.RR......",
+    "...RRRRRRR.....",
+    "..BBBBKBBBB....",
+    ".BBBBBBKBBBBG..",
+    ".BKKKKBBBBBGGGG",
+    ".BKKCKBBKBGG...",
+    ".BKKKKBBBb..GGG",
+    "..bBBBBBbbGGG..",
+    "...bbbbbbRR....",
+]
+
+
 def hollow_effigy(frame=0):
-    """The catalyst that summons Gallus: a carved pumpkin gone dark with sculk, its carved face lit hollow cyan from
-    inside, a crimson rooster's comb on top - the Hollow Jockey's mark. The light flickers (animated)."""
+    """The catalyst that summons Gallus, the Hollow Jockey: a ritual totem - a rooster's skull with its crimson comb and
+    wattle, the eye socket burning hollow cyan, set on a sculk stake bound with twine and hung with black feathers.
+    Animated: the socket flares and a wisp rises from it."""
     icon = Icon(16)
-    sc, hc, cr, gel = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["crimson"], RAMPS["gel"]
-    for (cx, r) in ((4.6, 4.4), (11.4, 4.4), (8.0, 5.2)):   # the pumpkin's lobes
-        lobe = icon.sphere(cx, 9.8, r, squash=1.0)
-        icon.paint(lobe, sc, bias=-0.15, outline_ramp=[sc[0], sc[0]], outline_over=False)
-    put(icon, [(6, y) for y in range(6, 15)] + [(10, y) for y in range(6, 15)], sc[1])   # grooves between lobes
-    comb = icon.polygon([(5.6, 5.0), (6.4, 1.4), (7.6, 3.6), (8.6, 0.8), (9.6, 3.4), (10.8, 1.8), (10.6, 5.0)], bevel=0.8)
-    icon.paint(comb, cr, bias=0.2, outline_over=False)
+    bone, cr, gd, sc, hc, tw, ink = (RAMPS["bone"], RAMPS["crimson"], RAMPS["gold"], RAMPS["sculk"], RAMPS["hollowcy"],
+                                     RAMPS["twine"], RAMPS["ink"])
+    stake = icon.box(6.0, 9.0, 8.0, 16.0, bevel=0.6)
+    icon.paint(stake, sc, bias=0.25)
+    put(icon, line_px((6, 11), (3, 14)) + [(3, 15)], ink[2])         # black feathers hanging off the binding
+    put(icon, line_px((7, 11), (10, 14)) + [(10, 15)], ink[3])
+    put(icon, [(6, 11), (7, 11), (6, 12), (7, 12)], tw[4])
     glow = hc[5] if frame % 4 in (1, 2) else hc[4]
-    put(icon, [(4, 8), (5, 8), (5, 9), (11, 8), (10, 8), (10, 9)], glow)          # eyes
-    put(icon, [(7, 11), (8, 11)], glow)                                           # nose
-    put(icon, [(4, 12), (5, 13), (6, 13), (7, 12), (8, 13), (9, 13), (10, 12), (11, 12)], hc[3])   # a jagged grin
+    cols = {"R": cr[3], "B": bone[3], "b": bone[1], "K": sc[0], "C": glow, "G": gd[3]}
+    pixmap(icon, ROOSTER_SKULL, 0, 0, cols)
+    put(icon, [(2, 2), (3, 2), (4, 2), (5, 2)], bone[4])    # aged bone: only the crown of the skull catches light
+    put(icon, [(x, 3) for x in range(8, 12)], bone[2])
+    put(icon, [(13, 5), (12, 6)], gd[2])
+    put(icon, [(5, 0), (4, 1)], cr[5])
+    mask = {(x, y) for y, row in enumerate(ROOSTER_SKULL) for x, c in enumerate(row) if c != "."}
+    icon.outline(Part({p: (0, 0, 1) for p in mask}), [sc[0], sc[0]], over=False)
+    wisp = [[], [(4, 3)], [(5, 2)], [(4, 1)]][frame % 4]
+    put(icon, wisp, hc[4], 200)
     return icon
 
 
@@ -114,48 +141,70 @@ F1 = [("Hollow Essence", hollow_essence, 4), ("Hollow Ingot", hollow_ingot, 4), 
 # ================================================================== F2: boss drops
 
 def warlords_brand(frame=0):
-    """The Hollow Warlord's branding iron: a bone-gripped iron rod ending in a round brand - an iron disc whose rim
-    glows red-hot and whose face carries the Hollow star, white-hot at the centre; heat shimmer and smoke (animated)."""
+    """The Hollow Warlord's brand, forged like a weapon: a thick hexagonal iron head seen at three quarters (its side
+    shows its depth), spiked at the corners, the Hollow star raised on its face and glowing white-hot to crimson; a
+    gold-collared rod, a leather grip, a bone pommel. Heat glows round it, embers fall (animated)."""
     icon = Icon(16)
-    ir, cr, em, bone = RAMPS["boundsteel"], RAMPS["crimson"], RAMPS["ember"], RAMPS["bone"]
-    rod = icon.tubes([((1.4, 14.6), (7.6, 8.4))], 0.8)
-    icon.paint(rod, ir, bias=0.1)
-    grip = icon.tubes([((1.4, 14.6), (4.0, 12.0))], 1.15)
-    icon.paint(grip, bone, bias=0.0, outline_over=False)
-    disc = icon.sphere(10.4, 5.6, 4.8)
-    icon.paint(disc, ir, bias=-0.1, outline_ramp=[cr[0], cr[1]], outline_over=False)
+    ir, cr, em, bone, gd, lea = (RAMPS["boundsteel"], RAMPS["crimson"], RAMPS["ember"], RAMPS["bone"], RAMPS["gold"],
+                                 RAMPS["leather"])
+    rod = icon.tubes([((2.0, 14.0), (8.0, 8.0))], 0.85)
+    icon.paint(rod, ir, bias=0.15)
+    grip = icon.tubes([((2.0, 14.0), (4.6, 11.4))], 1.1)
+    icon.paint(grip, lea, bias=0.1, outline_over=False)
+    icon.paint(icon.sphere(1.6, 14.4, 1.4), bone, bias=0.2, outline_over=False)
+    icon.paint(icon.sphere(7.6, 8.4, 1.5), gd, bias=0.2, outline_over=False)
+    cx, cy = 10.4, 5.4
+    hexa = [(cx + 4.4 * math.cos(math.radians(a)), cy + 4.4 * math.sin(math.radians(a))) for a in range(-90, 270, 60)]
+    back = icon.facet([(x + 1.2, y + 1.2) for x, y in hexa], (0, 0, 1))
+    icon.paint(back, ir, outline=False, flat=1)
+    front = icon.polygon(hexa, bevel=1.2)
+    icon.paint(front, ir, bias=0.05, outline_over=False)
+    icon.outline(front | back, [ir[0], ir[0]], over=False)
+    for (x, y) in hexa:   # spikes at the corners
+        sx, sy = cx + (x - cx) * 1.3, cy + (y - cy) * 1.3
+        p = (math.floor(sx), math.floor(sy))
+        if 0 <= p[0] < 16 and 0 <= p[1] < 16:
+            put(icon, [p], ir[4])
     heat = frame % 4
-    rim = [p for p in disc.keys() if math.hypot(p[0] + 0.5 - 10.4, p[1] + 0.5 - 5.6) > 3.6]
-    put(icon, rim, cr[3] if heat in (0, 3) else cr[4])
-    star = [(10.4 + (3.2 if i % 2 == 0 else 1.3) * math.cos(math.radians(-90 + i * 36)),
-             5.6 + (3.2 if i % 2 == 0 else 1.3) * math.sin(math.radians(-90 + i * 36))) for i in range(10)]
+    star = [(cx + (3.2 if i % 2 == 0 else 1.3) * math.cos(math.radians(-90 + i * 36)),
+             cy + (3.2 if i % 2 == 0 else 1.3) * math.sin(math.radians(-90 + i * 36))) for i in range(10)]
     st = icon.facet(star, (0, 0, 1))
     for (x, y) in st.keys():
-        d = math.hypot(x + 0.5 - 10.4, y + 0.5 - 5.6)
-        put(icon, [(x, y)], em[5] if d < 1.2 + (heat % 2) * 0.6 else em[4])
-    smoke = [[(14, 0)], [(15, 0), (13, 0)], [(15, 1)], []][heat]
-    put(icon, smoke, RAMPS["ash"][4], 170)
+        d = math.hypot(x + 0.5 - cx, y + 0.5 - cy)
+        put(icon, [(x, y)], em[5] if d < 1.0 + (heat % 2) * 0.5 else em[4] if d < 2.0 else cr[4])
+    icon.glow(cr[3], radius=1.3, strength=0.25)
+    embers = [[(13, 12)], [(14, 13), (12, 11)], [(13, 14)], [(12, 12)]][heat]
+    put(icon, embers, em[4])
     return icon
 
 
 def heartwood_resin(frame=0):
-    """A drop of Heartwood amber, glossy and clear, with an eye trapped inside it - the Heartwood Horror's - that opens
-    and closes (animated)."""
+    """A drop of Heartwood amber with real volume: lit from the top left, light glowing through its lower side, a
+    sharp specular streak, bubbles caught inside, a drip hanging from it - and deep in it, blurred by the resin, the
+    Heartwood Horror's eye, which opens and closes (animated)."""
     icon = Icon(16)
     am, wood, gel = RAMPS["amber"], RAMPS["wood"], RAMPS["gel"]
-    drop = icon.sphere(8.0, 9.6, 5.6) | icon.polygon([(3.4, 8.0), (12.6, 8.0), (8.6, 0.8)], bevel=1.6)
-    icon.paint(drop, am, bias=0.15, outline_ramp=[am[0], am[1]])
-    inner = icon.sphere(8.4, 10.2, 3.4)
-    for p in inner.keys():   # deeper, darker amber inside (it's thick)
-        put(icon, [p], am[2])
+    drop = icon.sphere(7.6, 9.0, 5.4) | icon.polygon([(3.0, 7.6), (12.2, 7.6), (8.2, 0.6)], bevel=2.2)
+    icon.paint(drop, am, bias=0.05, outline_ramp=[am[0], am[1]])
+    for (x, y) in drop.keys():   # subsurface glow: light passing through the lower right
+        if math.hypot(x + 0.5 - 9.6, y + 0.5 - 11.4) < 2.6:
+            put(icon, [(x, y)], am[4])
+    halo = icon.sphere(7.4, 9.4, 2.6)
+    for p in halo.keys():         # the dark depth round the trapped eye
+        put(icon, [p], am[1] if math.hypot(p[0] + 0.5 - 7.4, p[1] + 0.5 - 9.4) < 1.8 else am[2])
     open_ = [1, 2, 2, 0][frame % 4]
     if open_:
-        put(icon, [(6, 10), (7, 9), (8, 9), (9, 9), (10, 10), (7, 11), (8, 11), (9, 11)], wood[1])
-        put(icon, [(8, 10)] if open_ == 1 else [(7, 10), (8, 10), (9, 10)], gel[4])
+        put(icon, [(7, 9)] if open_ == 1 else [(6, 9), (7, 9), (8, 9)], gel[3])
+        if open_ == 2:
+            put(icon, [(7, 9)], wood[0])
     else:
-        put(icon, [(6, 10), (7, 10), (8, 10), (9, 10), (10, 10)], wood[1])
-    put(icon, [(5, 6), (5, 7), (6, 5)], am[5])   # gloss
-    put(icon, [(11, 13), (10, 14)], am[4])       # light through the resin
+        put(icon, [(6, 9), (7, 9), (8, 9)], wood[0])
+    put(icon, [(4, 6), (4, 7), (5, 5), (5, 4)], am[5])   # the specular streak
+    put(icon, [(10, 6), (11, 9)], am[5])                # bubbles
+    put(icon, [(10, 7), (11, 10)], am[3])
+    drip = [[(8, 15)], [(8, 15)], [(8, 15), (8, 14)], []][frame % 4]
+    put(icon, [(8, 14)], am[3])
+    put(icon, drip, am[3])
     return icon
 
 
@@ -251,21 +300,22 @@ def mirror_visage(frame=0):
 
 
 def hollow_heart(frame=0):
-    """A heart of dark heartwood: two lobes with a clear dip between them, vessel stubs on top, hollow-cyan light
-    pulsing through its cracks - it beats (animated)."""
+    """A Hollow heart, anatomical: chambers of dark heartwood, the aortic arch and the great vessels rising from it
+    (their cut ends crimson), hollow-cyan veins running over it - it beats (animated)."""
     icon = Icon(16)
     sc, hc, cr = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["crimson"]
-    beat = [0.0, 0.5, 0.0, 0.2][frame % 4]
-    heart = icon.sphere(5.0, 7.0, 3.9 + beat * 0.4) | icon.sphere(11.0, 7.0, 3.9 + beat * 0.4) | \
-        icon.polygon([(1.2, 7.8), (14.8, 7.8), (8.0, 15.2 + beat)], bevel=1.6)
-    heart = Part({p: n for p, n in heart.normals.items() if not (p[0] in (7, 8) and p[1] < 5)})   # the dip
-    icon.paint(heart, sc, bias=0.05, outline_ramp=[sc[0], sc[0]])
-    for (x0, y0) in ((5, 3), (10, 3)):   # vessel stubs
-        put(icon, [(x0, y0 - 1), (x0 + 1, y0 - 1), (x0, y0 - 2), (x0 + 1, y0 - 2)], sc[3])
-        put(icon, [(x0, y0 - 2)], sc[4])
-    cracks = [(8, 6), (7, 7), (8, 8), (9, 9), (8, 10), (8, 11), (5, 7), (4, 8), (11, 6), (12, 7)]
-    put(icon, cracks, hc[5] if beat > 0.3 else hc[4] if beat else hc[3])
-    put(icon, [(3, 5), (4, 4)], sc[5])
+    beat = [0.0, 0.45, 0.0, 0.2][frame % 4]
+    vessels = icon.tubes([((7.6, 6.4), (7.4, 2.6)), ((7.4, 2.6), (5.8, 1.6)), ((5.8, 1.6), (4.2, 2.4)),
+                          ((4.2, 2.4), (3.6, 4.2))], 1.2) | icon.tubes([((9.6, 6.6), (11.4, 2.4))], 1.0) |         icon.tubes([((12.0, 7.0), (14.0, 4.8))], 0.9)
+    icon.paint(vessels, sc, bias=0.5)
+    for p in ((3, 4), (11, 1), (14, 4)):   # the cut vessel ends
+        put(icon, [p], cr[3])
+    body = icon.sphere(8.2, 10.0, 4.2 + beat * 0.5) | icon.sphere(11.0, 7.6, 2.3 + beat * 0.3) |         icon.sphere(5.4, 7.8, 2.1 + beat * 0.3) | icon.polygon([(4.2, 10.4), (12.2, 11.0), (7.0, 15.8)], bevel=1.0)
+    icon.paint(body, sc, bias=0.0, outline_ramp=[sc[0], sc[0]], outline_over=True)
+    put(icon, [(9, 8), (10, 7)], sc[1])     # the groove between the chambers
+    veins = [(9, 9), (8, 10), (8, 11), (7, 12), (7, 13), (10, 10), (11, 11), (6, 9), (5, 10)]
+    put(icon, veins, hc[4] if beat > 0.3 else hc[3])
+    put(icon, [(4, 7), (5, 6), (6, 9)], sc[5])
     return icon
 
 
@@ -294,56 +344,77 @@ F2 = [("Warlord's Brand", warlords_brand, 4), ("Heartwood Resin", heartwood_resi
 # ================================================================== F3: weapons
 
 def dreadlance(frame=0):
-    """The Dreadlance, drawn as its 3D model would look: a dark shaft on the diagonal, a wide bone vamplate (the cone
-    hand-guard, ringed) over the grip, a big leaf-shaped head of hollow steel whose edges run crimson - it drinks
-    blood; a drop gathers and falls from it (animated)."""
+    """The Dreadlance, drawn as its 3D model would look and meant to frighten: a shaft of black wood with crimson runes
+    smouldering along it, a bone vamplate bristling with thorns, a long barbed head of blackened steel - harpoon barbs
+    on both edges, a blood channel glowing crimson down its middle - and a tattered ribbon fluttering under it; blood
+    gathers and drips from the point (animated)."""
     icon = Icon(16)
-    sc, bone, cr, ir = RAMPS["sculk"], RAMPS["bone"], RAMPS["crimson"], RAMPS["boundsteel"]
-    shaft = icon.tubes([((0.6, 15.4), (9.4, 6.6))], 0.75)
-    icon.paint(shaft, sc, bias=0.15)
+    ink, bone, cr, st = RAMPS["ink"], RAMPS["bone"], RAMPS["crimson"], RAMPS["boundsteel"]
     d, pp = (0.7071, -0.7071), (0.7071, 0.7071)
 
-    def at(u, v):   # u along the lance from the vamplate's narrow end, v across it
-        return (3.6 + d[0] * u + pp[0] * v, 12.4 + d[1] * u + pp[1] * v)
+    def at(u, v):
+        return (3.4 + d[0] * u + pp[0] * v, 12.6 + d[1] * u + pp[1] * v)
 
-    vamp = icon.polygon([at(0, -1.0), at(0, 1.0), at(3.8, 3.4), at(3.8, -3.4)], bevel=1.2)
-    icon.paint(vamp, bone, bias=0.1, outline_over=True)
-    put(icon, [p for p in line_px(at(2.4, -2.4), at(2.4, 2.4)) if p in vamp.normals], bone[2])   # a ring on the cone
-    head = icon.polygon([at(6.0, 0), at(8.6, -2.3), at(14.6, 0), at(8.6, 2.3)], bevel=1.4)
-    icon.paint(head, ir, bias=0.45, outline_ramp=[cr[0], cr[1]], outline_over=True)
-    edge = [p for p in head.keys() if any((p[0] + dx, p[1] + dy) not in head.normals for dx, dy in ((1, 0), (0, 1), (1, 1)))]
-    put(icon, edge, cr[3] if frame % 4 != 1 else cr[4])
-    put(icon, line_px(at(6.8, 0), at(13.4, 0)), ir[5])
-    drip = [[], [(14, 5)], [(14, 6)], [(14, 8)]][frame % 4]
+    shaft = icon.tubes([((0.4, 15.6), at(6.4, 0))], 0.75)
+    icon.paint(shaft, ink, bias=0.25)
+    for i, u in enumerate((-2.0, -0.8)):
+        x, y = at(u, 0)
+        put(icon, [(math.floor(x), math.floor(y))], cr[4] if (i + frame) % 2 else cr[3])
+    vamp = icon.polygon([at(0, -1.0), at(0, 1.0), at(3.0, 3.0), at(3.0, -3.0)], bevel=1.0)
+    icon.paint(vamp, bone, bias=0.0, outline_ramp=[ink[0], ink[0]], outline_over=True)
+    for v in (-3.6, 3.6):   # thorns off the vamplate's rim
+        x, y = at(2.6, v)
+        put(icon, [(math.floor(x), math.floor(y))], bone[5])
+    head_pts = [at(5.6, 1.1), at(6.8, 2.9), at(7.4, 1.3), at(9.2, 2.3), at(9.9, 1.1), at(14.9, 0), at(9.9, -1.1),
+                at(9.2, -2.3), at(7.4, -1.3), at(6.8, -2.9), at(5.6, -1.1)]
+    head = icon.polygon(head_pts, bevel=1.0)
+    icon.paint(head, st, bias=-0.05, outline_ramp=[ink[0], ink[0]], outline_over=True)
+    put(icon, [p for p in line_px(at(6.0, 0), at(13.4, 0)) if p in head.normals], cr[4] if frame % 4 != 2 else cr[5])
+    put(icon, [p for p in line_px(at(6.6, -1.6), at(13.0, -0.4)) if p in head.normals], st[4])   # the lit edge
+    k = frame % 4
+    rib = [at(4.6, 0.6), at(4.0, 1.8 + k * 0.2), at(3.0, 2.6), at(2.6, 3.6 + (k % 2) * 0.6)]
+    put(icon, [p for a, b in zip(rib, rib[1:]) for p in line_px(a, b)], cr[2])
+    put(icon, [(math.floor(rib[-1][0]), math.floor(rib[-1][1]))], ink[2])
+    drip = [[], [(15, 1)], [(15, 2)], [(15, 4)]][k]
     put(icon, drip, cr[4])
     return icon
 
 
 def soulfire_censer(frame=0):
-    """The Soulfire Censer (the Wyrmbreath's successor): a pierced silver orb with a gold band, hung by three short
-    chains from a cap and one chain to a ring handle; hollow-cyan soul fire glows through two rows of piercings and
-    wisps out of them; it swings (animated)."""
+    """The Soulfire Censer, the Wyrmbreath's successor: a gothic censer - a caged orb of dark iron bound with gold
+    filigree, a domed spire on top and a finial below, soul fire blazing inside the bars and venting from it, a trail
+    of hollow smoke curling away; it hangs on a chain from a gold ring and swings (animated)."""
     icon = Icon(16)
-    ir, hc, gd = RAMPS["iron"], RAMPS["hollowcy"], RAMPS["gold"]
-    swing = [0, 1, 0, -1][frame % 4]
-    ring = icon.ring(2.6, 2.6, 2.2, 1.1)
-    icon.paint(ring, ir, bias=0.1)
-    cx, cy = 9.6 + swing * 0.6, 10.4
-    hook = (cx, cy - 6.4)
-    chain = line_px((4.0, 4.0), hook)
+    ir, hc, gd, ink = RAMPS["boundsteel"], RAMPS["hollowcy"], RAMPS["gold"], RAMPS["ink"]
+    k = frame % 4
+    swing = [0, 1, 0, -1][k] * 0.5
+    cx, cy = 9.8 + swing, 9.6
+    ring = icon.ring(2.4, 2.4, 2.0, 1.0)
+    icon.paint(ring, gd, bias=0.1)
+    chain = line_px((3.6, 3.6), (cx, cy - 6.4))
     put(icon, [p for i, p in enumerate(chain) if i % 2 == 0], ir[4])
     put(icon, [p for i, p in enumerate(chain) if i % 2 == 1], ir[2])
-    for dx in (-2.6, 0, 2.6):   # three short chains from the hook to the orb's rim
-        put(icon, line_px(hook, (cx + dx, cy - 3.4)), ir[3])
-    orb = icon.sphere(cx, cy, 4.2)
-    icon.paint(orb, ir, bias=0.0)
+    cage = icon.sphere(cx, cy, 4.0)
+    for (x, y) in cage.keys():   # the fire inside, brightest at its heart
+        dd = math.hypot(x + 0.5 - cx, y + 0.5 - cy - 0.6)
+        put(icon, [(x, y)], hc[5] if dd < 1.4 + (k % 2) * 0.4 else hc[4] if dd < 2.6 else hc[3])
+    for (x, y) in cage.keys():   # the iron bars and rims over it
+        dx = x + 0.5 - cx
+        rim = math.hypot(dx, y + 0.5 - cy) > 3.2
+        if rim or abs(dx) < 0.5 or abs(abs(dx) - 2.0) < 0.5:
+            put(icon, [(x, y)], ir[3] if dx < 0 else ir[1])
     put(icon, [(x, math.floor(cy)) for x in range(math.floor(cx - 4), math.floor(cx + 4) + 1)
-               if (x, math.floor(cy)) in orb.normals], gd[4])
-    holes = [(-2, -2), (0, -2), (2, -2), (-3, 2), (-1, 2), (1, 2), (3, 2)]
-    for i, (dx, dy) in enumerate(holes):
-        put(icon, [(math.floor(cx + dx), math.floor(cy + dy))], hc[5] if (i + frame) % 3 == 0 else hc[4])
-    wisps = [[(12, 7), (13, 6)], [(13, 6), (14, 5)], [(5, 8), (4, 7)], [(14, 5), (15, 4)]][frame % 4]
-    put(icon, wisps, hc[4], 200)
+               if (x, math.floor(cy)) in cage.normals], gd[4])                                # the gold band
+    icon.outline(cage, [ink[0], ink[0]], over=False)
+    dome = icon.polygon([(cx - 2.8, cy - 3.2), (cx + 2.8, cy - 3.2), (cx, cy - 6.6)], bevel=1.0)
+    icon.paint(dome, gd, bias=0.1, outline_over=False)
+    fin = icon.polygon([(cx - 1.6, cy + 3.6), (cx + 1.6, cy + 3.6), (cx, cy + 6.2)], bevel=0.6)
+    icon.paint(fin, gd, bias=-0.05, outline_over=False)
+    for i, (fx, h) in enumerate(((-2, 2), (2, 3))):   # soul fire venting at the shoulders
+        hh = h + [0, 1, 0, -1][(k + i) % 4]
+        put(icon, [(math.floor(cx + fx), math.floor(cy - 3.6 - j)) for j in range(max(1, hh))], hc[4])
+    trail = [(13, 3), (14, 2), (15, 1), (14, 0)]
+    put(icon, [trail[(k + j) % 4] for j in range(2)], hc[3], 170)
     return icon
 
 
@@ -412,99 +483,116 @@ F3 = [("Dreadlance", dreadlance, 4), ("Soulfire Censer", soulfire_censer, 4), ("
 BOW_STATES = ["standby", "pulling_0", "pulling_1", "pulling_2"]
 
 
-# ================================================================== F4: Hollow armor (vanilla armor-icon silhouettes + bone)
+# ================================================================== F4: Hollow armor, hand-drawn plate by plate
+# A richer scheme than the first try: blackened violet steel plates (each lit on its own, so they read as separate
+# pieces of metal), aged gold trim, bone, a hollow-cyan glow in the seams and crimson gems. Silhouettes follow the
+# vanilla armor icons. Letters: H highlight, L light plate, M mid, D dark, K seam/shadow, G gold, g dark gold,
+# B bone, b bone shade, C hollow glow (animated), R crimson.
 
-from session_e import CHEST, LEGS, BOOTS  # noqa: E402
-
-CROWN_HELM = [   # the crown's spikes are drawn separately (an outline would fill the gaps between them)
+HOLLOW_HELM = [
+    "....B..BB..B....",
+    "...BB.BBBB.BB...",
+    "...gGGGRRGGGg...",
+    "..HLLMMMMMMDDK..",
+    "..HLMMMMMMMMDK..",
+    "..LMMMMMMMMMDK..",
+    "..LKCCCCCCCCKK..",
+    "..LMMMMGGMMMDK..",
+    "..LMMMMGGMMMDK..",
+    "..gLMMMMMMMDgK..",
+    "...gMDKKKKDMg...",
+    "...gKK....KKg...",
+]
+HOLLOW_CHEST = [
+    "................",
+    "..B..........B..",
+    ".gGGGg....gGGGg.",
+    ".HLLMK....KMMDD.",
+    ".LLMMKC..CKMMDD.",
+    ".LMMKBbGGbBKMDD.",
+    ".LMMKbBGGBbKMDD.",
+    ".LMMKBbRRbBKMDD.",
+    "...MKbBGGBbKD...",
+    "...MKBbGGbBKD...",
+    "...MKKCGGCKKD...",
+    "...LMMKGGKMMD...",
+    "...gGGGGGGGGg...",
+    "....LMMCCMMD....",
+    ".....DDDDDD.....",
+]
+HOLLOW_LEGS = [
     "................",
     "................",
-    "...##########...",
-    "....########....",
-    "...##########...",
-    "...##########...",
-    "...##########...",
-    "...##########...",
-    "...##########...",
-    "...##########...",
-    "....##....##....",
+    "....gGGGGGGg....",
+    "...HLMMRRMMDD...",
+    "...LLMMKKMMDD...",
+    "...LMMKCCKMMD...",
+    "...LMMMKKMMMD...",
+    "...LMMM..MMMD...",
+    "...BBBb..BBBb...",
+    "...BCBb..BCBb...",
+    "...LMMD..LMMD...",
+    "...LMMD..LMMD...",
+    "...gGGg..gGGg...",
+    "...LMMD..LMMD...",
+]
+HOLLOW_BOOTS = [
+    "................",
+    "................",
+    "................",
+    "...Cg......gC...",
+    "...GGG....GGG...",
+    "...LMD....LMD...",
+    "...LMMD..LMMD...",
+    "...LMMD..LMMD...",
+    "...gGGg..gGGg...",
+    "..LHMMD..LHMMD..",
+    ".BLMMKD..BLMMKD.",
+    ".BBMKMD..DMKMBB.",
+    ".KKKK......KKKK.",
 ]
 
 
-def hollow_base(icon, rows, cx, cy, rx, ry):
-    sc = RAMPS["sculk"]
-    part = mask_part(icon, rows, dome_normals(cx, cy, rx, ry))
-    part = Part({p: n for p, n in part.normals.items() if rows[p[1]][p[0]] == "#"})
-    icon.paint(part, sc, bias=0.05, outline=False)
-    icon.outline(part, [sc[0], sc[0]], over=False)
-    mirror_silhouette(icon)
-    return part
-
-
-def glow(frame):
-    hc = RAMPS["hollowcy"]
-    return hc[[3, 4, 5, 4][frame % 4]]
+def hollow_armor(rows, frame):
+    icon = Icon(16)
+    st, gd, bone, hc, cr = RAMPS["boundsteel"], RAMPS["gold"], RAMPS["bone"], RAMPS["hollowcy"], RAMPS["crimson"]
+    for row in rows:
+        assert len(row) == 16, row
+    # blackened steel: every plate tone one step darker than Bound Steel's, so tier 3 is unmistakably darker
+    cols = {"H": st[4], "L": st[3], "M": st[2], "D": st[1], "K": st[0], "G": gd[4], "g": gd[2], "B": bone[4],
+            "b": bone[2], "C": hc[[3, 4, 5, 4][frame % 4]], "R": cr[4]}
+    pixmap(icon, rows, 0, 0, cols)
+    mask = {(x, y) for y, row in enumerate(rows) for x, c in enumerate(row) if c != "."}
+    icon.outline(Part({p: (0, 0, 1) for p in mask}), [RAMPS["ink"][0], RAMPS["ink"][0]], over=False)
+    return icon
 
 
 def hollow_helmet(frame=0):
-    """The Hollow Crown: a sculk helm crowned with bone spikes, a crimson gem at the brow, a visor of hollow light."""
-    icon = Icon(16)
-    bone, cr, sc = RAMPS["bone"], RAMPS["crimson"], RAMPS["sculk"]
-    hollow_base(icon, CROWN_HELM, 7.0, 4.0, 6.0, 7.0)
-    for x in (3, 6, 9, 12):   # the crown: four bone spikes on a band, a crimson gem in the band
-        put(icon, [(x, 0), (x, 1)], bone[4] if x < 8 else bone[3])
-    put(icon, [(x, 2) for x in range(3, 13)], bone[3])
-    put(icon, [(3, 2), (4, 2), (5, 2), (6, 2)], bone[5])
-    put(icon, [(7, 2), (8, 2)], cr[4])
-    put(icon, [(x, 5) for x in range(4, 12)], sc[0])
-    put(icon, [(x, 5) for x in range(5, 11)], glow(frame))   # the visor at eye level
-    return icon
+    """The Hollow Crown: a closed great-helm of blackened steel crowned with bone spikes on a gold band set with a
+    crimson gem, a visor slit burning hollow cyan, a gold nose guard, gilded cheek guards."""
+    return hollow_armor(HOLLOW_HELM, frame)
 
 
 def hollow_chestplate(frame=0):
-    """The Hollow Cuirass: sculk plates with a ribcage of bone across the chest, a crimson gem at the heart, hollow
-    light at the collar."""
-    icon = Icon(16)
-    bone, cr = RAMPS["bone"], RAMPS["crimson"]
-    hollow_base(icon, CHEST, 7.0, 6.0, 7.0, 7.0)
-    put(icon, [(0, 1), (15, 1)], RAMPS["sculk"][1])   # (the chest mask's fin tips: keep them dark, no fins here)
-    for y in (8, 10, 12):   # ribs
-        put(icon, [(x, y) for x in range(4, 7)] + [(x, y) for x in range(9, 12)], bone[3])
-        put(icon, [(4, y), (11, y)], bone[4])
-    put(icon, [(7, y) for y in range(7, 14)] + [(8, y) for y in range(7, 14)], bone[2])   # the sternum
-    put(icon, [(7, 9), (8, 9)], cr[4])
-    put(icon, [(6, 5), (7, 6), (8, 6), (9, 5)], glow(frame))
-    return icon
+    """The Hollow Cuirass: gold-rimmed pauldrons with bone spikes, a ribcage of bone embossed on the breastplate round a
+    gold sternum with a crimson heart-gem, hollow light in the seams, a gold belt."""
+    return hollow_armor(HOLLOW_CHEST, frame)
 
 
 def hollow_leggings(frame=0):
-    """The Hollow Greaves: sculk plates, bone knee guards, a crimson gem at the belt, hollow light down the sides."""
-    icon = Icon(16)
-    bone, cr = RAMPS["bone"], RAMPS["crimson"]
-    hollow_base(icon, LEGS, 7.0, 5.0, 7.0, 8.0)
-    put(icon, [(2, 7), (2, 9), (13, 7), (13, 9)], RAMPS["sculk"][2])
-    put(icon, [(x, 3) for x in range(3, 13)], bone[2])
-    put(icon, [(7, 3), (8, 3)], cr[4])
-    for x0 in (3, 9):   # knee guards
-        put(icon, [(x0, 8), (x0 + 1, 8), (x0 + 2, 8), (x0 + 1, 9)], bone[4] if x0 == 3 else bone[3])
-    put(icon, [(3, 11), (3, 12), (12, 11), (12, 12)], glow(frame))
-    return icon
+    """The Hollow Greaves: a gold belt with a crimson buckle, plated thighs, bone knee cops set with hollow light, gold
+    bands round the shins."""
+    return hollow_armor(HOLLOW_LEGS, frame)
 
 
 def hollow_boots(frame=0):
-    """The Hollow Sabatons: sculk plates with bone toe caps and cuffs of hollow light."""
-    icon = Icon(16)
-    bone = RAMPS["bone"]
-    hollow_base(icon, BOOTS, 7.0, 7.0, 7.0, 6.0)
-    put(icon, [(2, 4), (13, 4)], RAMPS["sculk"][2])
-    put(icon, [(1, 10), (2, 10), (1, 11), (2, 11), (13, 10), (14, 10), (13, 11), (14, 11)], bone[4])
-    put(icon, [(3, 5), (4, 5), (5, 5), (10, 5), (11, 5), (12, 5)], glow(frame))
-    put(icon, [(x, 12) for x in (1, 2, 3, 4, 11, 12, 13, 14)], RAMPS["sculk"][0])
-    return icon
+    """The Hollow Sabatons: cuffs of gold and hollow light, plated shins, segmented toes capped in bone."""
+    return hollow_armor(HOLLOW_BOOTS, frame)
 
 
 F4 = [("Hollow Crown", hollow_helmet, 4), ("Hollow Cuirass", hollow_chestplate, 4),
       ("Hollow Greaves", hollow_leggings, 4), ("Hollow Sabatons", hollow_boots, 4)]
+GROUPS = {"f1": F1, "f2": F2, "f3": F3, "f4": F4}
 
 
 # ================================================================== F5: talismans, the egg, the shield, the flower
@@ -589,22 +677,118 @@ def gallus_egg(frame=0):
     return icon
 
 
-def heartwood_aegis(frame=0):
-    """The Heartwood Aegis: a heater shield of dark heartwood in a bone rim, amber resin running in its grain, a green
-    rune of regrowth at its heart that pulses (animated). (Held as a shield, it needs a 3D model - Session G.)"""
-    icon = Icon(16)
-    wood, bone, am, gel = RAMPS["wood"], RAMPS["bone"], RAMPS["amber"], RAMPS["gel"]
-    rim = icon.polygon([(1.5, 1.5), (14.5, 1.5), (14.5, 7.2), (8.0, 15.2), (1.5, 7.2)], bevel=1.4)
-    icon.paint(rim, bone, bias=0.0)
-    face = icon.polygon([(3.0, 3.0), (13.0, 3.0), (13.0, 6.8), (8.0, 13.2), (3.0, 6.8)], bevel=1.2)
-    icon.paint(face, wood, bias=-0.15, outline=False)
-    for (x, y) in face.keys():   # the grain, with resin in it
-        if (x + y * 2) % 5 == 0:
-            put(icon, [(x, y)], am[3] if y % 3 else am[4])
-    rune = [(8, 4), (7, 5), (9, 5), (8, 6), (8, 7), (6, 7), (10, 7), (8, 8), (8, 9)]
-    put(icon, rune, gel[[3, 4, 5, 4][frame % 4]])
-    mirror_silhouette(icon)
-    return icon
+# ------------------------------------------------------------------ the Heartwood Aegis is a real shield: a 3D texture
+
+SHIELD_UV = {  # the vanilla shield model's box unwrap on a 64 x 64 sheet (plate 12x22x1 at 0,0; handle 2x6x6 at 26,0)
+    "front": (1, 1, 12, 22), "back": (14, 1, 12, 22), "left": (0, 1, 1, 22), "right": (13, 1, 1, 22),
+    "top": (1, 0, 12, 1), "bottom": (13, 0, 12, 1), "handle": (26, 0, 16, 12),
+}
+
+
+def heartwood_shield_texture(frame=0):
+    """The Heartwood Aegis as a shield texture in the vanilla shield's layout: the front is dark heartwood with its
+    grain running down it, two veins of amber resin flowing through the grain, a bone rim with gold corner caps, an
+    amber boss and a green rune of regrowth that pulses (animated); the back is lighter planks with leather straps and
+    iron studs; the edges are bone; the handle is leather."""
+    from PIL import Image
+    img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    wood, am, bone, gd, gel, lea, ir = (RAMPS["wood"], RAMPS["amber"], RAMPS["bone"], RAMPS["gold"], RAMPS["gel"],
+                                        RAMPS["leather"], RAMPS["iron"])
+    fx, fy, fw, fh = SHIELD_UV["front"]
+    for v in range(fh):
+        for u in range(fw):
+            c = wood[2] if (u + round(1.4 * math.sin(v * 0.45))) % 3 else wood[1]
+            if u in (1, 2) and v > 1:
+                c = wood[3] if c == wood[2] else c    # the lit side of the curve
+            for (x0, ph) in ((2.6, 0.0), (9.4, 2.2)):   # resin veins: thin, running down the grain
+                if abs(u + 0.5 - (x0 + 1.0 * math.sin(v * 0.33 + ph))) < 0.5:
+                    c = am[4] if (v + int(ph * 3)) % 9 == 0 else am[2]
+            if u == 0 or v == 0:
+                c = bone[4]
+            elif u == fw - 1 or v == fh - 1:
+                c = bone[2]
+            if (u < 2 or u > fw - 3) and (v < 2 or v > fh - 3):
+                c = gd[4] if u < 6 and v < 11 else gd[3]
+            img.putpixel((fx + u, fy + v), c)
+    pulse = [3, 4, 5, 4][frame % 4]
+    rune = [  # a tree of regrowth: a trunk, branches reaching out, roots
+        ".....gg.....",
+        "...g.GG.g...",
+        "....gGGg....",
+        "..g..GG..g..",
+        "...g.GG.g...",
+        "....gGGg....",
+        ".....GG.....",
+        ".....GG.....",
+        "....gGGg....",
+        "...g....g...",
+    ]
+    for dv, row in enumerate(rune):
+        for u, ch in enumerate(row):
+            if ch != ".":
+                img.putpixel((fx + u, fy + 8 + dv), gel[pulse] if ch == "G" else gel[pulse - 1])
+    for (u, v, c) in ((5, 4, am[4]), (6, 4, am[3]), (5, 5, am[3]), (6, 5, am[2]), (5, 3, gd[4]), (6, 3, gd[3]),
+                      (4, 4, gd[4]), (7, 4, gd[3]), (4, 5, gd[3]), (7, 5, gd[2]), (5, 6, gd[2]), (6, 6, gd[2])):
+        img.putpixel((fx + u, fy + v), c)   # the boss: an amber gem in a gold setting
+    img.putpixel((fx + 5, fy + 4), am[5])
+    bx, by, bw, bh = SHIELD_UV["back"]
+    for v in range(bh):
+        for u in range(bw):
+            c = wood[3] if v % 5 else wood[2]
+            if u in (3, 8):
+                c = lea[3] if u == 3 else lea[2]
+            if u in (3, 8) and v % 7 == 3:
+                c = ir[4]
+            img.putpixel((bx + u, by + v), c)
+    for key, col in (("left", bone[3]), ("right", bone[2]), ("top", bone[4]), ("bottom", bone[2])):
+        x0, y0, w, h = SHIELD_UV[key]
+        for v in range(h):
+            for u in range(w):
+                img.putpixel((x0 + u, y0 + v), col)
+    hx, hy, hw, hh = SHIELD_UV["handle"]
+    for v in range(hh):
+        for u in range(hw):
+            if (u < 6 and v >= 6) or (u >= 6 and v < 6) or (u >= 6 and v >= 6):
+                img.putpixel((hx + u, hy + v), lea[3] if (u + v) % 4 else lea[2])
+    return img
+
+
+def shield_preview(tex, scale=6):
+    """How the shield looks as a 3D object: the front face, its right edge and top edge in an oblique view, and the
+    flat front and back faces for reference."""
+    from PIL import Image, ImageDraw
+    fx, fy, fw, fh = SHIELD_UV["front"]
+    out = Image.new("RGBA", ((fw + 4) * scale * 3 + 40, (fh + 8) * scale + 30), (34, 32, 40, 255))
+    d = ImageDraw.Draw(out)
+    # oblique 3D view: shear the front up toward the right, then add the side (right edge) and top edge in depth
+    ox, oy = 10, 40
+    depth = 2
+    for v in range(fh):
+        for u in range(fw):
+            c = tex.getpixel((fx + u, fy + v))
+            x, y = ox + u * scale, oy + (v - u * 0.25) * scale
+            d.rectangle((x, y, x + scale - 1, y + scale - 1), fill=c)
+    rx, ry, _, _ = SHIELD_UV["right"]
+    for v in range(fh):
+        for k in range(depth):
+            c = tex.getpixel((rx, ry + v))
+            c = (c[0] * 7 // 10, c[1] * 7 // 10, c[2] * 7 // 10, 255)
+            x, y = ox + (fw + k) * scale, oy + (v - fw * 0.25 - k * 0.5) * scale
+            d.rectangle((x, y, x + scale - 1, y + scale - 1), fill=c)
+    tx, ty, _, _ = SHIELD_UV["top"]
+    for u in range(fw):
+        for k in range(depth):
+            c = tex.getpixel((tx + u, ty))
+            x, y = ox + (u + k) * scale, oy + (-1 - u * 0.25 - k * 0.5) * scale
+            d.rectangle((x, y, x + scale - 1, y + scale - 1), fill=c)
+    d.text((ox, 8), "3D view", fill=(220, 220, 230))
+    for n, key in enumerate(("front", "back")):
+        x0, y0, w, h = SHIELD_UV[key]
+        face = tex.crop((x0, y0, x0 + w, y0 + h)).resize((w * scale, h * scale), Image.NEAREST)
+        px = 10 + (fw + 4) * scale * (n + 1)
+        out.alpha_composite(face, (px, 40))
+        d.text((px, 8), key, fill=(220, 220, 230))
+    return out
 
 
 def watchful_eyeblossom(frame=0):
@@ -638,7 +822,7 @@ def watchful_eyeblossom(frame=0):
 
 
 F5 = [("Hollow Halo", hollow_halo, 4), ("Wishbone Talisman", wishbone_talisman, 4), ("Aura Talisman", aura_talisman, 4),
-      ("Gallus Egg", gallus_egg, 4), ("Heartwood Aegis", heartwood_aegis, 4), ("Watchful Eyeblossom", watchful_eyeblossom, 4)]
+      ("Gallus Egg", gallus_egg, 4), ("Watchful Eyeblossom", watchful_eyeblossom, 4)]
 GROUPS = {"f1": F1, "f2": F2, "f3": F3, "f4": F4, "f5": F5}
 
 
@@ -650,6 +834,13 @@ def tier3_set():
     for group in (F1, F2, F3, F4, F5):
         icons += [(name, make(0).img) for name, make, _ in group]
     icons.append(("Stormstring Bow", stormstring_bow(0).img))
+    from PIL import Image
+    tex = heartwood_shield_texture(0)
+    x0, y0, w, h = SHIELD_UV["front"]
+    front = tex.crop((x0, y0, x0 + w, y0 + h)).resize((8, 15), Image.NEAREST)
+    stand_in = Image.new("RGBA", (16, 16))
+    stand_in.paste(front, (4, 0))
+    icons.append(("Heartwood Aegis (3D model)", stand_in))
     return icons
 
 
@@ -675,6 +866,12 @@ def render(which, version):
             icon.save(os.path.join(OUT, f"stormstring_bow_{st}.png"))
             statics.append((f"Stormstring Bow ({st})", icon.img))
         animated.append(("Stormstring Bow (draw)", [i.img for i in bows]))
+    if which == "f5":   # the Heartwood Aegis is a shield: a 64x64 texture in the vanilla layout (4 frames), a preview
+        texes = [heartwood_shield_texture(f) for f in range(4)]
+        for f, tex in enumerate(texes):
+            tex.save(os.path.join(OUT, f"heartwood_aegis_shield_{f}.png"))
+        shield_preview(texes[0], scale=10).save(os.path.join(OUT, f"review-heartwood-aegis{suffix}.png"))
+        review.gif([[shield_preview(t, scale=4) for t in texes]], os.path.join(OUT, "preview-heartwood-aegis.gif"), ms=220, scale=1)
     print(review.sheet(statics, os.path.join(OUT, f"review-{which}{suffix}.png")))
     if animated:
         from session_b import frame_sheet
