@@ -78,7 +78,8 @@ Each boss keeps working without the pack (the vanilla mob is shown instead of th
 | 6 | particle retextures and sounds | me + sound source | small |
 
 ## 8. Honest assessment of what I can make
-Samples in [art-samples/](art-samples/) (`preview.png`), made procedurally from code:
+First samples (since superseded and deleted; the real art lives in [art/](art/), see [art/SESSIONS.md](art/SESSIONS.md)),
+made procedurally from code:
 - **Good:** geometric art - sigils, runes, circles, pentagrams, GUI frames, slot borders, decals, animated glow frames,
   palette swaps and consistent recolors. The 64x64 sigil sample is usable as-is.
 - **Usable as placeholders:** 16x16 item icons. They read (the Spirit Essence vial works) but have flat shading,

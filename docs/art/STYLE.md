@@ -39,9 +39,11 @@ living light; chromatic ramps; glowing inlay; the twinkle; hard facets; everythi
 
 ## Toolkit (`tools/art/`)
 - `palettes.py` - ramps and tier families, the light direction.
-- `pixelkit.py` - shapes with surface normals (sphere, capsule, box, bevelled polygon, ring), ramp shading, selective
-  outlines, symmetry check.
-- `review.py` - the review sheet: 1x and 2x in inventory slots, 8x on dark and light, silhouette, values (grayscale).
+- `pixelkit.py` - shapes with surface normals (sphere, capsule, box, bevelled polygon, ring, tubes for line art, flat
+  gem facets, tilted ellipse ring), ramp shading, selective outlines, glow, the twinkle, symmetry check.
+- `glyphkit.py` - flat glyphs (runes, paw print): supersampled strokes, outline and glow.
+- `review.py` - review sheets: `sheet` (16 px icons in inventory slots, dark/light, silhouette, values), `big_sheet`
+  (large assets, also on a stone floor), `gif` (animated previews).
 - `session_*.py` - each session's assets; outputs and review sheets go to `docs/art/session-*/`.
 
 ## Self-critique checklist (every asset, every iteration)

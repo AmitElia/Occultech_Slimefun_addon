@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from palettes import RAMPS  # noqa: E402
 from pixelkit import Icon, Part, _norm  # noqa: E402
 from session_b import OUT, frame_sheet  # noqa: E402
+import review  # noqa: E402
 
 FRAMES = 4
 
@@ -240,7 +241,7 @@ STEPS = [("Ember step", ember_step), ("Frost step", frost_step), ("Rune step (as
 
 
 if __name__ == "__main__":
-    version = sys.argv[1] if len(sys.argv) > 1 else "v1"
+    version = sys.argv[1] if len(sys.argv) > 1 else "final"
     rows = []
     for name, make in STEPS:
         frames = []
@@ -249,4 +250,5 @@ if __name__ == "__main__":
             icon.save(os.path.join(OUT, name.lower().replace(" (", "_").replace(")", "").replace(" ", "_") + f"_{f}.png"))
             frames.append(icon.img)
         rows.append((name, frames))
-    print(frame_sheet(rows, os.path.join(OUT, f"review-steps-{version}.png")))
+    print(frame_sheet(rows, os.path.join(OUT, f"review-steps{'' if version == 'final' else '-' + version}.png")))
+    review.gif([f for _, f in rows], os.path.join(OUT, "preview-steps.gif"), ms=380, bg=(62, 62, 68, 255))

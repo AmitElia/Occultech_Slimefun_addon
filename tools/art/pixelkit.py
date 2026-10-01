@@ -230,13 +230,9 @@ class Icon:
         for (x, y) in coords:
             self.img.putpixel((x, y), (0, 0, 0, 0))
 
-    def mirror_check(self):
-        """Pixels that differ from the horizontal mirror image (0 = perfectly symmetric)."""
-        w = self.w
-        return sum(1 for y in range(self.h) for x in range(w // 2) if self.img.getpixel((x, y)) != self.img.getpixel((w - 1 - x, y)))
-
     def silhouette_asymmetry(self):
-        """Like mirror_check but only compares coverage (shading follows the top-left light, so it is never mirrored)."""
+        """Pixels whose coverage differs from the mirror image (0 = symmetric). Only coverage is compared: shading follows
+        the top-left light, so it is never mirrored."""
         w = self.w
         return sum(1 for y in range(self.h) for x in range(w // 2)
                    if (self.img.getpixel((x, y))[3] > 0) != (self.img.getpixel((w - 1 - x, y))[3] > 0))

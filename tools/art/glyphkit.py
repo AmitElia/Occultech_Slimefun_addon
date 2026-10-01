@@ -4,8 +4,6 @@ Shapes are drawn on a supersampled mask with exact geometry, reduced to crisp pi
 for exact symmetry, then styled in grayscale so the game can tint them (a font glyph's colours are multiplied by the
 text colour): white core, soft edge, dark outline, faint glow.
 """
-import math
-
 from PIL import Image, ImageDraw
 
 SS = 8  # supersampling factor
@@ -54,9 +52,6 @@ class Glyph:
 
     def erase_disc(self, cx, cy, r):
         ImageDraw.Draw(self.mask).ellipse((cx * SS - r * SS, cy * SS - r * SS, cx * SS + r * SS, cy * SS + r * SS), fill=0)
-
-    def erase_polygon(self, points):
-        ImageDraw.Draw(self.mask).polygon([self._p(*p) for p in points], fill=0)
 
     # ------------------------------------------------------------------ to pixels
 
@@ -114,16 +109,3 @@ def asymmetry(img):
     w = img.width
     return sum(1 for y in range(img.height) for x in range(w // 2)
                if (img.getpixel((x, y))[3] > 0) != (img.getpixel((w - 1 - x, y))[3] > 0))
-
-
-def star(cx, cy, r, n=5, rot=-math.pi / 2):
-    return [(cx + r * math.cos(rot + i * 2 * math.pi / n), cy + r * math.sin(rot + i * 2 * math.pi / n)) for i in range(n)]
-
-
-def star_outline(cx, cy, r_out, r_in, n=5, rot=-math.pi / 2):
-    pts = []
-    for i in range(2 * n):
-        r = r_out if i % 2 == 0 else r_in
-        a = rot + i * math.pi / n
-        pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
-    return pts

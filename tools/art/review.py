@@ -110,3 +110,19 @@ def big_sheet(icons, path, scale=4):
             out.paste(view, (xs[c], y))
     out.save(path)
     return path
+
+
+def gif(rows, path, ms=120, bg=(24, 22, 30, 255), scale=8):
+    """rows: [[frame images of one asset], ...] shown side by side, looping. All assets need the same frame count."""
+    n = len(rows[0])
+    w, h = rows[0][0].width * scale, rows[0][0].height * scale
+    frames = []
+    for i in range(n):
+        strip = Image.new("RGBA", (len(rows) * (w + 8) - 8, h), bg)
+        for k, frames_of in enumerate(rows):
+            cell = Image.new("RGBA", frames_of[i].size, bg)
+            cell.alpha_composite(frames_of[i])
+            strip.paste(cell.resize((w, h), Image.NEAREST), (k * (w + 8), 0))
+        frames.append(strip.convert("P", palette=Image.ADAPTIVE))
+    frames[0].save(path, save_all=True, append_images=frames[1:], duration=ms, loop=0)
+    return path

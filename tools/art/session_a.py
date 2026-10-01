@@ -100,5 +100,5 @@ if __name__ == "__main__":
     icons = [("Ritual Chalk (T0)", ritual_chalk()), ("Spirit Essence (T1)", spirit_essence()), ("Hollow Sigil (T3)", hollow_sigil())]
     for name, icon in icons:
         icon.save(os.path.join(OUT, name.split(" (")[0].lower().replace(" ", "_") + ".png"))
-    version = sys.argv[1] if len(sys.argv) > 1 else "v1"
-    print(review.sheet([(n, i.img) for n, i in icons], os.path.join(OUT, f"review-{version}.png")))
+    version = sys.argv[1] if len(sys.argv) > 1 else "final"
+    print(review.sheet([(n, i.img) for n, i in icons], os.path.join(OUT, f"review{'' if version == 'final' else '-' + version}.png")))

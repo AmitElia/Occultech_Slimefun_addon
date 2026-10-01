@@ -209,14 +209,14 @@ SIGILS = [("Pentagram", pentagram), ("Hexagram", hexagram), ("T0 Initiate", sigi
 
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "sigils"
-    version = sys.argv[2] if len(sys.argv) > 2 else "v1"
+    version = sys.argv[2] if len(sys.argv) > 2 else "final"
     if which == "sigils":
         made = []
         for name, make in SIGILS:
             icon = make()
             icon.save(os.path.join(OUT, "sigil_" + name.split()[-1].lower() + ".png"))
             made.append((f"{name} (asym {icon.silhouette_asymmetry()})", icon.img))
-        print(review.big_sheet(made, os.path.join(OUT, f"review-sigils-{version}.png"), scale=4))
+        print(review.big_sheet(made, os.path.join(OUT, f"review-sigils{'' if version == 'final' else '-' + version}.png"), scale=4))
 
 
 # ================================================================== pieces: finished 16 px item textures
@@ -436,7 +436,7 @@ def frame_sheet(rows, path, scale=6):
     return path
 
 
-PARTICLES = [*[(f"Gem {tier} {r} (animated)", [lambda f=f, r=r: gem(RAMPS[r], f) for f in range(GEM_FRAMES)]) for r, tier in GEMS],
+PARTICLES = [*[(f"Gem {tier} {r}", [lambda f=f, r=r: gem(RAMPS[r], f) for f in range(GEM_FRAMES)]) for r, tier in GEMS],
              ("Soul flame (spirit)", [lambda f=f: soul_flame(RAMPS["spirit"], f) for f in range(4)]),
              ("Soul flame (crimson)", [lambda f=f: soul_flame(RAMPS["crimson"], f) for f in range(4)]),
              ("Sparkle (gold)", [lambda f=f: sparkle(RAMPS["gold"], f) for f in range(5)]),
@@ -444,7 +444,7 @@ PARTICLES = [*[(f"Gem {tier} {r} (animated)", [lambda f=f, r=r: gem(RAMPS[r], f)
 
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "particles":
-    version = sys.argv[2] if len(sys.argv) > 2 else "v1"
+    version = sys.argv[2] if len(sys.argv) > 2 else "final"
     rows = []
     for name, makers in PARTICLES:
         frames = []
@@ -453,14 +453,21 @@ if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "particles":
             icon.save(os.path.join(OUT, name.lower().replace(" (", "_").replace(")", "").replace(" ", "_") + f"_{i}.png"))
             frames.append(icon.img)
         rows.append((name, frames))
-    print(frame_sheet(rows, os.path.join(OUT, f"review-particles-{version}.png")))
+    print(frame_sheet(rows, os.path.join(OUT, f"review-particles{'' if version == 'final' else '-' + version}.png")))
+    anim = dict(rows)
+    review.gif([anim[f"Gem {t} {r}"] for r, t in GEMS], os.path.join(OUT, "preview-gems.gif"), ms=120)
+    for name in ("Soul flame (spirit)", "Soul flame (crimson)"):
+        review.gif([anim[name]], os.path.join(OUT, "preview-" + name.lower().replace(" (", "_").replace(")", "").replace(" ", "_") + ".gif"), ms=140)
+    for name in ("Sparkle (gold)", "Sparkle (hollow)"):
+        review.gif([anim[name]], os.path.join(OUT, "preview-" + name.lower().replace(" (", "_").replace(")", "").replace(" ", "_") + ".gif"), ms=90)
 
 
 if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "pieces":
-    version = sys.argv[2] if len(sys.argv) > 2 else "v1"
+    version = sys.argv[2] if len(sys.argv) > 2 else "final"
     made = []
     for name, make in PIECES:
         icon = make()
-        icon.save(os.path.join(OUT, name.lower().replace(" (", "_").replace(")", "").replace(" ", "_") + ".png"))
+        if not name.startswith("Gem"):  # gems are saved as animation frames by "particles" (frame 0 = static icon)
+            icon.save(os.path.join(OUT, name.lower().replace(" (", "_").replace(")", "").replace(" ", "_") + ".png"))
         made.append((name, icon.img))
-    print(review.sheet(made, os.path.join(OUT, f"review-pieces-{version}.png")))
+    print(review.sheet(made, os.path.join(OUT, f"review-pieces{'' if version == 'final' else '-' + version}.png")))

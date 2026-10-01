@@ -37,8 +37,10 @@ visuals.
    hollow cyan + crimson.
 
 ## Our own reference assets (approved by the user)
-- Pentagrams and tier sigils: `session-b/review-sigils-r2v2.png` (liked a lot)
-- Animated soul flame and sparkle: `session-b/preview-*.gif` (the user's favourite - animation is the bar to meet)
-- Cut gems with twinkles: `session-b/review-pieces-r3v3.png`, animated in `review-particles-r3v3.png`
-- Paw print and runes: `session-b/review-prints-r2v3.png`, `review-runes-final.png`
-- Session A icons: `session-a/review-final.png` (v4 chalk, v2 essence and sigil)
+- Pentagrams and tier sigils: `session-b/review-sigils.png` (liked a lot)
+- Animated soul flame and sparkle: `session-b/preview-soul_flame_*.gif`, `preview-sparkle_*.gif` (the user's favourite -
+  animation is the bar to meet)
+- Cut gems with twinkles: `session-b/review-pieces.png`, `preview-gems.gif`
+- Step marks: `session-b/review-steps.png`, `preview-steps.gif`
+- Paw print and runes: `session-b/review-prints.png`, `review-runes.png`
+- Session A icons: `session-a/review.png` (v4 chalk, v2 essence and sigil)

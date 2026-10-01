@@ -18,7 +18,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 
 ## Session A - style and toolkit (2026-10-01)
 **Delivered:** `tools/art/` (palettes, pixelkit, review), [STYLE.md](STYLE.md), and three icons in
-[session-a/](session-a/) with review sheets `review-v1..v4.png` (v4 is final).
+[session-a/](session-a/) with the review sheet `review.png` (the user's final pick; iteration sheets deleted).
 
 **Iterations and self-critique**
 - **v1** - big step up from the first samples (real volume, one light, coloured outlines). Failed: the chalk was a
@@ -49,7 +49,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 - The ghost's face is two dark pixels; it works, but faces at this size are fragile.
 
 **Review (user):** v2 was the best overall - keep the v2 Hollow Sigil (bold star on a glowing ring) and the v2 Spirit
-Essence (round little ghost); take the v4 Ritual Chalk. Final set: `review-final.png`.
+Essence (round little ghost); take the v4 Ritual Chalk. Final set: `review.png`.
 
 **Lessons carried forward**
 - A bold, simple silhouette beats a "correct" symbol: the badge-like star was preferred over the literal pentacle
@@ -64,7 +64,7 @@ Essence (round little ghost); take the v4 Ritual Chalk. Final set: `review-final
 ### Round 1 - rejected
 Built a separate glyph toolkit (`glyphkit.py`) that made everything **flat grayscale** so the game's text colour could
 tint one glyph for every tier. Sigils (2 versions), 24 runes (3 versions), footprints and crown pieces (4 versions).
-Outputs kept in [session-b/round1/](session-b/round1/).
+Its outputs were deleted after the review.
 
 **User review:** the runes are nice and the paw prints are liked; everything else failed - sigils "lack volume and
 are very flat" (the very first 64 px sample was nicer), soul flame and sparkle "boring", gem/halo/crown "nowhere near a
@@ -84,8 +84,7 @@ finished item texture", boot and bare prints disliked. Redo the session and rele
 assets at 1x/2x and on dark, light and a stone floor. `session_b.py` = sigils, pieces, particles;
 `session_b_glyphs.py` = runes and footprints (kept glyph style - those were liked).
 
-**Final outputs** in [session-b/](session-b/): `review-sigils-r2v2.png`, `review-pieces-r2v3.png`,
-`review-particles-r2v3.png` (+ `preview-*.gif` animations), `review-prints-r2v3.png`, `review-runes-final.png`.
+Iteration names below (r2v1, r3v2...) are the versions as reviewed; only the final sheets are kept (see *Final files*).
 
 **Iterations and self-critique**
 - **Sigils r2v1** - six sigils (pentagram, hexagram, one per tier) each in its tier ramp: tube-shaded rings with marks
@@ -128,14 +127,14 @@ Occultech look* (dark vessel, living light; chromatic ramps; glowing inlay; the 
 magical moves). STYLE.md now points to it and has rule 11. Toolkit: `Icon.twinkle` (the signature motif), palettes
 frost/ink/ash/blossom/pollen.
 
-**Gems** (`review-pieces-r3v3.png`, `preview-gems.gif`)
+**Gems** (`review-pieces.png`, `preview-gems.gif`)
 - r3v1: hard seams (bright girdle line on the lit half, dark below), light/dark facets alternating round the pavilion,
   8-frame animation (a glint sweeps the table, then twinkles take turns). Failed: twinkles touched the outline and
   merged into the silhouette; two reflection pixels drew a scribble on the left.
 - r3v2: stone moved down 1 px, twinkles clear of it, scribble removed. Still a small "S" in the left pavilion: 2 px
   wedge facets are too thin to read as faces. r3v3: four wide pavilion facets (light, dark, light, dark). Pass.
 
-**Step marks replace footprints** (`session_b_steps.py`, `review-steps-v3.png`, `preview-steps.gif`): one per Aura
+**Step marks replace footprints** (`session_b_steps.py`, `review-steps.png`, `preview-steps.gif`): one per Aura
 Talisman step style, 4 frames each (appear, peak, decay, trace - the game swaps glyphs as the mark ages).
 - Ember: a charred ash patch whose cracks glow, flames lick, then cool to dark scars and smoke.
 - Frost: an ice crystal blooms on an icy sheen, glints, then melts into pieces and droplets.
@@ -144,7 +143,7 @@ Talisman step style, 4 frames each (appear, peak, decay, trace - the game swaps 
 - Blossom: a closed flower opens (domed petals, pollen centre), petals spin outward, three loose petals drift away.
 - v1 critique: ember frame 0 read as a yellow tile; the eye rune became a checkerboard; ink was a purple ball with
   tendrils that didn't read; the bud read as a bow tie. v2 fixed all four; v3 kept the dried ink's splat shape. Pass.
-- The paw print stays (`review-prints-final.png`); boot and bare prints are dropped.
+- The paw print stays (`review-prints.png`); boot and bare prints are dropped.
 
 **Honest remaining weaknesses**
 - Ember's first frame is still busy (bright cracks over a small patch); fine for a 3-second mark, could be calmer.
@@ -156,4 +155,19 @@ Talisman step style, 4 frames each (appear, peak, decay, trace - the game swaps 
 - Twinkles and other accents must never touch an object's outline (they merge into its silhouette).
 - Facets narrower than ~3 px don't read as faces; fewer, wider facets with alternating values do.
 - "Something unique" came from giving a mark a story (the ink eye opening) rather than a better shape.
+
+### Final files (cleanup after round 3)
+Iteration sheets, round 1, the dropped prints and the first `docs/art-samples/` were deleted; every file left is
+regenerated by the scripts (`python tools/art/session_b.py sigils|pieces|particles`, `session_b_glyphs.py
+runes|prints`, `session_b_steps.py`; a version argument such as `v2` writes `review-*-v2.png` for iterating).
+
+| Files in `session-b/` | What |
+|---|---|
+| `sigil_{pentagram,hexagram,initiate,bound,abyssal,hollow}.png` | 64 px ritual sigils (floor decals / glyphs) |
+| `gem_t{0..3}_{ember,violet,seaglow,crimson}_{0..7}.png` | animated gems, 8 frames (frame 0 = static icon) |
+| `crown.png`, `halo.png` | 16 px item textures |
+| `soul_flame_{spirit,crimson}_{0..3}.png`, `sparkle_{gold,hollow}_{0..4}.png` | animated particles |
+| `{ember,frost,ink,blossom}_step_{0..3}.png`, `rune_step_{ascend,bind}_{0..3}.png` | step marks, 4 life frames |
+| `footprint_paw.png`, `rune_*.png` (24) | flat glyphs (kept from round 1) |
+| `review-*.png`, `preview-*.gif` | review sheets and animated previews |
 

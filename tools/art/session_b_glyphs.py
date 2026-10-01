@@ -1,5 +1,4 @@
-"""Session B: runes (an original Occultech alphabet) and footprints - flat glyphs with outline and glow (the paw and the runes were kept from round 1)."""
-import math
+"""Session B: runes (an original Occultech alphabet) and the paw print - flat glyphs with outline and glow (both kept from round 1 on the user's review)."""
 import os
 import sys
 
@@ -104,12 +103,6 @@ def rune(strokes):
 
 
 # ------------------------------------------------------------------ footprints (16 x 16, left foot; the right is mirrored)
-# Hand-drawn: at 16 px a footprint lives or dies by single pixels. Same styling as the paw (which was kept).
-
-def bitmap(text):
-    rows = text.strip().split()
-    return [[c == "#" for c in r] for r in rows]
-
 
 def footprint_paw():
     g = Glyph(16)
@@ -150,14 +143,14 @@ def rune_sheet(runes, path, scale=4):
 
 if __name__ == "__main__":
     which = sys.argv[1]
-    version = sys.argv[2] if len(sys.argv) > 2 else "v1"
+    version = sys.argv[2] if len(sys.argv) > 2 else "final"
     if which == "runes":
         made = []
         for name, strokes, symmetric in RUNES:
             img = style(rune(strokes).pixels(mirror=symmetric))
             img.save(os.path.join(OUT, "rune_" + name + ".png"))
             made.append((name, img))
-        print(rune_sheet(made, os.path.join(OUT, f"review-runes-{version}.png")))
+        print(rune_sheet(made, os.path.join(OUT, f"review-runes{'' if version == 'final' else '-' + version}.png")))
     elif which == "prints":
         made = []
         for name, make, mirrored in PRINTS:
@@ -168,4 +161,4 @@ if __name__ == "__main__":
                 right = img.transpose(Image.FLIP_LEFT_RIGHT)
                 right.save(os.path.join(OUT, name.replace(" ", "_") + "_right.png"))
                 made.append((name + " (right)", right))
-        print(sheet(made, os.path.join(OUT, f"review-prints-{version}.png"), scale=4))
+        print(sheet(made, os.path.join(OUT, f"review-prints{'' if version == 'final' else '-' + version}.png"), scale=4))
