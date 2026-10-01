@@ -40,6 +40,12 @@ final class DebugWorld {
             wet.setWaterlogged(false);
             block.setBlockData(wet, false);
         }
+        // head-shaped Slimefun blocks need the item's texture, or they show up as plain Steve heads
+        if (block.getState() instanceof org.bukkit.block.Skull skull && item.getItem().getItemMeta() instanceof org.bukkit.inventory.meta.SkullMeta meta
+            && meta.getPlayerProfile() != null) {
+            skull.setPlayerProfile(meta.getPlayerProfile());
+            skull.update(true, false);
+        }
         BlockStorage.store(block, id);
         return true;
     }

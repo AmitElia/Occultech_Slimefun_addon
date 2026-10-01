@@ -32,6 +32,11 @@ public final class OccultechCommand implements TabExecutor {
         this.plugin = plugin;
     }
 
+    /** Keeps the showcase's machine and contract demos running (a no-op without a showcase). */
+    public static void startShowcaseLoop(Occultech plugin) {
+        new ShowcaseLoop(plugin);
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1 && args[0].equalsIgnoreCase("selftest")) {

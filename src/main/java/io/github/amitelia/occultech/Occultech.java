@@ -82,6 +82,7 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         getServer().getPluginManager().registerEvents(new io.github.amitelia.occultech.items.HollowGearListener(this), this);
         getServer().getPluginManager().registerEvents(new io.github.amitelia.occultech.items.CosmeticListener(decorations), this);
         getCommand("occultech").setExecutor(new OccultechCommand(this));
+        io.github.amitelia.occultech.debug.OccultechCommand.startShowcaseLoop(this);
 
         getLogger().info("Occultech enabled: " + registrar.stacks().size() + " items, " + rituals.recipes().size()
             + " rituals, " + registrar.researchCount() + " researches - the circles are listening.");

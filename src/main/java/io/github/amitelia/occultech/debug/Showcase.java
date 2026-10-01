@@ -98,6 +98,8 @@ final class Showcase {
     private final Map<Integer, Block> summonAltars = new HashMap<>();
     private final Set<Chunk> ticketed = new HashSet<>();
     private final List<Runnable> fills = new ArrayList<>();
+    /** Demos the showcase loop keeps running ("TYPE;x;y;z[;more]"), saved in showcase.yml. */
+    private final List<String> loops = new ArrayList<>();
     private World world;
     private int floorY;
     private int ox;
@@ -127,7 +129,7 @@ final class Showcase {
             z += length;
         }
         int servitorStart = z;
-        int end = z + 58;
+        int end = z + 88;
 
         loadArea(oz + 1, end + 1);
         layFloor(oz + 2, end, segments, servitorStart);
@@ -484,10 +486,6 @@ final class Showcase {
         demoBlock(world.getBlockAt(ox + 5, y, startZ + 15), "PEARL_BED", "&bPearl Bed\n&7Grows prismarine shards and crystals.");
         demoBlock(world.getBlockAt(ox - 5, y, startZ + 21), "EMBER_BRAZIER", "&6Ember Brazier\n&7Makes blaze powder.");
         demoBlock(world.getBlockAt(ox + 5, y, startZ + 21), "WIND_CHIME", "&bWind Chime\n&7Speed II and Jump Boost II within 32 blocks.\n&7Chimes softly now and then.");
-        demoBlock(world.getBlockAt(ox - 5, y, startZ + 27), "OCCULT_FORGE", "&cOccult Forge &8(machine)\n&7Needs Slimefun power to run.\n&7Flames while it works.");
-        demoBlock(world.getBlockAt(ox - 5, y, startZ + 33), "HOLLOW_ASSEMBLER", "&8Hollow Assembler &8(machine)\n&7Needs Slimefun power.\n&7Assembles tier-3 gear from 9 input slots.");
-        demoBlock(world.getBlockAt(ox, y, startZ + 22), "SERVITOR_NEXUS", "&3Servitor Nexus &8(tier 3)\n&7Links the shrines around it: shared store,\n&7empower all, and an overview of every shrine.");
-        demoBlock(world.getBlockAt(ox + 5, y, startZ + 27), "SOUL_CONDENSER", "&cSoul Condenser &8(machine)\n&7Needs Slimefun power to run.\n&7Souls drift while it works.");
 
         // decoration gallery across the end of the hall
         title(new Location(world, ox + 0.5, floorY + 5, startZ + 41.5), "&d&lDECORATIONS\n&7Right-click one to change its look");
@@ -582,6 +580,7 @@ final class Showcase {
             Block acolyte = tier0.getRelative(0, 0, 6);
             Map<Material, Integer> stock = Map.of(Material.STRING, 32, Material.SPIDER_EYE, 16, Material.FERMENTED_SPIDER_EYE, 4);
             shrine(acolyte, "ACOLYTE_CONTRACT", "&5Contract: Acolyte\n&7Refills the bowls with the offerings\n&7of the last ritual done here.", stock);
+            loops.add("ACOLYTE;" + acolyte.getX() + ";" + acolyte.getY() + ";" + acolyte.getZ() + ";" + tier0.getX() + ";" + tier0.getY() + ";" + tier0.getZ());
             fills.add(() -> {
                 plugin.rituals().rememberRitual(tier0, brood.get());
                 SlimefunItem salt = SlimefunItem.getById(ItemKeys.slimefunId("GRAVE_SALT"));
@@ -593,10 +592,68 @@ final class Showcase {
                 }
             });
         }
+        buildMachines(startZ + 62);
+    }
+
+    /**
+     * Powered machines and the Servitor Nexus. Power: an Infinity Panel (InfinityExpansion2) through an Energy Regulator
+     * and connectors - a real Slimefun network. Without InfinityExpansion2 the showcase loop keeps the machines charged.
+     */
+    private void buildMachines(int z0) {
+        int y = floorY + 1;
+        title(new Location(world, ox + 0.5, floorY + 5, z0 + 1.5), "&c&lMACHINES & POWER\n&7Working machines on a Slimefun power network");
+        boolean generator = ShowcaseLoop.exists("IE_INFINITY_PANEL");
+        if (generator) {
+            demoBlock(world.getBlockAt(ox - 15, y, z0 + 6), "IE_INFINITY_PANEL", "&bInfinity Panel &8(InfinityExpansion2)\n&7Generates power day and night");
+        }
+        demoBlock(world.getBlockAt(ox - 12, y, z0 + 6), "ENERGY_REGULATOR", "&eEnergy Regulator\n&7Every power network needs one.\n&7Connectors carry power 6 blocks each.");
+        demoBlock(world.getBlockAt(ox - 12, y, z0 + 8), "SMALL_CAPACITOR", "&eSmall Capacitor\n&7Stores spare power");
+        for (int x : new int[] { -8, -3, 2 }) {
+            DebugWorld.placeSlimefun(world.getBlockAt(ox + x, y, z0 + 6), "ENERGY_CONNECTOR", this::record);
+        }
+        String[][] machines = {
+            { "OCCULT_FORGE", "&cOccult Forge\n&7Forges alloys and tier-2/3 metals.\n&7Flames rise while it works." },
+            { "SOUL_CONDENSER", "&cSoul Condenser\n&7Condenses Spirit and Hollow Essence.\n&7Souls drift while it works." },
+            { "HOLLOW_ASSEMBLER", "&8Hollow Assembler\n&7Builds tier-3 gear from 9 input slots." } };
+        for (int i = 0; i < machines.length; i++) {
+            Block machine = world.getBlockAt(ox - 8 + i * 5, y, z0 + 4);
+            demoBlock(machine, machines[i][0], machines[i][1] + "\n&8Open it to watch the recipe run.");
+            loops.add("MACHINE;" + machine.getX() + ";" + machine.getY() + ";" + machine.getZ());
+            if (!generator) {
+                loops.add("CHARGE;" + machine.getX() + ";" + machine.getY() + ";" + machine.getZ());
+            }
+        }
+
+        // the Servitor Nexus with its own two shrines (far enough from the contract demos not to link them)
+        int zn = z0 + 16;
+        Block nexus = world.getBlockAt(ox, y, zn);
+        demoBlock(nexus, "SERVITOR_NEXUS", "&3Servitor Nexus &8(tier 3)\n&7The two shrines beside it deliver here.\n&7Open it: shared store, Overview, Empower all.");
+        Block linkedHarvest = world.getBlockAt(ox - 6, y, zn);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx != 0 || dz != 0) {
+                    setBlock(linkedHarvest.getRelative(dx, -1, dz), Material.SOUL_SAND);
+                    Block wart = linkedHarvest.getRelative(dx, 0, dz);
+                    setBlock(wart, Material.NETHER_WART);
+                    Ageable age = (Ageable) wart.getBlockData();
+                    age.setAge(age.getMaximumAge());
+                    wart.setBlockData(age, false);
+                }
+            }
+        }
+        shrine(linkedHarvest, "HARVEST_CONTRACT", "&5Harvest &3(linked to the Nexus)", Map.of());
+        Block linkedGather = world.getBlockAt(ox + 6, y, zn);
+        shrine(linkedGather, "GATHER_CONTRACT", "&5Gather &3(linked to the Nexus)", Map.of());
+        // these two deliver to the Nexus, not their own store: fix the labels the shrine() helper wrote
+        label(new Location(world, ox + 0.5, y + 4.2, zn + 0.5), "&3Linked shrines put their output in the Nexus store");
     }
 
     private void shrine(Block block, String contract, String text, Map<Material, Integer> supplies) {
-        demoBlock(block, "SERVITOR_SHRINE", text);
+        demoBlock(block, "SERVITOR_SHRINE", text + "\n&8Output: this shrine's store. The demo resets every 10s.");
+        String demo = contract.replace("_CONTRACT", "");
+        if (List.of("HARVEST", "GATHER", "BREWER", "SHEPHERD", "BEEKEEPER").contains(demo)) {
+            loops.add(demo + ";" + block.getX() + ";" + block.getY() + ";" + block.getZ());
+        }
         BlockStorage.addBlockInfo(block, "occultech_owner", sender instanceof Player p ? p.getUniqueId().toString() : DEMO_OWNER);
         fills.add(() -> {
             BlockMenu menu = BlockStorage.getInventory(block);
@@ -676,6 +733,7 @@ final class Showcase {
         List<String> blocks = new ArrayList<>();
         previous.forEach((block, blockData) -> blocks.add(block.getX() + ";" + block.getY() + ";" + block.getZ() + ";" + blockData.getAsString()));
         data.set("blocks", blocks);
+        data.set("loops", loops);
         try {
             plugin.getDataFolder().mkdirs();
             data.save(new File(plugin.getDataFolder(), FILE));
