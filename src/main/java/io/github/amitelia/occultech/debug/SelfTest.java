@@ -225,6 +225,34 @@ final class SelfTest {
 
     // ------------------------------------------------------------------ steps
 
+    /** The resource pack: loaded, item models set on items that have art (and only those), and served if self-hosted. */
+    private void resourcePack() {
+        var pack = plugin.resourcePack();
+        check("resource pack loaded", pack.packSize() > 0 && pack.modelCount() > 0, pack.packSize() + " bytes, " + pack.modelCount() + " models");
+        ItemStack silver = SlimefunItem.getById(ItemKeys.slimefunId("WARDED_SILVER")).getItem();
+        var model = silver.getItemMeta() == null ? null : silver.getItemMeta().getItemModel();
+        check("items with art get their occultech model", model != null && model.toString().equals("occultech:warded_silver"), String.valueOf(model));
+        ItemStack altar = SlimefunItem.getById(ItemKeys.slimefunId("ARCANE_ALTAR")).getItem();
+        check("items without art keep their vanilla look", altar.getItemMeta() == null || !altar.getItemMeta().hasItemModel(), "has a model");
+        long modelled = plugin.catalog().items().stream().filter(i -> i.tier() <= ContentRegistrar.IMPLEMENTED_TIER)
+            .map(i -> SlimefunItem.getById(ItemKeys.slimefunId(i.id()))).filter(java.util.Objects::nonNull)
+            .filter(i -> i.getItem().getItemMeta() != null && i.getItem().getItemMeta().hasItemModel()).count();
+        check(pack.modelCount() + " registered items carry a model", modelled == pack.modelCount(), modelled + " carry one");
+        if ("self-host".equals(pack.mode()) && pack.url() != null) {
+            try {
+                java.net.URI local = java.net.URI.create("http://localhost:" + pack.url().getPort() + pack.url().getPath());
+                var client = java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(3)).build();
+                var response = client.send(java.net.http.HttpRequest.newBuilder(local).timeout(java.time.Duration.ofSeconds(3)).build(),
+                    java.net.http.HttpResponse.BodyHandlers.ofByteArray());
+                String sha1 = java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-1").digest(response.body()));
+                check("the pack is served and matches its hash", response.statusCode() == 200 && sha1.equals(pack.sha1()),
+                    response.statusCode() + ", " + response.body().length + " bytes");
+            } catch (Exception e) {
+                check("the pack is served and matches its hash", false, e.toString());
+            }
+        }
+    }
+
     private void registration() {
         ContentRegistrar registrar = plugin.registrar();
         ItemCatalog catalog = plugin.catalog();
@@ -234,6 +262,7 @@ final class SelfTest {
         check("all " + expected + " items up to tier " + ContentRegistrar.IMPLEMENTED_TIER + " registered", registered == expected, registered + " registered");
         check("no content problems", registrar.problems().isEmpty(), String.join("; ", registrar.problems()));
         check("researches registered", registrar.researchCount() == catalog.researches().size(), registrar.researchCount() + " registered");
+        resourcePack();
         long summons = rituals.recipes().stream().filter(RitualRecipe::isSummon).count();
         int expectedSummons = BOSSES.size() + TIER1_BOSSES.size() + TIER2_BOSSES.size() + TIER3_BOSSES.size() + 1;
         check(expectedSummons + " summoning rituals registered", summons == expectedSummons, summons + " summons");

@@ -223,8 +223,13 @@ public final class ContentRegistrar {
             lore.add(lore.size() - 1, color("&8Repair: ritual with " + catalog.item(def.repair()).map(ItemCatalog.ItemDef::name).orElse(def.repair())));
             rituals.addRepair(ItemKeys.slimefunId(def.id()), ItemKeys.slimefunId(def.repair()));
         }
+        org.bukkit.NamespacedKey model = Occultech.instance().resourcePack() == null ? null
+            : Occultech.instance().resourcePack().modelFor(def.id());
         java.util.function.Consumer<ItemMeta> look = meta -> {
             meta.setLore(lore);
+            if (model != null) {
+                meta.setItemModel(model);   // Occultech's own model from its resource pack
+            }
             if (glint) {
                 meta.setEnchantmentGlintOverride(true);
             }

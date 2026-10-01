@@ -111,6 +111,16 @@ public final class OccultechCommand implements TabExecutor {
             }
             return true;
         }
+        if (args.length == 1 && args[0].equalsIgnoreCase("pack")) {
+            var pack = plugin.resourcePack();
+            sender.sendMessage("Resource pack: mode " + pack.mode() + ", " + pack.modelCount() + " item models, "
+                + pack.packSize() / 1024 + " KiB, sha1 " + pack.sha1() + (pack.url() != null ? ", " + pack.url() : ""));
+            if (sender instanceof org.bukkit.entity.Player player) {
+                pack.send(player);
+                sender.sendMessage("Sent it to you again.");
+            }
+            return true;
+        }
         if (args.length == 2 && args[0].equalsIgnoreCase("unlockhalos")) {
             org.bukkit.entity.Player target = Bukkit.getPlayerExact(args[1]);
             if (target == null) {
@@ -130,7 +140,7 @@ public final class OccultechCommand implements TabExecutor {
             }
             return true;
         }
-        sender.sendMessage("Usage: /" + label + " <selftest | showcase [clear] | restock x y z BOSS | inspect x y z>");
+        sender.sendMessage("Usage: /" + label + " <selftest | showcase [clear] | restock x y z BOSS | inspect x y z | pack>");
         return true;
     }
 

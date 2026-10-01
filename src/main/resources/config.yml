@@ -24,3 +24,18 @@ pearl-bed:
 ember-brazier:
   # Seconds between blaze powder (same rules as the Brood Egg).
   seconds-per-item: 60
+
+resource-pack:
+  # Give Occultech items their own models (the `item_model` component, namespace "occultech"; no vanilla item is
+  # retextured). Without the pack loaded, those items show as a missing model - so keep delivery on, or carry the pack
+  # with another plugin.
+  item-models: true
+  # auto: hand the pack to Nexo if it is installed, otherwise serve it ourselves. nexo | self-host | off
+  mode: auto
+  # self-host only: the port of the built-in web server, and the address players reach it at (empty = server-ip,
+  # or localhost). Behind a proxy or a host with one open port, put the pack on a web host and use mode: off.
+  port: 8164
+  public-host: ""
+  # self-host only: kick players who decline the pack (they would see missing models otherwise)
+  required: false
+  prompt: "Occultech's textures: rituals, relics and bosses look as they should."

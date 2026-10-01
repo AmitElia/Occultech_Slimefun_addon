@@ -39,6 +39,7 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     private DecorationService decorations;
     private io.github.amitelia.occultech.items.TalismanService talismans;
     private ContentRegistrar registrar;
+    private io.github.amitelia.occultech.pack.ResourcePackService resourcePack;
 
     @Override
     public void onEnable() {
@@ -71,11 +72,14 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         decorations = new DecorationService(this);
         talismans = new io.github.amitelia.occultech.items.TalismanService(this);
         servitors.setRituals(rituals);
+        resourcePack = new io.github.amitelia.occultech.pack.ResourcePackService(this);
+        resourcePack.load();
         registrar = new ContentRegistrar(this, catalog, rituals);
         registrar.registerAll();
         registrar.problems().forEach(problem -> getLogger().warning("Content problem: " + problem));
 
         bosses.start();
+        resourcePack.start();
         getServer().getPluginManager().registerEvents(new WeaponListener(this), this);
         getServer().getPluginManager().registerEvents(new GearListener(this), this);
         getServer().getPluginManager().registerEvents(new HeldWeapons(this), this);
@@ -107,6 +111,9 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         }
         if (talismans != null) {
             talismans.shutdown();
+        }
+        if (resourcePack != null) {
+            resourcePack.shutdown();
         }
         if (registrar != null && registrar.arcaneAltar() != null) {
             registrar.arcaneAltar().shutdown();
@@ -150,6 +157,10 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     }
 
     @Nonnull
+    public io.github.amitelia.occultech.pack.ResourcePackService resourcePack() {
+        return resourcePack;
+    }
+
     public ContentRegistrar registrar() {
         return registrar;
     }
