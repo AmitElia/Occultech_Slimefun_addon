@@ -6,7 +6,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | Session | Content | Status |
 |---|---|---|
 | **A** | Style guide, toolkit, 3 test icons (Ritual Chalk, Spirit Essence, Hollow Sigil) | **Done** - reviewed |
-| B | Sigils and glyphs: pentagram, hexagram, tier sigils, 24 runes, footprints, crown pieces (64/128 px, exactly symmetric) | Next |
+| **B** | Sigils and glyphs: pentagram, hexagram, tier sigils, 24 runes, footprints, crown pieces | **Done** - awaiting review (A vs B sigil style) |
 | C | Tier-0 item icons | - |
 | D | Tier-1 item icons | - |
 | E | Tier-2 item icons | - |
@@ -58,3 +58,37 @@ Essence (round little ghost); take the v4 Ritual Chalk. Final set: `review-final
 - Build the silhouette first, then shade; check it in the silhouette column before adding detail.
 - Avoid accessories that change what an object *is* (the twine made chalk into a scroll).
 - Outlines must never cross other parts.
+
+## Session B - sigils and glyphs (2026-10-01)
+**Delivered:** `tools/art/glyphkit.py` (8x supersampled masks -> crisp pixels by coverage, mirroring for exact symmetry,
+grayscale styling so the game's text colour tints it), `session_b.py` (sigils) and `session_b_glyphs.py` (runes,
+footprints, crown pieces). Outputs in [session-b/](session-b/): `review-sigils-v2.png`, `review-runes-v3.png`,
+`review-pieces-v4.png` are final. Everything that should be symmetric measures 0 pixels off.
+
+**Why grayscale:** a font glyph's colours are multiplied by the text colour, so one white glyph serves every tier
+(ember / violet / teal / crimson columns on the sheets show the result).
+
+**Iterations and self-critique**
+- **Sigils v1** - pentagram A's thin inner ring was noise and its ticks merged; Initiate had a stray x in the centre;
+  Bound didn't read; the Abyssal waves were thin; the Hollow spikes were tiny. **v2** fixed all of them.
+- **Runes v1** - most read at 1x and as a line of text, but five looked like Latin letters or digits (bone `I`, twin
+  `n`, bind `X`, chain `8`) and hook/thorn were near-twins. **v2**: bind -> hourglass, bone -> forked ends, chain ->
+  two links, hook -> a real hook. New problem: twin now looked like gate. **v3**: twin -> open cup with a dot. Pass.
+- **Pieces v1** - bare-foot and paw toes merged into a bar; crown band's gem holes were 1-px noise and its spikes read as
+  candles; soul flame read as a light bulb; sparkle as a plus; the gem's hole made a donut. **v2** fixed crown, gem.
+  **v3**: toes that are smaller than r~1.5 collapse into `+` shapes at 16 px - toes are now fewer and bigger (big toe +
+  one blob; paw toes spread apart); the flame's mirrored side lick became cat ears, removed. **v4**: the sparkle went
+  through two failed tries (thin diagonal rays fall under 50% coverage; 1-px rays + outlines = noise) and ended as a
+  four-point star *without* the dark outline - it's a light sprite, the glow carries it.
+
+**Honest remaining weaknesses**
+- The boot print reads as a keyhole on its own; in a trail of alternating left/right prints it reads as steps.
+- Some runes are still close to known glyphs (ascend/descend are arrows, crown is a `W`) - fine for meaning at a glance.
+- The sparkle disappears on light backgrounds (in-world it is always over a scene and glows).
+
+**Open choice for the user:** pentagram/hexagram **A (lines)** vs **B (bold)** - per Session A's lesson both are shown.
+
+**Lessons carried forward**
+- At 16 px, round features under ~3 px across become `+` shapes; use fewer, bigger blobs.
+- Mirrored asymmetric details double up (the flame lick became two ears) - design the half, then look at the whole.
+- Light sprites (sparkles, motes) skip the dark outline; objects keep it.
