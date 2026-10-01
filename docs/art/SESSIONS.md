@@ -6,7 +6,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | Session | Content | Status |
 |---|---|---|
 | **A** | Style guide, toolkit, 3 test icons (Ritual Chalk, Spirit Essence, Hollow Sigil) | **Done** - reviewed |
-| **B** | Sigils, runes, footprints, gems/crown/halo, animated soul flame and sparkle | **Round 2 done** - awaiting review |
+| **B** | Sigils, runes, gems/crown/halo, animated soul flame and sparkle, step marks, paw | **Round 3 done** - awaiting review |
 | C | Tier-0 item icons | - |
 | D | Tier-1 item icons | - |
 | E | Tier-2 item icons | - |
@@ -115,3 +115,45 @@ assets at 1x/2x and on dark, light and a stone floor. `session_b.py` = sigils, p
 - Art-direct values by hand (facet tones) when computed lighting gives mush; hand-draw pixels when geometry fails (prints).
 - Particles are worth animating; emissive things get heat-coloured ramps, no outline, little glow.
 - At 16 px, round features under ~3 px across become `+` shapes; mirrored asymmetric details double up.
+
+### Round 2 review (user)
+"So much better." Pentagrams liked a lot; gems liked but want more defined edges, more 3D and little magic sparkles;
+**the animations are the favourite**. Footprints were the worst part: scratch the footprint shapes for something cooler
+and unique, keep the paw. Develop a unique style drawing on other arcane mods and keep references for future sessions.
+
+### Round 3
+**References:** [REFERENCES.md](REFERENCES.md) - nine arcane mods (Malum, Eidolon, Occultism, Ars Nouveau, Botania,
+Thaumcraft, Blood Magic, Iron's Spells, Forbidden & Arcanus): their look, what we take, and the synthesis *the
+Occultech look* (dark vessel, living light; chromatic ramps; glowing inlay; the twinkle; hard facets; everything
+magical moves). STYLE.md now points to it and has rule 11. Toolkit: `Icon.twinkle` (the signature motif), palettes
+frost/ink/ash/blossom/pollen.
+
+**Gems** (`review-pieces-r3v3.png`, `preview-gems.gif`)
+- r3v1: hard seams (bright girdle line on the lit half, dark below), light/dark facets alternating round the pavilion,
+  8-frame animation (a glint sweeps the table, then twinkles take turns). Failed: twinkles touched the outline and
+  merged into the silhouette; two reflection pixels drew a scribble on the left.
+- r3v2: stone moved down 1 px, twinkles clear of it, scribble removed. Still a small "S" in the left pavilion: 2 px
+  wedge facets are too thin to read as faces. r3v3: four wide pavilion facets (light, dark, light, dark). Pass.
+
+**Step marks replace footprints** (`session_b_steps.py`, `review-steps-v3.png`, `preview-steps.gif`): one per Aura
+Talisman step style, 4 frames each (appear, peak, decay, trace - the game swaps glyphs as the mark ages).
+- Ember: a charred ash patch whose cracks glow, flames lick, then cool to dark scars and smoke.
+- Frost: an ice crystal blooms on an icy sheen, glints, then melts into pieces and droplets.
+- Rune: a violet circle flares around a rune (ascend / bind, any rune can be used), breaks up, the rune lingers as motes.
+- Ink: a flat glossy splat; **an eye opens in it**, stares, closes; the ink dries matte.
+- Blossom: a closed flower opens (domed petals, pollen centre), petals spin outward, three loose petals drift away.
+- v1 critique: ember frame 0 read as a yellow tile; the eye rune became a checkerboard; ink was a purple ball with
+  tendrils that didn't read; the bud read as a bow tie. v2 fixed all four; v3 kept the dried ink's splat shape. Pass.
+- The paw print stays (`review-prints-final.png`); boot and bare prints are dropped.
+
+**Honest remaining weaknesses**
+- Ember's first frame is still busy (bright cracks over a small patch); fine for a 3-second mark, could be calmer.
+- Rune step uses 5x5 rune maps, not the 16 px runes - a few runes won't survive that size (the eye didn't).
+- The step marks are animated by swapping glyphs (4 frames over 3 s), so motion is coarse compared to the particles.
+
+**Lessons carried forward**
+- Animation is what the user loves most - plan motion from the start for anything magical.
+- Twinkles and other accents must never touch an object's outline (they merge into its silhouette).
+- Facets narrower than ~3 px don't read as faces; fewer, wider facets with alternating values do.
+- "Something unique" came from giving a mark a story (the ink eye opening) rather than a better shape.
+

@@ -212,6 +212,20 @@ class Icon:
                 if a > 6:
                     self.img.putpixel(q, color[:3] + (min(255, a),))
 
+    def twinkle(self, x, y, size, ramp):
+        """The Occultech twinkle (signature motif): size 1 = a dot, 2 = a 3 px cross, 3 = a 5 px star with a white core,
+        4 = a 7 px star. Colours come from the top of a ramp (chromatic, never plain white)."""
+        if size <= 0:
+            return
+        if size == 1:
+            self.pixels([(x, y)], ramp[4])
+            return
+        arm = {2: 1, 3: 2, 4: 3}[size]
+        for d in range(1, arm + 1):
+            c = ramp[4] if d < arm or size == 2 else ramp[3]
+            self.pixels([(x + d, y), (x - d, y), (x, y + d), (x, y - d)], c)
+        self.pixels([(x, y)], ramp[5])
+
     def clear(self, coords):
         for (x, y) in coords:
             self.img.putpixel((x, y), (0, 0, 0, 0))

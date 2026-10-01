@@ -3,6 +3,9 @@
 The look we aim for: chunky, readable, lightly hand-made pixel art in the spirit of magic mods like Occultism - our own
 designs, never copied art.
 
+**Read [REFERENCES.md](REFERENCES.md) first** - the arcane mods we learn from and *the Occultech look* (dark vessel,
+living light; chromatic ramps; glowing inlay; the twinkle; hard facets; everything magical moves).
+
 ## Rules
 0. **Bold beats literal.** A striking, simple shape wins over an accurate symbol (the Hollow Sigil's bold star was
    preferred to a "proper" pentacle).
@@ -31,6 +34,8 @@ designs, never copied art.
    grayscale "so the game can tint it"; draw a coloured version per tier instead (Session B round 1 was rejected for this).
 10. **Light sprites are emissive.** Particles (flames, sparkles, motes) are coloured by heat, not by the top-left light,
     have no dark outline, little glow, and are animated (flicker, life cycle) rather than a single static frame.
+11. **Magic moves and twinkles.** Magical items get an animated version (glint sweep, twinkles taking turns) and carry
+    the twinkle motif clear of their outline. Materials stay dark and calm so the magic is what you notice.
 
 ## Toolkit (`tools/art/`)
 - `palettes.py` - ramps and tier families, the light direction.

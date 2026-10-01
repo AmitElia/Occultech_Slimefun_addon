@@ -25,6 +25,12 @@ RAMPS = {
     "sculk":    hexes("#04090d", "#0a1a22", "#11303a", "#1a4a55", "#2a6f78", "#4fa6a8"),
     "hollowcy": hexes("#06343f", "#0c6a7c", "#15a7b8", "#4fe0e8", "#bdfbff", "#ffffff"),
     "crimson":  hexes("#1e0610", "#4a0b1c", "#86142a", "#c4243a", "#f2554a", "#ffb08a"),
+    # step marks and effects
+    "frost":    hexes("#10234a", "#1f4f8a", "#3f8fd0", "#86cdf2", "#cff2ff", "#ffffff"),
+    "ink":      hexes("#07040d", "#140c22", "#241638", "#3b2457", "#6a45a0", "#b48cf0"),
+    "ash":      hexes("#141114", "#262024", "#3a3236", "#55494a", "#786a66"),
+    "blossom":  hexes("#4a1035", "#8a2258", "#c94a86", "#f08ab4", "#ffc4dc", "#fff2f8"),
+    "pollen":   hexes("#5c3a08", "#a86a10", "#e8a822", "#ffd85a", "#fff3b0"),
     # accents
     "ember":    hexes("#3a0f05", "#7a2508", "#c4500e", "#f08a1e", "#ffc65a", "#fff3c0"),
     "gold":     hexes("#2a1a06", "#5c3c0c", "#9a6a16", "#d6a230", "#f6d470", "#fff6c8"),

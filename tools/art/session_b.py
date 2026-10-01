@@ -221,21 +221,27 @@ if __name__ == "__main__":
 
 # ================================================================== pieces: finished 16 px item textures
 
-def gem(ramp):
-    """A cut gem seen from the side: table, crown facets and a pavilion. Facet tones are art-directed (a lit top-left,
-    a dark right side, light refracting out at the bottom right) so the cut reads even at 1x."""
+GEM_FRAMES = 8
+
+
+def gem(ramp, frame=0):
+    """A cut gem with hard facet edges: light and dark facets alternate round the pavilion (that alternation is what
+    reads as "faceted" and 3D), the lit seams get a bright edge line, the shadow seams a dark one. Animated in 8 frames:
+    a glint sweeps across the table, then twinkles take turns round the stone. Frame 0 is the static icon."""
     icon = Icon(16)
-    t, g0, g1, tip = 2.0, 5.6, 7.0, 15.0
+    t, g0, g1, tip = 4.0, 7.0, 8.2, 15.6
+    L, R = 2.0, 14.0
+    tl, tr = 5.6, 10.4
     facets = [  # (polygon, ramp index)
-        ([(5.0, t), (11.0, t), (10.0, 4.4), (6.0, 4.4)], 4),                              # table
-        ([(1.0, g0), (5.0, t), (6.0, 4.4), (4.5, g0)], 4),                                # crown left
-        ([(6.0, 4.4), (10.0, 4.4), (11.5, g0), (4.5, g0)], 3),                            # crown front
-        ([(11.0, t), (15.0, g0), (11.5, g0), (10.0, 4.4)], 2),                            # crown right
-        ([(1.0, g0), (15.0, g0), (15.0, g1), (1.0, g1)], 3),                              # girdle
-        ([(1.0, g1), (5.5, g1), (8.0, tip)], 3),                                          # pavilion left
-        ([(5.5, g1), (8.0, g1), (8.0, tip)], 2),                                          # pavilion mid-left
-        ([(8.0, g1), (10.5, g1), (8.0, tip)], 1),                                         # pavilion mid-right
-        ([(10.5, g1), (15.0, g1), (8.0, tip)], 1),                                        # pavilion right
+        ([(tl, t), (tr, t), (9.6, 6.0), (6.4, 6.0)], 4),                    # table
+        ([(L, g0), (tl, t), (6.4, 6.0), (4.6, g0)], 5),                     # crown left (faces the light)
+        ([(6.4, 6.0), (9.6, 6.0), (11.4, g0), (4.6, g0)], 3),               # crown front
+        ([(tr, t), (R, g0), (11.4, g0), (9.6, 6.0)], 2),                    # crown right
+        ([(L, g0), (R, g0), (R, g1), (L, g1)], 3),                          # girdle
+        ([(L, g1), (5.0, g1), (8.0, tip)], 4),                              # pavilion: four wide facets,
+        ([(5.0, g1), (8.0, g1), (8.0, tip)], 2),                            # light and dark alternating
+        ([(8.0, g1), (11.0, g1), (8.0, tip)], 3),
+        ([(11.0, g1), (R, g1), (8.0, tip)], 1),
     ]
     whole = Part({})
     for pts, idx in facets:
@@ -243,13 +249,24 @@ def gem(ramp):
         icon.paint(part, ramp, outline=False, flat=idx)
         whole = whole | part
     icon.outline(whole, ramp)
-    # girdle edge: lit on the left, in shadow on the right
-    icon.pixels([(x, 6) for x in range(1, 8)], ramp[4])
-    icon.pixels([(x, 6) for x in range(11, 15)], ramp[2])
-    # glints on the table and the left crown, light refracting out at the lower right
-    icon.pixels([(5, 2), (6, 2), (5, 3), (2, 5)], ramp[5])
-    icon.pixels([(10, 9), (10, 10), (9, 11)], ramp[3])
-    icon.pixels([(10, 9)], ramp[4])
+    # hard seams: the girdle line (bright on the lit half), the crown's lit edge, table rim
+    icon.pixels([(x, 7) for x in range(2, 8)], ramp[5])
+    icon.pixels([(x, 7) for x in range(8, 14)], ramp[2])
+    icon.pixels([(x, 8) for x in range(2, 14)], ramp[1])
+    icon.pixels([(3, 6), (4, 5)], ramp[5])
+    icon.pixels([(x, 4) for x in range(6, 10)], ramp[5])
+    # refracted light low in the stone (bottom right) and a cool reflection on the left pavilion
+    icon.pixels([(9, 10), (9, 11)], ramp[4])
+    icon.pixels([(4, 9)], ramp[5])
+    # animation: a glint sweeping the table (frames 0-3), then twinkles take turns (frames 4-7)
+    sweep = {0: [(6, 5)], 1: [(7, 5), (8, 4)], 2: [(8, 5), (9, 4)], 3: [(9, 5)]}
+    icon.pixels(sweep.get(frame, [(6, 5)]), ramp[5])
+    sizes_a = [3, 2, 1, 0, 0, 0, 1, 2]   # top right
+    sizes_b = [0, 0, 1, 2, 3, 2, 1, 0]   # bottom left
+    sizes_c = [1, 0, 0, 0, 1, 2, 3, 2]   # bottom right
+    icon.twinkle(13, 2, sizes_a[frame], ramp)
+    icon.twinkle(2, 13, sizes_b[frame], ramp)
+    icon.twinkle(14, 13, max(0, sizes_c[frame] - 1), ramp)
     return icon
 
 
@@ -305,6 +322,7 @@ def halo():
 PIECES = [("Gem (T0 ember)", lambda: gem(RAMPS["ember"])), ("Gem (T1 violet)", lambda: gem(RAMPS["violet"])),
           ("Gem (T2 seaglow)", lambda: gem(RAMPS["seaglow"])), ("Gem (T3 crimson)", lambda: gem(RAMPS["crimson"])),
           ("Crown", crown), ("Halo", halo)]
+GEMS = [("ember", "T0"), ("violet", "T1"), ("seaglow", "T2"), ("crimson", "T3")]
 
 
 # ================================================================== particles: animated, emissive (no light, no outline)
@@ -418,7 +436,8 @@ def frame_sheet(rows, path, scale=6):
     return path
 
 
-PARTICLES = [("Soul flame (spirit)", [lambda f=f: soul_flame(RAMPS["spirit"], f) for f in range(4)]),
+PARTICLES = [*[(f"Gem {tier} {r} (animated)", [lambda f=f, r=r: gem(RAMPS[r], f) for f in range(GEM_FRAMES)]) for r, tier in GEMS],
+             ("Soul flame (spirit)", [lambda f=f: soul_flame(RAMPS["spirit"], f) for f in range(4)]),
              ("Soul flame (crimson)", [lambda f=f: soul_flame(RAMPS["crimson"], f) for f in range(4)]),
              ("Sparkle (gold)", [lambda f=f: sparkle(RAMPS["gold"], f) for f in range(5)]),
              ("Sparkle (hollow)", [lambda f=f: sparkle(RAMPS["hollowcy"], f) for f in range(5)])]
