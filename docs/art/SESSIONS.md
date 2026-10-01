@@ -8,10 +8,10 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **A** | Style guide, toolkit, 3 test icons (Ritual Chalk, Spirit Essence, Hollow Sigil) | **Done** - reviewed |
 | **B** | Sigils, runes, gems/crown/halo, animated soul flame and sparkle, step marks, paw | **Done** - approved, cleaned up |
 | **C** | Tier-0 item icons (15 + bow states; the 8 placed blocks move to G) | **Done** - codex redone after review |
-| **D** | Tier-1 item icons (23; the 6 placed blocks move to G) | **Done** - awaiting review |
-| E | Tier-2 item icons | - |
+| **D** | Tier-1 item icons (23; the 6 placed blocks move to G) | **Done** - fixed after review |
+| **E** | Tier-2 item icons (26: materials, drops, weapons, armor, decor objects) | **Done** - awaiting review |
 | F | Tier-3 item icons | - |
-| G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg; tier-1 blocks: Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil) **and held 3D models** (first: the Occult Codex as a 3D book - see *Notes for G*) | - |
+| G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg; tier-1 blocks: Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil; tier-2 blocks: Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack) **and held 3D models** (first: the Occult Codex as a 3D book - see *Notes for G*) | - |
 | H | Menu backgrounds | - |
 | I | Effect sprites (motes, embers, shards, shockwave rings, beams) | - |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
@@ -248,6 +248,13 @@ Iron's Spells 'n Spellbooks for the codex. Focus on item icons for now; keep not
   elements - with its own texture sheet in the codex's palette (leather, iron, bone pages, ember jewel). The item model
   definition picks by display context (`minecraft:select` on `minecraft:display_context`): `gui` (and `ground`) show
   the 2D icon, hands/head/fixed show the 3D book. Same pattern for any other held item that needs a real shape.
+- **Abyssal Anchor held model:** the icon is upright (an anchor only reads upright); in the hand it should be a 3D
+  anchor held by its ring, flukes as the head, with the spectral chain - same display-context switch as the codex.
+- **Abyssal armor worn texture:** the icons are done (Session E); the worn look needs an `equippable` asset layer
+  (humanoid + leggings layers) in the same abyssal plates, fins and sea-glow trim.
+- **Decorations placed in the world** (Moonlit Lily, Witchcap, Everliving Coral, Wisp Jar, Bottled Gale, Wind Chime,
+  Orrery, Soulfire Brazier, Rune Obelisk): their item icons exist; how they look *placed* (vanilla blocks + display
+  effects today) is a G decision.
 
 ## Session D - tier-1 item icons (2026-10-01)
 **Scope:** 23 icons - every tier-1 item that lives in an inventory (Spirit Essence was done in Session A). The 6 placed
@@ -311,4 +318,37 @@ boundsteel, parchment, emerald, dusk.
 (shields, crystals, medallions) must be *exactly* symmetric - `mirror_silhouette` enforces it; at 16 px a small shape
 drawn with thick lines fills in - use 1 px lines; look at the 16x zoom when the review sheet and the pixel data
 disagree (the sheet is downscaled when viewed).
+
+## Session E - tier-2 item icons (2026-10-01)
+**Scope:** 26 icons. Rule (as in D): full-cube blocks go to Session G; decorations that are *objects* (jars, chimes,
+orrery, brazier, coral, obelisk) get icons. Script: `tools/art/session_e.py e1..e5|set`; outputs in
+[session-e/](session-e/). Tier-2 look: abyss teal and prismarine, sea glow as the magic, iron and gold fittings; boss
+drops keep their boss's colours. New ramp: wind.
+
+| Batch | Icons (all animated) |
+|---|---|
+| E1 materials | Abyssal Alloy (the ingot family's teal bar, a wave of light running along its inlay), Tide Glass (hexagonal sea-glass tile, caustics wander), Abyssal Sigil (drop-shaped plaque - T0 diamond, T1 medallion, T2 drop - with a blinking eye), Tide Relic (a sea eye in a gold-bound prismarine cage, looking about), Abyssal Tether (a spectral chain: ring, links, hook) |
+| E2 drops | Abyssal Lens (a magnifying lens, the beam point flares), Nautilus Core (nested whorls, a light pulsing in its opening), Choir Ember (a crystallised flame, sparks), Tempest Core (an orb in a turning whirlwind), Elder Scale (a great scale with growth lines, a glint) |
+| E3 weapons | Wyrmbreath (gold rod, crimson dragon head breathing fire), Guardian's Gaze (a guardian eye on a wand, looking about), Grave Lantern (an iron lantern, a skull in its ghost flame), Abyssal Anchor (upright anchor, pulsing runes, spectral chain), Choir Bell (gold hand bell, burning shockwave) |
+| E4 armor | Abyssal Helm, Chestplate, Greaves, Boots - vanilla armor-icon silhouettes, abyssal plates, prismarine fins (crest, shoulders, leg sides, heels), sea-glow trim that pulses |
+| E5 decor | Bottled Gale (a twisting banded tornado in a bottle), Wisp Jar (round tinted jar, blinking wisps), Wind Chime (swaying tubes), Occult Orrery (sun, tilted dotted orbits, moving worlds), Soulfire Brazier (tripod, soul flames), Everliving Coral (tube coral, bubbles), Rune Obelisk (blackstone obelisk, eye rune, orbiting runes) |
+
+**Wrong readings caught and fixed:** a candy (glass) - a hooded creature with teeth (sigil waves) - a tangle (coiled
+chain) - a cracked egg, then a walnut (nautilus: a line spiral is mush at 16 px; nested whorls work) - a rune glyph
+(scale ridges) - a golden club (dragon head too small) - a mace (spikes over the eye) - two eyes (a slit pupil splitting
+the iris) - a bottle (lantern, twice) - a pickaxe, a curl, a ship's wheel (anchor; only upright works) - a robot face
+(trim under the visor) - cracked ice and milk (tornado) - a purple chest (jar) - a trophy cup (orrery) - a grave (a
+cross rune on an obelisk).
+
+**Honest remaining weaknesses**
+- Abyssal Sigil and Elder Scale are both teal rounded shapes; the eye tells them apart at 1x, but they're the closest
+  pair in the tier.
+- The orrery is busy at 1x (sun + dots + three worlds).
+- The anchor is upright in the icon; held in the hand it will sit at 45 degrees until it gets a held model (G).
+
+**Lessons carried forward**
+- Some shapes only read in one orientation (anchor upright); for those, keep the icon readable and fix the hand pose
+  with a model later.
+- Spirals and coils: use nested shapes, not lines.
+- A "familiar" silhouette must survive our recolour: a dark narrow-capped lantern stops being a lantern.
 
