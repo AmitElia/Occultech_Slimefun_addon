@@ -1,0 +1,43 @@
+# Occultech art style
+
+The look we aim for: chunky, readable, lightly hand-made pixel art in the spirit of magic mods like Occultism - our own
+designs, never copied art.
+
+## Rules
+1. **Silhouette first.** Every icon has a shape you can recognise filled solid black. A flask is not enough - the Spirit
+   Essence's flask has a ghost escaping it.
+2. **Readable at 1x** (16 px in an inventory slot). Details that blur into a blob at 1x are cut or simplified - a
+   pentagram drawn in lines fills in at 16 px, so the star goes in the silhouette instead.
+3. **Volume from one light.** Light comes from the top-left, slightly in front. Shapes are shaded from their real form
+   (sphere, cylinder, bevelled plate) with 3-5 steps of a ramp, never a flat fill or a "pillow" (shading toward the
+   centre).
+4. **Hue-shifted ramps.** Shadows lean blue/violet, highlights lean warm. Ramps live in `tools/art/palettes.py`.
+5. **Coloured outlines.** Outlines use the object's own darkest tones - lighter on the lit top-left side, darkest on the
+   shadow side. Never pure black. Outlines only go on empty pixels; a part on top of another separates itself by its own
+   tone, not by drawing a line across it.
+6. **One accent per item.** A saturated accent (spirit cyan, crimson core, ember orange) marks what's magical about it.
+7. **Tier families** so tier reads at a glance:
+   | Tier | Family | Accent |
+   |---|---|---|
+   | 0 Initiate | chalk, bone, candle wax, twine, iron | ember |
+   | 1 Bound | violet, smoky glass, silver | spirit cyan |
+   | 2 Abyssal | deep teal, prismarine | sea glow |
+   | 3 Hollow | sculk black-teal, old bone | hollow cyan, crimson |
+8. **Symmetry where it belongs.** Sigils, glyphs and runes are exactly symmetric (checked by the toolkit); objects are
+   not.
+
+## Toolkit (`tools/art/`)
+- `palettes.py` - ramps and tier families, the light direction.
+- `pixelkit.py` - shapes with surface normals (sphere, capsule, box, bevelled polygon, ring), ramp shading, selective
+  outlines, symmetry check.
+- `review.py` - the review sheet: 1x and 2x in inventory slots, 8x on dark and light, silhouette, values (grayscale).
+- `session_*.py` - each session's assets; outputs and review sheets go to `docs/art/session-*/`.
+
+## Self-critique checklist (every asset, every iteration)
+- [ ] Silhouette unique and recognisable?
+- [ ] Readable at 1x in a slot?
+- [ ] Tier palette, one accent?
+- [ ] Light from the top-left, real volume, no pillow shading?
+- [ ] Outlines in the object's own tones, not across other parts?
+- [ ] Values: does it still read in grayscale?
+- [ ] Symmetric if it's a sigil/glyph?
