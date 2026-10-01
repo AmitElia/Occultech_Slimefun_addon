@@ -33,6 +33,10 @@ RAMPS = {
     "pollen":   hexes("#5c3a08", "#a86a10", "#e8a822", "#ffd85a", "#fff3b0"),
     "gel":      hexes("#0e2a12", "#1f5a22", "#3a8f2c", "#6cc43c", "#b2ec6a", "#effed0"),
     "brew":     hexes("#1c2a08", "#3c5410", "#6e8e14", "#a8cc1c", "#dcf550", "#fbffc4"),
+    "boundsteel": hexes("#120c1e", "#2a2240", "#4a4266", "#757094", "#a9a6c4", "#e2e0f2"),
+    "parchment": hexes("#3a2614", "#6e5132", "#a88a5c", "#d2b98a", "#ecdcb4", "#fff6dc"),
+    "emerald":  hexes("#05231a", "#0b4a33", "#14794d", "#22b06a", "#62e39a", "#cfffe0"),
+    "dusk":     hexes("#160a24", "#33174a", "#5e2a6e", "#93407a", "#d0687a", "#f6a88a"),
     "leather":  hexes("#1a0c0e", "#3a1a1c", "#5e2c28", "#87473a", "#ad6c55", "#d39a7c"),
     # accents
     "ember":    hexes("#3a0f05", "#7a2508", "#c4500e", "#f08a1e", "#ffc65a", "#fff3c0"),

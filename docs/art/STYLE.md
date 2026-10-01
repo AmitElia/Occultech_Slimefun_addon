@@ -46,7 +46,7 @@ living light; chromatic ramps; glowing inlay; the twinkle; hard facets; everythi
 - `glyphkit.py` - flat glyphs (runes, paw print): supersampled strokes, outline and glow.
 - `review.py` - review sheets: `sheet` (16 px icons in inventory slots, dark/light, silhouette, values), `big_sheet`
   (large assets, also on a stone floor), `gif` (animated previews).
-- `session_*.py` - each session's assets (`session_c.py` = tier-0 icons); outputs and review sheets go to `docs/art/session-*/`.
+- `session_*.py` - each session's assets (`session_c.py` = tier-0 icons, `session_d.py` = tier-1 icons); outputs and review sheets go to `docs/art/session-*/`.
 
 ## Self-critique checklist (every asset, every iteration)
 - [ ] Silhouette unique and recognisable?

@@ -7,11 +7,11 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 |---|---|---|
 | **A** | Style guide, toolkit, 3 test icons (Ritual Chalk, Spirit Essence, Hollow Sigil) | **Done** - reviewed |
 | **B** | Sigils, runes, gems/crown/halo, animated soul flame and sparkle, step marks, paw | **Done** - approved, cleaned up |
-| **C** | Tier-0 item icons (15 + bow states; the 8 placed blocks move to G) | **Done** - awaiting review |
-| D | Tier-1 item icons | - |
+| **C** | Tier-0 item icons (15 + bow states; the 8 placed blocks move to G) | **Done** - codex redone after review |
+| **D** | Tier-1 item icons (23; the 6 placed blocks move to G) | **Done** - awaiting review |
 | E | Tier-2 item icons | - |
 | F | Tier-3 item icons | - |
-| G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg) **and held 3D models** (first: the Occult Codex as a 3D book - see *Notes for G*) | - |
+| G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg; tier-1 blocks: Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil) **and held 3D models** (first: the Occult Codex as a 3D book - see *Notes for G*) | - |
 | H | Menu backgrounds | - |
 | I | Effect sprites (motes, embers, shards, shockwave rings, beams) | - |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
@@ -248,4 +248,46 @@ Iron's Spells 'n Spellbooks for the codex. Focus on item icons for now; keep not
   elements - with its own texture sheet in the codex's palette (leather, iron, bone pages, ember jewel). The item model
   definition picks by display context (`minecraft:select` on `minecraft:display_context`): `gui` (and `ground`) show
   the 2D icon, hands/head/fixed show the 3D book. Same pattern for any other held item that needs a real shape.
+
+## Session D - tier-1 item icons (2026-10-01)
+**Scope:** 23 icons - every tier-1 item that lives in an inventory (Spirit Essence was done in Session A). The 6 placed
+blocks (Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil) move to Session G.
+Script: `tools/art/session_d.py d1|d2|d3|d4|set`; outputs in [session-d/](session-d/).
+
+**Tier-1 look:** violet, smoky glass, silver; spirit cyan is the magic accent; the theme is *binding* (bands, clamps,
+spirits held in place). Boss drops keep their boss's colour (frenzy crimson, dusk, evoker emerald). New ramps:
+boundsteel, parchment, emerald, dusk.
+
+| Batch | Icons (* animated) |
+|---|---|
+| D1 materials | Bound Steel* (dark violet steel bar, two spirit bands pulse), Bound Chalk* (violet chalk in a silver band, cyan stroke - the Ritual Chalk's family shape), Resonant Crystal* (shard cluster on a rock, ripples round the tip), Bound Sigil* (silver triangle plaque, violet cut, a bound spirit at its heart) |
+| D2 boss drops | Frenzied Edge* (serrated blade shard, frenzy-red teeth beat), Dusk Membrane (bat wing: arched arm, scalloped skin, claws, dusk gradient), Mirror Dust* (silver glitter heap, mirror flakes, moving twinkles), Evoker's Sigil* (gold fangs clamped on an emerald), Archevoker's Effigy* (illager effigy mid-spell, glowing eyes) |
+| D3 gear | Frenzy Cleaver* (vanilla axe layout, cleaver blade, frenzy edge), Bone Scepter* (vertebrae staff, skull with burning sockets, wisp), Duskwing Charm* (winged violet gem, wings beat), Mirror Ward* (mirror-glass heater shield, the decoy ghost in it, glint sweep), Scrying Mirror* (black oval mirror on a stand, an eye opens in the mist) |
+| D4 contracts and decor | 7 contracts as one family - a tilted scroll, the duty's emblem, a wax seal in the duty's colour (Harvest wheat/gold, Gather chest/wood, Brewer's Aid potion/pink, Shepherd shears/white, Beekeeper honeycomb/amber, Acolyte offering bowl/ember, Ward eye-shield/cyan); Moonlit Lily* (lily bells under a crescent moon, stars twinkle), Witchcap* (crimson toadstool with bubbling brew spots) |
+
+**Iterations and self-critique**
+- **D1:** Bound Steel as pale as Warded Silver -> darker tones; Resonant Crystal read as a castle/crown (blocky shards,
+  flat base) -> narrow shards leaning out of a rock; then as antlers/coral with the sound rings crossing the side
+  shards -> wider side shards, ripples moved round the tip; the ripples were lopsided from rounding -> mirrored exactly.
+- **D2:** Frenzied Edge read as a kitchen knife -> broader shard, deep teeth; Dusk Membrane read as a heart/leaf, then
+  as a **flag on a pole** (straight top edge + knob) -> rebuilt as a wing (arched arm, fanned fingers, scallops,
+  thumb claw); Evoker's fangs too small -> big interlocking fangs.
+- **D3:** Bone Scepter's skull was cute (small cyan dots) -> deep dark sockets with a burning point, cheekbones,
+  vertebra joints; Duskwing Charm's loop + round gem read as a potion bottle -> loop removed.
+- **D4:** square scroll filling the slot read as a **door/cabinet** -> tilted scroll with rolls; the sheep emblem was
+  a white blob with two dark dots (a face, again) -> shears; harvest/beekeeper emblems vanished on parchment (set
+  check) -> darker amber.
+
+**Honest remaining weaknesses**
+- Moonlit Lily's bells cluster at 1x; it reads as "white flowers + moon" rather than lily of the valley specifically.
+- Evoker's Sigil reads first as a golden eye, second as jaws - a striking icon, but not literal.
+- Contract emblems are 5 px; they're told apart mostly by the seal colour at 1x.
+- Moonlit Lily and Witchcap are placed decorations too: their item icons are done, but how they look *placed* (they
+  use vanilla flower/fungus blocks) belongs to Session G.
+
+**Lessons carried forward**
+- New wrong readings this time: castle, antlers, kitchen knife, flag on a pole, potion bottle, door. Keep asking.
+- Families help: same shape, different emblem/colour (contracts; Bound Chalk with Ritual Chalk; Bound Steel with
+  Warded Silver) - players learn the shape once.
+- Low-contrast emblems on light materials disappear at 1x; check them in the set view.
 
