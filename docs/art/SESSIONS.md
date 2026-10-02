@@ -535,20 +535,32 @@ definition selects on `display_context`, as vanilla's trident does. Glowing part
     rivet) and Bone Scepter (stacked vertebrae with spurs, a skull with soul-green burning sockets looking forward,
     jaw hanging open, a wisp above).
 
-**G6 worn armor** (`python tools/art/session_g.py g6` -> `docs/art/session-g/equipment/<set>/`). Each set is an
-equipment asset `occultech:<set>` with a `humanoid` layer (helmet, chestplate, boots) and a `humanoid_leggings`
-layer, 64x32 in vanilla's armor layout; build_pack writes them and `occultech-pack-equipment.txt`, and the plugin
-points the armor items' `equippable` at the asset (`ContentRegistrar.wornLook`, keeping the vanilla piece's sound
-and behaviour) when the pack has the set. Painted face by face on the player's boxes (`paint_armor`); armor textures
-are entity textures - no animation or glow. Not seen in game yet.
-- Abyssal - overlapping plates of abyssal teal, softly shaded with glints on their lit edges (v1's hard four-row
-  shading read as stripes); the helm's face plate with two sea-glow visor slits, a nose guard and a fin crest running
-  to the nape; a sea-glow line down the breastplate, a spine plate behind, shoulder fins; knee studs; boots with a
-  pale toe and a heel fin.
-- Hollow - blackened violet steel trimmed in aged gold: the Crown's ring of bone spikes over a gold circlet with a
-  crimson gem and a cyan visor slit; the Cuirass's bone ribcage round a gold sternum and crimson heart-gem, a bone
-  spine down the back, gold-edged pauldrons with cyan seams; the Greaves' gold belt, bone knee cops and cyan seams;
-  the Sabatons' gold band and bone toe caps.
+**G6 worn armor - redone in 3D** (the user on v1: "very flat and unimpressive... hide your face, look like a reskin of
+your player. It should be 3D, much more detailed; you should see the player's face through the helmets"; Abyssal as a
+sea monster with the wearer's face as its mouth, a big fin ridge, scales; Hollow half futuristic, half magical -
+crystals, lightning, 3D details, big Loki horns). `python tools/art/session_g.py g6`.
+- **Helmets are 3D models.** A head item whose equippable has *no* asset isn't drawn as armor - the game draws its
+  item model on the head (display context "head"), as it draws a carved pumpkin. So the helmets' equippable has no
+  asset (`ContentRegistrar.wornLook`) and the item definition shows `<key>_head` in the "head" context, the 2D icon
+  everywhere else. Item models can glow and animate, so the helms do. The head spans model units 1.6..14.4 (1 head
+  pixel = 1.6 units), its face on the north side - left open.
+- **Chestplates carry 3D back pieces** on the equipment asset's `wings` layer: the elytra's two wings (a 64x32
+  texture in the elytra layout, `wings_tex`), drawn on the back and swaying with the body.
+- Bodies, legs and boots stay equipment textures (`humanoid`, `humanoid_leggings`; no glow or animation there).
+- Abyssal Helm - a sea monster's head with the face in its open mouth: a scaled skull, an upper jaw jutting over the
+  brow with fangs hanging from it, a lower jaw under the chin with fangs rising, bulging glowing eyes under heavy brows
+  on the snout, glowing gill slits on the cheeks (pulsing), swept-back side fins and a great spined fin ridge from the
+  snout over the crown and down the nape. Body: scales, a pale banded belly, glowing spots down the flanks, a spiny
+  ridge down the spine, fin edges on the forearms, webbed boots with bone claws; back fins (wings layer): two tall
+  spined fins with glowing rims.
+- Hollow Crown - open-faced blackened violet steel with glowing circuit traces pulsing along its panels, a gold brow
+  band with a cyan visor line, a glinting cyan crystal on the forehead with a spike above, great gold horns sweeping
+  out, up and back like Loki's (smooth: interpolated segments; v1's read as a chain of beads), a lightning arc
+  crackling between the horn tips (animated), violet crystal shards behind. Body: blackened plates with panel seams,
+  a cyan crystal heart in a gold frame, a lightning bolt down the back, gold pauldrons with violet crystals, circuit
+  traces down the sides (v1 had them everywhere - noise), knee crystals, gold-toed sabatons; back vanes (wings layer):
+  cyan and violet crystal shards in a gold mount.
+- Not seen in game yet: the helm sizes on the head, and how the wings-layer pieces sit on the back.
 
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing

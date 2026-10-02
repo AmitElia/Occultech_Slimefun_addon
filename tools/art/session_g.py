@@ -2236,166 +2236,407 @@ def paint_armor(painter):
     return layers
 
 
+# ================================================================== G6 v2: worn armor in 3D.
+# Helmets: worn as their own 3D item models (an equippable with no asset makes the game draw the head item's model,
+# context "head", as it draws a carved pumpkin) - open at the face, glowing, animated. The head spans model units
+# 1.6..14.4 on every axis (the head layer's 0.625 scale: 1 head pixel = 1.6 units), its face on the north side.
+# Chestplates: the equipment asset also gets a "wings" layer - the elytra's two 3D wings on the back - painted as fins
+# (Abyssal) or crystal vanes (Hollow). Bodies, legs and boots: detailed equipment textures (64x32, vanilla layout).
+
+HEAD_DISPLAY = {"head": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]}}
+
+
+def scales_tex(ramp, seed, glow=None, size=16):
+    """Overlapping fish scales, tileable: rows of arcs, each scale lit at its top and shadowed at its rim."""
+    rnd = random.Random(seed)
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    for y in range(size):
+        row = y // 3
+        off = (row % 2) * 2
+        for x in range(size):
+            cx = (x + off) % 4
+            cy = y % 3
+            t = 3 if cy == 0 and cx in (1, 2) else 2 if cy == 0 or cx in (1, 2) else 1
+            if cy == 2 and cx in (0, 3):
+                t = 0
+            img.putpixel((x, y), ramp[t + 1])
+    if glow:
+        for _ in range(size // 3):
+            img.putpixel((rnd.randrange(size), rnd.randrange(size)), glow)
+    return img
+
+
+def fin_tex(ramp, edge):
+    """A fin membrane: dark spines fanning down it, membrane between, a glowing rim."""
+    img = blank()
+    for y in range(16):
+        for x in range(16):
+            spine = (x + y // 3) % 4 == 0
+            img.putpixel((x, y), ramp[1] if spine else ramp[3] if y < 6 else ramp[2])
+    for x in range(16):
+        img.putpixel((x, 0), edge)
+    return img
+
+
+def abyssal_helm_worn():
+    """The Abyssal Helm worn: a sea monster's head with the wearer's face inside its open mouth - a scaled skull over the
+    head, an upper jaw jutting forward over the brow with a row of fangs hanging from it, a lower jaw under the chin
+    with fangs rising, glowing eyes on the snout, gill slits glowing on the cheeks, side fins, and a great spined fin
+    ridge running from the snout over the crown and down the nape. The face itself stays open."""
+    m = Model("abyssal_helmet_head")
+    m.part = True
+    ab, sg, bone = RAMPS["abyss"], RAMPS["seaglow"], RAMPS["bone"]
+    t_scale = m.texture("scales", scales_tex(ab, 701, glow=sg[3]))
+    t_belly = m.texture("belly", scales_tex([ab[2], ab[3], ab[4], ab[5], sg[1], sg[2]], 703))
+    t_fin = m.texture("fin", fin_tex(ab, sg[4]))
+    t_tooth = m.texture("tooth", bone_tex(705, tone=4))
+    eyes = [fill(sg, [3, 4, 5, 5, 5, 4, 3, 2][f]) for f in range(8)]
+    for f, img in enumerate(eyes):
+        put(img, [(x, y) for x in range(6, 10) for y in range(4, 12)], RAMPS["ink"][0])   # a slit pupil
+    t_eye = m.texture("eye", eyes)
+    gills = []
+    for f in range(6):
+        g = blank()
+        for k, y in enumerate((5, 8, 11)):
+            for x in range(3, 13):
+                g.putpixel((x, y), sg[[3, 4, 5, 4, 3, 2][(f + k) % 6]])
+        gills.append(g)
+    t_gill = m.texture("gills", gills)
+    sc = lambda w, h: (t_scale, [0, 0, max(1, min(16, round(w))), max(1, min(16, round(h)))])  # noqa: E731
+    # the skull: top, back, sides (the face open)
+    m.cube((0.4, 14.6, 1.0), (15.6, 16.2, 15.8), sc(15, 2), top=sc(15, 15))
+    m.cube((0.4, 0.4, 14.6), (15.6, 14.6, 16.2), sc(15, 14))
+    for x0 in (-0.2, 14.8):
+        m.cube((x0, 0.4, 1.0), (x0 + 1.4, 14.6, 14.6), sc(14, 14))
+        gx = x0 - 0.05 if x0 < 1 else x0 + 1.45
+        m.box((gx, 5.0, 4.0), (gx, 11.0, 10.0), {"west" if x0 < 1 else "east": (t_gill, [2, 3, 14, 13])}, shade=False, light=15)
+    # the upper jaw, jutting forward over the brow, and its snout
+    m.cube((0.6, 12.8, -3.8), (15.4, 16.2, 1.0), sc(15, 4), top=sc(15, 5), bottom=(t_belly, [0, 0, 15, 5]))
+    m.cube((2.4, 16.2, -3.2), (13.6, 17.6, 1.0), sc(11, 2), top=sc(11, 4))
+    for (x, ln) in ((1.2, 2.0), (3.2, 1.4), (5.0, 2.2), (6.8, 1.2), (8.4, 1.2), (10.2, 2.2), (12.0, 1.4), (14.0, 2.0)):
+        m.cube((x, 12.8 - ln, -3.6), (x + 0.8, 12.8, -2.8), (t_tooth, [0, 0, 1, 2]))       # fangs hanging
+    for z in (-1.6, 0.2):
+        for x in (0.8, 14.4):
+            m.cube((x, 11.4, z), (x + 0.8, 12.8, z + 0.8), (t_tooth, [0, 0, 1, 2]))
+    for x in (-0.4, 14.6):                                                                   # its eyes, bulging
+        m.box((x, 13.2, -3.0), (x + 1.8, 15.8, -0.2), {d: (t_eye, [2, 0, 14, 16]) for d in FACES_ALL}, light=15, shade=False)
+        m.cube((x - 0.2, 15.8, -3.4), (x + 2.0, 16.8, 0.2), sc(2, 2))                         # a heavy brow over it
+    # the lower jaw under the chin, fangs rising
+    m.cube((0.6, -1.6, -3.8), (15.4, 0.8, 1.4), sc(15, 3), top=(t_belly, [0, 0, 15, 5]), bottom=sc(15, 5))
+    for (x, ln) in ((1.6, 1.6), (4.0, 2.2), (6.4, 1.2), (8.8, 1.2), (11.0, 2.2), (13.4, 1.6)):
+        m.cube((x, 0.8, -3.4), (x + 0.8, 0.8 + ln, -2.6), (t_tooth, [0, 0, 1, 2]))
+    for x0 in (0.0, 14.6):                                                                   # the jaw's hinge
+        m.cube((x0, -1.6, -2.0), (x0 + 1.4, 3.0, 1.4), sc(3, 4))
+    # the great fin ridge: from the snout over the crown and down the nape
+    for (z0, z1, y0, y1) in ((-3.0, 0.0, 17.6, 19.4), (0.0, 3.6, 16.2, 22.0), (3.6, 7.4, 16.2, 25.2), (7.4, 11.0, 16.2, 26.2),
+                             (11.0, 14.4, 16.2, 24.4), (14.4, 16.2, 9.0, 22.0), (16.2, 18.0, 5.0, 17.0), (18.0, 19.4, 2.0, 11.0)):
+        m.box((7.3, y0, z0), (8.7, y1, z1), {"west": (t_fin, [0, 0, 16, 16]), "east": (t_fin, [16, 0, 0, 16]),
+              "up": (t_fin, [0, 0, 2, 2]), "north": (t_fin, [0, 0, 2, 16]), "south": (t_fin, [0, 0, 2, 16])})
+    # side fins at the back of the head, swept back
+    for (x0, x1) in ((-1.8, -0.6), (16.6, 17.8)):
+        m.box((x0, 6.0, 9.0), (x1, 14.0, 15.0), {"west": (t_fin, [0, 0, 16, 16]), "east": (t_fin, [0, 0, 16, 16]),
+              "up": (t_fin, [0, 0, 2, 2]), "south": (t_fin, [0, 0, 2, 16]), "north": (t_fin, [0, 0, 2, 16])})
+        m.box((x0, 3.0, 12.0), (x1, 6.0, 17.0), {"west": (t_fin, [0, 8, 16, 16]), "east": (t_fin, [0, 8, 16, 16])})
+    m.display = HEAD_DISPLAY
+    return m
+
+
+def hollow_helm_worn():
+    """The Hollow Crown worn - half machine, half sorcery: an open-faced helm of blackened violet steel whose panels
+    carry glowing circuit traces (animated); a brow band with a hollow-cyan visor line; a cyan crystal on the forehead
+    with a spike above it; great golden horns sweeping out from the temples and up and back like Loki's; between their
+    tips a lightning arc crackles (animated, glowing); crystal shards behind the horns. The face stays open."""
+    m = Model("hollow_helmet_head")
+    m.part = True
+    st, gd, hc, vi, ink = RAMPS["boundsteel"], RAMPS["gold"], RAMPS["hollowcy"], RAMPS["violet"], RAMPS["ink"]
+    steel = blank()
+    for y in range(16):
+        for x in range(16):
+            seam = x % 8 == 7 or y % 6 == 5
+            steel.putpixel((x, y), ink[1] if seam else st[2] if (x + y) % 9 else st[3])
+    t_steel = m.texture("steel", steel)
+    traces = []
+    path = [(1, 2), (2, 2), (3, 2), (4, 2), (4, 3), (4, 4), (5, 4), (6, 4), (7, 4), (7, 5), (7, 6), (7, 7), (8, 7), (9, 7),
+            (10, 7), (11, 7), (11, 8), (11, 9), (11, 10), (12, 10), (13, 10), (14, 10), (2, 12), (3, 12), (4, 12), (4, 11),
+            (4, 10), (5, 10), (6, 10), (9, 13), (10, 13), (11, 13), (12, 13), (12, 14)]
+    for f in range(8):
+        t = blank()
+        for i, (x, y) in enumerate(path):
+            t.putpixel((x, y), hc[5] if (i - f * 4) % 32 < 3 else hc[2])
+        for (x, y) in ((1, 2), (14, 10), (6, 10), (12, 14)):
+            t.putpixel((x, y), hc[4])   # nodes
+        traces.append(t)
+    t_trace = m.texture("trace", traces)
+    t_gold = m.texture("gold", metal(gd, 721))
+    crystals = []
+    for f in range(8):
+        c = blank()
+        for y in range(16):
+            for x in range(16):
+                facet = (x + y) % 6 < 3
+                c.putpixel((x, y), hc[4] if facet else hc[3])
+        sx = (f * 2) % 16
+        for y in range(16):
+            c.putpixel(((sx + y) % 16, y), hc[5])   # a glint sweeping across the facets
+        crystals.append(c)
+    t_crystal = m.texture("crystal", crystals)
+    t_vcrystal = m.texture("vcrystal", [fill(vi, [3, 4, 5, 4][f % 4]) for f in range(8)])
+    bolts = []
+    for f in range(6):
+        b = blank()
+        rnd = random.Random(731 + f)
+        y = 8
+        for x in range(16):   # a jagged bolt across, a new shape each frame
+            y = max(2, min(13, y + rnd.choice((-2, -1, 0, 1, 2))))
+            b.putpixel((x, y), (255, 255, 255, 255))
+            b.putpixel((x, y + 1), hc[4])
+            if rnd.random() < 0.25:
+                b.putpixel((x, max(0, y - 2)), hc[3])   # a fork
+        bolts.append(b)
+    t_bolt = m.texture("bolt", bolts)
+    s_ = lambda w, h: (t_steel, [0, 0, max(1, min(16, round(w))), max(1, min(16, round(h)))])  # noqa: E731
+    # the helm: crown plate, back, cheek guards (face open), brow band
+    m.cube((0.6, 14.6, 1.0), (15.4, 16.0, 15.6), s_(15, 2), top=s_(15, 15))
+    m.cube((0.6, 2.0, 14.6), (15.4, 14.6, 16.0), s_(15, 13))
+    for x0 in (-0.2, 14.8):
+        m.cube((x0, 3.0, 1.0), (x0 + 1.4, 14.6, 14.6), s_(14, 12))
+        tx = x0 - 0.05 if x0 < 1 else x0 + 1.45
+        m.box((tx, 3.0, 1.0), (tx, 14.6, 14.6), {"west" if x0 < 1 else "east": (t_trace, [0, 0, 16, 16])}, shade=False, light=13)
+    m.box((0.6, 2.0, 16.05), (15.4, 14.6, 16.05), {"south": (t_trace, [0, 0, 16, 16])}, shade=False, light=13)
+    m.cube((0.2, 11.8, 0.0), (15.8, 14.6, 1.6), (t_gold, [0, 0, 16, 3]))                  # the brow band
+    m.box((1.0, 12.6, -0.05), (15.0, 13.4, -0.05), {"north": (t_crystal, [0, 0, 16, 1])}, shade=False, light=15)   # visor line
+    m.cube((7.4, 9.4, -0.2), (8.6, 11.8, 0.8), (t_gold, [0, 0, 1, 2]))                     # nose guard
+    m.box((6.6, 12.8, -1.2), (9.4, 16.6, 0.2), {d: (t_crystal, [4, 2, 8, 8]) for d in FACES_ALL}, light=15)   # forehead crystal
+    m.box((7.2, 16.6, -0.8), (8.8, 19.4, -0.2), {d: (t_crystal, [6, 0, 8, 4]) for d in FACES_ALL}, light=15)
+    # the horns: out from the temples, up and back, narrowing - gold, like Loki's
+    horn = ((-1.0, 13.0, 3.6, 3.0), (-2.6, 15.4, 4.6, 2.7), (-3.8, 18.0, 6.0, 2.4), (-4.4, 20.8, 7.8, 2.1),
+            (-4.4, 23.4, 10.0, 1.8), (-3.8, 25.6, 12.4, 1.5), (-2.8, 27.2, 14.8, 1.2), (-1.8, 28.2, 17.0, 0.9))
+    pts = []   # a smooth sweep: four steps between each pair of control points, so the segments overlap
+    for (a, b) in zip(horn, horn[1:]):
+        for k in range(4):
+            t = k / 4
+            pts.append(tuple(a[i] + (b[i] - a[i]) * t for i in range(4)))
+    pts.append(horn[-1])
+    for side in (0, 1):
+        for (cx, cy, cz, w) in pts:
+            x = cx if side == 0 else 16 - cx
+            m.cube((x - w / 2, cy - w / 2, cz - w / 2), (x + w / 2, cy + w / 2, cz + w / 2), (t_gold, [0, 0, 2, 2]))
+    # lightning crackling between the horn tips (two crossing arcs)
+    m.box((-1.6, 21.0, 15.0), (17.6, 28.0, 15.0), {"north": (t_bolt, [0, 0, 16, 16]), "south": (t_bolt, [16, 0, 0, 16])},
+          shade=False, light=15)
+    m.box((-0.4, 22.5, 12.0), (16.4, 27.0, 12.0), {"north": (t_bolt, [16, 0, 0, 16]), "south": (t_bolt, [0, 0, 16, 16])},
+          shade=False, light=15)
+    # crystal shards behind the horns
+    for (x, ln) in ((3.2, 4.0), (12.0, 4.0), (5.6, 2.6), (9.6, 2.6)):
+        m.box((x, 16.0, 11.0), (x + 1.2, 16.0 + ln, 12.4), {d: (t_vcrystal, [0, 0, 1, 3]) for d in FACES_ALL}, light=12)
+    m.display = HEAD_DISPLAY
+    return m
+
+
+# ---------------------------------------------------------------- the worn textures, v2: far more detail
 def abyssal_armor():
-    """The Abyssal set worn: overlapping plates of abyssal teal steel, each lit along its top edge; the helm's face a
-    plate with two sea-glow visor slits and a fin crest from brow to nape; a sea-glow line down the breastplate's
-    middle and fins on the shoulders; knee plates with a sea-glow stud; boots with a pale toe and a fin at the heel."""
-    ab, sg, ir = RAMPS["abyss"], RAMPS["seaglow"], RAMPS["iron"]
+    """Abyssal, worn: a sea creature's hide - overlapping scales in deep teal, a pale banded belly down the chest and
+    the fronts of the legs, bioluminescent spots in rows down the flanks, a spiny ridge down the spine, fin edges on
+    the forearms, webbed boots with bone claws."""
+    ab, sg, bone = RAMPS["abyss"], RAMPS["seaglow"], RAMPS["bone"]
+
+    def scale(u, v):
+        row = v // 2
+        cx = (u + (row % 2) * 2) % 4
+        cy = v % 2
+        return ab[4] if cy == 0 and cx in (1, 2) else ab[1] if cy == 1 and cx in (0, 3) else ab[3] if cy == 0 else ab[2]
 
     def paint(piece, part, face, u, v, w, h):
-        band = (v + (1 if part in ("arm", "leg") else 0)) % 4   # overlapping plates, four rows each, softly shaded
-        c = ab[3] if band == 0 else ab[2] if band in (1, 2) else ab[1]
-        if band == 0 and (u + v) % 5 == 2:
-            c = ab[4]                                      # a glint along a plate's lit edge
-        if face in ("right", "left") and u == (0 if face == "right" else w - 1):
-            c = ab[1]                                      # the plates' edges round off
-        if piece == "helmet":
-            if face == "top":
-                return sg[3] if u in (3, 4) else ab[3] if (u + v) % 3 else ab[2]    # the fin crest
-            if face == "front":
-                if v == 4 and u in (1, 2, 5, 6):
-                    return sg[4]                           # visor slits
-                if v == 4 or v == 5 and u in (1, 2, 5, 6):
-                    return ab[0]
-                if u in (3, 4) and v < 4:
-                    return ab[4]                           # the nose guard
-                return c
-            if face == "back" and u in (3, 4):
-                return sg[2]                               # the crest running down the nape
-            return c
+        c = scale(u, v)
         if piece == "chest":
             if face == "front":
+                if 2 <= u <= 5:
+                    return ab[5] if v % 2 == 0 else ab[4]          # banded belly
+                if u in (1, 6) and v % 3 == 1:
+                    return sg[4]                                    # glowing spots beside it
+            if face == "back":
                 if u in (3, 4):
-                    return sg[4] if v % 3 == 1 else sg[2]  # the sea-glow line down the middle
-                if v in (3, 4) and u in (1, 6):
-                    return ab[5]
-            if face == "back" and u in (3, 4):
-                return ab[5] if v % 2 else ab[3]           # the spine plate
+                    return bone[3] if v % 2 == 0 else ab[0]        # the spiny ridge
+            if face in ("right", "left") and u == 1 and v % 3 == 0:
+                return sg[3]
             if face == "top":
-                return ab[4]
+                return ab[3]
             return c
         if piece == "arms":
             if face == "top":
                 return ab[4]
-            if v == 0:
-                return sg[2] if face in ("right", "left") else ab[5]   # shoulder fins
+            if face in ("right", "left") and u == (0 if face == "right" else w - 1):
+                return sg[3] if v % 2 == 0 else ab[1]              # fin edge down the arm
+            if v == 0 and face == "front":
+                return bone[3] if u % 2 == 0 else c                # spines on the shoulder
             return c
         if piece == "waist":
-            return ir[2] if v == 8 else c                  # a belt
+            if face == "front" and u in (2, 5) and v in (9, 11):
+                return sg[4]
+            return ab[5] if face == "front" and 2 <= u <= 5 and v % 2 == 0 else c
         if piece == "legs":
-            if face == "front" and v in (4, 5) and u in (1, 2):
-                return sg[4] if v == 4 else ab[4]          # knee plate's sea-glow stud
+            if face == "front" and u in (1, 2):
+                return ab[5] if v % 2 == 0 else ab[4]              # pale belly scales down the shin
+            if face in ("right", "left") and u == 1 and v % 3 == 2:
+                return sg[4]
             return c
         if piece == "boots":
             if face == "bottom":
                 return ab[0]
-            if face == "front" and v >= 10:
-                return ir[4]                               # pale toe
-            if face == "back" and v == 7:
-                return sg[2]                               # heel fin
-            return ab[2] if v >= 10 else c
+            if face == "front" and v == 11:
+                return bone[4] if u % 2 == 0 else ab[0]            # claws
+            if face == "front" and v == 10:
+                return ab[3]
+            if v == 7:
+                return sg[3] if u % 2 else ab[1]                   # webbing rim
+            return c
+        if piece == "helmet":
+            return None                                            # the helm is its own 3D model
         return c
 
-    return paint_armor(paint)
+    layers = paint_armor(paint)
+    layers["wings"] = abyssal_wings()
+    return layers
 
 
 def hollow_armor():
-    """The Hollow set worn (after the F4 icons): blackened violet steel trimmed in aged gold, hollow-cyan seams and
-    crimson gems. The Crown: a band of bone spikes round the brow above a gold circlet with a crimson gem, a dark visor
-    with a cyan slit. The Cuirass: a ribcage of bone over the chest round a gold sternum and a crimson heart-gem, a
-    bone spine down the back, gold-edged pauldrons. The Greaves: plates with bone knee cops and cyan seams, a gold
-    belt. The Sabatons: gold-banded, with bone toe caps."""
-    st, gd, bone, hc, cr, ink = RAMPS["boundsteel"], RAMPS["gold"], RAMPS["bone"], RAMPS["hollowcy"], RAMPS["crimson"], RAMPS["ink"]
-    dark = [ink[1], ink[2], st[1], st[2], st[3], st[4]]   # blackened violet steel
+    """Hollow, worn - half machine, half sorcery: blackened violet plates with panel seams and lit edges, hollow-cyan
+    circuit traces running across them, aged gold trims, a cyan crystal heart set in the chest within a gold frame,
+    a lightning bolt worked down the back, gold pauldrons with violet crystals, knee crystals, gold-toed sabatons."""
+    st, gd, hc, vi, ink, cr = RAMPS["boundsteel"], RAMPS["gold"], RAMPS["hollowcy"], RAMPS["violet"], RAMPS["ink"], RAMPS["crimson"]
+
+    def plate(u, v, w):
+        if v % 4 == 3:
+            return ink[1]                                          # panel seam
+        if u == w // 2 and v % 4 == 1:
+            return ink[2]
+        return st[3] if v % 4 == 0 else st[2]
+
+    trace = {(0, 1), (1, 1), (1, 2), (1, 3), (2, 3), (3, 5), (3, 6), (2, 6), (6, 9), (5, 9), (5, 10), (6, 2), (6, 1)}
 
     def paint(piece, part, face, u, v, w, h):
-        band = v % 4
-        c = dark[3] if band == 0 else dark[2] if band in (1, 2) else dark[1]
-        if face in ("right", "left") and u == (0 if face == "right" else w - 1):
-            c = dark[1]
-        if piece == "helmet":
-            if face == "top":
-                ring = u in (0, w - 1) or v in (0, h - 1)
-                return (bone[4] if (u + v) % 2 else bone[3]) if ring else dark[2]   # the crown's ring of spikes
-            if v == 0:
-                return bone[5] if u % 2 == 0 else bone[3]  # spike tips round the brow
-            if v == 1:
-                return bone[3] if u % 2 == 0 else dark[1]
-            if v == 2:
-                return cr[4] if face == "front" and u in (3, 4) else gd[4] if u % 3 else gd[3]   # gold circlet + gem
-            if face == "front":
-                if v == 4 and 1 <= u <= 6:
-                    return hc[4] if u in (2, 5) else hc[2]  # the visor slit
-                if v in (3, 5):
-                    return dark[0]
-                if u in (3, 4) and v >= 6:
-                    return gd[2]
-            return c
+        c = plate(u, v, w)
+        if (u % w, v % 8) in trace and face in ("right", "left"):
+            c = hc[2]                                              # circuit traces, down the sides only
         if piece == "chest":
             if face == "front":
-                if u in (3, 4):
-                    if v in (4, 5):
-                        return cr[4] if v == 4 else cr[3]   # the heart-gem
-                    return gd[4] if u == 3 else gd[3]       # gold sternum
-                if v in (1, 3, 6, 8) and u not in (0, 7):
-                    return bone[4] if u in (1, 2, 5, 6) and v != 8 else bone[3]   # ribs
-                if v in (2, 7) and u in (2, 5):
-                    return bone[2]
+                if 2 <= u <= 5 and 3 <= v <= 7:
+                    if u in (2, 5) or v in (3, 7):
+                        return gd[4] if (u + v) % 2 else gd[3]      # the crystal's gold frame
+                    return hc[5] if (u, v) == (3, 4) else hc[4] if v < 6 else hc[3]   # the crystal heart
                 if v == 11:
-                    return gd[3]                            # gold hem
-                if v == 10 and u in (1, 6):
-                    return hc[3]                            # cyan seam studs
+                    return gd[3]
+                if v == 9 and u in (1, 6):
+                    return vi[4]
                 return c
             if face == "back":
-                if u in (3, 4):
-                    return bone[4] if v % 2 == 0 else bone[2]   # the spine
+                bolt = {(5, 1), (4, 2), (4, 3), (3, 4), (4, 5), (3, 5), (3, 6), (2, 7), (3, 8), (2, 9), (1, 10)}
+                if (u, v) in bolt:
+                    return (255, 255, 255, 255) if v % 3 == 0 else hc[4]   # a lightning bolt down the back
                 if v == 11:
                     return gd[3]
                 return c
             if face == "top":
-                return gd[3] if u in (0, w - 1) else dark[3]
+                return gd[3] if u in (0, w - 1) else st[3]
             if v == 11:
                 return gd[3]
-            return hc[2] if v == 5 and face in ("right", "left") else c
+            return c
         if piece == "arms":
             if face == "top":
-                return gd[4] if (u + v) % 3 == 0 else dark[3]
-            if v == 0:
-                return gd[4]
-            if v == 5:
-                return gd[2]                                # the pauldron's gold edge
-            if v == 2 and face in ("right", "left", "front"):
-                return hc[3] if u in (1, 2) else c
+                return gd[4] if (u + v) % 2 else gd[3]
+            if v <= 1:
+                return gd[4] if v == 0 else gd[2]                  # gold pauldron rim
+            if v == 3 and face == "right" and u in (1, 2) or v == 3 and face == "left" and u in (1, 2):
+                return vi[4]                                       # violet crystal on the pauldron
             return c
         if piece == "waist":
             if v == 8:
-                return gd[4] if u % 2 else gd[3]           # gold belt
+                return gd[4] if u % 2 else gd[3]
             if v == 9 and face == "front" and u in (3, 4):
-                return cr[4]
+                return hc[4]
             return c
         if piece == "legs":
-            if face == "front" and v in (4, 5, 6) and u in (1, 2):
-                return bone[4] if v == 5 else bone[3]      # bone knee cop
-            if face == "front" and v == 5 and u in (0, 3):
-                return bone[2]
-            if face in ("right", "left") and u == 1 and 1 <= v <= 7:
-                return hc[2] if v % 2 else hc[3]           # cyan seam
+            if face == "front" and v in (4, 5) and u in (1, 2):
+                return vi[5] if v == 4 else vi[4]                  # knee crystal
+            if face == "front" and v in (3, 6) and u in (0, 3):
+                return gd[3]
             if v == 8:
                 return gd[2]
             return c
         if piece == "boots":
             if face == "bottom":
-                return dark[0]
+                return ink[1]
             if v == 7:
-                return gd[4]                               # gold band
-            if face == "front" and v >= 10 and u in (1, 2) or face == "front" and v == 11:
-                return bone[4] if v == 10 else bone[3]     # bone toe cap
+                return gd[4]
+            if face == "front" and v >= 10:
+                return gd[4] if v == 10 else gd[3]                 # gold toe
             if face in ("right", "left") and v == 9 and u in (1, 2):
-                return hc[3]
+                return hc[4]
             return c
+        if piece == "helmet":
+            return None
         return c
 
-    return paint_armor(paint)
+    layers = paint_armor(paint)
+    layers["wings"] = hollow_wings()
+    return layers
+
+
+ELYTRA_FRONT, ELYTRA_BACK = (24, 2), (36, 2)   # a wing's two broad faces (10 x 20) in the elytra texture
+
+
+def wings_tex(shape):
+    """A wings texture (64x32, the elytra layout): shape(u, v) -> colour or None for a 10x20 wing face, drawn on both
+    broad faces (mirrored on the back) and on the edges and top where the shape reaches them."""
+    img = Image.new("RGBA", (64, 32), (0, 0, 0, 0))
+    for v in range(20):
+        for u in range(10):
+            c = shape(u, v)
+            if c is None:
+                continue
+            img.putpixel((ELYTRA_FRONT[0] + u, ELYTRA_FRONT[1] + v), c)
+            img.putpixel((ELYTRA_BACK[0] + 9 - u, ELYTRA_BACK[1] + v), c)
+    for v in range(20):   # the thin edges
+        if shape(0, v) is not None:
+            img.putpixel((34, 2 + v), shape(0, v)); img.putpixel((35, 2 + v), shape(0, v))
+        if shape(9, v) is not None:
+            img.putpixel((22, 2 + v), shape(9, v)); img.putpixel((23, 2 + v), shape(9, v))
+    for u in range(10):
+        if shape(u, 0) is not None:
+            img.putpixel((24 + u, 0), shape(u, 0)); img.putpixel((24 + u, 1), shape(u, 0))
+    return img
+
+
+def abyssal_wings():
+    """The Abyssal back fins: each wing a tall spined fin, widest at the shoulder and tapering to a point, its spines
+    fanning down it and its rim glowing."""
+    ab, sg = RAMPS["abyss"], RAMPS["seaglow"]
+
+    def shape(u, v):
+        half = 5.0 * (1 - v / 21) ** 0.7 + (0.8 if v % 4 == 0 else 0)   # tapering, the spines poking past the rim
+        d = abs(u + 0.5 - 5)
+        if d > half:
+            return None
+        if d > half - 1:
+            return sg[3] if v % 4 == 0 else ab[1]
+        return ab[1] if (u + v // 2) % 3 == 0 else ab[3] if v < 8 else ab[2]
+    return wings_tex(shape)
+
+
+def hollow_wings():
+    """The Hollow back vanes: each wing a cluster of long crystal shards - a cyan one down the middle, violet ones
+    beside it - set in a gold mount at the shoulder."""
+    hc, vi, gd = RAMPS["hollowcy"], RAMPS["violet"], RAMPS["gold"]
+
+    def shape(u, v):
+        if v <= 1:
+            return gd[4] if v == 0 else gd[2]
+        for (cx, top, length, ramp) in ((5.0, 2, 18, hc), (2.5, 2, 12, vi), (7.5, 2, 13, vi)):
+            half = 1.6 * (1 - (v - top) / length)
+            if top <= v < top + length and abs(u + 0.5 - cx) <= half:
+                return ramp[5] if u + 0.5 < cx else ramp[4] if abs(u + 0.5 - cx) < 0.6 else ramp[3]
+        return None
+    return wings_tex(shape)
 
 
 def save_armor(name, layers):
@@ -2473,6 +2714,8 @@ if __name__ == "__main__":
     version = sys.argv[2] if len(sys.argv) > 2 else "final"
     if which == "g6":   # worn armor: textures, not models
         sheet = Image.new("RGBA", (420, 230 * len(G6_SETS)), (60, 58, 66, 255))
+        for helm in (abyssal_helm_worn(), hollow_helm_worn()):
+            save(helm)
         for i, (name, make) in enumerate(G6_SETS.items()):
             layers = make()
             save_armor(name, layers)

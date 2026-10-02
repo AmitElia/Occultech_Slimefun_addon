@@ -262,17 +262,20 @@ public final class ContentRegistrar {
     }
 
     /**
-     * Worn armor drawn by the pack (Abyssal, Hollow): the item's equippable points at Occultech's equipment asset
-     * {@code occultech:<set>}; everything else about wearing it stays the vanilla piece's.
+     * Worn armor drawn by the pack (Abyssal, Hollow): the chestplate, leggings and boots point their equippable at
+     * Occultech's equipment asset {@code occultech:<set>} (textures, and the chestplate's 3D back pieces on the wings
+     * layer); the helmet gets an equippable with no asset at all, so the game draws its own 3D item model on the head
+     * (as it draws a carved pumpkin). Everything else about wearing it stays the vanilla piece's.
      */
     static void wornLook(ItemStack item, String set) {
         io.papermc.paper.datacomponent.item.Equippable worn = item.getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE);
         if (worn == null) {
             return;
         }
+        boolean helm = worn.slot() == org.bukkit.inventory.EquipmentSlot.HEAD;
         item.setData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE,
             io.papermc.paper.datacomponent.item.Equippable.equippable(worn.slot())
-                .assetId(net.kyori.adventure.key.Key.key("occultech", set))
+                .assetId(helm ? null : net.kyori.adventure.key.Key.key("occultech", set))
                 .equipSound(worn.equipSound()).cameraOverlay(worn.cameraOverlay()).allowedEntities(worn.allowedEntities())
                 .dispensable(worn.dispensable()).swappable(worn.swappable()).damageOnHurt(worn.damageOnHurt())
                 .equipOnInteract(worn.equipOnInteract()).canBeSheared(worn.canBeSheared()).shearSound(worn.shearSound())

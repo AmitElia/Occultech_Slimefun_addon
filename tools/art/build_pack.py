@@ -181,6 +181,18 @@ def main():
             "type": "minecraft:select", "property": "minecraft:display_context",
             "cases": [{"when": ["gui", "ground", "fixed"], "model": {"type": "minecraft:model", "model": model_ref(base)}}],
             "fallback": held}}
+    # worn helmets (Session G6): <key>_head is the 3D helm drawn on the wearer's head (display context "head"); the
+    # inventory and everything else keep the 2D icon
+    for key in sorted(os.listdir(gdir)) if os.path.isdir(gdir) else []:
+        if not key.endswith("_head") or not os.path.exists(os.path.join(gdir, key, "model.json")):
+            continue
+        base = key[:-len("_head")]
+        if base.upper() not in items or base.upper() not in with_models:
+            raise SystemExit(f"{key}: no item {base.upper()} with a 2D icon")
+        files[f"assets/{NS}/items/{base}.json"] = {"model": {
+            "type": "minecraft:select", "property": "minecraft:display_context",
+            "cases": [{"when": "head", "model": {"type": "minecraft:model", "model": f"{NS}:block/{key}"}}],
+            "fallback": {"type": "minecraft:model", "model": model_ref(base)}}}
     # the Heartwood Aegis: a shield - its model while held, and its blocking model while in use (vanilla's shield)
     if os.path.isdir(os.path.join(gdir, "heartwood_aegis_shield")):
         files[f"assets/{NS}/items/heartwood_aegis.json"] = {"model": {
@@ -195,9 +207,12 @@ def main():
     equipment = []
     edir = os.path.join(gdir, "equipment")
     for name in sorted(os.listdir(edir)) if os.path.isdir(edir) else []:
+        layers = ["humanoid", "humanoid_leggings"]
+        if os.path.exists(os.path.join(edir, name, "wings.png")):
+            layers.append("wings")   # the chestplate's 3D back pieces, drawn on the elytra's wings
         files[f"assets/{NS}/equipment/{name}.json"] = {"layers": {
-            "humanoid": [{"texture": f"{NS}:{name}"}], "humanoid_leggings": [{"texture": f"{NS}:{name}"}]}}
-        for layer in ("humanoid", "humanoid_leggings"):
+            layer: [{"texture": f"{NS}:{name}"}] for layer in layers}}
+        for layer in layers:
             img = Image.open(os.path.join(edir, name, f"{layer}.png")).convert("RGBA")
             assert img.size == (64, 32), (name, layer, img.size)
             files[f"assets/{NS}/textures/entity/equipment/{layer}/{name}.png"] = png_bytes(img)

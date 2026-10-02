@@ -1094,9 +1094,14 @@ final class SelfTest {
         ItemStack crown = SlimefunItem.getById(ItemKeys.slimefunId("HOLLOW_HELMET")).getItem();
         if (plugin.resourcePack().hasEquipment("hollow")) {
             var worn = crown.getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE);
-            check("the Hollow Crown is worn in Occultech's look (equipment occultech:hollow)",
-                worn != null && worn.assetId() != null && worn.assetId().asString().equals("occultech:hollow"),
-                worn == null ? "no equippable" : String.valueOf(worn.assetId()));
+            check("the Hollow Crown is worn as its 3D model (an equippable head item with no armor asset)",
+                worn != null && worn.assetId() == null && worn.slot() == org.bukkit.inventory.EquipmentSlot.HEAD,
+                worn == null ? "no equippable" : worn.slot() + " " + worn.assetId());
+            var cuirass = SlimefunItem.getById(ItemKeys.slimefunId("HOLLOW_CHESTPLATE")).getItem()
+                .getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE);
+            check("the Hollow Cuirass is worn in Occultech's look (equipment occultech:hollow)",
+                cuirass != null && cuirass.assetId() != null && cuirass.assetId().asString().equals("occultech:hollow"),
+                cuirass == null ? "no equippable" : String.valueOf(cuirass.assetId()));
         }
         check("Hollow Crown has Protection V", crown.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 5,
             "protection " + crown.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION));
