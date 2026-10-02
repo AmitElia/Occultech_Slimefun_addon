@@ -34,6 +34,8 @@ import me.mrCookieSlime.Slimefun.api.BlockStorage;
  * player moves onto a new block, with a cheap material filter before any Slimefun lookup, and a short cooldown.</li>
  * <li>Everliving coral, Tidal Tiles and Pearl Beds never dry out of water.</li>
  * <li>Decorative flowers: breaking the block under one pops the Occultech item, never a plain vanilla flower.</li>
+ * <li>Prismatic Netherrack burns with its own coloured fire: lighting it (flint and steel, a fire charge, spreading
+ * fire, lava) lights that instead of vanilla fire, and a left-click on its top puts it out.</li>
  * </ul>
  */
 public final class CosmeticListener implements Listener {
@@ -41,6 +43,7 @@ public final class CosmeticListener implements Listener {
     private static final String CHIMING = ItemKeys.slimefunId("CHIMING_TILE");
     private static final String TIDAL = ItemKeys.slimefunId("TIDAL_TILE");
     private static final String RESIN = ItemKeys.slimefunId("RESIN_TILE");
+    private static final String PRISMATIC = ItemKeys.slimefunId("PRISMATIC_NETHERRACK");
     private static final Set<String> NEVER_DRY = Set.of(TIDAL, ItemKeys.slimefunId("EVERLIVING_CORAL"),
         ItemKeys.slimefunId("PEARL_BED"));
     private static final Set<String> FLOWERS = Set.of(ItemKeys.slimefunId("MOONLIT_LILY"), ItemKeys.slimefunId("WITCHCAP"),
@@ -139,6 +142,30 @@ public final class CosmeticListener implements Listener {
             drop.setAmount(1);
             above.getWorld().dropItemNaturally(above.getLocation().add(0.5, 0.3, 0.5), drop);
         }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onIgnite(org.bukkit.event.block.BlockIgniteEvent e) {
+        Block below = e.getBlock().getRelative(BlockFace.DOWN);
+        if (!PRISMATIC.equals(BlockStorage.checkID(below)) || !decorations.coloredFire()) {
+            return;
+        }
+        e.setCancelled(true);
+        if (decorations.lightPrismatic(below)) {
+            below.getWorld().playSound(e.getBlock().getLocation().add(0.5, 0.5, 0.5), Sound.ITEM_FLINTANDSTEEL_USE, 1F, 1F);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPunchFire(org.bukkit.event.player.PlayerInteractEvent e) {
+        Block block = e.getClickedBlock();
+        if (e.getAction() != org.bukkit.event.block.Action.LEFT_CLICK_BLOCK || block == null || e.getBlockFace() != BlockFace.UP
+            || !DecorationService.prismaticLit(block) || !PRISMATIC.equals(BlockStorage.checkID(block))) {
+            return;
+        }
+        e.setCancelled(true);
+        decorations.extinguishPrismatic(block);
+        block.getWorld().playSound(block.getLocation().add(0.5, 1.2, 0.5), Sound.BLOCK_FIRE_EXTINGUISH, 0.7F, 1.2F);
     }
 
     /** Trophy models are real (tiny, frozen) mobs: they must never burn in daylight. */

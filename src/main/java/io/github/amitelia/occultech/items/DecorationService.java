@@ -13,6 +13,9 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.Levelled;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -220,6 +223,9 @@ public final class DecorationService {
             Decoration decoration = entry.getValue();
             if (now - decoration.lastSeen > SEEN_TIMEOUT_MS || !at.isChunkLoaded() || BlockStorage.checkID(at) == null) {
                 clearParts(decoration);
+                if (decoration.kind == Kind.PRISMATIC_NETHERRACK && at.isChunkLoaded() && BlockStorage.checkID(at) == null) {
+                    extinguishPrismatic(at.getBlock());   // the block is gone (blown up, moved): its fire's light too
+                }
                 return true;
             }
             Location center = at.clone().add(0.5, 0.5, 0.5);
@@ -243,7 +249,7 @@ public final class DecorationService {
                 case MOONLIT_LILY -> lily(center, decoration, palette);
                 case WITCHCAP -> witchcap(center, palette);
                 case EVERLIVING_CORAL -> coral(center);
-                case PRISMATIC_NETHERRACK -> prismaticFire(at.getBlock(), index);
+                case PRISMATIC_NETHERRACK -> prismaticFire(at.getBlock(), decoration, index);
                 case TROPHY_BOARD -> trophy(center, decoration, at.getBlock());
                 case WATCHFUL_EYEBLOSSOM -> eyeblossom(center, at.getBlock(), palette);
                 case FLOOR_SIGIL -> floorSigil(center, decoration, palette, index % 2 == 0 ? 2.4 : 1.4);
@@ -437,14 +443,86 @@ public final class DecorationService {
         }
     }
 
+    // ------------------------------------------------------------------ Prismatic Netherrack's fire
+
     /**
-     * Rainbow fire: only while fire burns on top. Vanilla fire can't be recolored, so hue-cycling flames are drawn over
-     * it. Neighbouring blocks are offset in hue so a pit of them ripples like rainbow glass.
+     * Whether Prismatic Netherrack burns with its own coloured fire: the resource pack has its flames. Without the pack
+     * it keeps vanilla fire, with coloured sparks drawn over it.
      */
-    private void prismaticFire(Block block, int palette) {
+    public boolean coloredFire() {
+        var skins = io.github.amitelia.occultech.Occultech.instance().skins();
+        return skins != null && skins.isSkinned(io.github.amitelia.occultech.content.ItemKeys.slimefunId("PRISMATIC_NETHERRACK"));
+    }
+
+    /**
+     * Lights a Prismatic Netherrack with its coloured fire: an invisible light block (level 15) takes the fire's place
+     * on top - it never spreads or burns anything - and the flames are a display drawn while players are near. False if
+     * something else is on top.
+     */
+    public boolean lightPrismatic(Block block) {
+        Block above = block.getRelative(BlockFace.UP);
+        Material type = above.getType();
+        if (!type.isAir() && type != Material.FIRE && type != Material.SOUL_FIRE) {
+            return false;
+        }
+        Levelled light = (Levelled) Material.LIGHT.createBlockData();
+        light.setLevel(15);
+        above.setBlockData(light, false);
+        return true;
+    }
+
+    public static boolean prismaticLit(Block block) {
+        return block.getRelative(BlockFace.UP).getType() == Material.LIGHT;
+    }
+
+    /** Puts the coloured fire out (left-click on top, water, or the block going away). */
+    public void extinguishPrismatic(Block block) {
+        Block above = block.getRelative(BlockFace.UP);
+        if (above.getType() == Material.LIGHT) {
+            above.setType(Material.AIR, false);
+        }
+        Decoration decoration = decorations.get(block.getLocation());
+        if (decoration != null) {
+            clearParts(decoration);
+        }
+    }
+
+    /**
+     * The fire on top. With the pack: the coloured flames (a display of the palette's fire model, full bright), fire
+     * that arrives any other way (spread, lava, older saves) is turned into ours, and water puts it out. A few sparks
+     * of the palette's hues either way; without the pack they are drawn over vanilla fire. Neighbouring blocks are
+     * offset in hue so a pit of them ripples like rainbow glass.
+     */
+    private void prismaticFire(Block block, Decoration decoration, int palette) {
         Block above = block.getRelative(0, 1, 0);
-        if (above.getType() != Material.FIRE && above.getType() != Material.SOUL_FIRE) {
+        boolean colored = coloredFire();
+        if (colored && (above.getType() == Material.FIRE || above.getType() == Material.SOUL_FIRE)) {
+            lightPrismatic(block);
+        }
+        if (above.getType() == Material.LIGHT && above.getBlockData() instanceof Waterlogged wet && wet.isWaterlogged()) {
+            extinguishPrismatic(block);
             return;
+        }
+        boolean lit = colored ? above.getType() == Material.LIGHT : above.getType() == Material.FIRE || above.getType() == Material.SOUL_FIRE;
+        if (!lit) {
+            clearParts(decoration);
+            return;
+        }
+        if (colored && decoration.parts.isEmpty()) {
+            ItemStack flames = new ItemStack(Material.PAPER);
+            var meta = flames.getItemMeta();
+            meta.setItemModel(new org.bukkit.NamespacedKey("occultech", "prismatic_fire" + (palette == 0 ? "" : "_v" + palette)));
+            flames.setItemMeta(meta);
+            decoration.parts.add(block.getWorld().spawn(above.getLocation().add(0.5, 0.5, 0.5), ItemDisplay.class, d -> {
+                prepare(d);
+                d.setItemStack(flames);
+                d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+                d.setBrightness(new Display.Brightness(15, 15));
+                d.setShadowRadius(0F);
+            }));
+        }
+        if (ThreadLocalRandom.current().nextInt(colored ? 3 : 1) != 0) {
+            return;   // with the coloured flames, sparks only now and then
         }
         // hue range per palette: rainbow (full circle), aurora (green-violet), dusk embers (red-violet)
         float start = palette == 1 ? 0.3F : palette == 2 ? 0.75F : 0F;

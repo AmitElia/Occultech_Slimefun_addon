@@ -309,9 +309,9 @@ def arcane_pedestal():
 
 
 def brood_egg():
-    """The Brood Egg (vanilla: sniffer egg - the skin encloses it): a rounded sac of spider silk built up in layers,
-    wound with clear bands of thread, dark eggs pressing against it from inside and crimson veins pulsing through it;
-    a strand rising from its top (animated)."""
+    """The Brood Egg (vanilla: sniffer egg, 14x16x12 - the skin encloses it): a great egg sac of spider silk, wider
+    than its foot, bulging round its middle and rising to a rounded crown above the block; wound with bands of thread,
+    dark eggs pressing against it from inside, crimson veins pulsing through it (animated), a strand at its tip."""
     m = Model("brood_egg")
     bone, cr, ink = RAMPS["bone"], RAMPS["crimson"], RAMPS["ink"]
     frames = []
@@ -320,8 +320,8 @@ def brood_egg():
         for y in range(16):
             for x in range(16):
                 band = (x + y) % 5 == 0          # wound thread
-                silk.putpixel((x, y), bone[2] if band else bone[4] if y < 4 else bone[3])
-        for (cx, cy) in ((3, 5), (10, 3), (7, 10), (12, 11)):   # eggs pressing from inside
+                silk.putpixel((x, y), bone[2] if band else bone[4] if y < 5 else bone[3])
+        for (cx, cy) in ((3, 6), (10, 4), (7, 10), (12, 12)):   # eggs pressing from inside
             put(silk, [(cx, cy), (cx + 1, cy), (cx, cy + 1), (cx + 1, cy + 1)], ink[3])
             put(silk, [(cx, cy)], ink[4])
         glow = cr[[2, 3, 4, 3][f]]
@@ -329,13 +329,14 @@ def brood_egg():
                    (13, 8), (14, 9)], glow)
         frames.append(silk)
     t = m.texture("silk", frames)
-    top = m.texture("top", rim(fill(bone, 4), bone[5], bone[2]))
-    m.cube((0.8, 0, 1.8), (15.2, 16, 14.2), t, top=top, bottom=top)
-    m.cube((0, 2, 1), (16, 14, 15), (t, [0, 2, 16, 14]))
-    m.cube((-0.6, 4.5, 0.4), (16.6, 11.5, 15.6), (t, [0, 4, 16, 11]))
-    m.cube((2.5, 16, 3.5), (13.5, 17.5, 12.5), (t, [2, 0, 13, 2]), top=top)
-    m.cube((5, 17.5, 6), (11, 18.5, 10), (t, [5, 0, 11, 1]), top=top)
-    m.box((7.5, 18.5, 7.5), (8.5, 22, 8.5), {d: (t, [0, 0, 1, 4]) for d in ("north", "south", "west", "east")})
+    top = m.texture("top", rim(fill(bone, 4), bone[5], bone[3]))
+    # (y0, y1, half-width): the egg's layers from the foot up; every layer up to y16 encloses the sniffer egg
+    layers = ((0, 2, 7.2), (2, 5, 7.8), (5, 11, 8.3), (11, 14, 7.8), (14, 16, 7.2), (16, 18, 6.0), (18, 20, 4.6),
+              (20, 21.5, 3.0), (21.5, 22.5, 1.6))
+    for i, (y0, y1, r) in enumerate(layers):
+        v0 = (i * 3) % 12
+        m.cube((8 - r, y0, 8 - r), (8 + r, y1, 8 + r), (t, [0, v0, 16, v0 + min(4, y1 - y0)]), top=top, bottom=top)
+    m.box((7.5, 22.5, 7.5), (8.5, 25, 8.5), {d: (t, [0, 0, 1, 3]) for d in ("north", "south", "west", "east")})
     return m
 
 
@@ -392,23 +393,38 @@ def chiming_tile():
     return m
 
 
-def tier_glyph(key, chalk_ramp, base_ramp, glow_ramp, variant):
+def tier_glyph(key, chalk_ramp, base_ramp, glow_ramp, variant, glow=False):
     """A circle glyph tile over a carpet: dark slate, a rune drawn in the tier's chalk, dust, a faint glow in the rune's
-    heart."""
+    heart. glow: the rune also burns with its own light - a second, emissive layer over the tile (light_emission 15, so
+    it shines in the dark) with a soft halo round the strokes, pulsing (animated)."""
     m = Model(key + ("" if variant == 0 else f"_v{variant}"))
     rnd = random.Random(170 + variant)
     top = slab_top(base_ramp, 160 + variant, tone=2)
     for _ in range(18):
         top.putpixel((rnd.randrange(16), rnd.randrange(16)), base_ramp[3])
-    for y, row in enumerate(GLYPH_RUNES[(variant + 1) % 4]):
-        for x, c in enumerate(row):
-            if c == "#":
-                top.putpixel((4 + x, 4 + y), chalk_ramp[4] if (x + y) % 4 else chalk_ramp[3])
+    rune = GLYPH_RUNES[(variant + 1) % 4]
+    strokes = [(4 + x, 4 + y) for y, row in enumerate(rune) for x, c in enumerate(row) if c == "#"]
+    for (x, y) in strokes:
+        top.putpixel((x, y), chalk_ramp[4] if (x + y) % 4 else chalk_ramp[3])
     put(top, [(7, 7), (8, 8)], glow_ramp[4])
     side = fill(base_ramp, 1)
     t_top, t_side = m.texture("top", top), m.texture("side", side)
     m.box((0, 0, 0), (16, 1.2, 16), {"up": t_top, "north": (t_side, [0, 0, 16, 1]), "south": (t_side, [0, 0, 16, 1]),
                                       "west": (t_side, [0, 0, 16, 1]), "east": (t_side, [0, 0, 16, 1]), "down": t_top})
+    if glow:
+        halo = {(x + dx, y + dy) for (x, y) in strokes for dx in (-1, 0, 1) for dy in (-1, 0, 1)} - set(strokes)
+        frames = []
+        for f in range(8):
+            layer = blank()
+            a = [110, 140, 170, 200, 220, 200, 170, 140][f]
+            for (x, y) in halo:
+                if 0 <= x < 16 and 0 <= y < 16:
+                    layer.putpixel((x, y), glow_ramp[3][:3] + (a,))
+            for (x, y) in strokes:
+                layer.putpixel((x, y), glow_ramp[5] if (x + y + f) % 4 == 0 else glow_ramp[4])
+            frames.append(layer)
+        t_glow = m.texture("glow", frames)
+        m.box((0, 1.3, 0), (16, 1.3, 16), {"up": t_glow}, shade=False, light=15)
     return m
 
 
@@ -449,31 +465,62 @@ FACES_ALL = ("north", "south", "west", "east", "up", "down")
 
 
 def phantom_roost():
-    """The Phantom Roost (vanilla: bone block): a lattice of bleached ribs bound into a block, dark gaps between them,
-    dusk membrane stretched in the gaps; on top a nest of dark membrane with two crossed perch bones."""
+    """The Phantom Roost (vanilla: bone block): a little tower of dark slate where phantoms sleep - silver-capped
+    corners, and on each side an arched roosting hole in the dark of which a phantom's pale green eyes glow and now and
+    then blink (animated; the eyes have their own light). On top a silver perch bar on two posts, rags of dusk membrane
+    hanging from it."""
     m = Model("phantom_roost")
-    bone, du, ink = RAMPS["bone"], RAMPS["dusk"], RAMPS["ink"]
-    side = blank()
+    st, ir, du, ink, emd = RAMPS["boundsteel"], RAMPS["iron"], RAMPS["dusk"], RAMPS["ink"], RAMPS["emerald"]
+    side = bricks(st, 71, row_h=4, brick_w=8, tones=(1, 2, 2))
+    arch = set()
+    for y in range(4, 15):
+        for x in range(4, 12):
+            if y == 4 and x in (4, 5, 10, 11) or y == 5 and x in (4, 11):
+                continue
+            arch.add((x, y))
+    for (x, y) in arch:
+        side.putpixel((x, y), ink[0] if y > 6 else ink[1])
+    put(side, [(3, y) for y in range(6, 15)] + [(x, 3) for x in range(6, 10)] + [(4, 5), (5, 4), (11, 5), (10, 4)], st[4])
+    put(side, [(12, y) for y in range(6, 15)], st[1])
+    put(side, [(x, 15) for x in range(3, 13)], st[3])   # the sill
+    for x in range(16):
+        side.putpixel((x, 0), ir[4])
+    t_side = m.texture("side", side)
+    # the eyes: their own emissive layer just outside each face
+    blink = [0] * 12 + [1, 2, 1, 0]
+    eyes = []
+    for f, b in enumerate(blink):
+        layer = blank()
+        if b < 2:
+            for ex in (5, 9):
+                pts = [(ex, 9), (ex + 1, 9)] if b == 0 else []
+                pts += [(ex, 10), (ex + 1, 10)]
+                put(layer, pts, emd[5] if b == 0 else emd[4])
+                put(layer, [(ex + 1, 10)], emd[4])
+        eyes.append(layer)
+    t_eyes = m.texture("eyes", eyes)
+    top = rim(slab_top(st, 73, tone=2), ir[4], st[1])
+    t_top = m.texture("top", top)
+    t_silver = m.texture("silver", rim(fill(ir, 3), ir[5], ir[1]))
+    rag = blank()
     for y in range(16):
         for x in range(16):
-            rib = x % 5 in (0, 1)
-            side.putpixel((x, y), (bone[4] if x % 5 == 0 else bone[3]) if rib else (du[2] if (x + y) % 4 else du[1]))
-    for y in (0, 15):
-        for x in range(16):
-            side.putpixel((x, y), bone[4] if y == 0 else bone[2])
-    for x in (0, 5, 10, 15):
-        put(side, [(x, 7), (x + 1, 7)], bone[5])
-    top = blank()
-    rnd = random.Random(71)
-    for y in range(16):
-        for x in range(16):
-            d = math.hypot(x - 7.5, y - 7.5)
-            top.putpixel((x, y), bone[3] if d > 6.5 else du[1] if d > 4 else ink[2] if rnd.random() < 0.7 else du[2])
-    t_side, t_top = m.texture("side", side), m.texture("top", top)
-    t_bone = m.texture("bone", rim(fill(bone, 4), bone[5], bone[2]))
-    m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=t_side)
-    m.cube((1, 16, 7), (15, 17.5, 8.5), (t_bone, [0, 0, 14, 2]))
-    m.cube((7.5, 16, 1), (9, 17.5, 15), (t_bone, [0, 0, 14, 2]))
+            if y < 12 - (x * 7 % 5):   # ragged hem
+                rag.putpixel((x, y), du[2] if (x + y) % 5 else du[1])
+    t_rag = m.texture("rag", rag)
+    m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=t_top)
+    for (x, z) in ((-0.3, -0.3), (14.3, -0.3), (-0.3, 14.3), (14.3, 14.3)):   # silver corner caps
+        m.cube((x, 14, z), (x + 2, 16.5, z + 2), (t_silver, [0, 0, 2, 2]), top=(t_silver, [0, 0, 2, 2]))
+    m.box((0, 0, -0.05), (16, 16, -0.05), {"north": t_eyes}, shade=False, light=15)
+    m.box((0, 0, 16.05), (16, 16, 16.05), {"south": t_eyes}, shade=False, light=15)
+    m.box((-0.05, 0, 0), (-0.05, 16, 16), {"west": t_eyes}, shade=False, light=15)
+    m.box((16.05, 0, 0), (16.05, 16, 16), {"east": t_eyes}, shade=False, light=15)
+    for x in (3, 12):   # the perch: two posts and a bar
+        m.cube((x, 16, 7), (x + 1, 21, 8.5), (t_silver, [0, 0, 1, 5]), top=(t_silver, [0, 0, 1, 1]))
+    m.cube((2, 21, 6.8), (14, 22.2, 8.7), (t_silver, [0, 0, 12, 1]), top=(t_silver, [0, 0, 12, 2]))
+    for (x0, x1, drop) in ((4.5, 7, 4.5), (8, 10.5, 3)):   # rags of membrane hanging from the bar
+        m.box((x0, 21 - drop, 7.75), (x1, 21, 7.75), {"north": (t_rag, [0, 0, x1 - x0, drop]), "south": (t_rag, [0, 0, x1 - x0, drop])},
+              shade=False)
     return m
 
 
@@ -791,51 +838,88 @@ def abyssal_altar():
     return m
 
 
-def guardian_eye():
-    """The Guardian Eye (vanilla: observer): a guardian made into a sentry - a block of teal guardian hide, scaled and
-    plated, with amber spikes jutting from its edges and one great eye on each side whose pupil watches left and
-    right (animated)."""
+GUARDIAN_EYE_Y = 22.4   # the eye's centre above the column, in px (the plugin puts its display at block y + 1.4)
+
+
+def guardian_column():
+    """The Guardian Eye's column (vanilla: observer): a fluted column of teal guardian stone - a stepped plinth, a
+    capital ringed in amber spikes - and on top a gold cradle of four claws in which its eye sits. The eye itself is
+    a separate display that turns to look at what it shoots (guardian_eye_orb)."""
     m = Model("guardian_eye")
-    ab, am, bone, sg = RAMPS["abyss"], RAMPS["amber"], RAMPS["bone"], RAMPS["seaglow"]
-    looks = [0, 0, 0, 1, 2, 2, 2, 1, 0, 0, -1, -2, -2, -2, -1, 0]   # pupil offset per frame: hold, glance, hold
-    eyes = []
-    for f, dx in enumerate(looks):
-        side = blank()
-        for y in range(16):
-            for x in range(16):
-                scale = (x // 4 + y // 2) % 2
-                side.putpixel((x, y), ab[3] if scale else ab[2])
-                if y % 4 == 3 and x % 4 == 0:
-                    side.putpixel((x, y), ab[1])
-        rim(side, ab[4], ab[1])
-        # the eye: a pale almond 10 wide, 6 tall
-        for y in range(5, 11):
-            half = {5: 2, 6: 4, 7: 5, 8: 5, 9: 4, 10: 2}[y]
-            for x in range(8 - half, 8 + half):
-                side.putpixel((x, y), bone[4] if y < 8 else bone[3])
-        put(side, [(x, 4) for x in range(5, 11)], ab[0])          # a heavy lid
-        put(side, [(x, 11) for x in range(6, 10)], ab[1])
-        px = 7 + dx
-        put(side, [(px, 6), (px + 1, 6), (px, 7), (px + 1, 7), (px, 8), (px + 1, 8), (px, 9), (px + 1, 9)], am[3])
-        put(side, [(px, 7), (px + 1, 7), (px, 8), (px + 1, 8)], ab[0])   # slit pupil in an amber iris
-        put(side, [(px, 6)], bone[5])
-        eyes.append(side)
-    t_side = m.texture("side", eyes)
-    top = rim(fill(ab, 2), ab[4], ab[1])
+    ab, am, gd, sg = RAMPS["abyss"], RAMPS["amber"], RAMPS["gold"], RAMPS["seaglow"]
+    shaft = blank()
     for y in range(16):
         for x in range(16):
-            if (x // 4 + y // 4) % 2:
-                top.putpixel((x, y), ab[3])
-    put(top, [(7, 7), (8, 8), (7, 8), (8, 7)], sg[3])
-    t_top = m.texture("top", top)
-    spike = rim(fill(am, 3), am[5], am[1])
-    t_spike = m.texture("spike", spike)
-    m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=t_top)
-    for (x, z) in ((-1.5, -1.5), (15.5, -1.5), (-1.5, 15.5), (15.5, 15.5)):   # corner spikes, top and bottom
-        m.cube((x, 13, z), (x + 2, 15, z + 2), (t_spike, [0, 0, 2, 2]))
-        m.cube((x, 1, z), (x + 2, 3, z + 2), (t_spike, [0, 0, 2, 2]))
-    for (x, z) in ((7, -1), (7, 16), (-1, 7), (16, 7)):   # a spike crowning each face's edge
-        m.cube((x, 15, z), (x + 2, 18, z + 1 if z in (-1, 16) else z + 2), (t_spike, [0, 0, 2, 3]))
+            flute = x % 4
+            shaft.putpixel((x, y), ab[4] if flute == 0 else ab[3] if flute == 1 else ab[2] if flute == 2 else ab[1])
+    put(shaft, [(x, y) for x in range(16) for y in (7, 8)], sg[2])   # a sea-glow ring round the shaft
+    t_shaft = m.texture("shaft", shaft)
+    stone = rim(fill(ab, 3), ab[5], ab[1])
+    put(stone, [(x, 8) for x in range(16)], ab[2])
+    t_stone = m.texture("stone", stone)
+    t_top = m.texture("top", rim(slab_top(ab, 311, tone=3), ab[5], ab[1]))
+    t_spike = m.texture("spike", rim(fill(am, 3), am[5], am[1]))
+    t_gold = m.texture("gold", rim(fill(gd, 3), gd[5], gd[1]))
+    m.cube((0, 3, 0), (16, 13, 16), (t_shaft, [0, 3, 16, 13]))
+    m.cube((-0.5, 0, -0.5), (16.5, 3, 16.5), (t_stone, [0, 5, 16, 8]), top=t_top, bottom=t_top)       # plinth
+    m.cube((-0.5, 13, -0.5), (16.5, 16, 16.5), (t_stone, [0, 5, 16, 8]), top=t_top, bottom=t_top)     # capital
+    for (x, z) in ((-1.5, -1.5), (15.5, -1.5), (-1.5, 15.5), (15.5, 15.5)):
+        m.cube((x, 13.5, z), (x + 2, 15.5, z + 2), (t_spike, [0, 0, 2, 2]))
+    m.cube((5, 16, 5), (11, 17.5, 11), (t_gold, [0, 0, 6, 2]), top=(t_gold, [0, 0, 6, 6]))           # the cradle
+    for (x, z) in ((4, 4), (11, 4), (4, 11), (11, 11)):
+        m.cube((x, 17, z), (x + 1, 20.5, z + 1), (t_gold, [0, 0, 1, 3]), top=(t_gold, [0, 0, 1, 1]))
+    return m
+
+
+def guardian_orb(m=None, cy=8.0, frame_count=8):
+    """The Guardian Eye's eye: a ball of pale guardian hide, an amber-ringed iris with a slit pupil on its north face
+    (its front - the plugin turns it toward its target), glowing (light_emission). Drawn into `m` at height cy (the
+    inventory model) or as its own model centred in its block."""
+    own = m is None
+    m = m or Model("guardian_eye_orb")
+    ab, am, bone, sg = RAMPS["abyss"], RAMPS["amber"], RAMPS["bone"], RAMPS["seaglow"]
+    hide = blank()
+    for y in range(16):
+        for x in range(16):
+            hide.putpixel((x, y), bone[4] if (x * 3 + y) % 7 else bone[3])
+    put(hide, [(2, 5), (3, 6), (4, 6), (12, 9), (11, 10)], RAMPS["crimson"][3])   # a few veins
+    t_hide = m.texture("orb_hide", hide)
+    irises = []
+    for f in range(frame_count):
+        iris = fill(bone, 4)
+        for y in range(16):
+            for x in range(16):
+                d = math.hypot(x - 7.5, y - 7.5)
+                if d < 6.5:
+                    iris.putpixel((x, y), am[2] if d > 5.4 else sg[3] if d > 3.6 else sg[4])
+        w = [2, 2, 2, 1, 1, 2, 2, 2][f % 8]   # the slit narrows now and then
+        for y in range(3, 13):
+            for x in range(8 - w // 2 - (w % 2), 8 + w // 2):
+                iris.putpixel((x, y), ab[0])
+        put(iris, [(5, 4), (6, 4), (5, 5)], (255, 255, 255, 255))   # a catchlight
+        irises.append(iris)
+    t_iris = m.texture("orb_iris", irises)
+    c, r = 8.0, 4.0
+    def b(x0, y0, z0, x1, y1, z1):
+        return (c + x0, cy + y0, c + z0), (c + x1, cy + y1, c + z1)
+    m.box(*b(-r, -2, -2, r, 2, 2), {d: (t_hide, [0, 0, 8, 5]) for d in ("west", "east", "up", "down", "south")})
+    m.box(*b(-2, -r, -2, 2, r, 2), {d: (t_hide, [0, 0, 5, 8]) for d in ("west", "east", "up", "down", "south")})
+    m.box(*b(-3.2, -3.2, -3.2, 3.2, 3.2, 3.2), {d: (t_hide, [2, 2, 9, 9]) for d in ("west", "east", "up", "down", "south")})
+    m.box(*b(-2.4, -2.4, -r, 2.4, 2.4, r), {"north": (t_iris, [3, 3, 13, 13]), "south": (t_hide, [0, 0, 5, 5]),
+                                           "west": (t_hide, [0, 0, 8, 5]), "east": (t_hide, [0, 0, 8, 5]),
+                                           "up": (t_hide, [0, 0, 5, 8]), "down": (t_hide, [0, 0, 5, 8])}, light=12)
+    if own:
+        m.part = True
+    return m
+
+
+def guardian_eye_inventory():
+    """The Guardian Eye as the inventory shows it: the column with its eye in the cradle, looking out."""
+    m = guardian_column()
+    m.key = "guardian_eye_inventory"
+    m.part = True
+    guardian_orb(m, cy=GUARDIAN_EYE_Y)
+    m.display = {"gui": {"rotation": [30, 225, 0], "translation": [0, -2.5, 0], "scale": [0.5, 0.5, 0.5]}}
     return m
 
 
@@ -926,9 +1010,10 @@ def ember_brazier():
 
 
 def abyssal_lantern():
-    """The Abyssal Lantern (vanilla: sea lantern): a deep-sea lamp - dark iron cap and foot rimmed in gold, iron
-    corner posts, and panes of sea glow, brightest at the heart, behind which bubbles rise (animated); an iron ring to
-    hang it by on top."""
+    """The Abyssal Lantern (vanilla: lantern - light 15, small - so the skin can be smaller than a block; it encloses
+    the lantern standing or hanging): a deep-sea lamp 12 wide and 14 tall - dark iron cap and foot rimmed in gold,
+    iron corner posts, panes of sea glow brightest at the heart behind which bubbles rise (animated, glowing), and an
+    iron ring on top over the lantern's chain."""
     m = Model("abyssal_lantern")
     ir, gd, sg = RAMPS["iron"], RAMPS["gold"], RAMPS["seaglow"]
     panes = []
@@ -939,28 +1024,31 @@ def abyssal_lantern():
                 d = abs(x - 7.5) + abs(y - 7.5) * 0.8
                 side.putpixel((x, y), sg[4] if d < 3 else sg[3] if d < 6 else sg[2])
         for (bx, phase) in ((4, 0), (8, 6), (11, 11)):   # bubbles rising
-            y = 12 - (phase + f * 3) % 10
+            y = 13 - (phase + f * 3) % 11
             put(side, [(bx, y), (bx + 1, y)], sg[5]); put(side, [(bx, y + 1)], sg[1])
-        for i in range(16):
-            for (x, y) in ((i, 0), (i, 1), (i, 14), (i, 15)):
-                side.putpixel((x, y), gd[4] if y == 0 else ir[1] if y in (1, 14) else ir[0])
         panes.append(side)
     t_side = m.texture("side", panes)
     top = rim(fill(ir, 1), gd[4], gd[1])
-    put(top, circle_pts(7.5, 7.5, 4), ir[3])
-    put(top, [(x, y) for x in range(6, 10) for y in range(6, 10)], sg[3])
+    put(top, circle_pts(7.5, 7.5, 3.5), ir[3])
     t_top = m.texture("top", top)
+    band = blank()
+    for y in range(16):
+        for x in range(16):
+            band.putpixel((x, y), gd[4] if y == 0 else ir[1] if y < 3 else ir[0])
+    t_band = m.texture("band", band)
     post = rim(fill(ir, 1), ir[3], ir[0])
     t_post = m.texture("post", post)
     ring = rim(fill(ir, 2), ir[4], ir[0])
     t_ring = m.texture("ring", ring)
-    m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=t_top)
-    for (x, z) in ((-0.4, -0.4), (14.4, -0.4), (-0.4, 14.4), (14.4, 14.4)):
-        m.cube((x, 0, z), (x + 2, 16, z + 2), (t_post, [0, 0, 2, 16]), top=(t_post, [0, 0, 2, 2]))
-    m.cube((7, 16, 7.4), (9, 17, 8.6), (t_ring, [0, 0, 2, 1]))
-    m.cube((6, 17, 7.4), (7, 19, 8.6), (t_ring, [0, 0, 1, 2]))
-    m.cube((9, 17, 7.4), (10, 19, 8.6), (t_ring, [0, 0, 1, 2]))
-    m.cube((6.5, 19, 7.4), (9.5, 20, 8.6), (t_ring, [0, 0, 3, 1]))
+    m.box((2.5, 2, 2.5), (13.5, 12, 13.5), {d: (t_side, [2.5, 3, 13.5, 13]) for d in ("north", "south", "west", "east")}, light=15)
+    m.cube((2, 0, 2), (14, 2, 14), (t_band, [0, 0, 12, 2]), top=t_top, bottom=t_top)       # foot
+    m.cube((2, 12, 2), (14, 14, 14), (t_band, [0, 0, 12, 2]), top=t_top, bottom=t_top)     # cap
+    for (x, z) in ((1.6, 1.6), (12.9, 1.6), (1.6, 12.9), (12.9, 12.9)):
+        m.cube((x, 0, z), (x + 1.5, 14, z + 1.5), (t_post, [0, 0, 2, 14]), top=(t_post, [0, 0, 2, 2]))
+    m.cube((6, 14, 6), (10, 15, 10), (t_ring, [0, 0, 4, 1]), top=(t_ring, [0, 0, 4, 4]))
+    m.cube((6, 15, 7.4), (7, 17, 8.6), (t_ring, [0, 0, 1, 2]))
+    m.cube((9, 15, 7.4), (10, 17, 8.6), (t_ring, [0, 0, 1, 2]))
+    m.cube((6.5, 17, 7.4), (9.5, 18, 8.6), (t_ring, [0, 0, 3, 1]))
     return m
 
 
@@ -975,37 +1063,32 @@ CORAL_ORDER = ["tube", "brain", "bubble", "fire", "horn"]
 
 
 def tidal_tile(variant=0):
-    """The Tidal Coral Tile (vanilla: a coral block, cycled by right-click): living coral set in a frame of worn
-    prismarine, a film of sea water glinting over its top (animated). One variant per coral; the skin follows the block."""
+    """The Tidal Coral Tile (vanilla: a coral block, cycled by right-click): living coral with a film of sea water
+    glinting over its top (animated). Seamless - no frame or edge shading - so a floor of tiles reads as one reef, not
+    a grid. One variant per coral; the skin follows the block."""
     coral = CORALS[CORAL_ORDER[variant]]
     m = Model("tidal_tile" + ("" if variant == 0 else f"_v{variant}"))
-    ab, sg = RAMPS["abyss"], RAMPS["seaglow"]
-    rnd = random.Random(290 + variant)
+    sg = RAMPS["seaglow"]
 
-    def polyps(img, x0, y0, x1, y1):
-        for y in range(y0, y1):
-            for x in range(x0, x1):
+    def reef(seed):
+        rnd = random.Random(seed)
+        img = blank()
+        for y in range(16):
+            for x in range(16):
                 img.putpixel((x, y), coral[2] if (x + 2 * y) % 5 else coral[1])
-        for _ in range((x1 - x0) * (y1 - y0) // 6):
-            x, y = rnd.randrange(x0, x1), rnd.randrange(y0, y1)
-            put(img, [(x, y)], coral[4]); put(img, [(x + 1, y)] if x + 1 < x1 else [], coral[3])
+        for _ in range(40):   # polyps, wrapping round the edges so tiles join
+            x, y = rnd.randrange(16), rnd.randrange(16)
+            img.putpixel((x, y), coral[4]); img.putpixel(((x + 1) % 16, y), coral[3]); img.putpixel((x, (y + 1) % 16), coral[1])
+        return img
 
     tops = []
     for f in range(4):
-        top = rim(fill(ab, 3), ab[4], ab[1])
-        put(top, [(x, y) for x in range(16) for y in (1, 14)] + [(x, y) for x in (1, 14) for y in range(16)], ab[2])
-        rnd.seed(291 + variant)
-        polyps(top, 2, 2, 14, 14)
+        top = reef(291 + variant)
         for k in range(3):   # glints of the water film drifting across
-            gx, gy = (3 + k * 4 + f * 2) % 12 + 2, (4 + k * 3 + f) % 12 + 2
-            put(top, [(gx, gy), (gx + 1, gy)], sg[5] if k == 0 else sg[4])
+            gx, gy = (3 + k * 5 + f * 2) % 16, (4 + k * 6 + f) % 16
+            put(top, [(gx, gy), ((gx + 1) % 16, gy)], sg[5] if k == 0 else sg[4])
         tops.append(top)
-    side = rim(fill(ab, 2), ab[4], ab[1])
-    rnd.seed(295 + variant)
-    polyps(side, 1, 1, 15, 11)
-    put(side, [(x, 11) for x in range(16)], ab[4])
-    put(side, [(x, y) for x in range(16) for y in (12, 13, 14)], ab[3])
-    t_top, t_side = m.texture("top", tops), m.texture("side", side)
+    t_top, t_side = m.texture("top", tops), m.texture("side", reef(295 + variant))
     m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=t_side)
     return m
 
@@ -1045,18 +1128,63 @@ def prismatic_netherrack():
     return m
 
 
+FIRE_PALETTES = {   # the Prismatic Netherrack's palettes (DecorationService order): hue (start, span) per frame cycle
+    0: ("rainbow", 0.0, 1.0),
+    1: ("aurora", 0.30, 0.45),
+    2: ("dusk", 0.78, 0.30),
+}
+
+
+def prismatic_fire(palette=0):
+    """Prismatic fire (shown by the plugin over a lit Prismatic Netherrack, in place of vanilla fire): tongues of flame
+    on four crossed planes like vanilla fire's, white-hot at the root, their colour running through the palette's hues
+    as they flicker (16 frames). Glows (light_emission)."""
+    name, start, span = FIRE_PALETTES[palette]
+    m = Model("prismatic_fire" + ("" if palette == 0 else f"_v{palette}"))
+    m.part = True
+    import colorsys
+    frames = []
+    rnd = random.Random(320 + palette)
+    phases = [rnd.random() * 6.28 for _ in range(16)]
+    for f in range(16):
+        img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+        for x in range(16):
+            edge = min(x, 15 - x)
+            h = 6 + edge * 0.9 + 3 * math.sin(phases[x] + f * 0.8) + 2 * math.sin(x * 1.7 + f * 0.4)
+            h = max(3, min(15, h))
+            for k in range(int(h)):
+                y = 15 - k
+                t = k / h
+                hue = (start + span * (((f / 16) + x / 40 + t * 0.15) % 1.0)) % 1.0
+                light = 0.92 if t < 0.15 else 0.75 - 0.25 * t
+                sat = 0.35 if t < 0.15 else 0.9
+                r, g, b = colorsys.hls_to_rgb(hue, light, sat)
+                img.putpixel((x, y), (int(r * 255), int(g * 255), int(b * 255), 255 if t < 0.8 else 170))
+        frames.append(img)
+    t = m.texture("flame", frames)
+    both = lambda a, b_: {a: (t, [0, 0, 16, 16]), b_: (t, [16, 0, 0, 16])}   # noqa: E731
+    m.box((0, 0, 8), (16, 16, 8), both("north", "south"), shade=False, light=15)
+    m.box((8, 0, 0), (8, 16, 16), both("west", "east"), shade=False, light=15)
+    m.box((0, 0, 8), (16, 16, 8), both("north", "south"), shade=False, light=15, rotation=("y", 45))
+    m.box((8, 0, 0), (8, 16, 16), both("west", "east"), shade=False, light=15, rotation=("y", 45))
+    return m
+
+
 G3 = [("Occult Forge", occult_forge), ("Occult Forge (front)", lambda: turned(occult_forge())),
       ("Soul Condenser", soul_condenser)] + \
      [(f"Abyssal Glyph v{v}", (lambda v=v: abyssal_glyph(v))) for v in range(4)] + \
-     [("Abyssal Altar", abyssal_altar), ("Guardian Eye", guardian_eye), ("Pearl Bed", pearl_bed),
+     [("Abyssal Altar", abyssal_altar), ("Guardian Eye", guardian_column), ("Guardian Eye (inventory)", guardian_eye_inventory),
+      ("Guardian Eye orb", guardian_orb), ("Pearl Bed", pearl_bed),
       ("Ember Brazier", ember_brazier), ("Abyssal Lantern", abyssal_lantern)] + \
      [(f"Tidal Tile ({CORAL_ORDER[v]})", (lambda v=v: tidal_tile(v))) for v in range(5)] + \
-     [("Prismatic Netherrack", prismatic_netherrack)]
+     [("Prismatic Netherrack", prismatic_netherrack)] + \
+     [(f"Prismatic fire ({FIRE_PALETTES[p][0]})", (lambda p=p: prismatic_fire(p))) for p in range(3)]
 
 
 G2 = [("Arcane Pedestal", arcane_pedestal), ("Brood Egg", brood_egg), ("Trophy Board", trophy_board),
       ("Chiming Tile", chiming_tile)] + \
-     [(f"Bound Glyph v{v}", (lambda v=v: tier_glyph("bound_glyph", RAMPS["violet"], RAMPS["boundsteel"], RAMPS["spirit"], v)))
+     [(f"Bound Glyph v{v}", (lambda v=v: tier_glyph("bound_glyph", RAMPS["violet"], RAMPS["boundsteel"], RAMPS["violet"], v,
+                                                    glow=True)))
       for v in range(4)] + \
      [("Bound Altar", bound_altar), ("Phantom Roost", phantom_roost), ("Frenzy Idol", frenzy_idol),
       ("Servitor Shrine", servitor_shrine), ("Floor Sigil", floor_sigil)]
@@ -1081,6 +1209,8 @@ def save(model):
             tex.save(os.path.join(d, f"{name}.png"))
     with open(os.path.join(d, "model.json"), "w", encoding="utf-8") as f:
         json.dump(model.to_json(), f, indent=2)
+    if model.part:
+        open(os.path.join(d, "part.txt"), "w", encoding="utf-8").write("shown by the plugin, not a block skin")
 
 
 if __name__ == "__main__":

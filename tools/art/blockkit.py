@@ -21,15 +21,23 @@ class Model:
         self.key = key              # e.g. "initiate_altar" -> occultech:block/initiate_altar
         self.textures = {}          # name -> Image (16x16) or [Image, ...] (animated, frames)
         self.elements = []
+        self.display = None         # optional display transforms (e.g. a tall model's inventory scale)
+        self.part = False           # a part shown by the plugin (not a block skin): build_pack skips the skins list
 
     def texture(self, name, img_or_frames):
         self.textures[name] = img_or_frames
         return "#" + name
 
-    def box(self, frm, to, faces, shade=True):
+    def box(self, frm, to, faces, shade=True, light=0, rotation=None):
         """faces: {direction: texture ref or (texture ref, uv)}; directions not given are left out (not drawn).
-        Without an explicit uv a face uses the matching area of its texture (Minecraft's default)."""
+        Without an explicit uv a face uses the matching area of its texture (Minecraft's default).
+        light: the element's light_emission (0-15) - it glows in the dark. rotation: (axis, angle) about the box's
+        centre, angle a multiple of 22.5 in -45..45 (the preview draws it unrotated)."""
         el = {"from": list(frm), "to": list(to), "faces": {}, "shade": shade}
+        if light:
+            el["light_emission"] = light
+        if rotation:
+            el["rotation"] = {"origin": [(a + b) / 2 for a, b in zip(frm, to)], "axis": rotation[0], "angle": rotation[1]}
         for direction, spec in faces.items():
             ref, uv = (spec, None) if isinstance(spec, str) else spec
             el["faces"][direction] = {"texture": ref, "uv": list(uv) if uv else default_uv(direction, frm, to)}
@@ -50,10 +58,18 @@ class Model:
     def to_json(self, ns="occultech"):
         textures = {name: f"{ns}:block/{self.key}_{name}" for name in self.textures}
         textures["particle"] = textures[next(iter(self.textures))]
-        return {"parent": "minecraft:block/block", "textures": textures,
-                "elements": [{"from": e["from"], "to": e["to"], "shade": e["shade"],
-                              "faces": {d: {"texture": f["texture"], "uv": f["uv"]} for d, f in e["faces"].items()}}
-                             for e in self.elements]}
+        elements = []
+        for e in self.elements:
+            out = {"from": e["from"], "to": e["to"], "shade": e["shade"]}
+            for extra in ("light_emission", "rotation"):
+                if extra in e:
+                    out[extra] = e[extra]
+            out["faces"] = {d: {"texture": f["texture"], "uv": f["uv"]} for d, f in e["faces"].items()}
+            elements.append(out)
+        model = {"parent": "minecraft:block/block", "textures": textures, "elements": elements}
+        if self.display:
+            model["display"] = self.display
+        return model
 
 
 def default_uv(direction, frm, to):
@@ -77,13 +93,14 @@ def project(x, y, z, s, ox, oy):
     return (ox + (x - z) * COS30 * s, oy + (x + z) * SIN30 * s - y * s)
 
 
-def render_iso(model, frame=0, s=6, size=None, bg=(34, 32, 40, 255)):
-    """Draw the model's visible faces (up, south, east) texel by texel, far elements first."""
+def render_iso(model, frame=0, s=6, size=None, bg=(34, 32, 40, 255), lift=0.0):
+    """Draw the model's visible faces (up, south, east) texel by texel, far elements first. lift moves the view down
+    (a fraction of the height) for tall models."""
     w = size or int(32 * COS30 * s + 40)
     h = size or int(40 * s)
     img = Image.new("RGBA", (w, h), bg)
     d = ImageDraw.Draw(img)
-    ox, oy = w / 2, h * 0.42
+    ox, oy = w / 2, h * (0.42 + lift)
     order = sorted(model.elements, key=lambda e: (e["from"][0] + e["to"][0]) + (e["from"][2] + e["to"][2])
                    + 0.5 * (e["from"][1] + e["to"][1]))
     for e in order:

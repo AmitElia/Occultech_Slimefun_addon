@@ -532,3 +532,30 @@ fittings, sea glow; fire blocks in ember.
 - Prismatic Netherrack - dark nether rock split by two crystal cracks whose light runs through the rainbow (8 frames);
   the top stays flat for the fire. (v1's scattered vein pixels didn't read as cracks.)
 
+**G2/G3 revisions after review** (the user: Pearl Bed, Soul Condenser and Ember Brazier "AMAZING"; the rest below)
+- New in the tools: elements can glow (`light_emission`, so they shine in the dark) and turn (45-degree crossed planes);
+  a model can be a *part* the plugin shows itself (`part.txt`, not a skin), and a block whose inventory look differs
+  from its placed skin gets a `<key>_inventory` model (the item definition selects on `display_context`: "none" is the
+  skin's item display).
+- Bound Glyph - "not clear enough, glow stronger with purple light": the rune now also burns on an emissive layer over
+  the tile, white-violet strokes in a soft violet halo, pulsing.
+- Phantom Roost - "looks off": redone as a small tower of dark slate where phantoms sleep - silver corner caps, an
+  arched roosting hole on each side with a phantom's pale green eyes glowing in the dark (emissive) and now and then
+  blinking, a silver perch on top with rags of membrane hanging from it. (The bone lattice read as a crate of ribs.)
+- Brood Egg - "the shape looks off": a real egg profile - wider than its foot, bulging round its middle, rising to a
+  rounded crown above the block (the sniffer egg's 14x16x12 box is still enclosed up to y16).
+- Guardian Eye - "an eye on a column that shoots the lasers": the block is a fluted column of guardian stone, amber
+  spikes round its capital, a gold claw cradle on top; the eye is a separate display (`guardian_eye_orb`: pale hide,
+  sea-glow iris with a slit pupil, glowing) that the plugin turns toward its target - or slowly round when idle - and
+  the beam now leaves from the eye. The inventory shows the column with its eye.
+- Abyssal Lantern - "a little smaller than a full block": vanilla block is now a LANTERN (light 15), the skin a lamp
+  12 wide and 14 tall with glowing panes, enclosing the lantern standing or hanging. Lanterns placed before stay sea
+  lanterns, unskinned, until replaced.
+- Tidal Tile - "no grid pattern when placed together": seamless coral, no frame, polyps wrapping round the edges.
+- Prismatic Netherrack - "requires new textures for fires in different colours": it now burns with its own fire.
+  Lighting it (flint and steel, fire charge, spreading fire, lava) puts an invisible light block (level 15) on top
+  instead of vanilla fire, and the plugin shows coloured flames there (`prismatic_fire`, `_v1`, `_v2`: rainbow, aurora,
+  dusk - crossed planes like vanilla fire, glowing, 16 frames) in the palette chosen by right-click. It never spreads
+  or burns anything; a left-click on its top or water puts it out. Without the pack it keeps vanilla fire + sparks.
+- Self-test: the eye exists and turns along its gaze; the netherrack lights, shows its flames and puts out (292 pass).
+

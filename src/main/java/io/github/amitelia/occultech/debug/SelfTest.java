@@ -997,6 +997,18 @@ final class SelfTest {
     private void guardianEyeFired() {
         double max = husk.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue();
         check("Guardian Eye beams a hostile mob", husk.isDead() || husk.getHealth() < max, husk.getHealth() + "/" + max);
+        if (plugin.skins().isSkinned(ItemKeys.slimefunId("GUARDIAN_EYE"))
+            && SlimefunItem.getById(ItemKeys.slimefunId("GUARDIAN_EYE")) instanceof io.github.amitelia.occultech.items.GuardianEye guardian) {
+            org.bukkit.entity.ItemDisplay orb = guardian.orb(eye);
+            check("the Guardian Eye has its eye on top", orb != null && orb.isValid(), "no eye");
+            if (orb != null) {
+                // the eye's front (its model's north face, drawn facing +z) turned onto a gaze east and up
+                io.github.amitelia.occultech.items.GuardianEye.look(orb, new org.bukkit.util.Vector(1, 1, 0));
+                org.joml.Vector3f front = orb.getTransformation().getLeftRotation().transform(new org.joml.Vector3f(0, 0, 1));
+                check("the eye turns to look along its gaze", Math.abs(front.x - 0.7071F) < 0.01F && Math.abs(front.y - 0.7071F) < 0.01F
+                    && Math.abs(front.z) < 0.01F, String.valueOf(front));
+            }
+        }
         husk.remove();
         plugin.rituals().holograms().clear(eye);
     }
@@ -1021,6 +1033,8 @@ final class SelfTest {
         }
     }
 
+    private Block prismatic;
+
     private void decorationPalette() {
         Block jar = bound.getRelative(-8, 0, -8);
         DebugWorld.placeSlimefun(jar, ItemKeys.slimefunId("WISP_JAR"), this::remember);
@@ -1033,6 +1047,14 @@ final class SelfTest {
         DebugWorld.placeSlimefun(coral, ItemKeys.slimefunId("EVERLIVING_CORAL"), this::remember);
         decorations.cyclePalette(coral, io.github.amitelia.occultech.items.DecorationService.Kind.EVERLIVING_CORAL);
         check("Everliving Coral's palette swaps the coral type", coral.getType() == Material.BRAIN_CORAL, String.valueOf(coral.getType()));
+        prismatic = bound.getRelative(-8, 0, -2);
+        DebugWorld.placeSlimefun(prismatic, ItemKeys.slimefunId("PRISMATIC_NETHERRACK"), this::remember);
+        remember(prismatic.getRelative(0, 1, 0));
+        if (decorations.coloredFire()) {
+            check("Prismatic Netherrack lights with its own fire (a light block, no vanilla fire)",
+                decorations.lightPrismatic(prismatic) && prismatic.getRelative(0, 1, 0).getType() == Material.LIGHT,
+                String.valueOf(prismatic.getRelative(0, 1, 0).getType()));
+        }
         Block board = bound.getRelative(-8, 0, -4);
         DebugWorld.placeSlimefun(board, ItemKeys.slimefunId("TROPHY_BOARD"), this::remember);
         BlockStorage.addBlockInfo(board, "occultech_trophy", "ABYSSAL_WARDEN;3;Test");
@@ -1047,6 +1069,13 @@ final class SelfTest {
         long models = trophyBoard.getWorld().getNearbyEntities(trophyBoard.getLocation().add(0.5, 1.5, 0.5), 1.5, 2, 1.5,
             e -> e instanceof org.bukkit.entity.Guardian && e.getPersistentDataContainer().has(Keys.HOLOGRAM)).size();
         check("Trophy Board shows a small model of the chosen boss", models == 1, models + " models");
+        if (plugin.decorations().coloredFire()) {
+            check("lit Prismatic Netherrack shows its coloured flames", plugin.decorations().partCount(prismatic) == 1,
+                plugin.decorations().partCount(prismatic) + " parts");
+            plugin.decorations().extinguishPrismatic(prismatic);
+            check("its fire puts out (light and flames gone)", prismatic.getRelative(0, 1, 0).getType().isAir()
+                && plugin.decorations().partCount(prismatic) == 0, String.valueOf(prismatic.getRelative(0, 1, 0).getType()));
+        }
         plugin.decorations().remove(trophyBoard);
         plugin.decorations().setAlwaysVisible(false);
     }

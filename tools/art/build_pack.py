@@ -129,7 +129,14 @@ def main():
         with open(mpath, encoding="utf-8") as f:
             model = json.load(f)
         files[f"assets/{NS}/models/block/{key}.json"] = model
-        files[f"assets/{NS}/items/{key}.json"] = {"model": {"type": "minecraft:model", "model": f"{NS}:block/{key}"}}
+        plain = {"type": "minecraft:model", "model": f"{NS}:block/{key}"}
+        if os.path.isdir(os.path.join(gdir, key + "_inventory")):
+            # the placed skin (an item display, context "none") and the inventory show different models: e.g. the
+            # Guardian Eye's column alone (its eye is a separate, turning display) vs the column with its eye
+            plain = {"type": "minecraft:select", "property": "minecraft:display_context",
+                     "cases": [{"when": "none", "model": plain}],
+                     "fallback": {"type": "minecraft:model", "model": f"{NS}:block/{key}_inventory"}}
+        files[f"assets/{NS}/items/{key}.json"] = {"model": plain}
         for tex_ref in set(model["textures"].values()):
             name = tex_ref.split("/")[-1][len(key) + 1:]
             single = os.path.join(gdir, key, f"{name}.png")
@@ -147,6 +154,8 @@ def main():
                 files[target + ".mcmeta"] = {"animation": {"frametime": FRAMETIME}}
             else:
                 raise SystemExit(f"{key}: texture {name} has no image")
+        if os.path.exists(os.path.join(gdir, key, "part.txt")):
+            continue   # a part the plugin shows itself (the Guardian Eye's eye, coloured fire), not a block skin
         base = key.split("_v")[0] if "_v" in key and key.rsplit("_v", 1)[1].isdigit() else key
         skins[base] = skins.get(base, 0) + 1
         if base == key and key.upper() in items and key.upper() not in with_models:

@@ -51,6 +51,9 @@ public class DecorationBlock extends SlimefunItem {
         addItemHandler(new BlockBreakHandler(false, false) {
             @Override
             public void onPlayerBreak(BlockBreakEvent e, ItemStack tool, List<ItemStack> drops) {
+                if (kind == DecorationService.Kind.PRISMATIC_NETHERRACK) {
+                    decorations.extinguishPrismatic(e.getBlock());
+                }
                 decorations.remove(e.getBlock());
             }
         });
