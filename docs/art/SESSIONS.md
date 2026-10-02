@@ -449,7 +449,7 @@ bow) is designed as that model's texture, not as an icon.
 | **G3** | Tier-2 blocks (Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack) | **Done** |
 | **G4** | Tier-3 blocks (Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) | **Done** |
 | **G5** | Held 3D models: Occult Codex, Wyrmbreath, Guardian's Gaze, Abyssal Anchor, Dreadlance, Soulfire Censer, Heartwood Aegis (shield model) | **Done** |
-| G6 | Worn armor (`equippable` layers): Abyssal, Hollow | - |
+| **G6** | Worn armor (`equippable` layers): Abyssal, Hollow | **Done** |
 | G7 | Placed decorations (Moonlit Lily, Witchcap, Everliving Coral, jars, chime, orrery, brazier, obelisk, eyeblossom) | - |
 | **H** | **After the textures, before shipping: move the blocks to Nexo's note-block custom blocks** (see below) | - |
 
@@ -534,6 +534,21 @@ definition selects on `display_context`, as vanilla's trident does. Glowing part
   - New: Frenzy Cleaver (wrapped haft, a heavy steel blade with a thick spine and pulsing frenzy-red serrated edge, a
     rivet) and Bone Scepter (stacked vertebrae with spurs, a skull with soul-green burning sockets looking forward,
     jaw hanging open, a wisp above).
+
+**G6 worn armor** (`python tools/art/session_g.py g6` -> `docs/art/session-g/equipment/<set>/`). Each set is an
+equipment asset `occultech:<set>` with a `humanoid` layer (helmet, chestplate, boots) and a `humanoid_leggings`
+layer, 64x32 in vanilla's armor layout; build_pack writes them and `occultech-pack-equipment.txt`, and the plugin
+points the armor items' `equippable` at the asset (`ContentRegistrar.wornLook`, keeping the vanilla piece's sound
+and behaviour) when the pack has the set. Painted face by face on the player's boxes (`paint_armor`); armor textures
+are entity textures - no animation or glow. Not seen in game yet.
+- Abyssal - overlapping plates of abyssal teal, softly shaded with glints on their lit edges (v1's hard four-row
+  shading read as stripes); the helm's face plate with two sea-glow visor slits, a nose guard and a fin crest running
+  to the nape; a sea-glow line down the breastplate, a spine plate behind, shoulder fins; knee studs; boots with a
+  pale toe and a heel fin.
+- Hollow - blackened violet steel trimmed in aged gold: the Crown's ring of bone spikes over a gold circlet with a
+  crimson gem and a cyan visor slit; the Cuirass's bone ribcage round a gold sternum and crimson heart-gem, a bone
+  spine down the back, gold-edged pauldrons with cyan seams; the Greaves' gold belt, bone knee cops and cyan seams;
+  the Sabatons' gold band and bone toe caps.
 
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing

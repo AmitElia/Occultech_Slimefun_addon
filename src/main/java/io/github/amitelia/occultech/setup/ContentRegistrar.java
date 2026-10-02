@@ -253,7 +253,30 @@ public final class ContentRegistrar {
             // item() is a copy on Slimefun Legacy, where the stack itself is the ItemStack
             HeldWeapons.makeHoldable((Object) stack instanceof ItemStack itemStack ? itemStack : stack.item());
         }
+        String set = def.id().substring(0, Math.max(0, def.id().indexOf('_'))).toLowerCase(java.util.Locale.ROOT);
+        if ("armor".equals(def.category()) && Occultech.instance().resourcePack() != null
+            && Occultech.instance().resourcePack().hasEquipment(set)) {
+            wornLook((Object) stack instanceof ItemStack itemStack ? itemStack : stack.item(), set);
+        }
         return stack;
+    }
+
+    /**
+     * Worn armor drawn by the pack (Abyssal, Hollow): the item's equippable points at Occultech's equipment asset
+     * {@code occultech:<set>}; everything else about wearing it stays the vanilla piece's.
+     */
+    static void wornLook(ItemStack item, String set) {
+        io.papermc.paper.datacomponent.item.Equippable worn = item.getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE);
+        if (worn == null) {
+            return;
+        }
+        item.setData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE,
+            io.papermc.paper.datacomponent.item.Equippable.equippable(worn.slot())
+                .assetId(net.kyori.adventure.key.Key.key("occultech", set))
+                .equipSound(worn.equipSound()).cameraOverlay(worn.cameraOverlay()).allowedEntities(worn.allowedEntities())
+                .dispensable(worn.dispensable()).swappable(worn.swappable()).damageOnHurt(worn.damageOnHurt())
+                .equipOnInteract(worn.equipOnInteract()).canBeSheared(worn.canBeSheared()).shearSound(worn.shearSound())
+                .build());
     }
 
     private void register(ItemDef def) {

@@ -1092,6 +1092,12 @@ final class SelfTest {
 
     private void tier3Items() {
         ItemStack crown = SlimefunItem.getById(ItemKeys.slimefunId("HOLLOW_HELMET")).getItem();
+        if (plugin.resourcePack().hasEquipment("hollow")) {
+            var worn = crown.getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE);
+            check("the Hollow Crown is worn in Occultech's look (equipment occultech:hollow)",
+                worn != null && worn.assetId() != null && worn.assetId().asString().equals("occultech:hollow"),
+                worn == null ? "no equippable" : String.valueOf(worn.assetId()));
+        }
         check("Hollow Crown has Protection V", crown.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 5,
             "protection " + crown.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION));
         SlimefunItem assembler = SlimefunItem.getById(ItemKeys.slimefunId("HOLLOW_ASSEMBLER"));

@@ -58,6 +58,7 @@ public final class ResourcePackService implements Listener {
     private static final String PACK = "occultech-pack.zip";
     private static final String ITEMS = "occultech-pack-items.txt";
     private static final String SKINS = "occultech-pack-skins.txt";
+    private static final String EQUIPMENT = "occultech-pack-equipment.txt";
     /** A fixed id, so a client replaces the old version of our pack instead of stacking a new one. */
     private static final UUID PACK_ID = UUID.nameUUIDFromBytes("occultech:resource-pack".getBytes(StandardCharsets.UTF_8));
 
@@ -65,6 +66,7 @@ public final class ResourcePackService implements Listener {
     private final Logger log;
     private final Set<String> modelled = new HashSet<>();
     private final java.util.Map<String, Integer> skins = new java.util.HashMap<>();
+    private final Set<String> equipment = new HashSet<>();
     private byte[] pack;
     private String sha1 = "";
     private boolean itemModels = true;
@@ -117,6 +119,19 @@ public final class ResourcePackService implements Listener {
         } catch (IOException | NumberFormatException e) {
             log.warning("Resource pack: could not read " + SKINS + ": " + e.getMessage());
         }
+        try (InputStream in = plugin.getResource(EQUIPMENT)) {
+            if (in != null) {
+                new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).lines()
+                    .map(String::trim).filter(line -> !line.isEmpty() && !line.startsWith("#")).forEach(equipment::add);
+            }
+        } catch (IOException e) {
+            log.warning("Resource pack: could not read " + EQUIPMENT + ": " + e.getMessage());
+        }
+    }
+
+    /** Whether the pack draws this armor set worn (an equipment asset occultech:{@code set}, e.g. "abyssal"). */
+    public boolean hasEquipment(@Nonnull String set) {
+        return itemModels && pack != null && equipment.contains(set);
     }
 
     /** How many skin variants the pack has for a placed block of this recipes.yml item (0 = not skinned). */

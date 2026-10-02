@@ -2189,6 +2189,250 @@ G5 = [("Occult Codex (held)", occult_codex_held), ("Wyrmbreath (held)", wyrmbrea
       ("Heartwood Aegis", heartwood_aegis), ("Heartwood Aegis (blocking)", lambda: heartwood_aegis(True))]
 
 
+# ================================================================== G6: worn armor. An equipment asset per set
+# (assets/occultech/equipment/<set>.json) with a humanoid layer (helmet, chestplate, boots) and a humanoid_leggings
+# layer, 64x32 each in vanilla's armor layout; the plugin points the armor items' `equippable` at it. Armor textures
+# are entity textures: no animation, no glow. Written to docs/art/session-g/equipment/<set>/.
+
+ARMOR_BOXES = {   # part: (u, v, w, h, d) - the player model's boxes in the armor texture
+    "head": (0, 0, 8, 8, 8), "body": (16, 16, 8, 12, 4), "arm": (40, 16, 4, 12, 4), "leg": (0, 16, 4, 12, 4)}
+
+
+def armor_faces():
+    """Every face of every box: (part, face, x0, y0, w, h)."""
+    out = []
+    for part, (u, v, w, h, d) in ARMOR_BOXES.items():
+        out += [(part, "top", u + d, v, w, d), (part, "bottom", u + d + w, v, w, d), (part, "right", u, v + d, d, h),
+                (part, "front", u + d, v + d, w, h), (part, "left", u + d + w, v + d, d, h), (part, "back", u + 2 * d + w, v + d, w, h)]
+    return out
+
+
+# which piece covers what: layer, part, faces, rows of the side faces (0 = top of the box)
+ARMOR_COVER = {
+    "helmet":   ("humanoid", "head", ("top", "right", "front", "left", "back"), range(0, 8)),
+    "chest":    ("humanoid", "body", ("top", "right", "front", "left", "back"), range(0, 12)),
+    "arms":     ("humanoid", "arm", ("top", "right", "front", "left", "back"), range(0, 6)),
+    "boots":    ("humanoid", "leg", ("bottom", "right", "front", "left", "back"), range(7, 12)),
+    "waist":    ("humanoid_leggings", "body", ("right", "front", "left", "back"), range(8, 12)),
+    "legs":     ("humanoid_leggings", "leg", ("top", "right", "front", "left", "back"), range(0, 9)),
+}
+
+
+def paint_armor(painter):
+    """Both layers: painter(piece, part, face, u, v, w, h) -> colour or None, for every covered pixel."""
+    layers = {"humanoid": Image.new("RGBA", (64, 32), (0, 0, 0, 0)), "humanoid_leggings": Image.new("RGBA", (64, 32), (0, 0, 0, 0))}
+    faces = armor_faces()
+    for piece, (layer, part, face_names, rows) in ARMOR_COVER.items():
+        for (p_, face, x0, y0, w, h) in faces:
+            if p_ != part or face not in face_names:
+                continue
+            for v in range(h):
+                if face not in ("top", "bottom") and v not in rows:
+                    continue
+                for u in range(w):
+                    c = painter(piece, part, face, u, v, w, h)
+                    if c is not None:
+                        layers[layer].putpixel((x0 + u, y0 + v), c)
+    return layers
+
+
+def abyssal_armor():
+    """The Abyssal set worn: overlapping plates of abyssal teal steel, each lit along its top edge; the helm's face a
+    plate with two sea-glow visor slits and a fin crest from brow to nape; a sea-glow line down the breastplate's
+    middle and fins on the shoulders; knee plates with a sea-glow stud; boots with a pale toe and a fin at the heel."""
+    ab, sg, ir = RAMPS["abyss"], RAMPS["seaglow"], RAMPS["iron"]
+
+    def paint(piece, part, face, u, v, w, h):
+        band = (v + (1 if part in ("arm", "leg") else 0)) % 4   # overlapping plates, four rows each, softly shaded
+        c = ab[3] if band == 0 else ab[2] if band in (1, 2) else ab[1]
+        if band == 0 and (u + v) % 5 == 2:
+            c = ab[4]                                      # a glint along a plate's lit edge
+        if face in ("right", "left") and u == (0 if face == "right" else w - 1):
+            c = ab[1]                                      # the plates' edges round off
+        if piece == "helmet":
+            if face == "top":
+                return sg[3] if u in (3, 4) else ab[3] if (u + v) % 3 else ab[2]    # the fin crest
+            if face == "front":
+                if v == 4 and u in (1, 2, 5, 6):
+                    return sg[4]                           # visor slits
+                if v == 4 or v == 5 and u in (1, 2, 5, 6):
+                    return ab[0]
+                if u in (3, 4) and v < 4:
+                    return ab[4]                           # the nose guard
+                return c
+            if face == "back" and u in (3, 4):
+                return sg[2]                               # the crest running down the nape
+            return c
+        if piece == "chest":
+            if face == "front":
+                if u in (3, 4):
+                    return sg[4] if v % 3 == 1 else sg[2]  # the sea-glow line down the middle
+                if v in (3, 4) and u in (1, 6):
+                    return ab[5]
+            if face == "back" and u in (3, 4):
+                return ab[5] if v % 2 else ab[3]           # the spine plate
+            if face == "top":
+                return ab[4]
+            return c
+        if piece == "arms":
+            if face == "top":
+                return ab[4]
+            if v == 0:
+                return sg[2] if face in ("right", "left") else ab[5]   # shoulder fins
+            return c
+        if piece == "waist":
+            return ir[2] if v == 8 else c                  # a belt
+        if piece == "legs":
+            if face == "front" and v in (4, 5) and u in (1, 2):
+                return sg[4] if v == 4 else ab[4]          # knee plate's sea-glow stud
+            return c
+        if piece == "boots":
+            if face == "bottom":
+                return ab[0]
+            if face == "front" and v >= 10:
+                return ir[4]                               # pale toe
+            if face == "back" and v == 7:
+                return sg[2]                               # heel fin
+            return ab[2] if v >= 10 else c
+        return c
+
+    return paint_armor(paint)
+
+
+def hollow_armor():
+    """The Hollow set worn (after the F4 icons): blackened violet steel trimmed in aged gold, hollow-cyan seams and
+    crimson gems. The Crown: a band of bone spikes round the brow above a gold circlet with a crimson gem, a dark visor
+    with a cyan slit. The Cuirass: a ribcage of bone over the chest round a gold sternum and a crimson heart-gem, a
+    bone spine down the back, gold-edged pauldrons. The Greaves: plates with bone knee cops and cyan seams, a gold
+    belt. The Sabatons: gold-banded, with bone toe caps."""
+    st, gd, bone, hc, cr, ink = RAMPS["boundsteel"], RAMPS["gold"], RAMPS["bone"], RAMPS["hollowcy"], RAMPS["crimson"], RAMPS["ink"]
+    dark = [ink[1], ink[2], st[1], st[2], st[3], st[4]]   # blackened violet steel
+
+    def paint(piece, part, face, u, v, w, h):
+        band = v % 4
+        c = dark[3] if band == 0 else dark[2] if band in (1, 2) else dark[1]
+        if face in ("right", "left") and u == (0 if face == "right" else w - 1):
+            c = dark[1]
+        if piece == "helmet":
+            if face == "top":
+                ring = u in (0, w - 1) or v in (0, h - 1)
+                return (bone[4] if (u + v) % 2 else bone[3]) if ring else dark[2]   # the crown's ring of spikes
+            if v == 0:
+                return bone[5] if u % 2 == 0 else bone[3]  # spike tips round the brow
+            if v == 1:
+                return bone[3] if u % 2 == 0 else dark[1]
+            if v == 2:
+                return cr[4] if face == "front" and u in (3, 4) else gd[4] if u % 3 else gd[3]   # gold circlet + gem
+            if face == "front":
+                if v == 4 and 1 <= u <= 6:
+                    return hc[4] if u in (2, 5) else hc[2]  # the visor slit
+                if v in (3, 5):
+                    return dark[0]
+                if u in (3, 4) and v >= 6:
+                    return gd[2]
+            return c
+        if piece == "chest":
+            if face == "front":
+                if u in (3, 4):
+                    if v in (4, 5):
+                        return cr[4] if v == 4 else cr[3]   # the heart-gem
+                    return gd[4] if u == 3 else gd[3]       # gold sternum
+                if v in (1, 3, 6, 8) and u not in (0, 7):
+                    return bone[4] if u in (1, 2, 5, 6) and v != 8 else bone[3]   # ribs
+                if v in (2, 7) and u in (2, 5):
+                    return bone[2]
+                if v == 11:
+                    return gd[3]                            # gold hem
+                if v == 10 and u in (1, 6):
+                    return hc[3]                            # cyan seam studs
+                return c
+            if face == "back":
+                if u in (3, 4):
+                    return bone[4] if v % 2 == 0 else bone[2]   # the spine
+                if v == 11:
+                    return gd[3]
+                return c
+            if face == "top":
+                return gd[3] if u in (0, w - 1) else dark[3]
+            if v == 11:
+                return gd[3]
+            return hc[2] if v == 5 and face in ("right", "left") else c
+        if piece == "arms":
+            if face == "top":
+                return gd[4] if (u + v) % 3 == 0 else dark[3]
+            if v == 0:
+                return gd[4]
+            if v == 5:
+                return gd[2]                                # the pauldron's gold edge
+            if v == 2 and face in ("right", "left", "front"):
+                return hc[3] if u in (1, 2) else c
+            return c
+        if piece == "waist":
+            if v == 8:
+                return gd[4] if u % 2 else gd[3]           # gold belt
+            if v == 9 and face == "front" and u in (3, 4):
+                return cr[4]
+            return c
+        if piece == "legs":
+            if face == "front" and v in (4, 5, 6) and u in (1, 2):
+                return bone[4] if v == 5 else bone[3]      # bone knee cop
+            if face == "front" and v == 5 and u in (0, 3):
+                return bone[2]
+            if face in ("right", "left") and u == 1 and 1 <= v <= 7:
+                return hc[2] if v % 2 else hc[3]           # cyan seam
+            if v == 8:
+                return gd[2]
+            return c
+        if piece == "boots":
+            if face == "bottom":
+                return dark[0]
+            if v == 7:
+                return gd[4]                               # gold band
+            if face == "front" and v >= 10 and u in (1, 2) or face == "front" and v == 11:
+                return bone[4] if v == 10 else bone[3]     # bone toe cap
+            if face in ("right", "left") and v == 9 and u in (1, 2):
+                return hc[3]
+            return c
+        return c
+
+    return paint_armor(paint)
+
+
+def save_armor(name, layers):
+    d = os.path.join(OUT, "equipment", name)
+    os.makedirs(d, exist_ok=True)
+    for layer, img in layers.items():
+        img.save(os.path.join(d, f"{layer}.png"))
+
+
+def armor_preview(layers, scale=6):
+    """A flat front/back preview: the player's boxes unfolded as they're worn (head, body, arms, legs, both views)."""
+    hum, leg = layers["humanoid"], layers["humanoid_leggings"]
+    out = Image.new("RGBA", (2 * 16 * scale + 3 * 10, 32 * scale + 20), (60, 58, 66, 255))
+    def blit(img, src, dst, flip=False):
+        crop = img.crop(src)
+        if flip:
+            crop = crop.transpose(Image.FLIP_LEFT_RIGHT)
+        crop = crop.resize((crop.size[0] * scale, crop.size[1] * scale), Image.NEAREST)
+        out.alpha_composite(crop, dst)
+    for view, ox in (("front", 10), ("back", 16 * scale + 20)):
+        hx = (8, 8, 16, 16) if view == "front" else (24, 8, 32, 16)
+        bx = (20, 20, 28, 32) if view == "front" else (32, 20, 40, 32)
+        ax = (44, 20, 48, 32) if view == "front" else (52, 20, 56, 32)
+        lx = (4, 20, 8, 32) if view == "front" else (12, 20, 16, 32)
+        for img in (hum, leg):
+            blit(img, hx, (ox + 4 * scale, 10))
+            blit(img, bx, (ox + 4 * scale, 10 + 8 * scale))
+            blit(img, ax, (ox, 10 + 8 * scale))
+            blit(img, ax, (ox + 12 * scale, 10 + 8 * scale), flip=True)
+            blit(img, lx, (ox + 4 * scale, 10 + 20 * scale))
+            blit(img, lx, (ox + 8 * scale, 10 + 20 * scale), flip=True)
+    return out
+
+
+G6_SETS = {"abyssal": abyssal_armor, "hollow": hollow_armor}
+
+
 G2 = [("Arcane Pedestal", arcane_pedestal), ("Brood Egg", brood_egg), ("Trophy Board", trophy_board),
       ("Chiming Tile", chiming_tile)] + \
      [(f"Bound Glyph v{v}", (lambda v=v: tier_glyph("bound_glyph", RAMPS["violet"], RAMPS["boundsteel"], RAMPS["violet"], v,
@@ -2227,6 +2471,15 @@ def save(model):
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "g1"
     version = sys.argv[2] if len(sys.argv) > 2 else "final"
+    if which == "g6":   # worn armor: textures, not models
+        sheet = Image.new("RGBA", (420, 230 * len(G6_SETS)), (60, 58, 66, 255))
+        for i, (name, make) in enumerate(G6_SETS.items()):
+            layers = make()
+            save_armor(name, layers)
+            sheet.alpha_composite(armor_preview(layers), (0, i * 230))
+        sheet.save(os.path.join(OUT, "review-g6.png"))
+        print(os.path.join(OUT, "review-g6.png"))
+        sys.exit(0)
     suffix = "" if version == "final" else "-" + version
     models = []
     for name, make in GROUPS[which]:
