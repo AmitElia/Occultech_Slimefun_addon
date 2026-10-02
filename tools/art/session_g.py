@@ -1252,6 +1252,216 @@ G3 = [("Occult Forge", occult_forge), ("Occult Forge (front)", lambda: turned(oc
      [(f"Prismatic fire ({FIRE_PALETTES[p][0]})", (lambda p=p: prismatic_fire(p))) for p in range(3)]
 
 
+# ================================================================== G4: tier-3 blocks (Hollow: sculk black-teal, old
+# bone, hollow cyan, crimson). Built for their final Nexo look (see SESSIONS.md, Session H); glowing parts emit light.
+
+def hollow_star(img, cx, cy, r_out, r_in, c_out, c_in, core=None):
+    """The Hollow Sigil's bold eight-pointed star (filled), centred at (cx, cy)."""
+    pts = []
+    for k in range(16):
+        a = -math.pi / 2 + k * math.pi / 8
+        r = r_out if k % 2 == 0 else r_in
+        pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    for y in range(16):
+        for x in range(16):
+            # point-in-polygon (even-odd)
+            inside = False
+            px, py = x + 0.5, y + 0.5
+            for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1]):
+                if (y0 > py) != (y1 > py) and px < x0 + (py - y0) * (x1 - x0) / (y1 - y0):
+                    inside = not inside
+            if inside:
+                d = math.hypot(px - cx, py - cy)
+                img.putpixel((x, y), c_in if d < r_in * 0.9 else c_out)
+    if core:
+        put(img, [(int(cx) - 1, int(cy) - 1), (int(cx), int(cy) - 1), (int(cx) - 1, int(cy)), (int(cx), int(cy))], core)
+    return img
+
+
+def sculk_stone(seed, tone=2):
+    """Dark sculk-black stone, softly mottled, with a few faint cyan flecks (sculk's own spark)."""
+    sk, hc = RAMPS["sculk"], RAMPS["hollowcy"]
+    rnd = random.Random(seed)
+    img = blank()
+    for y in range(16):
+        for x in range(16):
+            t = tone + (1 if rnd.random() < 0.2 else -1 if rnd.random() < 0.15 else 0)
+            img.putpixel((x, y), sk[max(0, min(5, t))])
+    for _ in range(5):
+        img.putpixel((rnd.randrange(16), rnd.randrange(16)), hc[1])
+    return img
+
+
+def hollow_assembler():
+    """The Hollow Assembler (vanilla: crafter): an armoured machine of sculk-black plate and old bone ribs; on each side
+    a ribbed vent where hollow-cyan light runs up in pulses (animated, glowing); a crimson core eye in each vent; its
+    top a 3x3 grid of glowing assembly cells (its nine input slots) in a bone frame, lighting in turn."""
+    m = Model("hollow_assembler")
+    sk, hc, bone, cr = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["bone"], RAMPS["crimson"]
+    plate_img = sculk_stone(401, tone=2)
+    rim(plate_img, sk[4], sk[0])
+    for x in range(16):
+        plate_img.putpixel((x, 2), bone[2]); plate_img.putpixel((x, 13), bone[2])
+    for y in range(16):
+        plate_img.putpixel((2, y), bone[3]); plate_img.putpixel((13, y), bone[1])
+    t_body = m.texture("body", plate_img)
+    vents = []
+    for f in range(8):
+        v = blank()
+        for y in range(16):
+            for x in range(16):
+                rib = y % 3 == 0
+                pulse = (y + f * 2) % 16 < 4
+                v.putpixel((x, y), sk[1] if rib else (hc[3] if pulse else hc[1]))
+        put(v, [(7, 7), (8, 7), (7, 8), (8, 8)], cr[[3, 4, 5, 4, 3, 4, 5, 4][f]])
+        put(v, [(7, 7)], cr[5])
+        vents.append(v)
+    t_vent = m.texture("vent", vents)
+    tops = []
+    for f in range(9):
+        top = sculk_stone(403, tone=1)
+        rim(top, bone[3], bone[1])
+        for i in range(3):
+            for j in range(3):
+                x0, y0 = 2 + i * 4, 2 + j * 4
+                lit = (i + j * 3) == f
+                for y in range(y0, y0 + 4):
+                    for x in range(x0, x0 + 4):
+                        edge = x in (x0, x0 + 3) or y in (y0, y0 + 3)
+                        top.putpixel((x, y), sk[1] if edge else (hc[5] if lit else hc[3]))
+        tops.append(top)
+    t_top = m.texture("top", tops)
+    t_bone = m.texture("bone", rim(fill(bone, 2), bone[4], bone[1]))
+    m.cube((0, 0, 0), (16, 16, 16), t_body, top=t_top, bottom=t_body)
+    for (frm, to, d) in (((4, 3, -0.2), (12, 13, -0.2), "north"), ((4, 3, 16.2), (12, 13, 16.2), "south"),
+                         ((-0.2, 3, 4), (-0.2, 13, 12), "west"), ((16.2, 3, 4), (16.2, 13, 12), "east")):
+        m.box(frm, to, {d: (t_vent, [4, 3, 12, 13])}, light=10)
+    m.box((2, 16.05, 2), (14, 16.05, 14), {"up": (t_top, [2, 2, 14, 14])}, light=12)
+    for (x, z) in ((-0.3, -0.3), (14.8, -0.3), (-0.3, 14.8), (14.8, 14.8)):   # bone corner ribs
+        m.cube((x, 0, z), (x + 1.5, 16.3, z + 1.5), (t_bone, [0, 0, 2, 16]), top=(t_bone, [0, 0, 2, 2]))
+    return m
+
+
+def hollow_glyph(variant=0):
+    """A Hollow Glyph (vanilla: gray carpet): hollow-cyan runes on sculk-black slate, burning with their own light."""
+    return tier_glyph("hollow_glyph", RAMPS["hollowcy"], RAMPS["sculk"], RAMPS["hollowcy"], variant, glow=True)
+
+
+def hollow_altar():
+    """The Hollow Altar (vanilla: crying obsidian; the Abyssal Altar upgrades into it): a block of sculk-black stone
+    split by glowing hollow-cyan rifts (animated, emitting light), gripped at its corners by old bone claws that curl up
+    past its top; on top the Hollow Sigil - the bold eight-pointed star - in cyan round a crimson heart that beats."""
+    m = Model("hollow_altar")
+    sk, hc, bone, cr = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["bone"], RAMPS["crimson"]
+    base = bricks(sk, 451, row_h=5, brick_w=8, tones=(1, 2, 2))
+    rift = [(3, 15), (3, 14), (4, 13), (4, 12), (5, 11), (5, 10), (6, 9), (6, 8), (7, 7), (8, 6), (8, 5), (9, 4), (9, 3),
+            (10, 2), (10, 1), (11, 0), (5, 12), (12, 9), (12, 10), (13, 11)]
+    sides, glows = [], []
+    for f in range(6):
+        side = base.copy()
+        for x in range(16):
+            side.putpixel((x, 0), bone[3]); side.putpixel((x, 15), sk[0])
+        sides.append(side)
+        g = blank()
+        for i, (x, y) in enumerate(rift):
+            g.putpixel((x, y), hc[[3, 4, 5, 4, 3, 2][(i // 3 + f) % 6]])
+        glows.append(g)
+    t_side, t_rift = m.texture("side", sides[0]), m.texture("rift", glows)
+    tops, stars = [], []
+    for f in range(6):
+        top = sculk_stone(453, tone=1)
+        rim(top, bone[3], sk[0])
+        tops.append(top)
+        star = hollow_star(blank(), 8, 8, 7.2, 3.2, hc[3], hc[4], core=cr[[3, 4, 5, 5, 4, 3][f]])
+        stars.append(star)
+    t_top, t_star = m.texture("top", tops[0]), m.texture("star", stars)
+    t_bone = m.texture("bone", rim(fill(bone, 3), bone[5], bone[1]))
+    m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=t_top)
+    for (d, frm, to) in (("north", (0, 0, -0.05), (16, 16, -0.05)), ("south", (0, 0, 16.05), (16, 16, 16.05)),
+                         ("west", (-0.05, 0, 0), (-0.05, 16, 16)), ("east", (16.05, 0, 0), (16.05, 16, 16))):
+        m.box(frm, to, {d: t_rift}, shade=False, light=15)
+    m.box((0, 16.05, 0), (16, 16.05, 16), {"up": t_star}, shade=False, light=15)
+    for (x, z, dx, dz) in ((-0.6, -0.6, 1, 1), (14.1, -0.6, -1, 1), (-0.6, 14.1, 1, -1), (14.1, 14.1, -1, -1)):
+        m.cube((x, 1, z), (x + 2.5, 15, z + 2.5), (t_bone, [0, 0, 3, 14]), top=(t_bone, [0, 0, 3, 3]))   # the claw's shaft
+        m.cube((x, 15, z), (x + 2.5, 18, z + 2.5), (t_bone, [0, 0, 3, 3]), top=(t_bone, [0, 0, 3, 3]))
+        cx, cz = x + dx * 1.2, z + dz * 1.2   # its tip curling in over the top
+        m.cube((cx + 0.4, 18, cz + 0.4), (cx + 2.1, 20, cz + 2.1), (t_bone, [0, 0, 2, 2]), top=(t_bone, [0, 0, 2, 2]))
+    return m
+
+
+def servitor_nexus():
+    """The Servitor Nexus (vanilla: conduit, a small cube in the middle of its block): a bone-and-sculk cage - a
+    stepped plinth, four bone posts, a crowning ring - holding a heart of hollow-cyan light that churns (animated,
+    glowing), the linked shrines' spirits circling inside it."""
+    m = Model("servitor_nexus")
+    sk, hc, bone, cr = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["bone"], RAMPS["crimson"]
+    hearts = []
+    for f in range(8):
+        h = fill(hc, 3)
+        for y in range(16):
+            for x in range(16):
+                swirl = math.sin((x + y) * 0.6 + f * 0.8) + math.cos((x - y) * 0.5 - f * 0.6)
+                h.putpixel((x, y), hc[5] if swirl > 1.3 else hc[4] if swirl > 0.3 else hc[3] if swirl > -0.8 else hc[2])
+        a = f * math.pi / 4
+        for k in range(3):   # spirits circling
+            sx, sy = 7.5 + 5 * math.cos(a + k * 2.1), 7.5 + 5 * math.sin(a + k * 2.1)
+            put(h, [(int(sx), int(sy))], (255, 255, 255, 255))
+        hearts.append(h)
+    t_heart = m.texture("heart", hearts)
+    t_bone = m.texture("bone", rim(fill(bone, 3), bone[5], bone[1]))
+    stone = sculk_stone(471, tone=2)
+    rim(stone, sk[4], sk[0])
+    hollow_star(stone, 8, 8, 6.4, 2.8, bone[2], bone[3])
+    t_stone = m.texture("stone", stone)
+    m.cube((1, 0, 1), (15, 2, 15), (t_stone, [1, 0, 15, 2]), top=t_stone, bottom=t_stone)          # plinth
+    m.cube((3, 2, 3), (13, 3.5, 13), (t_stone, [3, 0, 13, 2]), top=t_stone)
+    m.box((4.6, 4.6, 4.6), (11.4, 11.4, 11.4), {d: (t_heart, [2, 2, 14, 14]) for d in FACES_ALL}, shade=False, light=15)
+    for (x, z) in ((2, 2), (12.5, 2), (2, 12.5), (12.5, 12.5)):
+        m.cube((x, 3.5, z), (x + 1.5, 14, z + 1.5), (t_bone, [0, 0, 2, 11]), top=(t_bone, [0, 0, 2, 2]))
+    for (frm, to) in (((2, 14, 2), (14, 15.5, 3.5)), ((2, 14, 12.5), (14, 15.5, 14)),
+                      ((2, 14, 3.5), (3.5, 15.5, 12.5)), ((12.5, 14, 3.5), (14, 15.5, 12.5))):   # the crowning ring
+        m.cube(frm, to, (t_bone, [0, 0, 12, 2]), top=(t_bone, [0, 0, 12, 2]), bottom=(t_bone, [0, 0, 12, 2]))
+    m.box((7, 15.5, 7), (9, 18, 9), {d: (t_heart, [7, 7, 9, 9]) for d in FACES_ALL}, shade=False, light=15)   # a crest
+    return m
+
+
+RESIN = hexes("#2a1206", "#5a2a0c", "#8a4816", "#b46a26", "#d89144", "#f2bf72")   # amber resin, warm but not loud
+
+
+def resin_tile():
+    """The Resin Tile (vanilla: resin bricks): polished bricks of amber resin from the Heartwood - warm, a little
+    translucent-looking (a lit inner glow in each brick), joined by dark heartwood seams; the same on every side and
+    running bond across exactly one block, so floors join seamlessly; a tiny insect caught in one brick, and a glint
+    that slides across the top (animated)."""
+    m = Model("resin_tile")
+    base = polished_bricks(RESIN, 491)
+    for (x, y) in ((4, 9), (5, 9), (4, 10), (6, 10), (5, 8), (3, 8)):   # a little fly caught in the amber
+        base.putpixel((x, y), RESIN[0])
+    put(base, [(13, 5), (14, 5), (12, 6)], RESIN[1])   # and a speck of heartwood
+    for y in range(16):   # amber is translucent: light pools in the middle of each brick
+        row, off = y // 4, ((y // 4) % 2) * 4
+        for x in range(16):
+            if (x + off) % 8 in (3, 4) and y % 4 == 1 and base.getpixel((x, y)) in (RESIN[2], RESIN[3]):
+                base.putpixel((x, y), RESIN[4])
+    put(base, [(10, 1), (11, 1), (2, 13)], RESIN[5])
+    frames = []
+    for f in range(8):
+        top = base.copy()
+        for k in range(16):   # a glint sliding along a diagonal
+            x, y = (k + f * 2) % 16, (k * 2 + f) % 16
+            if k % 5 == 0 and top.getpixel((x, y)) not in (RESIN[0], RESIN[1]):
+                top.putpixel((x, y), RESIN[5])
+        frames.append(top)
+    t_side, t_top = m.texture("side", base), m.texture("top", frames)
+    m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=t_side)
+    return m
+
+
+G4 = [("Hollow Assembler", hollow_assembler)] + \
+     [(f"Hollow Glyph v{v}", (lambda v=v: hollow_glyph(v))) for v in range(4)] + \
+     [("Hollow Altar", hollow_altar), ("Servitor Nexus", servitor_nexus), ("Resin Tile", resin_tile)]
+
+
 G2 = [("Arcane Pedestal", arcane_pedestal), ("Brood Egg", brood_egg), ("Trophy Board", trophy_board),
       ("Chiming Tile", chiming_tile)] + \
      [(f"Bound Glyph v{v}", (lambda v=v: tier_glyph("bound_glyph", RAMPS["violet"], RAMPS["boundsteel"], RAMPS["violet"], v,
@@ -1264,7 +1474,7 @@ G2 = [("Arcane Pedestal", arcane_pedestal), ("Brood Egg", brood_egg), ("Trophy B
 G1 = [("Initiate's Altar", initiate_altar), ("Offering Bowl", offering_bowl), ("Chalk Glyph", chalk_glyph),
       ("Chalk Glyph v1", lambda: chalk_glyph(1)), ("Chalk Glyph v2", lambda: chalk_glyph(2)),
       ("Chalk Glyph v3", lambda: chalk_glyph(3)), ("Arcane Altar", arcane_altar)]
-GROUPS = {"g1": G1, "g2": G2, "g3": G3}
+GROUPS = {"g1": G1, "g2": G2, "g3": G3, "g4": G4}
 
 
 def save(model):

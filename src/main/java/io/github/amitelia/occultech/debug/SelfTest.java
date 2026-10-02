@@ -475,7 +475,10 @@ final class SelfTest {
         // simulate a crash: the marker survived but the fight is gone
         BlockStorage.addBlockInfo(altar, ACTIVE_KEY, CATALYST);
         plugin.rituals().recoverAltar(altar);
-        check("crash recovery returns the catalyst", CATALYST.equals(idIn(RitualAltar.CENTER_SLOT)), String.valueOf(idIn(RitualAltar.CENTER_SLOT)));
+        long dropped = altar.getWorld().getNearbyEntities(altar.getLocation().add(0.5, 1, 0.5), 2, 2, 2, e -> e instanceof Item).size();
+        check("crash recovery returns the catalyst", CATALYST.equals(idIn(RitualAltar.CENTER_SLOT)), idIn(RitualAltar.CENTER_SLOT)
+            + " (menu " + (BlockStorage.getInventory(altar) == null ? "missing" : "there") + ", " + dropped + " dropped, fight here: "
+            + bosses.fightAt(altar).isPresent() + ")");
         check("crash marker cleared", BlockStorage.getLocationInfo(altar.getLocation(), ACTIVE_KEY) == null, "marker left");
     }
 

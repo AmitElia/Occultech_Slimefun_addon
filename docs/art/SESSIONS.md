@@ -447,7 +447,7 @@ bow) is designed as that model's texture, not as an icon.
 | **G1** | The block-skin technique (block-model tools, 3D preview renderer, skin service in the plugin) + Initiate's Altar, Offering Bowl, Chalk Glyph (4 variants), Arcane Altar | **Done** |
 | **G2** | Rest of tier 0 (Arcane Pedestal, Brood Egg, Trophy Board, Chiming Tile) + tier 1 (Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil) | **Done** |
 | **G3** | Tier-2 blocks (Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack) | **Done** |
-| G4 | Tier-3 blocks (Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) | - |
+| **G4** | Tier-3 blocks (Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) | **Done** |
 | G5 | Held 3D models: Occult Codex, Wyrmbreath, Guardian's Gaze, Abyssal Anchor, Dreadlance, Soulfire Censer, Heartwood Aegis (shield model) | - |
 | G6 | Worn armor (`equippable` layers): Abyssal, Hollow | - |
 | G7 | Placed decorations (Moonlit Lily, Witchcap, Everliving Coral, jars, chime, orrery, brazier, obelisk, eyeblossom) | - |
@@ -458,6 +458,20 @@ system.** Every block is authored as its final Nexo look: a block model (`occult
 note-block block - the hitbox is always a full block, but the model may show less than a block (bowls, egg, lantern,
 glyphs...). The display-entity skins are the interim way to see them until Session H; while they last, a skin still
 has to enclose its interim vanilla block.
+
+**G4 blocks** (`python tools/art/session_g.py g4`) - the Hollow family: sculk black-teal, old bone, hollow cyan, a
+crimson heart; glowing parts emit light (`light_emission`), as they will on Nexo blocks.
+- Hollow Assembler - armoured sculk-black plate with slim bone corner ribs; a ribbed vent on each side where cyan light
+  pulses upward round a crimson core eye; its top a 3x3 grid of glowing assembly cells (its nine inputs) lighting in
+  turn. (v1's wide bone posts and bone grid read as a pale crate.)
+- Hollow Glyph - glowing hollow-cyan runes on sculk slate, 4 variants. **Its vanilla block is now a gray carpet** (was
+  sculk, a full cube): a flat tile like the other three glyphs.
+- Hollow Altar - sculk-black masonry split by glowing cyan rifts, gripped at the corners by bone claws curling over its
+  top; the Hollow Sigil's bold eight-pointed star glowing on top round a beating crimson heart.
+- Servitor Nexus - a cage of bone posts and a crowning ring on a sculk plinth (the Hollow star carved in it), holding
+  a churning heart of hollow-cyan light with the linked spirits circling in it; a small crest of light on top.
+- Resin Tile - polished amber-resin bricks (`RESIN`, warm but not loud; v1 was loud orange, v2 read as wood), the
+  same on every side and seamless as a floor; light pools in each brick, a fly caught in one, a glint slides across.
 
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
