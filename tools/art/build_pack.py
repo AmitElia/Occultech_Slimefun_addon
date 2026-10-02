@@ -147,9 +147,10 @@ def main():
             if os.path.exists(single):
                 files[target] = png_bytes(Image.open(single).convert("RGBA"))
             elif frames:
-                strip = Image.new("RGBA", (16, 16 * len(frames)))
+                fw, fh = Image.open(frames[0]).size   # 16x16, or 64x64 for the shield
+                strip = Image.new("RGBA", (fw, fh * len(frames)))
                 for i, p in enumerate(frames):
-                    strip.paste(Image.open(p).convert("RGBA"), (0, 16 * i))
+                    strip.paste(Image.open(p).convert("RGBA"), (0, fh * i))
                 files[target] = png_bytes(strip)
                 custom = os.path.join(gdir, key, f"{name}.mcmeta.json")
                 files[target + ".mcmeta"] = (json.load(open(custom, encoding="utf-8")) if os.path.exists(custom)
@@ -163,6 +164,28 @@ def main():
         if base == key and key.upper() in items and key.upper() not in with_models:
             with_models.append(key.upper())
             without[:] = [w for w in without if f" {key.upper()} " not in w]
+
+    # held 3D models (Session G5): <key>_held is what the hand holds; the inventory, the ground and item frames keep
+    # the 2D icon - like vanilla's trident, the item definition selects on display_context
+    for key in sorted(os.listdir(gdir)) if os.path.isdir(gdir) else []:
+        if not key.endswith("_held") or not os.path.exists(os.path.join(gdir, key, "model.json")):
+            continue
+        base = key[:-len("_held")]
+        if base.upper() not in items or base.upper() not in with_models:
+            raise SystemExit(f"{key}: no item {base.upper()} with a 2D icon")
+        files[f"assets/{NS}/items/{base}.json"] = {"model": {
+            "type": "minecraft:select", "property": "minecraft:display_context",
+            "cases": [{"when": ["gui", "ground", "fixed"], "model": {"type": "minecraft:model", "model": model_ref(base)}}],
+            "fallback": {"type": "minecraft:model", "model": f"{NS}:block/{key}"}}}
+    # the Heartwood Aegis: a shield - its model while held, and its blocking model while in use (vanilla's shield)
+    if os.path.isdir(os.path.join(gdir, "heartwood_aegis_shield")):
+        files[f"assets/{NS}/items/heartwood_aegis.json"] = {"model": {
+            "type": "minecraft:condition", "property": "minecraft:using_item",
+            "on_false": {"type": "minecraft:model", "model": f"{NS}:block/heartwood_aegis_shield"},
+            "on_true": {"type": "minecraft:model", "model": f"{NS}:block/heartwood_aegis_shield_blocking"}}}
+        if "HEARTWOOD_AEGIS" not in with_models:
+            with_models.append("HEARTWOOD_AEGIS")
+            without[:] = [w for w in without if " HEARTWOOD_AEGIS " not in w]
 
     files["pack.mcmeta"] = {"pack": {
         "description": "Occultech - occult rituals, bosses and relics",

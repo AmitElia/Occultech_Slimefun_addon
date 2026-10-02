@@ -1619,6 +1619,364 @@ G4 = [("Hollow Assembler", hollow_assembler)] + \
      [("Hollow Altar", hollow_altar), ("Servitor Nexus", servitor_nexus), ("Resin Tile", resin_tile)]
 
 
+# ================================================================== G5: held 3D models. In the inventory (and on the
+# ground, in frames) these items keep their 2D icons; in the hand (and on the head) they are these models - the item
+# definition selects on display_context, as vanilla's trident does. build_pack wires folders named <key>_held.
+
+HANDHELD_DISPLAY = {   # vanilla item/handheld (with item/generated's head): how a sword sprite is held
+    "thirdperson_righthand": {"rotation": [0, -90, 55], "translation": [0, 4.0, 0.5], "scale": [0.85, 0.85, 0.85]},
+    "thirdperson_lefthand": {"rotation": [0, 90, -55], "translation": [0, 4.0, 0.5], "scale": [0.85, 0.85, 0.85]},
+    "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [1.13, 3.2, 1.13], "scale": [0.68, 0.68, 0.68]},
+    "firstperson_lefthand": {"rotation": [0, 90, -25], "translation": [1.13, 3.2, 1.13], "scale": [0.68, 0.68, 0.68]},
+    "head": {"rotation": [0, 180, 0], "translation": [0, 13, 7], "scale": [1, 1, 1]},
+}
+GENERATED_DISPLAY = {   # vanilla item/generated: how a flat item (a book) is held
+    "thirdperson_righthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.55, 0.55, 0.55]},
+    "thirdperson_lefthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.55, 0.55, 0.55]},
+    "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [1.13, 3.2, 1.13], "scale": [0.68, 0.68, 0.68]},
+    "firstperson_lefthand": {"rotation": [0, 90, -25], "translation": [1.13, 3.2, 1.13], "scale": [0.68, 0.68, 0.68]},
+    "head": {"rotation": [0, 180, 0], "translation": [0, 13, 7], "scale": [1, 1, 1]},
+}
+TRIDENT_DISPLAY = {   # vanilla item/trident_in_hand (its model points up along y, centred on x = z = 0)
+    "thirdperson_righthand": {"rotation": [0, 60, 0], "translation": [11, 17, -2], "scale": [1, 1, 1]},
+    "thirdperson_lefthand": {"rotation": [0, 60, 0], "translation": [3, 17, 12], "scale": [1, 1, 1]},
+    "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [-3, 17, 1], "scale": [1, 1, 1]},
+    "firstperson_lefthand": {"rotation": [0, 90, -25], "translation": [13, 17, 1], "scale": [1, 1, 1]},
+}
+
+
+def _rot_xyz(deg, v):
+    """Minecraft's display rotation (a quaternion from Euler XYZ: Rx * Ry * Rz) applied to v."""
+    rx, ry, rz = (math.radians(a) for a in deg)
+    x, y, z = v
+    # Rz
+    x, y = x * math.cos(rz) - y * math.sin(rz), x * math.sin(rz) + y * math.cos(rz)
+    # Ry
+    x, z = x * math.cos(ry) + z * math.sin(ry), -x * math.sin(ry) + z * math.cos(ry)
+    # Rx
+    y, z = y * math.cos(rx) - z * math.sin(rx), y * math.sin(rx) + z * math.cos(rx)
+    return x, y, z
+
+
+def shifted_display(display, offset):
+    """A display for a model drawn `offset` px away from the frame `display` was made for: each translation is
+    corrected by the offset turned and scaled as that context turns and scales the model (T' = T - R S o)."""
+    out = {}
+    for ctx, d in display.items():
+        o = [offset[i] * d["scale"][i] for i in range(3)]
+        r = _rot_xyz(d["rotation"], o)
+        t = [round(d["translation"][i] - r[i], 3) for i in range(3)]
+        out[ctx] = {"rotation": d["rotation"], "translation": t, "scale": d["scale"]}
+    return out
+
+
+def diagonal(m):
+    """Lays a model built upright (along y, centred on x = z = 8, from y -3 to 19) along the diagonal a sword sprite
+    takes - grip at the bottom-left, head at the top-right - by turning every element 45 degrees about z."""
+    for e in m.elements:
+        assert "rotation" not in e
+        e["rotation"] = {"origin": [8, 8, 8], "axis": "z", "angle": -45}
+    return m
+
+
+def prism(m, w, y0, y1, faces_tex, top=None, light=0, cx=8.0, cz=8.0, d=None, shade=True):
+    """A square (or w x d) upright box centred on (cx, cz)."""
+    d = d or w
+    tex, uv = faces_tex if isinstance(faces_tex, tuple) else (faces_tex, None)
+    def f(width):
+        return (tex, uv or [0, 0, max(1, round(width)), max(1, round(y1 - y0))])
+    faces = {"north": f(w), "south": f(w), "west": f(d), "east": f(d)}
+    cap = top or (tex, [0, 0, max(1, round(w)), max(1, round(d))])
+    faces["up"] = cap
+    faces["down"] = cap
+    return m.box((cx - w / 2, y0, cz - d / 2), (cx + w / 2, y1, cz + d / 2), faces, shade=shade, light=light)
+
+
+def metal(ramp, seed, tone=3):
+    """Shaded metal: a lit stripe down the left, darker to the right, a little wear."""
+    rnd = random.Random(seed)
+    img = blank()
+    for y in range(16):
+        for x in range(16):
+            t = tone + (1 if x % 4 == 0 else -1 if x % 4 == 3 else 0) - (1 if rnd.random() < 0.08 else 0)
+            img.putpixel((x, y), ramp[max(0, min(len(ramp) - 1, t))])
+    return img
+
+
+def orb_frames(ramp, n=8, swirl=0.7):
+    """A glowing orb's surface: a hot heart, a slow swirl of brighter and darker light (animated)."""
+    out = []
+    for f in range(n):
+        img = blank()
+        for y in range(16):
+            for x in range(16):
+                v = math.sin((x + y) * swirl + f * 0.8) + math.cos((x - y) * 0.5 - f * 0.5)
+                img.putpixel((x, y), ramp[5] if v > 1.3 else ramp[4] if v > 0.2 else ramp[3] if v > -0.9 else ramp[2])
+        out.append(img)
+    return out
+
+
+def scepter(key, metal_ramp, orb_ramp, eye=False):
+    """A scepter (Wyrmbreath, Guardian's Gaze): a pommel, a wrapped grip, a ringed collar, a cup from which three claw
+    prongs - one behind, two in front - rise round a glowing orb (or a guardian's eye) and hook in over it."""
+    m = Model(key + "_held")
+    m.part = True
+    t_metal = m.texture("metal", metal(metal_ramp, 601))
+    grip = metal(metal_ramp, 603, tone=2)
+    for y in range(0, 16, 3):
+        for x in range(16):
+            grip.putpixel((x, y), metal_ramp[1])
+    t_grip = m.texture("grip", grip)
+    if eye:
+        sg, bone, ab = RAMPS["seaglow"], RAMPS["bone"], RAMPS["abyss"]
+        frames = []
+        for f in range(8):
+            img = fill(bone, 4)
+            for y in range(16):
+                for x in range(16):
+                    dd = math.hypot(x - 7.5 - [0, 0, 1, 1, 0, 0, -1, -1][f], y - 7.5)
+                    if dd < 5.5:
+                        img.putpixel((x, y), sg[2] if dd > 4.5 else sg[4] if dd > 2.2 else ab[0])
+            put(img, [(5, 5), (6, 5)], (255, 255, 255, 255))
+            frames.append(img)
+        t_orb = m.texture("orb", frames)
+    else:
+        t_orb = m.texture("orb", orb_frames(orb_ramp))
+    prism(m, 2.4, -3, -1.6, t_metal)                       # pommel
+    prism(m, 1.6, -1.6, 8, t_grip)                          # grip
+    prism(m, 3.0, 8, 9.4, t_metal)                          # collar
+    prism(m, 1.8, 9.4, 10, t_metal)
+    prism(m, 4.2, 10, 11.2, t_metal)                        # the cup
+    prism(m, 4.4, 11.2, 15.6, (t_orb, [3, 3, 13, 13]), light=15, shade=False)   # the orb
+    for (px, pz) in ((8, 10.6), (5.9, 6.2), (10.1, 6.2)):   # prongs: one behind, two in front
+        prism(m, 1.0, 10.4, 16.2, t_metal, cx=px, cz=pz)
+        ix, iz = px + (8 - px) * 0.45, pz + (8 - pz) * 0.45   # each hooks in over the orb
+        prism(m, 1.0, 16.2, 17.4, t_metal, cx=ix, cz=iz)
+        prism(m, 0.7, 17.4, 18.4, t_metal, cx=ix + (8 - ix) * 0.5, cz=iz + (8 - iz) * 0.5)
+    m.display = HANDHELD_DISPLAY
+    return m
+
+
+def wyrmbreath_held():
+    """Wyrmbreath in the hand: a gold scepter, its claws round an orb of dragon fire."""
+    return diagonal(scepter("wyrmbreath", RAMPS["gold"], RAMPS["ember"]))
+
+
+def guardians_gaze_held():
+    """Guardian's Gaze in the hand: a teal-steel scepter, its claws round a guardian's eye that glances about."""
+    return diagonal(scepter("guardians_gaze", RAMPS["abyss"], RAMPS["seaglow"], eye=True))
+
+
+def abyssal_anchor_held():
+    """The Abyssal Anchor in the hand: an anchor of abyssal iron held by its ring - the stock across just above the
+    hand, the shank rising to the crown, the arms spreading at the top and their flukes turned back down like a war
+    hammer's head; sea-glow runes down the shank (glowing), a spectral chain trailing from the ring (glowing)."""
+    m = Model("abyssal_anchor_held")
+    m.part = True
+    ab, sg, ir = RAMPS["abyss"], RAMPS["seaglow"], RAMPS["iron"]
+    t_iron = m.texture("iron", metal(ab, 611, tone=3))
+    runes = []
+    for f in range(6):
+        img = metal(ab, 613, tone=3)
+        for i, y in enumerate((2, 6, 10, 14)):
+            put(img, [(7, y), (8, y)], sg[[3, 4, 5, 4, 3, 2][(f + i) % 6]])
+        runes.append(img)
+    t_rune = m.texture("rune", runes)
+    t_chain = m.texture("chain", fill(sg, 4))
+    # the ring (grip), a square loop in the x-y plane
+    prism(m, 4.6, -3, -2.2, t_iron)
+    for x in (5.7, 10.3):
+        prism(m, 0.8, -3, 1.0, t_iron, cx=x)
+    prism(m, 4.6, 0.4, 1.2, t_iron)
+    prism(m, 1.6, 1.2, 2.2, t_iron)
+    prism(m, 1.2, 2.2, 3.4, t_iron, d=9)                    # the stock, across (z)
+    prism(m, 2.0, 3.4, 15, (t_rune, [0, 0, 2, 12]), light=0)   # the shank
+    m.box((7, 4, 6.95), (9, 14.5, 6.95), {"north": (t_rune, [6, 1, 10, 15])}, shade=False, light=15)
+    m.box((7, 4, 9.05), (9, 14.5, 9.05), {"south": (t_rune, [6, 1, 10, 15])}, shade=False, light=15)
+    prism(m, 3.0, 15, 16.6, t_iron)                         # the crown
+    prism(m, 1.0, 16.6, 18.4, t_iron)                       # its spike
+    for side in (-1, 1):                                    # arms out, then the flukes down
+        prism(m, 4.0, 15.2, 16.4, t_iron, cx=8 + side * 3.5, d=2.0)
+        prism(m, 1.8, 12.4, 16.4, t_iron, cx=8 + side * 6.1, d=2.0)
+        prism(m, 3.0, 11.0, 13.4, t_iron, cx=8 + side * 6.1, d=2.4)     # the palm
+        prism(m, 1.2, 10.0, 11.0, t_iron, cx=8 + side * 6.1, d=1.2)     # its bill
+    for i in range(4):                                      # the spectral chain trailing from the ring
+        prism(m, 1.6 if i % 2 == 0 else 0.6, -4.6 - i * 1.6, -3.0 - i * 1.6, (t_chain, [0, 0, 2, 2]),
+              d=0.6 if i % 2 == 0 else 1.6, light=15, shade=False)
+    m.display = HANDHELD_DISPLAY
+    return diagonal(m)
+
+
+def soulfire_censer_held():
+    """The Soulfire Censer in the hand: a gold-ringed handle, a short chain, and its censer - a dark caged orb with soul
+    fire burning behind cyan glass (glowing, animated), a gold band round it, a gold cap and finial."""
+    m = Model("soulfire_censer_held")
+    m.part = True
+    gd, st, hc, ir = RAMPS["gold"], RAMPS["boundsteel"], RAMPS["hollowcy"], RAMPS["iron"]
+    t_gold = m.texture("gold", metal(gd, 621))
+    t_steel = m.texture("steel", metal(st, 623, tone=2))
+    t_chain = m.texture("chain", metal(ir, 625, tone=3))
+    fires = []
+    for f in range(8):
+        img = fill(st, 1)
+        rnd = random.Random(627 + f)
+        for x in range(3, 13):
+            h = 4 + rnd.randrange(5)
+            for k in range(h):
+                img.putpixel((x, 13 - k), hc[5] if k < 2 else hc[4] if k < 4 else hc[3])
+        for x in (5, 10):   # the cage's bars over the glass
+            for y in range(16):
+                img.putpixel((x, y), st[2])
+        fires.append(img)
+    t_fire = m.texture("fire", fires)
+    for x in (6.2, 9.8):                                   # the ring at the grip
+        prism(m, 0.8, -3, 0.0, t_gold, cx=x)
+    prism(m, 4.4, -3, -2.2, t_gold)
+    prism(m, 4.4, -0.8, 0.0, t_gold)
+    prism(m, 1.4, 0.0, 3.0, t_gold)                        # the handle
+    for i in range(4):                                      # a short chain
+        prism(m, 1.2 if i % 2 == 0 else 0.5, 3 + i * 1.5, 4.6 + i * 1.5, t_chain, d=0.5 if i % 2 == 0 else 1.2)
+    prism(m, 3.0, 9.0, 10.0, t_gold)                        # the cap
+    prism(m, 4.6, 10.0, 11.0, t_steel)                      # the orb, stepped round
+    prism(m, 6.0, 11.0, 15.0, (t_fire, [2, 2, 14, 14]), light=15, shade=False)
+    prism(m, 6.4, 12.6, 13.4, t_gold)                       # its band
+    prism(m, 4.6, 15.0, 16.0, t_steel)
+    prism(m, 2.0, 16.0, 17.0, t_gold)                       # the finial
+    prism(m, 0.8, 17.0, 18.6, t_gold)
+    m.display = HANDHELD_DISPLAY
+    return diagonal(m)
+
+
+def dreadlance_held():
+    """The Dreadlance in the hand, held like a trident: a long shaft of black-violet steel banded in crimson, a violet
+    pommel gem, a bone-white vamplate flaring over the hand, and a silver leaf-shaped head with a crimson fuller that
+    pulses (glowing). Built in the trident's frame (centred on x = z = 0, pointing up), lifted 16 px to stay inside a
+    model's bounds - the display's translations take the lift back out."""
+    m = Model("dreadlance_held")
+    m.part = True
+    st, cr, bone, vi, ir = RAMPS["boundsteel"], RAMPS["crimson"], RAMPS["bone"], RAMPS["violet"], RAMPS["iron"]
+    shaft = metal(st, 631, tone=1)
+    for y in (2, 9):
+        for x in range(16):
+            shaft.putpixel((x, y), cr[3])
+    t_shaft = m.texture("shaft", shaft)
+    t_bone = m.texture("bone", bone_tex(633, tone=4))
+    t_gem = m.texture("gem", fill(vi, 4))
+    t_steel = m.texture("blade", metal(ir, 635, tone=4))
+    fullers = []
+    for f in range(6):
+        img = blank()
+        for y in range(16):
+            img.putpixel((7, y), cr[[3, 4, 5, 4, 3, 2][(f + y // 3) % 6]])
+            img.putpixel((8, y), cr[[3, 4, 5, 4, 3, 2][(f + y // 3) % 6]])
+        fullers.append(img)
+    t_fuller = m.texture("fuller", fullers)
+    p = lambda w, y0, y1, tex, d=None, light=0: prism(m, w, y0, y1, tex, cx=0.0, cz=0.0, d=d, light=light)  # noqa: E731
+    p(1.8, -11, -9.4, t_gem, light=10)                      # pommel gem
+    p(1.0, -9.4, 12, (t_shaft, [7, 0, 8, 16]))              # the shaft
+    p(4.4, -1.4, -0.4, t_bone)                              # the vamplate, flaring toward the hand
+    p(3.4, -0.4, 0.8, t_bone)
+    p(2.2, 0.8, 2.0, t_bone)
+    p(1.6, 12, 13, t_steel)                                 # the head's socket, then the leaf
+    p(2.4, 13, 15, t_steel, d=0.6)
+    p(3.0, 15, 17.2, t_steel, d=0.6)
+    p(2.2, 17.2, 18.6, t_steel, d=0.6)
+    p(1.2, 18.6, 19.6, t_steel, d=0.6)
+    p(0.5, 19.6, 20.4, t_steel, d=0.5)
+    m.box((-0.4, 13.2, -0.32), (0.4, 18.4, -0.32), {"north": (t_fuller, [7, 0, 9, 16])}, shade=False, light=15)
+    m.box((-0.4, 13.2, 0.32), (0.4, 18.4, 0.32), {"south": (t_fuller, [7, 0, 9, 16])}, shade=False, light=15)
+    m.display = shifted_display(TRIDENT_DISPLAY, (0, 16, 0))
+    return m
+
+
+def occult_codex_held():
+    """The Occult Codex in the hand, after Iron's Spells' books: two thick leather covers overhanging a block of bone
+    pages, a rounded spine, iron corner guards, an iron clasp across the fore-edge, and the ember jewel on the cover
+    (glowing, pulsing). Lies in the x-y plane like a flat item, so it is held as vanilla holds a book."""
+    m = Model("occult_codex_held")
+    m.part = True
+    le, ir, bone, em = RAMPS["leather"], RAMPS["iron"], RAMPS["bone"], RAMPS["ember"]
+    cover = blank()
+    for y in range(16):
+        for x in range(16):
+            cover.putpixel((x, y), le[3] if (x * 3 + y * 5) % 11 else le[2])
+    rim(cover, le[4], le[1])
+    for i in range(2, 14):   # a tooled border
+        cover.putpixel((i, 2), le[1]); cover.putpixel((i, 13), le[1]); cover.putpixel((2, i), le[1]); cover.putpixel((13, i), le[1])
+    t_cover = m.texture("cover", cover)
+    pages = blank()
+    for y in range(16):
+        for x in range(16):
+            pages.putpixel((x, y), bone[4] if y % 2 else bone[3])
+    t_pages = m.texture("pages", pages)
+    t_iron = m.texture("iron", metal(ir, 641, tone=3))
+    jewels = [fill(em, [3, 4, 5, 4, 3, 2][f]) for f in range(6)]
+    t_jewel = m.texture("jewel", jewels)
+    # covers (front +z, back -z), pages between, the spine on the left
+    m.cube((3, 1, 9.4), (13.6, 15, 10.6), t_cover)
+    m.cube((3, 1, 5.4), (13.6, 15, 6.6), t_cover)
+    m.box((3.6, 1.6, 6.6), (13.0, 14.4, 9.4), {"east": (t_pages, [0, 0, 3, 13]), "up": (t_pages, [0, 0, 9, 3]),
+                                                "down": (t_pages, [0, 0, 9, 3])})
+    m.cube((2.2, 1, 6.0), (3.4, 15, 10.0), (t_cover, [0, 0, 4, 14]))   # the spine
+    m.cube((1.8, 2.5, 6.6), (2.4, 13.5, 9.4), (t_cover, [0, 0, 3, 11]))
+    for (y0, y1) in ((1, 2.6), (13.4, 15)):                  # corner guards on the fore-edge corners
+        for z0, z1 in ((10.4, 10.9), (5.1, 5.6)):
+            m.cube((11.8, y0, z0), (13.9, y1, z1), (t_iron, [0, 0, 2, 2]))
+    m.cube((12.8, 7, 5.2), (14.2, 9, 10.8), (t_iron, [0, 0, 2, 2]))   # the clasp across the fore-edge
+    m.box((7.0, 6.6, 10.6), (9.6, 9.4, 11.3), {d: (t_jewel, [0, 0, 3, 3]) for d in FACES_ALL}, light=15, shade=False)
+    m.cube((6.6, 6.2, 10.6), (10.0, 9.8, 10.9), (t_iron, [0, 0, 3, 3]))   # its setting
+    m.display = GENERATED_DISPLAY
+    return m
+
+
+SHIELD_DISPLAY = {   # vanilla item/shield
+    "thirdperson_righthand": {"rotation": [0, 90, 0], "translation": [10, 6, -4], "scale": [1, 1, 1]},
+    "thirdperson_lefthand": {"rotation": [0, 90, 0], "translation": [10, 6, 12], "scale": [1, 1, 1]},
+    "firstperson_righthand": {"rotation": [0, 180, 5], "translation": [-10, 2, -10], "scale": [1.25, 1.25, 1.25]},
+    "firstperson_lefthand": {"rotation": [0, 180, 5], "translation": [10, 0, -10], "scale": [1.25, 1.25, 1.25]},
+    "gui": {"rotation": [15, -25, -5], "translation": [2, 3, 0], "scale": [0.65, 0.65, 0.65]},
+    "fixed": {"rotation": [0, 180, 0], "translation": [-4.5, 4.5, -5], "scale": [0.55, 0.55, 0.55]},
+    "ground": {"rotation": [0, 0, 0], "translation": [2, 4, 2], "scale": [0.25, 0.25, 0.25]},
+}
+SHIELD_BLOCKING_DISPLAY = {   # vanilla item/shield_blocking
+    "thirdperson_righthand": {"rotation": [45, 155, 0], "translation": [-3.49, 11, -2], "scale": [1, 1, 1]},
+    "thirdperson_lefthand": {"rotation": [45, 155, 0], "translation": [11.51, 7, 2.5], "scale": [1, 1, 1]},
+    "firstperson_righthand": {"rotation": [0, 180, -5], "translation": [-15, 5, -11], "scale": [1.25, 1.25, 1.25]},
+    "firstperson_lefthand": {"rotation": [0, 180, -5], "translation": [5, 5, -11], "scale": [1.25, 1.25, 1.25]},
+    "gui": {"rotation": [15, -25, -5], "translation": [2, 3, 0], "scale": [0.65, 0.65, 0.65]},
+}
+
+
+def heartwood_aegis(blocking=False):
+    """The Heartwood Aegis (vanilla: shield): vanilla's shield rebuilt as a plain model - the entity shield's plate
+    (12x22x1) and handle (2x6x6) in the same place its renderer puts them - so the Session F texture (vanilla shield
+    UV layout, 64x64, its regrowth rune animated) maps on unchanged, with vanilla's display (held and blocking)."""
+    m = Model("heartwood_aegis_shield" + ("_blocking" if blocking else ""))
+    m.part = True
+    m.extra = {"gui_light": "front"}
+    frames = []
+    i = 0
+    while os.path.exists(os.path.join(OUT, "..", "session-f", f"heartwood_aegis_shield_{i}.png")):
+        frames.append(Image.open(os.path.join(OUT, "..", "session-f", f"heartwood_aegis_shield_{i}.png")).convert("RGBA"))
+        i += 1
+    t = m.texture("shield", frames)
+    q = lambda x0, y0, x1, y1: (t, [x0 / 4, y0 / 4, x1 / 4, y1 / 4])  # noqa: E731  (64 px texture -> 16 uv units)
+    # the plate: entity box (-6,-11,-2) size 12x22x1 at uv (0,0); its renderer flips y and z, so it sits at z 1..2
+    m.box((-6, -11, 1), (6, 11, 2), {"south": q(1, 1, 13, 23), "north": q(14, 1, 26, 23), "up": q(1, 0, 13, 1),
+                                      "down": q(13, 0, 25, 1), "west": q(0, 1, 1, 23), "east": q(13, 1, 14, 23)})
+    # the handle: entity box (-1,-3,-1) size 2x6x6 at uv (26,0) -> z -5..1
+    m.box((-1, -3, -5), (1, 3, 1), {"south": q(32, 6, 34, 12), "north": q(40, 6, 42, 12), "up": q(32, 0, 34, 6),
+                                     "down": q(34, 0, 36, 6), "west": q(26, 6, 32, 12), "east": q(34, 6, 40, 12)})
+    m.display = SHIELD_BLOCKING_DISPLAY if blocking else SHIELD_DISPLAY
+    return m
+
+
+G5 = [("Occult Codex (held)", occult_codex_held), ("Wyrmbreath (held)", wyrmbreath_held),
+      ("Guardian's Gaze (held)", guardians_gaze_held), ("Abyssal Anchor (held)", abyssal_anchor_held),
+      ("Dreadlance (held)", dreadlance_held), ("Soulfire Censer (held)", soulfire_censer_held),
+      ("Heartwood Aegis", heartwood_aegis), ("Heartwood Aegis (blocking)", lambda: heartwood_aegis(True))]
+
+
 G2 = [("Arcane Pedestal", arcane_pedestal), ("Brood Egg", brood_egg), ("Trophy Board", trophy_board),
       ("Chiming Tile", chiming_tile)] + \
      [(f"Bound Glyph v{v}", (lambda v=v: tier_glyph("bound_glyph", RAMPS["violet"], RAMPS["boundsteel"], RAMPS["violet"], v,
@@ -1631,7 +1989,7 @@ G2 = [("Arcane Pedestal", arcane_pedestal), ("Brood Egg", brood_egg), ("Trophy B
 G1 = [("Initiate's Altar", initiate_altar), ("Offering Bowl", offering_bowl), ("Chalk Glyph", chalk_glyph),
       ("Chalk Glyph v1", lambda: chalk_glyph(1)), ("Chalk Glyph v2", lambda: chalk_glyph(2)),
       ("Chalk Glyph v3", lambda: chalk_glyph(3)), ("Arcane Altar", arcane_altar)]
-GROUPS = {"g1": G1, "g2": G2, "g3": G3, "g4": G4}
+GROUPS = {"g1": G1, "g2": G2, "g3": G3, "g4": G4, "g5": G5}
 
 
 def save(model):

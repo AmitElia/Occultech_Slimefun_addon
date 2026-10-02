@@ -451,8 +451,9 @@ final class SelfTest {
         List<Entity> left = nearby().stream().filter(Keys::isSummoned).toList();
         check(name + " leaves no summoned entities", left.isEmpty(),
             left.size() + " left: " + left.stream().map(e -> e.getType() + (e.isDead() ? " (dead)" : "")).toList());
-        long drops = nearby().stream().filter(e -> e instanceof Item).count();
-        check(name + " drops no vanilla loot", drops == 0, drops + " items on the ground");
+        List<Item> dropped = nearby().stream().filter(e -> e instanceof Item).map(e -> (Item) e).toList();
+        check(name + " drops no vanilla loot", dropped.isEmpty(), dropped.size() + " items on the ground: "
+            + dropped.stream().map(i -> i.getItemStack().getType() + "x" + i.getItemStack().getAmount()).distinct().limit(6).toList());
         // superflat worlds spawn wild slimes, so only count slimes that appeared during the fight
         long slimes = nearby().stream().filter(e -> e instanceof Slime && !slimesBefore.contains(e.getUniqueId()) && !Keys.isSummoned(e)).count();
         check(name + " leaves no split slimes", slimes == 0, slimes + " new slimes");

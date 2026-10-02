@@ -92,3 +92,6 @@ Rules:
 - Scripted boss movement goes in `BossBehavior.move()` (every tick); decisions stay in `tick()` (every 5 ticks).
 - Rebuilding Slimefun blocks at the same spot within seconds (self-test) can race the async storage; a single odd
   self-test failure that passes on rerun is that, not gameplay.
+- A self-test killed mid-run (server stopped or timed out) leaves its circles and arenas in the world, and later runs
+  restore to that dirty state - e.g. glyph carpets popping off as "vanilla loot" in every run. Reset the test world
+  (delete `world` and `data-storage/Slimefun/block-storage.db` in that server folder) and rerun.

@@ -448,7 +448,7 @@ bow) is designed as that model's texture, not as an icon.
 | **G2** | Rest of tier 0 (Arcane Pedestal, Brood Egg, Trophy Board, Chiming Tile) + tier 1 (Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil) | **Done** |
 | **G3** | Tier-2 blocks (Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack) | **Done** |
 | **G4** | Tier-3 blocks (Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) | **Done** |
-| G5 | Held 3D models: Occult Codex, Wyrmbreath, Guardian's Gaze, Abyssal Anchor, Dreadlance, Soulfire Censer, Heartwood Aegis (shield model) | - |
+| **G5** | Held 3D models: Occult Codex, Wyrmbreath, Guardian's Gaze, Abyssal Anchor, Dreadlance, Soulfire Censer, Heartwood Aegis (shield model) | **Done** |
 | G6 | Worn armor (`equippable` layers): Abyssal, Hollow | - |
 | G7 | Placed decorations (Moonlit Lily, Witchcap, Everliving Coral, jars, chime, orrery, brazier, obelisk, eyeblossom) | - |
 | **H** | **After the textures, before shipping: move the blocks to Nexo's note-block custom blocks** (see below) | - |
@@ -487,6 +487,29 @@ over them in a ragged edge; `bone_tex()` - grained, pitted bone instead of flat 
 - Servitor Nexus - the heart of light now sits in a ribcage: a vertebral spine at the back, four ribs curving round
   and sloping down toward the front, falling short of meeting; the cage rooted in a mound of glowing sculk.
 - Hollow Glyph - its slab is living sculk now, the rune burning in it.
+
+**G5 held models** (`python tools/art/session_g.py g5`; folders `<key>_held`, wired by build_pack). In the inventory,
+on the ground and in item frames these items keep their 2D icons; in the hand (and on the head) they are 3D - the item
+definition selects on `display_context`, as vanilla's trident does. Glowing parts emit light.
+- Held poses are vanilla's own: models are built upright and laid along the diagonal a sword sprite takes (every
+  element turned 45 degrees about z), so vanilla's `handheld` transforms hold them like a sword; the codex lies in the
+  x-y plane like a flat item and uses `generated`'s (held as a book); the Dreadlance is built in the trident's frame
+  and uses `trident_in_hand`'s transforms, lifted 16 px to stay in bounds (`shifted_display` corrects each translation
+  by the lift turned and scaled as that context turns it). **Not seen in game yet - check each pose.**
+- Occult Codex - Iron's-Spells-style tome: thick leather covers with a tooled border overhanging bone pages, a rounded
+  spine, iron corner guards, an iron clasp across the fore-edge, the ember jewel glowing on the cover.
+- Wyrmbreath / Guardian's Gaze - scepters: pommel, wrapped grip, ringed collar, a cup with three claw prongs (one
+  behind, two in front) hooking in over a glowing orb of dragon fire / a guardian's eye that glances side to side.
+- Abyssal Anchor - held by its ring, the stock across above the hand, runes glowing down the shank, arms spreading at
+  the top with the flukes turned down like a war hammer's head; a spectral chain trails from the ring.
+- Dreadlance - black-violet shaft banded in crimson, violet pommel gem, a bone vamplate flaring over the hand, a silver
+  leaf head with a pulsing crimson fuller.
+- Soulfire Censer - a gold ring and handle, a short chain, a dark caged orb with soul fire behind cyan glass, gold band,
+  cap and finial.
+- Heartwood Aegis - vanilla's shield (plate 12x22x1, handle 2x6x6) rebuilt as a plain model where its entity renderer
+  puts them, so Session F's 64x64 texture (vanilla shield UV layout, animated rune) maps on unchanged; held and blocking
+  models with vanilla's shield / shield_blocking displays, switched on `using_item`. Its inventory look is the model.
+  (The preview can't tell whether the design is mirrored; check the rune's side in game.)
 
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
