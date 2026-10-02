@@ -2908,9 +2908,7 @@ def abyssal_armor():
         for u in range(F[3]):
             c.px(F, u, 8, ab[1]); c.px(F, u, 9, ab[4] if u % 2 else ab[3])
     c.gem(c.face(L, "body", "front"), 3, 9, 4, 10, sg)
-    layers = c.layers
-    layers["wings"] = abyssal_back()
-    return layers
+    return c.layers   # no back piece: capes and elytras stay free
 
 
 def hollow_armor():
@@ -3160,9 +3158,170 @@ def hollow_helm_worn():
     return m
 
 
+# ---------------------------------------------------------------- G6 v5: Hollow as a sculk soul machine
+SOUL = RAMPS["hollowcy"]      # the light-blue soul power
+STEEL = DEEPSLATE             # black and greys, reinforced-deepslate style
+
+
+def hollow_armor():
+    """Hollow, worn - a sculk soul machine, endgame armour: heavy plates of black-grey reinforced steel (clean bevels,
+    like reinforced deepslate), sculk in the vents and gaps between them, soul power in light blue - a soul reactor core
+    in the chest with conduits running to the shoulders, cores in the pauldrons and knees, conduits down the legs - and
+    purple trim. No back piece (capes and elytras stay free)."""
+    sk, vi = RAMPS["sculk"], RAMPS["violet"]
+    c = covered_canvas()
+    H, L = "humanoid", "humanoid_leggings"
+    vent = [sk[0], sk[1], sk[2], sk[2], sk[3], sk[3]]
+    for layer in (H, L):                                   # the dark sculk underlayer everywhere it covers
+        for part in ("body", "arm", "leg"):
+            for face in ("front", "back", "right", "left", "top", "bottom"):
+                F = c.face(layer, part, face)
+                for v in range(F[4]):
+                    for u in range(F[3]):
+                        c.px(F, u, v, vent[1 + (u + v) % 2])
+    # chest: two heavy pectoral plates, the reactor core between, abdominal plates, conduits to the shoulders
+    F = c.face(H, "body", "front")
+    c.plate(F, 0, 0, 2, 4, STEEL, 3); c.plate(F, 5, 0, 7, 4, STEEL, 3)
+    c.rect(F, 2, 1, 5, 5, STEEL[1]); c.px(F, 2, 1, STEEL[4])               # the core's frame
+    c.gem(F, 3, 2, 4, 4, SOUL)                                             # the soul reactor core
+    c.px(F, 1, 0, SOUL[3]); c.px(F, 6, 0, SOUL[3])                         # conduits rising to the shoulders
+    c.px(F, 0, 1, vi[4]); c.px(F, 7, 1, vi[3])                             # purple trim at the collar
+    for v in (6, 8, 10):
+        c.plate(F, 1, v, 6, v + 1, STEEL, 3)
+    c.inlay(F, [(3, 6), (3, 7), (3, 8)], SOUL)                             # a conduit down from the core
+    for u in range(8):
+        c.px(F, u, 11, vi[3] if u % 2 else vi[2])
+    F = c.face(H, "body", "back")
+    c.plate(F, 0, 0, 3, 5, STEEL, 3); c.plate(F, 4, 0, 7, 5, STEEL, 3)
+    c.plate(F, 1, 7, 6, 9, STEEL, 2)
+    c.inlay(F, [(3, 1), (3, 2), (3, 3), (3, 4), (3, 5)], SOUL)              # the spine conduit
+    for u in range(8):
+        c.px(F, u, 11, vi[2])
+    for face in ("right", "left"):
+        F = c.face(H, "body", face)
+        c.plate(F, 0, 0, 3, 4, STEEL, 2); c.plate(F, 0, 6, 3, 9, STEEL, 2)
+    c.plate(c.face(H, "body", "top"), 0, 0, 7, 3, STEEL, 3)
+    # pauldrons: two heavy stacked plates, purple rim, a soul light
+    for face in ("front", "back", "right", "left"):
+        F = c.face(H, "arm", face)
+        c.plate(F, 0, 0, 3, 2, STEEL, 4); c.plate(F, 0, 3, 3, 5, STEEL, 3)
+        c.rect(F, 0, 6, 3, 6, vi[3])
+    for face in ("right", "left"):
+        c.gem(c.face(H, "arm", face), 1, 1, 2, 1, SOUL)
+    F = c.face(H, "arm", "top")
+    c.plate(F, 0, 0, 3, 3, STEEL, 4); c.gem(F, 1, 1, 2, 2, SOUL)
+    # boots: heavy plates, a light-blue sole line, purple toe trim
+    for face in ("front", "back", "right", "left"):
+        F = c.face(H, "leg", face)
+        c.plate(F, 0, 7, 3, 10, STEEL, 3)
+        c.rect(F, 0, 11, 3, 11, SOUL[3] if face == "front" else STEEL[1])
+    c.rect(c.face(H, "leg", "front"), 0, 10, 3, 10, vi[3])
+    c.rect(c.face(H, "leg", "bottom"), 0, 0, 3, 3, STEEL[1])
+    # leggings: belt with a core, thigh plates, a conduit down the outer thigh, knee guards
+    for face in ("front", "back", "right", "left"):
+        F = c.face(L, "body", face)
+        for u in range(F[3]):
+            c.px(F, u, 8, STEEL[4] if u == 0 else STEEL[3]); c.px(F, u, 9, STEEL[2])
+        G = c.face(L, "leg", face)
+        c.plate(G, 0, 0, 3, 3, STEEL, 3); c.plate(G, 0, 7, 3, 8, STEEL, 2)
+    c.gem(c.face(L, "body", "front"), 3, 8, 4, 9, SOUL)
+    for face in ("right", "left"):
+        c.inlay(c.face(L, "leg", face), [(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6)], SOUL)
+    F = c.face(L, "leg", "front")
+    c.plate(F, 0, 4, 3, 6, STEEL, 4); c.px(F, 0, 4, vi[4]); c.px(F, 3, 4, vi[3]); c.gem(F, 1, 5, 2, 5, SOUL)
+    c.plate(c.face(L, "leg", "top"), 0, 0, 3, 3, STEEL, 3)
+    return c.layers
+
+
+def hollow_helm_worn():
+    """The Hollow Crown worn - the head of a sculk soul machine, open-faced (the whole face shows): a helm of black-grey
+    reinforced steel plates with sculk growing over the crown (its soul spots glowing), a brow band with a soul core
+    and a soul conduit across it, cheek guards; and rising from the head two purple horns shaped like the warden's,
+    climbing up and out and hooking over at the tips - conducting soul lightning, which arcs between them and crackles
+    along them (animated, glowing)."""
+    m = Model("hollow_helmet_head")
+    m.part = True
+    vi, sk = RAMPS["violet"], RAMPS["sculk"]
+    t_steel = m.texture("steel", tex_plates(STEEL, band=4, tone=3))
+    t_brow = m.texture("brow", tex_smooth(STEEL, tone=3))
+    crown = sculk(781, frames=6, spots=3)
+    t_sculk = m.texture("sculk", crown)
+    t_souls = m.texture("souls", soul_glow(crown))
+    t_core = m.texture("core", [fill(SOUL, [3, 4, 5, 5, 4, 3][f]) for f in range(6)])
+    t_conduit = m.texture("conduit", tex_glow_lines(SOUL, [[(x, 7) for x in range(1, 15)], [(x, 8) for x in range(1, 15)]]))
+    horn = blank()
+    for y in range(16):
+        for x in range(16):
+            t = 4 if (x < 2 or y < 2) else 2 if (x > 13 or y > 13) else 3
+            horn.putpixel((x, y), vi[t])
+        if y % 5 == 4:
+            for x in range(16):
+                horn.putpixel((x, y), vi[1])          # ridges like the warden's
+    t_horn = m.texture("horn", horn)
+    crackle = []
+    for f in range(6):
+        cimg = blank()
+        rnd = random.Random(791 + f)
+        x = 7
+        for y in range(16):                           # a bolt running up the horn
+            x = max(1, min(14, x + rnd.choice((-1, 0, 1))))
+            if (y + f) % 3:
+                cimg.putpixel((x, y), (255, 255, 255, 255) if y % 4 == f % 4 else SOUL[4])
+        crackle.append(cimg)
+    t_crackle = m.texture("crackle", crackle)
+    bolts = []
+    for f in range(6):
+        b = blank()
+        rnd = random.Random(801 + f)
+        y = 8
+        for x in range(16):
+            y = max(2, min(13, y + rnd.choice((-2, -1, 0, 1, 2))))
+            b.putpixel((x, y), (255, 255, 255, 255)); b.putpixel((x, y + 1), SOUL[4])
+            if rnd.random() < 0.2:
+                b.putpixel((x, max(0, y - 2)), vi[5])
+        bolts.append(b)
+    t_bolt = m.texture("bolt", bolts)
+    T = lambda t, w, h: (t, [0, 0, max(1, min(16, round(w))), max(1, min(16, round(h)))])  # noqa: E731
+    # the helm: crown (sculk-grown), back, sides
+    m.cube((0.6, 14.6, 0.6), (15.4, 16.0, 15.6), T(t_steel, 15, 2), top=T(t_sculk, 15, 15))
+    m.box((0.6, 16.05, 0.6), (15.4, 16.05, 15.6), {"up": (t_souls, [0, 0, 15, 15])}, shade=False, light=15)
+    m.cube((0.6, 1.4, 14.6), (15.4, 14.6, 16.0), T(t_steel, 15, 13))
+    for x0 in (0.0, 14.6):
+        m.cube((x0, 2.0, 0.6), (x0 + 1.4, 14.6, 14.6), T(t_steel, 14, 13))
+    # brow band with a soul conduit and core; cheek guards (the face stays open)
+    m.cube((0.2, 10.6, -0.4), (15.8, 14.6, 1.2), T(t_brow, 16, 4))
+    m.box((0.4, 10.6, -0.45), (15.6, 12.2, -0.45), {"north": (t_conduit, [0, 6, 16, 9])}, shade=False, light=15)
+    m.box((6.8, 11.6, -1.0), (9.2, 13.8, -0.4), {d: (t_core, [0, 0, 2, 2]) for d in FACES_ALL}, light=15)
+    for x0 in (0.2, 14.0):
+        m.cube((x0, 2.0, -0.2), (x0 + 1.8, 10.6, 1.2), T(t_brow, 2, 8))
+    # the warden horns: up and out from the crown, hooking over at the tips
+    segs = ((1.0, 4.8, 15.6, 19.0, 5.0, 10.0), (-0.4, 3.2, 19.0, 22.6, 5.6, 9.6), (-2.2, 1.2, 22.6, 25.8, 6.0, 9.2),
+            (-4.6, -0.8, 25.0, 27.6, 6.4, 8.8), (-5.8, -3.6, 23.0, 25.4, 6.8, 8.4))
+    for side in (0, 1):
+        for (x0, x1, y0, y1, z0, z1) in segs:
+            a, b = (x0, x1) if side == 0 else (16 - x1, 16 - x0)
+            m.cube((a, y0, z0), (b, y1, z1), T(t_horn, b - a, y1 - y0))
+        # lightning crackling along the horn: on each segment's front and back faces
+        for k, (x0, x1, y0, y1, z0, z1) in enumerate(segs[:4]):
+            a, b = (x0, x1) if side == 0 else (16 - x1, 16 - x0)
+            uv = [k * 4 % 16, 0, k * 4 % 16 + 4, 16]
+            m.box((a, y0, z0 - 0.05), (b, y1, z0 - 0.05), {"north": (t_crackle, uv)}, shade=False, light=15)
+            m.box((a, y0, z1 + 0.05), (b, y1, z1 + 0.05), {"south": (t_crackle, uv)}, shade=False, light=15)
+    # soul lightning arcing between the horns
+    m.box((-5.0, 22.0, 7.6), (21.0, 29.0, 7.6), {"north": (t_bolt, [0, 0, 16, 16]), "south": (t_bolt, [16, 0, 0, 16])},
+          shade=False, light=15)
+    m.box((-1.0, 18.0, 6.4), (17.0, 23.0, 6.4), {"north": (t_bolt, [16, 0, 0, 16]), "south": (t_bolt, [0, 0, 16, 16])},
+          shade=False, light=15)
+    m.display = HEAD_DISPLAY
+    return m
+
+
 def save_armor(name, layers):
     d = os.path.join(OUT, "equipment", name)
     os.makedirs(d, exist_ok=True)
+    for old in os.listdir(d):
+        if old.endswith(".png") and old[:-4] not in layers:
+            os.remove(os.path.join(d, old))   # a layer the set no longer has (the old back pieces)
     for layer, img in layers.items():
         img.save(os.path.join(d, f"{layer}.png"))
 

@@ -589,6 +589,18 @@ thrusting forward, a mask closer to the Psi shaman's, better textures; the elect
   carved teeth, eye holes, a stepped crest above the head and a gold boss; blocky bone horns thrusting forward from the
   temples with a gold band; the crystal cluster with lightning, kept.
 
+**G6 v5** (the user, with an in-game screenshot: "the abyssal armor looks really good" - but remove the back section,
+players wear capes and elytras; the Hollow set needs a full rework).
+- No back pieces on either set: the wings layer is gone (it took the cape/elytra slot and hung like one in game).
+- Hollow reworked as a **sculk soul machine** - endgame armour in black, greys, sculk, light blue and purple, clean
+  vanilla-style textures: heavy reinforced-steel plates (`DEEPSLATE`, bevelled) with sculk in the vents and gaps; soul
+  power in light blue - a reactor core in the chest with conduits to the shoulders and down the spine, cores in the
+  pauldrons, belt and knees, conduits down the legs, a glowing sole line; purple trim. Helm: open-faced - black-grey
+  plates, sculk growing over the crown with its soul spots glowing, a brow band with a soul conduit and core, cheek
+  guards, and two purple horns shaped like the warden's, climbing up and out and hooking over at the tips, conducting
+  soul lightning: it crackles along each horn and arcs between them (animated, glowing).
+- The Hollow item icons (Session F: violet steel, aged gold, bone) no longer match the worn set - to redo.
+
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
   its model: real blocks, so they appear and vanish instantly, render at full distance, cost no entities and can't be
