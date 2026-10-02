@@ -494,6 +494,10 @@ inventory shows a block), `tools/art/session_g.py` (per-block models + textures 
   down over calm amber eyes, a gold sun on its forehead that breathes light, ivory ridged horns spiralling down its sides.
   First pass was one flat gold (no value contrast, horns like logs); darker stone and a pale muzzle fixed it. (The first
   design - a snarling crimson face with fangs - read as hostile.)
+  Then recoloured into the Bound tier family (the user: "match the tier, with orange undertones, along with its
+  visual effects"): dark violet slate with ember-brown seams, a silver muzzle with a peach highlight, silver horns,
+  ember-orange eyes and sun. Its particles changed from angry-villager clouds to violet motes warming to orange plus
+  small flames.
 - Servitor Shrine - violet stone framed in silver, an arched niche on each side with its spirit glowing in it, a
   stepped silver roof and finial.
 - Floor Sigil - stone with a violet five-pointed sigil turning on its top.

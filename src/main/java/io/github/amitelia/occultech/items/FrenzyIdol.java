@@ -2,6 +2,7 @@ package io.github.amitelia.occultech.items;
 
 import java.util.List;
 
+import org.bukkit.Color;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -20,6 +21,9 @@ import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
  */
 public class FrenzyIdol extends SlimefunItem {
 
+    /** Bound-tier violet motes that warm to ember orange as they rise (matches the idol's skin). */
+    private static final Particle.DustTransition MOTE = new Particle.DustTransition(Color.fromRGB(150, 110, 255), Color.fromRGB(240, 138, 30), 0.9F);
+
     public FrenzyIdol(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, RitualService rituals,
         ServitorService servitors) {
         super(group, item, type, recipe, output);
@@ -34,7 +38,10 @@ public class FrenzyIdol extends SlimefunItem {
             public void tick(Block block, SlimefunItem sfItem, Config data) {
                 servitors.registerIdol(block.getLocation());
                 rituals.holograms().show(block, null, "&6Frenzy Idol &8| &7shrines within 8 work faster");
-                block.getWorld().spawnParticle(Particle.ANGRY_VILLAGER, block.getLocation().add(0.5, 1.2, 0.5), 1, 0.2, 0.1, 0.2, 0);
+                block.getWorld().spawnParticle(Particle.DUST_COLOR_TRANSITION, block.getLocation().add(0.5, 1.15, 0.5), 2, 0.3, 0.1, 0.3, 0, MOTE);
+                if (Math.random() < 0.25) {
+                    block.getWorld().spawnParticle(Particle.SMALL_FLAME, block.getLocation().add(0.5, 1.05, 0.5), 1, 0.08, 0, 0.08, 0.005);
+                }
             }
         });
 

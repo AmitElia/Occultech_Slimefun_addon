@@ -498,18 +498,19 @@ RAM_FACE = [  # B brow, E eye glow, e eye edge, S muzzle, s muzzle shade, h muzz
 
 
 def frenzy_idol():
-    """The Frenzy Idol (vanilla: chiseled resin bricks): a ram guardian carved in warm terracotta - benevolent but stern.
-    Dark terracotta stone; a long pale-amber ram's muzzle down its face with flared nostrils; a heavy brow bearing down
-    toward the centre over calm almond eyes glowing warm amber; a gold sun on its brow; ivory horns ridged like a ram's,
-    spiralling down each side of its head. Animated: the eyes and the sun breathe light."""
+    """The Frenzy Idol (vanilla: chiseled resin bricks): a ram guardian of the Bound tier - benevolent but stern.
+    Dusk-violet stone warmed toward rose and orange; a long silver ram's muzzle down its face with flared nostrils; a
+    heavy brow bearing down toward the centre over calm almond eyes glowing ember orange; an ember sun on its brow;
+    silver horns ridged like a ram's, spiralling down each side of its head. Animated: the eyes and the sun breathe
+    light."""
     m = Model("frenzy_idol")
-    am, em, gd, bone, wood = RAMPS["amber"], RAMPS["ember"], RAMPS["gold"], RAMPS["bone"], RAMPS["wood"]
-    stone = [wood[0], wood[1], em[1], wood[2], em[2]]   # dark terracotta
+    du, em, st, vi = RAMPS["dusk"], RAMPS["ember"], RAMPS["boundsteel"], RAMPS["violet"]
+    stone = [em[0], du[0], du[1], st[2], du[2]]   # dark violet slate, its seams and shadows ember-brown
     frames = []
     for f in range(4):
         face = bricks(stone, 81, row_h=8, brick_w=16, tones=(2, 3))
-        cols = {"B": wood[0], "E": [em[3], em[4], em[5], em[4]][f], "e": em[2], "S": am[4], "s": am[3], "h": am[5],
-                "N": wood[0], "G": [gd[3], gd[4], gd[5], gd[4]][f], "g": gd[3]}
+        cols = {"B": du[0], "E": [em[3], em[4], em[5], em[4]][f], "e": em[2], "S": st[4], "s": st[3], "h": du[5],
+                "N": du[0], "G": [em[3], em[4], em[5], em[4]][f], "g": em[2]}
         for y, row in enumerate(RAM_FACE):
             for x, c in enumerate(row):
                 if c in cols:
@@ -518,14 +519,14 @@ def frenzy_idol():
     plain = bricks(stone, 83, row_h=8, brick_w=16, tones=(2, 3))
     t_face, t_plain = m.texture("face", frames), m.texture("plain", plain)
     top = rim(slab_top(stone, 85, tone=3), stone[4], stone[0])
-    put(top, circle_pts(7.5, 7.5, 3.2), gd[3])
-    put(top, [(7, 7), (8, 7), (7, 8), (8, 8)], gd[4])
+    put(top, circle_pts(7.5, 7.5, 3.2), em[2])
+    put(top, [(7, 7), (8, 7), (7, 8), (8, 8)], em[4])
     t_top = m.texture("top", top)
     horn = blank()
     for y in range(16):
         for x in range(16):
-            horn.putpixel((x, y), bone[2] if (x + y) % 3 == 0 else bone[3])   # ridged
-    t_horn = m.texture("horn", rim(horn, bone[4], bone[1]))
+            horn.putpixel((x, y), st[2] if (x + y) % 3 == 0 else st[3])   # ridged silver
+    t_horn = m.texture("horn", rim(horn, st[4], st[1]))
     m.box((0, 0, 0), (16, 16, 16), {"north": t_face, "south": t_face, "west": t_plain, "east": t_plain,
                                      "up": t_top, "down": t_plain})
     for side in (-1, 1):   # a spiral on the side of the head: up from the crown, back, down, and forward to the tip
