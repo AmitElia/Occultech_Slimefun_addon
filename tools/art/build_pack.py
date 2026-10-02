@@ -151,7 +151,9 @@ def main():
                 for i, p in enumerate(frames):
                     strip.paste(Image.open(p).convert("RGBA"), (0, 16 * i))
                 files[target] = png_bytes(strip)
-                files[target + ".mcmeta"] = {"animation": {"frametime": FRAMETIME}}
+                custom = os.path.join(gdir, key, f"{name}.mcmeta.json")
+                files[target + ".mcmeta"] = (json.load(open(custom, encoding="utf-8")) if os.path.exists(custom)
+                                             else {"animation": {"frametime": FRAMETIME}})
             else:
                 raise SystemExit(f"{key}: texture {name} has no image")
         if os.path.exists(os.path.join(gdir, key, "part.txt")):

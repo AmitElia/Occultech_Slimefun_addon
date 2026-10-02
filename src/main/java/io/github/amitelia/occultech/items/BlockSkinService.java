@@ -18,6 +18,11 @@ import org.bukkit.entity.ItemDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.event.world.EntitiesUnloadEvent;
 import org.bukkit.inventory.ItemStack;
@@ -41,8 +46,11 @@ import java.util.UUID;
  *
  * <p>The display stands on top of the block (so it is lit by the air above, not darkened inside the block) and its
  * model is shifted down into the block. It is tagged with {@link #SKIN} ({@code "x,y,z|ITEM_ID"}) and saved with the
- * chunk; on load it is tracked again. A skin is removed when its block is really gone - the block's type no longer
- * matches the item's - never merely because Slimefun's data for the chunk isn't loaded yet.
+ * chunk; on load it is tracked again. A skin comes and goes in the same tick as its block: it is put on when the
+ * block is placed (from the placed item, without waiting for Slimefun's storage) and taken off when the block is
+ * broken, burnt or blown up. A sweep every second catches anything else (a block replaced by a plugin): a skin is
+ * removed when its block's type no longer matches the item's - never merely because Slimefun's data for the chunk
+ * isn't loaded yet.
  *
  * <p>A block with a front (a horizontal {@link Directional}, like the Occult Forge's blast furnace) turns its skin so
  * the model's north face is its front. A tile that swaps its vanilla block ({@link StepTile} looks) shows the skin
@@ -67,7 +75,7 @@ public final class BlockSkinService implements Listener {
         for (World world : Bukkit.getWorlds()) {
             world.getEntitiesByClass(ItemDisplay.class).forEach(this::adopt);
         }
-        Bukkit.getScheduler().runTaskTimer(plugin, this::validate, 40L, 40L);
+        Bukkit.getScheduler().runTaskTimer(plugin, this::validate, 20L, 20L);
     }
 
     /** Whether Occultech has a skin for this Slimefun item id. */
@@ -78,7 +86,12 @@ public final class BlockSkinService implements Listener {
     /** Puts the skin on a placed Occultech block if it should have one and doesn't yet. Returns the display, or null. */
     @Nullable
     public ItemDisplay ensure(@Nonnull Block block) {
-        String id = BlockStorage.checkID(block);
+        return ensure(block, BlockStorage.checkID(block));
+    }
+
+    /** As {@link #ensure(Block)}, for a block known to be {@code id} (just placed: Slimefun may not have stored it yet). */
+    @Nullable
+    public ItemDisplay ensure(@Nonnull Block block, @Nullable String id) {
         if (!isSkinned(id)) {
             return null;
         }
@@ -139,11 +152,52 @@ public final class BlockSkinService implements Listener {
         return made;
     }
 
+    /** A player placed a block: skin it now, from the item in hand (the same tick the block appears). */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlace(SlimefunBlockPlaceEvent event) {
+    public void onPlace(BlockPlaceEvent event) {
+        SlimefunItem item = SlimefunItem.getByItem(event.getItemInHand());
+        if (item != null && isSkinned(item.getId())) {
+            ensure(event.getBlockPlaced(), item.getId());
+        }
+    }
+
+    /** Slimefun placed one (a Block Placer, or after a player's placement): same, idempotent. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onSlimefunPlace(SlimefunBlockPlaceEvent event) {
         if (isSkinned(event.getSlimefunItem().getId())) {
-            Block block = event.getBlockPlaced();
-            Bukkit.getScheduler().runTask(plugin, () -> ensure(block));   // after Slimefun has stored the block
+            ensure(event.getBlockPlaced(), event.getSlimefunItem().getId());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBreak(BlockBreakEvent event) {
+        remove(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBurn(BlockBurnEvent event) {
+        remove(event.getBlock());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onExplode(BlockExplodeEvent event) {
+        event.blockList().forEach(this::remove);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onExplode(EntityExplodeEvent event) {
+        event.blockList().forEach(this::remove);
+    }
+
+    /** Takes a block's skin off now (its block is going). */
+    public void remove(@Nonnull Block block) {
+        if (tracked.isEmpty()) {
+            return;
+        }
+        UUID id = tracked.remove(key(block));
+        Entity display = id == null ? null : Bukkit.getEntity(id);
+        if (display != null) {
+            display.remove();
         }
     }
 

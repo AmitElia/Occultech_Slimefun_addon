@@ -23,6 +23,7 @@ class Model:
         self.elements = []
         self.display = None         # optional display transforms (e.g. a tall model's inventory scale)
         self.part = False           # a part shown by the plugin (not a block skin): build_pack skips the skins list
+        self.mcmeta = {}            # texture name -> its .png.mcmeta (default: build_pack's frametime)
 
     def texture(self, name, img_or_frames):
         self.textures[name] = img_or_frames

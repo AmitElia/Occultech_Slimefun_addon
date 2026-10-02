@@ -559,3 +559,18 @@ fittings, sea glow; fire blocks in ember.
   or burns anything; a left-click on its top or water puts it out. Without the pack it keeps vanilla fire + sparks.
 - Self-test: the eye exists and turns along its gaze; the netherrack lights, shows its flames and puts out (292 pass).
 
+**Second review**
+- Skins lagged a second behind their blocks (put on a tick later after looking the block up in Slimefun's storage;
+  taken off by a 2-second sweep). Now they come and go in the same tick: placing skins the block from the item in
+  hand, and breaking, burning or an explosion removes it at once; the sweep (now every second) only catches the rest.
+  Nexo looks instant because its blocks are real block states with retextured models - nothing to spawn - but that
+  needs vanilla block states set aside for the pack, which clashes with Nexo and other packs; displays stay.
+- Chiming Tile - polished stone bricks in a muted lilac grey (`LILAC_STONE`), the same texture on every side and
+  running bond across exactly one block, so floors and walls join seamlessly; two amethyst quavers inlaid, catching
+  the light in turn on top.
+- Tidal Tile - corals pulled ~18% toward grey.
+- Brood Egg - blocky like the sniffer egg it covers (a 14x12 block of silk with a low cap and a strand).
+- Prismatic fire - now vanilla's own fire (`tools/art/vanilla_fire`: fire_0/fire_1 and their timing, from the 1.21.5
+  client; the floor-fire shape from template_fire_floor) recoloured: every pixel keeps vanilla's lightness, its hue
+  runs through the palette rolling up the flame and through time, like the first version's rainbow sparks.
+

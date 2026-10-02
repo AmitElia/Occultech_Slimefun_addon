@@ -309,9 +309,9 @@ def arcane_pedestal():
 
 
 def brood_egg():
-    """The Brood Egg (vanilla: sniffer egg, 14x16x12 - the skin encloses it): a great egg sac of spider silk, wider
-    than its foot, bulging round its middle and rising to a rounded crown above the block; wound with bands of thread,
-    dark eggs pressing against it from inside, crimson veins pulsing through it (animated), a strand at its tip."""
+    """The Brood Egg (vanilla: sniffer egg): blocky like the sniffer egg it covers - a squarish egg sac 14 wide, 12
+    deep and a block tall - of spider silk wound with bands of thread, dark eggs pressing against it from inside,
+    crimson veins pulsing through it (animated); a low cap of silk on top with a strand rising from it."""
     m = Model("brood_egg")
     bone, cr, ink = RAMPS["bone"], RAMPS["crimson"], RAMPS["ink"]
     frames = []
@@ -320,23 +320,25 @@ def brood_egg():
         for y in range(16):
             for x in range(16):
                 band = (x + y) % 5 == 0          # wound thread
-                silk.putpixel((x, y), bone[2] if band else bone[4] if y < 5 else bone[3])
+                silk.putpixel((x, y), bone[2] if band else bone[4] if y < 4 else bone[3])
         for (cx, cy) in ((3, 6), (10, 4), (7, 10), (12, 12)):   # eggs pressing from inside
             put(silk, [(cx, cy), (cx + 1, cy), (cx, cy + 1), (cx + 1, cy + 1)], ink[3])
             put(silk, [(cx, cy)], ink[4])
         glow = cr[[2, 3, 4, 3][f]]
         put(silk, [(1, 2), (2, 3), (2, 4), (3, 6), (4, 7), (5, 8), (5, 9), (6, 11), (13, 2), (13, 3), (12, 5), (12, 6),
                    (13, 8), (14, 9)], glow)
+        rim(silk, bone[5], bone[1])
         frames.append(silk)
     t = m.texture("silk", frames)
-    top = m.texture("top", rim(fill(bone, 4), bone[5], bone[3]))
-    # (y0, y1, half-width): the egg's layers from the foot up; every layer up to y16 encloses the sniffer egg
-    layers = ((0, 2, 7.2), (2, 5, 7.8), (5, 11, 8.3), (11, 14, 7.8), (14, 16, 7.2), (16, 18, 6.0), (18, 20, 4.6),
-              (20, 21.5, 3.0), (21.5, 22.5, 1.6))
-    for i, (y0, y1, r) in enumerate(layers):
-        v0 = (i * 3) % 12
-        m.cube((8 - r, y0, 8 - r), (8 + r, y1, 8 + r), (t, [0, v0, 16, v0 + min(4, y1 - y0)]), top=top, bottom=top)
-    m.box((7.5, 22.5, 7.5), (8.5, 25, 8.5), {d: (t, [0, 0, 1, 3]) for d in ("north", "south", "west", "east")})
+    top = rim(fill(bone, 4), bone[5], bone[2])
+    for y in range(16):
+        for x in range(16):
+            if (x * 2 + y) % 7 == 0:
+                top.putpixel((x, y), bone[3])
+    t_top = m.texture("top", top)
+    m.cube((0.8, 0, 1.8), (15.2, 16, 14.2), t, top=t_top, bottom=t_top)
+    m.cube((3, 16, 4), (13, 17.2, 12), (t, [3, 0, 13, 1]), top=t_top)
+    m.box((7.5, 17.2, 7.5), (8.5, 20, 8.5), {d: (t, [0, 0, 1, 3]) for d in ("north", "south", "west", "east")})
     return m
 
 
@@ -370,26 +372,66 @@ def trophy_board():
     return m
 
 
+LILAC_STONE = hexes("#262130", "#423b4f", "#625a72", "#857c96", "#a69eb6", "#c9c2d6")   # muted, a hint of lilac
+AMETHYST = hexes("#2f2244", "#4e3a72", "#7a5ea6", "#a689d0", "#d2bff0", "#f4ecff")
+NOTE = ["..#.", "..##", "..#.", "###.", "##.."]   # a quaver: stem, flag, head
+
+
+def polished_bricks(stone, seed):
+    """Polished stone bricks that tile: 8x4 bricks in running bond across exactly one block, so neighbours join with
+    no seam. Each brick is a smooth face shaded as a gentle slope (lit top-left, darker bottom-right) with a crisp lit
+    bevel, a faint polish streak and a little speckle; the mortar is a thin dark line."""
+    rnd = random.Random(seed)
+    img = blank()
+    tone = {}
+    for y in range(16):
+        row, off = y // 4, ((y // 4) % 2) * 4
+        for x in range(16):
+            bx, by = (x + off) % 8, y % 4
+            key = (row, ((x + off) // 8) % 2)
+            if key not in tone:
+                tone[key] = rnd.choice((3, 3, 4))
+            if by == 3 or bx == 7:
+                img.putpixel((x, y), stone[0] if (x + y) % 4 else stone[1])
+                continue
+            t = tone[key]
+            if by == 0 or bx == 0:
+                t += 1                       # the lit bevel
+            elif by == 2 and bx >= 4 or bx == 6 and by >= 1:
+                t -= 1                       # falling away to the bottom-right
+            img.putpixel((x, y), stone[max(1, min(len(stone) - 1, t))])
+    for _ in range(8):                       # speckle
+        x, y = rnd.randrange(16), rnd.randrange(16)
+        if img.getpixel((x, y)) not in (stone[0], stone[1]):
+            img.putpixel((x, y), stone[2])
+    for (x, y) in ((2, 1), (3, 1), (13, 9), (14, 9)):   # polish streaks
+        img.putpixel((x, y), stone[4])
+    return img
+
+
 def chiming_tile():
-    """The Chiming Amethyst Tile (vanilla: amethyst block): a pale stone tile set with a star of amethyst inlay that
-    rings with light when the chime sounds (animated shimmer); amethyst veins run down its sides."""
+    """The Chiming Amethyst Tile (vanilla: amethyst block): polished stone bricks in a muted lilac grey, the same on
+    every side so a floor (or wall) of tiles joins seamlessly, two amethyst musical notes inlaid in its bricks; on its
+    top the notes catch the light in turn (animated)."""
     m = Model("chiming_tile")
-    ch, vi, gl = RAMPS["chalk"], RAMPS["violet"], RAMPS["glass"]
-    side = bricks(ch, 51, row_h=8, brick_w=16, tones=(2, 3))
-    put(side, [(3, 2), (3, 3), (4, 4), (4, 5), (5, 6), (11, 9), (12, 10), (12, 11), (13, 12)], vi[3])
-    put(side, [(3, 2), (12, 10)], vi[5])
-    frames = []
-    for f in range(4):
-        top = rim(slab_top(ch, 53, tone=3), ch[4], ch[2])
-        star = [(7, 2), (8, 2), (7, 3), (8, 3), (7, 12), (8, 12), (7, 13), (8, 13), (2, 7), (3, 7), (2, 8), (3, 8),
-                (12, 7), (13, 7), (12, 8), (13, 8), (5, 5), (10, 5), (5, 10), (10, 10), (6, 6), (9, 6), (6, 9), (9, 9)]
-        put(top, star, vi[3])
-        ring = circle_pts(7.5, 7.5, 2.0 + f * 1.6)
-        put(top, ring, gl[5] if f < 3 else gl[4])
-        put(top, [(7, 7), (8, 7), (7, 8), (8, 8)], vi[5])
-        frames.append(top)
+    base = polished_bricks(LILAC_STONE, 51)
+    notes = [(1, 5), (10, 13)]   # inlaid at (x, y) of each note's top-left; inside one brick face each
+
+    def inlay(img, glow):
+        for n, (nx, ny) in enumerate(notes):
+            for y, row in enumerate(NOTE):
+                for x, c in enumerate(row):
+                    if c == "#":
+                        lit = glow == n
+                        img.putpixel(((nx + x) % 16, (ny + y) % 16), AMETHYST[4] if lit else AMETHYST[3] if (x + y) % 3 else AMETHYST[2])
+            if glow == n:
+                put(img, [((nx + 2) % 16, ny % 16)], AMETHYST[5])
+        return img
+
+    side = inlay(base.copy(), -1)
+    frames = [inlay(base.copy(), g) for g in (-1, 0, -1, 1)]
     t_side, t_top = m.texture("side", side), m.texture("top", frames)
-    m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=fill(ch, 2) and t_side)
+    m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=t_side)
     return m
 
 
@@ -1062,6 +1104,18 @@ CORALS = {   # the Tidal Tile's looks: variant 0 is its own block (tube), the re
 CORAL_ORDER = ["tube", "brain", "bubble", "fire", "horn"]
 
 
+def _soften(ramp, amount=0.18):
+    """Pulls a ramp a little toward grey (keeping its brightness)."""
+    out = []
+    for (r, g, b, a) in ramp:
+        lum = 0.3 * r + 0.59 * g + 0.11 * b
+        out.append((round(r + (lum - r) * amount), round(g + (lum - g) * amount), round(b + (lum - b) * amount), a))
+    return out
+
+
+CORALS = {k: _soften(v) for k, v in CORALS.items()}
+
+
 def tidal_tile(variant=0):
     """The Tidal Coral Tile (vanilla: a coral block, cycled by right-click): living coral with a film of sea water
     glinting over its top (animated). Seamless - no frame or edge shading - so a floor of tiles reads as one reef, not
@@ -1135,38 +1189,54 @@ FIRE_PALETTES = {   # the Prismatic Netherrack's palettes (DecorationService ord
 }
 
 
+VANILLA_FIRE = os.path.join(os.path.dirname(__file__), "vanilla_fire")   # fire_0/1.png + mcmeta from the 1.21.5 client
+
+
 def prismatic_fire(palette=0):
-    """Prismatic fire (shown by the plugin over a lit Prismatic Netherrack, in place of vanilla fire): tongues of flame
-    on four crossed planes like vanilla fire's, white-hot at the root, their colour running through the palette's hues
-    as they flicker (16 frames). Glows (light_emission)."""
+    """Prismatic fire (shown by the plugin over a lit Prismatic Netherrack, in place of vanilla fire): vanilla's own
+    fire - its two flame textures and its floor-fire shape (four crossed, leaning planes) - recoloured so its hue runs
+    through the palette, rolling upward and through time like the first version's sparks; the brightness of every
+    pixel is vanilla's, so it flickers exactly like fire. Glows (light_emission). Animated like vanilla (32 frames)."""
+    import colorsys
     name, start, span = FIRE_PALETTES[palette]
     m = Model("prismatic_fire" + ("" if palette == 0 else f"_v{palette}"))
     m.part = True
-    import colorsys
-    frames = []
-    rnd = random.Random(320 + palette)
-    phases = [rnd.random() * 6.28 for _ in range(16)]
-    for f in range(16):
-        img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-        for x in range(16):
-            edge = min(x, 15 - x)
-            h = 6 + edge * 0.9 + 3 * math.sin(phases[x] + f * 0.8) + 2 * math.sin(x * 1.7 + f * 0.4)
-            h = max(3, min(15, h))
-            for k in range(int(h)):
-                y = 15 - k
-                t = k / h
-                hue = (start + span * (((f / 16) + x / 40 + t * 0.15) % 1.0)) % 1.0
-                light = 0.92 if t < 0.15 else 0.75 - 0.25 * t
-                sat = 0.35 if t < 0.15 else 0.9
-                r, g, b = colorsys.hls_to_rgb(hue, light, sat)
-                img.putpixel((x, y), (int(r * 255), int(g * 255), int(b * 255), 255 if t < 0.8 else 170))
-        frames.append(img)
-    t = m.texture("flame", frames)
-    both = lambda a, b_: {a: (t, [0, 0, 16, 16]), b_: (t, [16, 0, 0, 16])}   # noqa: E731
-    m.box((0, 0, 8), (16, 16, 8), both("north", "south"), shade=False, light=15)
-    m.box((8, 0, 0), (8, 16, 16), both("west", "east"), shade=False, light=15)
-    m.box((0, 0, 8), (16, 16, 8), both("north", "south"), shade=False, light=15, rotation=("y", 45))
-    m.box((8, 0, 0), (8, 16, 16), both("west", "east"), shade=False, light=15, rotation=("y", 45))
+    refs = []
+    for t_name in ("fire_0", "fire_1"):
+        meta = json.load(open(os.path.join(VANILLA_FIRE, t_name + ".png.mcmeta")))
+        strip = Image.open(os.path.join(VANILLA_FIRE, t_name + ".png")).convert("RGBA")
+        count = strip.size[1] // 16
+        order = meta["animation"].get("frames", list(range(count)))
+        position = {k: i for i, k in enumerate(order)}   # when each frame plays
+        frames = []
+        for k in range(count):
+            img = strip.crop((0, k * 16, 16, k * 16 + 16))
+            out = blank()
+            for y in range(16):
+                for x in range(16):
+                    r, g, b, a = img.getpixel((x, y))
+                    if a == 0:
+                        continue
+                    h, l, sat = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+                    phase = (position.get(k, k) / count + (15 - y) / 40 + x / 120) % 1.0
+                    if span >= 1.0:
+                        hue = phase                                  # rainbow: round the whole wheel
+                    else:
+                        hue = start + span * (1 - abs(2 * phase - 1))  # back and forth within the palette
+                    rr, gg, bb = colorsys.hls_to_rgb(hue % 1.0, l, min(1.0, sat * 0.95))
+                    out.putpixel((x, y), (round(rr * 255), round(gg * 255), round(bb * 255), a))
+            frames.append(out)
+        refs.append(m.texture(t_name.replace("fire", "flame"), frames))
+        m.mcmeta[t_name.replace("fire", "flame")] = meta   # vanilla's timing
+    f0, f1 = refs
+    # vanilla's floor fire (template_fire_floor), each plane drawn from both sides so the item display shows it all round
+    for (frm, to, axis, angle, faces, ref) in (
+            ((0, 0, 8.8), (16, 22.4, 8.8), "x", -22.5, ("south", "north"), f0),
+            ((0, 0, 7.2), (16, 22.4, 7.2), "x", 22.5, ("north", "south"), f1),
+            ((8.8, 0, 0), (8.8, 22.4, 16), "z", -22.5, ("west", "east"), f0),
+            ((7.2, 0, 0), (7.2, 22.4, 16), "z", 22.5, ("east", "west"), f1)):
+        el = m.box(frm, to, {faces[0]: (ref, [0, 0, 16, 16]), faces[1]: (ref, [16, 0, 0, 16])}, shade=False, light=15)
+        el["rotation"] = {"origin": [8, 8, 8], "axis": axis, "angle": angle, "rescale": True}
     return m
 
 
@@ -1209,6 +1279,9 @@ def save(model):
             tex.save(os.path.join(d, f"{name}.png"))
     with open(os.path.join(d, "model.json"), "w", encoding="utf-8") as f:
         json.dump(model.to_json(), f, indent=2)
+    for name, meta in model.mcmeta.items():
+        with open(os.path.join(d, f"{name}.mcmeta.json"), "w", encoding="utf-8") as f:
+            json.dump(meta, f)
     if model.part:
         open(os.path.join(d, "part.txt"), "w", encoding="utf-8").write("shown by the plugin, not a block skin")
 

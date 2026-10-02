@@ -331,6 +331,8 @@ final class SelfTest {
         org.joml.Quaternionf east = new org.joml.Quaternionf().rotationY((float) Math.PI / 2);
         check("an Occult Forge's skin turns to its front", turn != null && Math.abs(turn.y - east.y) < 1e-3 && Math.abs(turn.w - east.w) < 1e-3,
             String.valueOf(turn));
+        plugin.skins().remove(forge);   // what breaking, burning or an explosion does, in the same tick
+        check("a skin comes off in the same tick its block breaks", forgeSkin != null && !forgeSkin.isValid(), "still there");
         for (Block block : List.of(tile, forge)) {
             BlockStorage.clearBlockInfo(block);
             block.setType(Material.AIR);

@@ -1,26 +1,81 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "flame": "occultech:block/prismatic_fire_v2_flame",
-    "particle": "occultech:block/prismatic_fire_v2_flame"
+    "flame_0": "occultech:block/prismatic_fire_v2_flame_0",
+    "flame_1": "occultech:block/prismatic_fire_v2_flame_1",
+    "particle": "occultech:block/prismatic_fire_v2_flame_0"
   },
   "elements": [
     {
       "from": [
         0,
         0,
-        8
+        8.8
       ],
       "to": [
         16,
-        16,
-        8
+        22.4,
+        8.8
       ],
       "shade": false,
       "light_emission": 15,
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "x",
+        "angle": -22.5,
+        "rescale": true
+      },
+      "faces": {
+        "south": {
+          "texture": "#flame_0",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#flame_0",
+          "uv": [
+            16,
+            0,
+            0,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        7.2
+      ],
+      "to": [
+        16,
+        22.4,
+        7.2
+      ],
+      "shade": false,
+      "light_emission": 15,
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "x",
+        "angle": 22.5,
+        "rescale": true
+      },
       "faces": {
         "north": {
-          "texture": "#flame",
+          "texture": "#flame_1",
           "uv": [
             0,
             0,
@@ -29,7 +84,7 @@
           ]
         },
         "south": {
-          "texture": "#flame",
+          "texture": "#flame_1",
           "uv": [
             16,
             0,
@@ -41,20 +96,30 @@
     },
     {
       "from": [
-        8,
+        8.8,
         0,
         0
       ],
       "to": [
-        8,
-        16,
+        8.8,
+        22.4,
         16
       ],
       "shade": false,
       "light_emission": 15,
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5,
+        "rescale": true
+      },
       "faces": {
         "west": {
-          "texture": "#flame",
+          "texture": "#flame_0",
           "uv": [
             0,
             0,
@@ -63,7 +128,7 @@
           ]
         },
         "east": {
-          "texture": "#flame",
+          "texture": "#flame_0",
           "uv": [
             16,
             0,
@@ -75,72 +140,30 @@
     },
     {
       "from": [
-        0,
-        0,
-        8
-      ],
-      "to": [
-        16,
-        16,
-        8
-      ],
-      "shade": false,
-      "light_emission": 15,
-      "rotation": {
-        "origin": [
-          8.0,
-          8.0,
-          8.0
-        ],
-        "axis": "y",
-        "angle": 45
-      },
-      "faces": {
-        "north": {
-          "texture": "#flame",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "south": {
-          "texture": "#flame",
-          "uv": [
-            16,
-            0,
-            0,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        8,
+        7.2,
         0,
         0
       ],
       "to": [
-        8,
-        16,
+        7.2,
+        22.4,
         16
       ],
       "shade": false,
       "light_emission": 15,
       "rotation": {
         "origin": [
-          8.0,
-          8.0,
-          8.0
+          8,
+          8,
+          8
         ],
-        "axis": "y",
-        "angle": 45
+        "axis": "z",
+        "angle": 22.5,
+        "rescale": true
       },
       "faces": {
-        "west": {
-          "texture": "#flame",
+        "east": {
+          "texture": "#flame_1",
           "uv": [
             0,
             0,
@@ -148,8 +171,8 @@
             16
           ]
         },
-        "east": {
-          "texture": "#flame",
+        "west": {
+          "texture": "#flame_1",
           "uv": [
             16,
             0,
