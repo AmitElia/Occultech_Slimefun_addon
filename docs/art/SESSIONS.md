@@ -535,32 +535,34 @@ definition selects on `display_context`, as vanilla's trident does. Glowing part
     rivet) and Bone Scepter (stacked vertebrae with spurs, a skull with soul-green burning sockets looking forward,
     jaw hanging open, a wisp above).
 
-**G6 worn armor - redone in 3D** (the user on v1: "very flat and unimpressive... hide your face, look like a reskin of
-your player. It should be 3D, much more detailed; you should see the player's face through the helmets"; Abyssal as a
-sea monster with the wearer's face as its mouth, a big fin ridge, scales; Hollow half futuristic, half magical -
-crystals, lightning, 3D details, big Loki horns). `python tools/art/session_g.py g6`.
-- **Helmets are 3D models.** A head item whose equippable has *no* asset isn't drawn as armor - the game draws its
-  item model on the head (display context "head"), as it draws a carved pumpkin. So the helmets' equippable has no
-  asset (`ContentRegistrar.wornLook`) and the item definition shows `<key>_head` in the "head" context, the 2D icon
-  everywhere else. Item models can glow and animate, so the helms do. The head spans model units 1.6..14.4 (1 head
-  pixel = 1.6 units), its face on the north side - left open.
-- **Chestplates carry 3D back pieces** on the equipment asset's `wings` layer: the elytra's two wings (a 64x32
-  texture in the elytra layout, `wings_tex`), drawn on the back and swaying with the body.
-- Bodies, legs and boots stay equipment textures (`humanoid`, `humanoid_leggings`; no glow or animation there).
-- Abyssal Helm - a sea monster's head with the face in its open mouth: a scaled skull, an upper jaw jutting over the
-  brow with fangs hanging from it, a lower jaw under the chin with fangs rising, bulging glowing eyes under heavy brows
-  on the snout, glowing gill slits on the cheeks (pulsing), swept-back side fins and a great spined fin ridge from the
-  snout over the crown and down the nape. Body: scales, a pale banded belly, glowing spots down the flanks, a spiny
-  ridge down the spine, fin edges on the forearms, webbed boots with bone claws; back fins (wings layer): two tall
-  spined fins with glowing rims.
-- Hollow Crown - open-faced blackened violet steel with glowing circuit traces pulsing along its panels, a gold brow
-  band with a cyan visor line, a glinting cyan crystal on the forehead with a spike above, great gold horns sweeping
-  out, up and back like Loki's (smooth: interpolated segments; v1's read as a chain of beads), a lightning arc
-  crackling between the horn tips (animated), violet crystal shards behind. Body: blackened plates with panel seams,
-  a cyan crystal heart in a gold frame, a lightning bolt down the back, gold pauldrons with violet crystals, circuit
-  traces down the sides (v1 had them everywhere - noise), knee crystals, gold-toed sabatons; back vanes (wings layer):
-  cyan and violet crystal shards in a gold mount.
-- Not seen in game yet: the helm sizes on the head, and how the wings-layer pieces sit on the back.
+**G6 worn armor - v3** (`python tools/art/session_g.py g6`). v1 was flat painted skins; v2 added 3D helms but its
+textures were noise and checker patterns. The user's verdict on v2: "you forgot all lessons learned in Sessions A and
+B" - with references (a clean-plated sea armor with layered fins, a crystal-spiked armor, a shaman set with a
+carved mask, crystals and cloth).
+- **Research:** those armors are mod models (GeckoLib/Blockbench geometry on every limb). A vanilla resource pack can
+  add geometry in exactly two places: the helmet (any 3D item model, drawn on the head when its equippable has no
+  asset) and the back (the equipment asset's `wings` layer = the elytra's two wings). Shoulder plates and the like
+  need a client mod. So the sculpting goes into the helms and back pieces; the rest is texture, done properly.
+- **The style, re-applied:** bold plate shapes, each a bevel lit from the top-left (`ArmorCanvas.plate`), dark gaps
+  in the material's own tones, real value contrast (bright plates over a dark underlayer - v3a had plates and scales
+  in the same values and nothing read), gems with hard facets (`gem`), glow only as inlay (`inlay`) - dark vessel,
+  living light. No noise anywhere. Fins are clean silhouettes (`tex_fin_shape` on two-sided planes, `fin_plane`):
+  three spines, smooth concave membrane, a glowing rim (the formula versions came out as specks - Session B's lesson:
+  art-direct the shape). A mannequin preview (`mannequin`) shows the textures on a 3D body for review.
+- **Abyssal** - a sea-monster mask helm: sculpted teal helm, the face behind a mask with a T visor (the wearer's eyes
+  and mouth show through), fangs lining the mouth slit, a heavy brow with two small glowing eyes, glowing gill marks,
+  three layered fan fins sweeping back from each temple, cheek fins, a tall dorsal crest from brow over the crown.
+  Body: bright bevelled plates over dark scales - pectorals, narrowing abdominal bands, a sea-glow heart gem, a spine
+  of stacked plates, layered pauldrons and bracers, belt and tassets, thigh plates and knee cops with sea-glow studs,
+  plated boots with a glowing toe line and heel fin; back fins (wings layer).
+- **Hollow** - a sculk shaman: a hood of dark violet cloth with a gold circlet, a carved old-bone mask (brow, nose
+  ridge, cheekbones, carved teeth, eye holes the wearer's eyes show through) with glowing cyan markings and a faceted
+  crimson gem; gold-ringed bone horns sweeping up and back; a cluster of faceted cyan crystals on the crown with
+  lightning crackling between them and the horn tips; a rune-bead tassel behind. Body: dark violet robes with glowing
+  cyan runes, bone plaques at the collar round a cut cyan crystal heart in gold, a bone spine down the back, bone
+  pauldrons with crystal facets, wrapped sleeves and bone bracers, a gold sash with a crimson gem, a skirt of
+  rune-marked panels with a gold hem, wrapped boots with bone toe caps; crystal vanes (wings layer).
+- Not seen in game yet.
 
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing

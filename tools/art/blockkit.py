@@ -120,12 +120,12 @@ def render_iso(model, frame=0, s=6, size=None, bg=(34, 32, 40, 255), lift=0.0):
                 quad = lambda a, b: (x0 + a * (x1 - x0), y1 - b * (y1 - y0), z1)  # noqa: E731
             else:
                 quad = lambda a, b: (x1, y1 - b * (y1 - y0), z1 - a * (z1 - z0))  # noqa: E731
-            k = tex.size[0] / 16   # texels per uv unit (a 64 px texture has 4)
-            nu, nv = max(1, round(abs(u1 - u0) * k)), max(1, round(abs(v1 - v0) * k))
+            ku, kv = tex.size[0] / 16, tex.size[1] / 16   # texels per uv unit (a 64 px texture has 4)
+            nu, nv = max(1, round(abs(u1 - u0) * ku)), max(1, round(abs(v1 - v0) * kv))
             for j in range(nv):
                 for i in range(nu):
-                    tu = int(min(u0, u1) * k + (i if u1 >= u0 else nu - 1 - i))
-                    tv = int(min(v0, v1) * k + (j if v1 >= v0 else nv - 1 - j))
+                    tu = int(min(u0, u1) * ku + (i if u1 >= u0 else nu - 1 - i))
+                    tv = int(min(v0, v1) * kv + (j if v1 >= v0 else nv - 1 - j))
                     c = tex.getpixel((min(tex.size[0] - 1, tu), min(tex.size[1] - 1, tv)))
                     if c[3] < 8:
                         continue
