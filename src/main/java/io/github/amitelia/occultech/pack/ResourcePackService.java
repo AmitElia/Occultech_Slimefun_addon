@@ -72,6 +72,11 @@ public final class ResourcePackService implements Listener {
     @Nullable private HttpServer server;
     @Nullable private URI url;
     private boolean required;
+    private int port;
+    /** The port players reach (a tunnel or router may map a different public port to {@link #port}). */
+    private int publicPort;
+    /** The configured public host, or null: then each player gets the address they themselves connected with. */
+    @Nullable private String fixedHost;
     private String prompt = "";
 
     public ResourcePackService(@Nonnull JavaPlugin plugin) {
@@ -137,6 +142,10 @@ public final class ResourcePackService implements Listener {
         String wanted = cfg == null ? "auto" : cfg.getString("mode", "auto").toLowerCase(Locale.ROOT);
         boolean nexo = Bukkit.getPluginManager().getPlugin("Nexo") != null;
         mode = wanted.equals("auto") ? (nexo ? "nexo" : "self-host") : wanted;
+        String external = cfg == null ? "" : cfg.getString("external-url", "");
+        if (external != null && !external.isBlank() && !mode.equals("off") && !mode.equals("nexo")) {
+            mode = "external";
+        }
         try {
             Path copy = plugin.getDataFolder().toPath().resolve(PACK);
             Files.createDirectories(copy.getParent());
@@ -147,6 +156,7 @@ public final class ResourcePackService implements Listener {
         switch (mode) {
             case "nexo" -> handToNexo();
             case "self-host" -> selfHost(cfg);
+            case "external" -> external(cfg, external.trim());
             case "off" -> log.info("Resource pack: delivery is off (" + modelled.size() + " item models are still set).");
             default -> log.warning("Resource pack: unknown mode '" + mode + "' (auto, nexo, self-host or off).");
         }
@@ -164,11 +174,27 @@ public final class ResourcePackService implements Listener {
         }
     }
 
+    /** The pack is hosted elsewhere (any web host); we only send players its address and our hash of it. */
+    private void external(@Nullable ConfigurationSection cfg, String address) {
+        required = cfg != null && cfg.getBoolean("required", false);
+        prompt = cfg == null ? "" : cfg.getString("prompt", "");
+        url = URI.create(address);
+        Bukkit.getPluginManager().registerEvents(this, plugin);
+        log.info("Resource pack: players download it from " + url + " (sha1 " + sha1 + "). Upload exactly the file "
+            + plugin.getDataFolder().toPath().resolve(PACK) + " there after every Occultech update.");
+        Bukkit.getOnlinePlayers().forEach(this::send);
+    }
+
     private void selfHost(@Nullable ConfigurationSection cfg) {
-        int port = cfg == null ? 8164 : cfg.getInt("port", 8164);
+        port = cfg == null ? 8164 : cfg.getInt("port", 8164);
+        publicPort = cfg == null ? 0 : cfg.getInt("public-port", 0);
+        if (publicPort <= 0) {
+            publicPort = port;
+        }
         String host = cfg == null ? "" : cfg.getString("public-host", "");
-        if (host == null || host.isBlank()) {
-            host = Bukkit.getIp().isBlank() ? "localhost" : Bukkit.getIp();
+        fixedHost = host == null || host.isBlank() ? null : host.trim();
+        if (fixedHost == null) {
+            host = Bukkit.getIp().isBlank() ? "localhost" : Bukkit.getIp();   // only for the log and the self-test
         }
         required = cfg != null && cfg.getBoolean("required", false);
         prompt = cfg == null ? "" : cfg.getString("prompt", "");
@@ -197,9 +223,13 @@ public final class ResourcePackService implements Listener {
             server = null;
             return;
         }
-        url = URI.create("http://" + host + ":" + port + "/" + PACK + "?" + sha1.substring(0, 12));
+        url = URI.create("http://" + (fixedHost != null ? fixedHost : host) + ":" + publicPort + "/" + PACK + "?" + sha1.substring(0, 12));
         Bukkit.getPluginManager().registerEvents(this, plugin);
-        log.info("Resource pack: serving " + modelled.size() + " item models at " + url + (required ? " (required)" : ""));
+        log.info("Resource pack: serving " + modelled.size() + " item models on port " + port + (required ? " (required)" : "")
+            + (fixedHost != null ? " at " + url
+               : " - each player downloads it from the address they connected with (set resource-pack.public-host to fix one)")
+            + (publicPort != port ? ", reached from outside on port " + publicPort : "")
+            + ". Players outside this machine need that port reachable (firewall, router forward or a tunnel) like the game port.");
         Bukkit.getOnlinePlayers().forEach(this::send);
     }
 
@@ -214,12 +244,33 @@ public final class ResourcePackService implements Listener {
             return;
         }
         ResourcePackRequest request = ResourcePackRequest.resourcePackRequest()
-            .packs(ResourcePackInfo.resourcePackInfo(PACK_ID, url, sha1))
+            .packs(ResourcePackInfo.resourcePackInfo(PACK_ID, urlFor(player), sha1))
             .replace(false)
             .required(required)
             .prompt(prompt == null || prompt.isBlank() ? null : Component.text(prompt, NamedTextColor.LIGHT_PURPLE))
             .build();
         player.sendResourcePacks(request);
+    }
+
+    /**
+     * The pack's address as this player can reach it: the configured public host, or else the host name the player
+     * typed to join (the server's address as seen from their side - "localhost" would only ever work on this machine).
+     */
+    public URI urlFor(@Nonnull Player player) {
+        if ("external".equals(mode)) {
+            return url;
+        }
+        String host = fixedHost;
+        if (host == null && player.getVirtualHost() != null) {
+            host = player.getVirtualHost().getHostString();
+        }
+        if (host == null || host.isBlank()) {
+            return url;
+        }
+        if (host.contains(":") && !host.startsWith("[")) {
+            host = "[" + host + "]";   // an IPv6 literal
+        }
+        return URI.create("http://" + host + ":" + publicPort + "/" + PACK + "?" + sha1.substring(0, 12));
     }
 
     public void shutdown() {

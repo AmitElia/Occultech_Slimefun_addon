@@ -32,10 +32,18 @@ resource-pack:
   item-models: true
   # auto: hand the pack to Nexo if it is installed, otherwise serve it ourselves. nexo | self-host | off
   mode: auto
-  # self-host only: the port of the built-in web server, and the address players reach it at (empty = server-ip,
-  # or localhost). Behind a proxy or a host with one open port, put the pack on a web host and use mode: off.
+  # self-host only: the port of the built-in web server, and the address players download it from. Leave public-host
+  # empty to use the address each player connected with (works for LAN and internet players alike). The port must be
+  # reachable like the game port: allowed in the firewall and forwarded on the router. Behind a proxy or a host with
+  # one open port, put the pack on a web host and use mode: off.
   port: 8164
   public-host: ""
+  # The port players reach, if it differs from `port` - a playit.gg / ngrok tunnel or a router mapping usually gives
+  # a different public port for the tunnel to local port 8164. 0 = same as `port`.
+  public-port: 0
+  # Or host the pack anywhere on the web (no extra port or tunnel needed): put the direct download link here and upload
+  # plugins/Occultech/occultech-pack.zip there after each Occultech update. The server still checks its hash.
+  external-url: ""
   # self-host only: kick players who decline the pack (they would see missing models otherwise)
   required: false
   prompt: "Occultech's textures: rituals, relics and bosses look as they should."

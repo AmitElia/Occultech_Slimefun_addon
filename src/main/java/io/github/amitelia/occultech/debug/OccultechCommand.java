@@ -127,7 +127,7 @@ public final class OccultechCommand implements TabExecutor {
                 + pack.packSize() / 1024 + " KiB, sha1 " + pack.sha1() + (pack.url() != null ? ", " + pack.url() : ""));
             if (sender instanceof org.bukkit.entity.Player player) {
                 pack.send(player);
-                sender.sendMessage("Sent it to you again.");
+                sender.sendMessage("Sent it to you again" + (pack.url() != null ? " from " + pack.urlFor(player) : "") + ".");
             }
             return true;
         }
