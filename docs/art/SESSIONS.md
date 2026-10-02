@@ -11,7 +11,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **D** | Tier-1 item icons (23; the 6 placed blocks move to G) | **Done** - fixed after review |
 | **E** | Tier-2 item icons (26: materials, drops, weapons, armor, decor objects) | **Done** - fixed after review |
 | **F** | Tier-3 item icons (25 + bow states + the Aegis shield texture; Hollow Sigil from A) | **Done** - reworked after review |
-| **G** | Blocks, held models, worn armor, placed decorations - split into G1-G7 (see *Session G*) | **G1 done** - awaiting review |
+| **G** | Blocks, held models, worn armor, placed decorations - split into G1-G7 (see *Session G*) | **G1-G2 done** |
 | H | Menu backgrounds | - |
 | I | Effect sprites (motes, embers, shards, shockwave rings, beams) | - |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
@@ -445,7 +445,7 @@ bow) is designed as that model's texture, not as an icon.
 | Part | Content | Status |
 |---|---|---|
 | **G1** | The block-skin technique (block-model tools, 3D preview renderer, skin service in the plugin) + Initiate's Altar, Offering Bowl, Chalk Glyph (4 variants), Arcane Altar | **Done** |
-| G2 | Rest of tier 0 (Arcane Pedestal, Brood Egg, Trophy Board, Chiming Tile) + tier 1 (Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil) | next |
+| **G2** | Rest of tier 0 (Arcane Pedestal, Brood Egg, Trophy Board, Chiming Tile) + tier 1 (Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil) | **Done** |
 | G3 | Tier-2 blocks (Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack) | - |
 | G4 | Tier-3 blocks (Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) | - |
 | G5 | Held 3D models: Occult Codex, Wyrmbreath, Guardian's Gaze, Abyssal Anchor, Dreadlance, Soulfire Censer, Heartwood Aegis (shield model) | - |
@@ -476,4 +476,24 @@ inventory shows a block), `tools/art/session_g.py` (per-block models + textures 
 - Chalk Glyph - a thin dark-slate tile over the carpet with a chalk rune; 4 variants picked by position.
 - Arcane Altar - gold-banded dark stone, ember arcane eyes on the sides, a turning star on top (full cube, so the
   enchanting table's floating book is hidden).
+
+**G2 blocks** (`python tools/art/session_g.py g2`)
+- Arcane Pedestal - a deepslate column (enclosing the wall's post) with a gold-banded base and capital, an ember eye
+  glowing on top where the offering rests.
+- Brood Egg - a rounded sac of wound spider silk built up in layers (enclosing the sniffer egg), dark eggs pressing from
+  inside, crimson veins pulsing, a strand from its top. v1 read as a speckled block of sand.
+- Trophy Board - a display pedestal: dark wood panels in gilded frames, a gold crest, a crimson velvet top for the
+  trophies. v1 (planks + iron frame) read as a wooden crate.
+- Chiming Tile - pale stone with an amethyst star inlay, a ring of light spreading from it (animated).
+- Bound Glyph - violet chalk runes on slate, a spirit glint; 4 variants.
+- Bound Altar - violet masonry gripped by silver corner clamps, a pulsing band of spirit light, the Bound sigil on top
+  and the spirit rising from it as a glowing orb.
+- Phantom Roost - a lattice of bone ribs with dusk membrane between them, a dark nest and crossed perch bones on top.
+- Frenzy Idol - crimson stone carved into a snarling face (recess, brows, glowing eyes, fanged maw that pulses), bone
+  horns. v1's face was too small (a red brick block).
+- Servitor Shrine - violet stone framed in silver, an arched niche on each side with its spirit glowing in it, a
+  stepped silver roof and finial.
+- Floor Sigil - stone with a violet five-pointed sigil turning on its top.
+- The self-test's "items without art" check now picks any item the pack has no model for (it broke each time a block
+  got art).
 

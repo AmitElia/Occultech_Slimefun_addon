@@ -1,0 +1,218 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "shaft": "occultech:block/arcane_pedestal_shaft",
+    "band": "occultech:block/arcane_pedestal_band",
+    "top": "occultech:block/arcane_pedestal_top",
+    "particle": "occultech:block/arcane_pedestal_shaft"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        0,
+        2
+      ],
+      "to": [
+        14,
+        3,
+        14
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#band",
+          "uv": [
+            0,
+            0,
+            12,
+            3
+          ]
+        },
+        "south": {
+          "texture": "#band",
+          "uv": [
+            0,
+            0,
+            12,
+            3
+          ]
+        },
+        "west": {
+          "texture": "#band",
+          "uv": [
+            0,
+            0,
+            12,
+            3
+          ]
+        },
+        "east": {
+          "texture": "#band",
+          "uv": [
+            0,
+            0,
+            12,
+            3
+          ]
+        },
+        "up": {
+          "texture": "#band",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#band",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3.5,
+        3,
+        3.5
+      ],
+      "to": [
+        12.5,
+        13,
+        12.5
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#shaft",
+          "uv": [
+            0,
+            3,
+            9,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#shaft",
+          "uv": [
+            0,
+            3,
+            9,
+            13
+          ]
+        },
+        "west": {
+          "texture": "#shaft",
+          "uv": [
+            0,
+            3,
+            9,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#shaft",
+          "uv": [
+            0,
+            3,
+            9,
+            13
+          ]
+        },
+        "up": {
+          "texture": "#shaft",
+          "uv": [
+            0,
+            3,
+            9,
+            13
+          ]
+        },
+        "down": {
+          "texture": "#shaft",
+          "uv": [
+            0,
+            3,
+            9,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        13,
+        2
+      ],
+      "to": [
+        14,
+        16,
+        14
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#band",
+          "uv": [
+            0,
+            13,
+            12,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#band",
+          "uv": [
+            0,
+            13,
+            12,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#band",
+          "uv": [
+            0,
+            13,
+            12,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#band",
+          "uv": [
+            0,
+            13,
+            12,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#top",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#band",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -232,8 +232,12 @@ final class SelfTest {
         ItemStack silver = SlimefunItem.getById(ItemKeys.slimefunId("WARDED_SILVER")).getItem();
         var model = silver.getItemMeta() == null ? null : silver.getItemMeta().getItemModel();
         check("items with art get their occultech model", model != null && model.toString().equals("occultech:warded_silver"), String.valueOf(model));
-        ItemStack altar = SlimefunItem.getById(ItemKeys.slimefunId("ARCANE_PEDESTAL")).getItem();   // (no art yet: Session G2)
-        check("items without art keep their vanilla look", altar.getItemMeta() == null || !altar.getItemMeta().hasItemModel(), "has a model");
+        // any registered item the pack has no model for (none left once all art is done: then there is nothing to check)
+        var bare = plugin.catalog().items().stream().filter(i -> i.tier() <= ContentRegistrar.IMPLEMENTED_TIER)
+            .filter(i -> pack.modelFor(i.id()) == null).map(i -> SlimefunItem.getById(ItemKeys.slimefunId(i.id())))
+            .filter(java.util.Objects::nonNull).findFirst();
+        check("items without art keep their vanilla look", bare.map(i -> i.getItem().getItemMeta() == null
+            || !i.getItem().getItemMeta().hasItemModel()).orElse(true), bare.map(SlimefunItem::getId).orElse("-") + " has a model");
         long modelled = plugin.catalog().items().stream().filter(i -> i.tier() <= ContentRegistrar.IMPLEMENTED_TIER)
             .map(i -> SlimefunItem.getById(ItemKeys.slimefunId(i.id()))).filter(java.util.Objects::nonNull)
             .filter(i -> i.getItem().getItemMeta() != null && i.getItem().getItemMeta().hasItemModel()).count();
