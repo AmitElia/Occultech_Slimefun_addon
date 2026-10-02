@@ -76,11 +76,25 @@ public final class HeldWeapons implements Listener {
         return HELD.contains(id);
     }
 
+    /**
+     * Where a held staff's tip (or a censer's orb) is: in front of the shoulder of the hand holding it, the arm raised
+     * forward, {@code reach} blocks along the look - so flames and beams come from the staff, not the player's face.
+     */
+    static Location staffTip(Player player, double reach) {
+        Location eye = player.getEyeLocation();
+        Vector look = eye.getDirection();
+        Vector right = look.clone().crossProduct(new Vector(0, 1, 0));
+        right = right.lengthSquared() < 1.0E-6 ? new Vector(1, 0, 0) : right.normalize();
+        boolean rightHand = (player.getMainHand() == org.bukkit.inventory.MainHand.RIGHT)
+            == (player.getActiveItemHand() != org.bukkit.inventory.EquipmentSlot.OFF_HAND);
+        return eye.add(0, -0.35, 0).add(right.multiply(rightHand ? 0.36 : -0.36)).add(look.multiply(reach));
+    }
+
     /** Lets the item be "used" by holding right-click, silently and (practically) forever. */
     public static void makeHoldable(ItemStack item) {
         item.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable()
             .consumeSeconds(3600)
-            .animation(ItemUseAnimation.BOW)
+            .animation(ItemUseAnimation.SPEAR)   // one arm raised, pointing the staff ahead (the pack's "in use" model)
             .hasConsumeParticles(false)
             .sound(Key.key("minecraft", "intentionally_empty"))
             .build());
@@ -155,7 +169,8 @@ public final class HeldWeapons implements Listener {
         Location eye = player.getEyeLocation();
         Vector look = eye.getDirection();
         ThreadLocalRandom random = ThreadLocalRandom.current();
-        Location mouth = eye.clone().add(look.clone().multiply(0.8)).add(0, -0.25, 0);
+        // from Wyrmbreath's orb at the staff's tip, or from the censer hanging under the raised hand
+        Location mouth = censer ? staffTip(player, 0.8).add(0, -0.5, 0) : staffTip(player, 1.3);
         for (int i = 0; i < 7; i++) {
             Vector spread = look.clone().add(new Vector(random.nextGaussian(), random.nextGaussian(), random.nextGaussian()).multiply(0.13)).normalize();
             double speed = (0.35 + random.nextDouble() * 0.25) * (censer ? 1.4 : 1);
@@ -209,7 +224,7 @@ public final class HeldWeapons implements Listener {
         if (target == null) {
             LivingEntity found = aimedAt(player, eye);
             if (found == null) {
-                drawBeam(eye.clone().add(0, -0.2, 0), beamEnd(eye));
+                drawBeam(staffTip(player, 1.3), beamEnd(eye));
                 return;
             }
             target = found;
@@ -219,7 +234,7 @@ public final class HeldWeapons implements Listener {
 
         int held = gazeTicks.merge(id, 2, Integer::sum);
         Location center = target.getLocation().add(0, target.getHeight() / 2, 0);
-        drawBeam(eye.clone().add(0, -0.2, 0), center);
+        drawBeam(staffTip(player, 1.3), center);   // from the eye on the staff
         if (held % 10 == 0) {
             double damage = Math.min(10, 3 + held / 20.0);
             hurt(target, damage, player);

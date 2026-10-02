@@ -3,8 +3,12 @@
   "textures": {
     "metal": "occultech:block/guardians_gaze_held_metal",
     "grip": "occultech:block/guardians_gaze_held_grip",
-    "sclera": "occultech:block/guardians_gaze_held_sclera",
-    "iris": "occultech:block/guardians_gaze_held_iris",
+    "eye_north": "occultech:block/guardians_gaze_held_eye_north",
+    "eye_south": "occultech:block/guardians_gaze_held_eye_south",
+    "eye_west": "occultech:block/guardians_gaze_held_eye_west",
+    "eye_east": "occultech:block/guardians_gaze_held_eye_east",
+    "eye_up": "occultech:block/guardians_gaze_held_eye_up",
+    "eye_down": "occultech:block/guardians_gaze_held_eye_down",
     "particle": "occultech:block/guardians_gaze_held_metal"
   },
   "elements": [
@@ -421,58 +425,58 @@
         "angle": -45
       },
       "faces": {
-        "up": {
-          "texture": "#iris",
-          "uv": [
-            1,
-            1,
-            15,
-            15
-          ]
-        },
         "north": {
-          "texture": "#sclera",
+          "texture": "#eye_north",
           "uv": [
-            2,
-            2,
-            14,
-            14
+            5.8,
+            0.40000000000000036,
+            10.2,
+            4.800000000000001
           ]
         },
         "south": {
-          "texture": "#sclera",
+          "texture": "#eye_south",
           "uv": [
-            2,
-            2,
-            14,
-            14
+            5.8,
+            0.40000000000000036,
+            10.2,
+            4.800000000000001
           ]
         },
         "west": {
-          "texture": "#sclera",
+          "texture": "#eye_west",
           "uv": [
-            2,
-            2,
-            14,
-            14
+            5.8,
+            0.40000000000000036,
+            10.2,
+            4.800000000000001
           ]
         },
         "east": {
-          "texture": "#sclera",
+          "texture": "#eye_east",
           "uv": [
-            2,
-            2,
-            14,
-            14
+            5.8,
+            0.40000000000000036,
+            10.2,
+            4.800000000000001
+          ]
+        },
+        "up": {
+          "texture": "#eye_up",
+          "uv": [
+            5.8,
+            5.8,
+            10.2,
+            10.2
           ]
         },
         "down": {
-          "texture": "#sclera",
+          "texture": "#eye_down",
           "uv": [
-            2,
-            2,
-            14,
-            14
+            5.8,
+            5.8,
+            10.2,
+            10.2
           ]
         }
       }

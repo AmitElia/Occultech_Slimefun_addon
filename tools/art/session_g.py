@@ -1645,6 +1645,26 @@ TRIDENT_DISPLAY = {   # vanilla item/trident_in_hand (its model points up along 
 }
 
 
+# The hand's frame (from vanilla's ItemInHandLayer, checked against an in-game screenshot of the censer): with no display
+# rotation a model's +y points forward along the arm's front and its -z runs down the arm toward the fist. Where the
+# fist grips, in display space: vanilla handheld holds a sword sprite at about pixel (3, 3) and puts it at
+FIST = (0.0, -1.9, 1.5)
+
+
+def grip_display(rotation, grip, scale, first_person=None):
+    """Third-person display that turns a model by `rotation` and puts its grip point (model px) in the fist."""
+    o = [(grip[i] - 8.0) * scale for i in range(3)]
+    r = _rot_xyz(rotation, o)
+    t = [round(FIST[i] - r[i], 3) for i in range(3)]
+    d = {"thirdperson_righthand": {"rotation": list(rotation), "translation": t, "scale": [scale] * 3},
+         "thirdperson_lefthand": {"rotation": list(rotation), "translation": t, "scale": [scale] * 3},
+         "head": {"rotation": [0, 180, 0], "translation": [0, 13, 7], "scale": [1, 1, 1]}}
+    d.update(first_person or {
+        "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [1.13, 3.2, 1.13], "scale": [0.68, 0.68, 0.68]},
+        "firstperson_lefthand": {"rotation": [0, 90, -25], "translation": [1.13, 3.2, 1.13], "scale": [0.68, 0.68, 0.68]}})
+    return d
+
+
 def _rot_xyz(deg, v):
     """Minecraft's display rotation (a quaternion from Euler XYZ: Rx * Ry * Rz) applied to v."""
     rx, ry, rz = (math.radians(a) for a in deg)
@@ -1716,12 +1736,49 @@ def orb_frames(ramp, n=8, swirl=0.7):
     return out
 
 
-def scepter(key, metal_ramp, orb_ramp, eye=False):
+def eyeball_faces(m, gaze_path, prefix="eye"):
+    """A guardian's eyeball as six face textures per frame: each face pixel is a point on the ball, coloured iris or
+    pupil by its angle to where the eye looks - so the one pupil slides across faces as the gaze moves round."""
+    sg, bone, ab, cr = RAMPS["seaglow"], RAMPS["bone"], RAMPS["abyss"], RAMPS["crimson"]
+    def point(face, u, v):
+        a, b = -1 + 2 * (u + 0.5) / 16, 1 - 2 * (v + 0.5) / 16   # a: right as seen from outside, b: up
+        return {"up": (a, 1, -b), "down": (a, -1, b), "north": (-a, b, -1), "south": (a, b, 1),
+                "west": (-1, b, a), "east": (1, b, -a)}[face]
+    refs = {}
+    for face in FACES_ALL:
+        frames = []
+        for g in gaze_path:
+            gl = math.sqrt(sum(c * c for c in g))
+            g = [c / gl for c in g]
+            img = fill(bone, 4)
+            for v in range(16):
+                for u in range(16):
+                    pnt = point(face, u, v)
+                    pl = math.sqrt(sum(c * c for c in pnt))
+                    ang = math.degrees(math.acos(max(-1, min(1, sum(pnt[i] * g[i] for i in range(3)) / pl))))
+                    if ang < 15:
+                        img.putpixel((u, v), ab[0])
+                    elif ang < 30:
+                        img.putpixel((u, v), sg[4] if ang < 25 else sg[2])
+                    elif ang > 120 and (u * 3 + v * 5) % 23 == 0:
+                        img.putpixel((u, v), cr[3])   # veins at the back
+            frames.append(img)
+        refs[face] = m.texture(f"{prefix}_{face}", frames)
+    return refs
+
+
+# where the eye looks, frame by frame (in the scepter's frame: +y out of its tip): holds and darts, all round
+GAZE_PATH = [(0, 1, 0), (0, 1, 0), (0, 1, 0), (0.9, 0.5, 0.2), (0.9, 0.5, 0.2), (0.4, 0.4, 0.9), (0.4, 0.4, 0.9),
+             (0, 1, 0), (-0.9, 0.5, -0.1), (-0.9, 0.5, -0.1), (-0.3, 0.3, -0.95), (-0.3, 0.3, -0.95), (0, 1, 0),
+             (0.2, 0.6, 0.8), (0.95, 0.2, -0.3), (0, 1, 0)]
+
+
+def scepter(key, metal_ramp, orb_ramp, eye=False, using=False):
     """A scepter (Wyrmbreath, Guardian's Gaze): a pommel, a wrapped grip, a ringed collar, a cup from which four claw
     prongs rise at the orb's corners and just hook over its top edges - the orb (or the guardian's eye) stays in full
-    view. The eye looks out of the scepter's tip (its top face): one slit-less round pupil in a sea-glow iris that
-    roams round in a wide circle (animated, 16 frames); its other faces are veined sclera."""
-    m = Model(key + "_held")
+    view. The eye is a ball: one pupil that darts round to look every way, sliding across its faces (16 frames).
+    using: the model while right-click is held - upright and posed straight out along the raised arm."""
+    m = Model(key + ("_held_using" if using else "_held"))
     m.part = True
     t_metal = m.texture("metal", metal(metal_ramp, 601))
     grip = metal(metal_ramp, 603, tone=2)
@@ -1735,28 +1792,8 @@ def scepter(key, metal_ramp, orb_ramp, eye=False):
     prism(m, 1.8, 9.4, 10, t_metal)
     prism(m, 4.2, 10, 11.2, t_metal)                        # the cup
     if eye:
-        sg, bone, ab, cr = RAMPS["seaglow"], RAMPS["bone"], RAMPS["abyss"], RAMPS["crimson"]
-        sclera = fill(bone, 4)
-        put(sclera, [(2, 5), (3, 6), (4, 6), (5, 7), (12, 9), (11, 10), (10, 10), (13, 3), (12, 4)], cr[3])   # veins
-        rim(sclera, bone[5], bone[3])
-        t_sclera = m.texture("sclera", sclera)
-        frames = []
-        for f in range(16):
-            a = f * math.pi / 8
-            cx, cy = 7.5 + 2.4 * math.cos(a), 7.5 + 2.4 * math.sin(a)   # the gaze roams round
-            img = fill(bone, 4)
-            for y in range(16):
-                for x in range(16):
-                    dd = math.hypot(x + 0.5 - cx - 0.5, y + 0.5 - cy - 0.5)
-                    if dd < 5.2:
-                        img.putpixel((x, y), ab[0] if dd < 2.3 else sg[4] if dd < 4.0 else sg[2])
-            put(img, [(int(cx) - 1, int(cy) - 1)], (255, 255, 255, 255))   # a catchlight
-            rim(img, bone[5], bone[3])
-            frames.append(img)
-        t_iris = m.texture("iris", frames)
-        m.box((5.8, 11.2, 5.8), (10.2, 15.6, 10.2), {"up": (t_iris, [1, 1, 15, 15]), "north": (t_sclera, [2, 2, 14, 14]),
-              "south": (t_sclera, [2, 2, 14, 14]), "west": (t_sclera, [2, 2, 14, 14]), "east": (t_sclera, [2, 2, 14, 14]),
-              "down": (t_sclera, [2, 2, 14, 14])}, light=12)
+        faces = eyeball_faces(m, GAZE_PATH)
+        m.box((5.8, 11.2, 5.8), (10.2, 15.6, 10.2), {d: faces[d] for d in FACES_ALL}, light=12)
     else:
         t_orb = m.texture("orb", orb_frames(orb_ramp))
         prism(m, 4.4, 11.2, 15.6, (t_orb, [3, 3, 13, 13]), light=15, shade=False)   # the orb
@@ -1764,28 +1801,39 @@ def scepter(key, metal_ramp, orb_ramp, eye=False):
         px, pz = 8 + sx * 2.7, 8 + sz * 2.7
         prism(m, 1.0, 10.4, 15.2, t_metal, cx=px, cz=pz)
         prism(m, 0.9, 15.2, 16.2, t_metal, cx=8 + sx * 2.05, cz=8 + sz * 2.05)   # hooking just over the corner
-    m.display = HANDHELD_DISPLAY
+    if using:
+        # the raised arm (the SPEAR use pose) points forward, so the model's -z (down the arm) is forward: turn the
+        # scepter's tip (+y) onto -z, grip in the fist
+        m.display = grip_display((-90, 0, 0), (8, 3.2, 8), 0.85, first_person={
+            "firstperson_righthand": {"rotation": [-60, -10, 0], "translation": [1.5, 1.5, -2], "scale": [0.68] * 3},
+            "firstperson_lefthand": {"rotation": [-60, 10, 0], "translation": [1.5, 1.5, -2], "scale": [0.68] * 3}})
+    else:
+        m.display = HANDHELD_DISPLAY
     return m
 
 
-def wyrmbreath_held():
-    """Wyrmbreath in the hand: a gold scepter, its claws round an orb of dragon fire."""
-    return diagonal(scepter("wyrmbreath", RAMPS["gold"], RAMPS["ember"]))
+def wyrmbreath_held(using=False):
+    """Wyrmbreath in the hand: a gold scepter, its claws round an orb of dragon fire (pointed ahead while in use)."""
+    m = scepter("wyrmbreath", RAMPS["gold"], RAMPS["ember"], using=using)
+    return m if using else diagonal(m)
 
 
-def guardians_gaze_held():
-    """Guardian's Gaze in the hand: a teal-steel scepter, its claws round a guardian's eye that glances about."""
-    return diagonal(scepter("guardians_gaze", RAMPS["abyss"], RAMPS["seaglow"], eye=True))
+def guardians_gaze_held(using=False):
+    """Guardian's Gaze in the hand: a teal-steel scepter, its claws round a guardian's eye that looks all about."""
+    m = scepter("guardians_gaze", RAMPS["abyss"], RAMPS["seaglow"], eye=True, using=using)
+    return m if using else diagonal(m)
 
 
 def abyssal_anchor_held():
-    """The Abyssal Anchor in the hand: an anchor of abyssal iron held by its ring - the stock across just above the
-    hand, the shank rising to the crown, the arms spreading at the top and their flukes turned back down like a war
-    hammer's head; sea-glow runes down the shank (glowing), a spectral chain trailing from the ring (glowing)."""
+    """The Abyssal Anchor in the hand, held by its ring like a war hammer: a round ring in the fist, a stock across just
+    above it with ball ends, the shank rising with sea-glow runes (glowing), and at the top the crown with the two arms
+    curving out and down in a smooth arc to broad arrowhead flukes - an anchor's true silhouette, upside down as it is
+    swung; a spectral chain trails from the ring (glowing)."""
     m = Model("abyssal_anchor_held")
     m.part = True
-    ab, sg, ir = RAMPS["abyss"], RAMPS["seaglow"], RAMPS["iron"]
+    ab, sg = RAMPS["abyss"], RAMPS["seaglow"]
     t_iron = m.texture("iron", metal(ab, 611, tone=3))
+    t_dark = m.texture("dark", metal(ab, 612, tone=2))
     runes = []
     for f in range(6):
         img = metal(ab, 613, tone=3)
@@ -1794,23 +1842,31 @@ def abyssal_anchor_held():
         runes.append(img)
     t_rune = m.texture("rune", runes)
     t_chain = m.texture("chain", fill(sg, 4))
-    # the ring (grip), a square loop in the x-y plane
-    prism(m, 4.6, -3, -2.2, t_iron)
-    for x in (5.7, 10.3):
-        prism(m, 0.8, -3, 1.0, t_iron, cx=x)
-    prism(m, 4.6, 0.4, 1.2, t_iron)
-    prism(m, 1.6, 1.2, 2.2, t_iron)
-    prism(m, 1.2, 2.2, 3.4, t_iron, d=9)                    # the stock, across (z)
-    prism(m, 2.0, 3.4, 15, (t_rune, [0, 0, 2, 12]), light=0)   # the shank
-    m.box((7, 4, 6.95), (9, 14.5, 6.95), {"north": (t_rune, [6, 1, 10, 15])}, shade=False, light=15)
-    m.box((7, 4, 9.05), (9, 14.5, 9.05), {"south": (t_rune, [6, 1, 10, 15])}, shade=False, light=15)
-    prism(m, 3.0, 15, 16.6, t_iron)                         # the crown
-    prism(m, 1.0, 16.6, 18.4, t_iron)                       # its spike
-    for side in (-1, 1):                                    # arms out, then the flukes down
-        prism(m, 4.0, 15.2, 16.4, t_iron, cx=8 + side * 3.5, d=2.0)
-        prism(m, 1.8, 12.4, 16.4, t_iron, cx=8 + side * 6.1, d=2.0)
-        prism(m, 3.0, 11.0, 13.4, t_iron, cx=8 + side * 6.1, d=2.4)     # the palm
-        prism(m, 1.2, 10.0, 11.0, t_iron, cx=8 + side * 6.1, d=1.2)     # its bill
+    # the ring: an octagon of bars in the x-y plane, centred at y -0.6
+    cy = -0.6
+    for (w, h, dx, dy) in ((2.6, 0.9, 0, 2.2), (2.6, 0.9, 0, -2.2), (0.9, 2.6, 2.2, 0), (0.9, 2.6, -2.2, 0)):
+        m.cube((8 + dx - w / 2, cy + dy - h / 2, 7.55), (8 + dx + w / 2, cy + dy + h / 2, 8.45), (t_iron, [0, 0, 2, 2]))
+    for (dx, dy) in ((1.5, 1.5), (-1.5, 1.5), (1.5, -1.5), (-1.5, -1.5)):
+        m.cube((8 + dx - 0.6, cy + dy - 0.6, 7.55), (8 + dx + 0.6, cy + dy + 0.6, 8.45), (t_iron, [0, 0, 1, 1]))
+    # the stock, across (z), ball-ended
+    prism(m, 1.2, 2.2, 3.4, t_dark, d=8.4)
+    for z in (3.4, 12.6):
+        prism(m, 1.8, 1.9, 3.7, t_dark, cz=z)
+    prism(m, 2.0, 3.4, 13.6, (t_rune, [0, 0, 2, 10]))       # the shank
+    m.box((7.2, 4, 6.95), (8.8, 13.2, 6.95), {"north": (t_rune, [6, 1, 10, 15])}, shade=False, light=15)
+    m.box((7.2, 4, 9.05), (8.8, 13.2, 9.05), {"south": (t_rune, [6, 1, 10, 15])}, shade=False, light=15)
+    prism(m, 3.2, 13.6, 15.4, t_iron)                       # the crown
+    prism(m, 1.6, 15.4, 16.8, t_iron)
+    # the arms: an arc whose centre is on the shank below the crown (radius 5), from the crown out and down
+    for side in (-1, 1):
+        for k in range(7):
+            phi = math.radians(20 + k * 13)
+            ax, ay = 8 + side * 5.0 * math.sin(phi), 10.4 + 5.0 * math.cos(phi)
+            prism(m, 1.6, ay - 0.8, ay + 0.8, t_iron, cx=ax, d=1.8)
+        # the fluke: a broad arrowhead pointing down (toward the ring), at the arm's end
+        fx = 8 + side * 4.9
+        for (w, y0, y1) in ((3.4, 9.6, 10.6), (2.6, 8.6, 9.6), (1.6, 7.8, 8.6), (0.7, 7.2, 7.8)):
+            prism(m, w, y0, y1, t_iron, cx=fx, d=1.4)
     for i in range(4):                                      # the spectral chain trailing from the ring
         prism(m, 1.6 if i % 2 == 0 else 0.6, -4.6 - i * 1.6, -3.0 - i * 1.6, (t_chain, [0, 0, 2, 2]),
               d=0.6 if i % 2 == 0 else 1.6, light=15, shade=False)
@@ -1818,21 +1874,15 @@ def abyssal_anchor_held():
     return diagonal(m)
 
 
-CENSER_DISPLAY = {   # vanilla item/generated's, a little larger: held in the fist like a torch, so the censer hangs
-    "thirdperson_righthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.7, 0.7, 0.7]},
-    "thirdperson_lefthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.7, 0.7, 0.7]},
-    "firstperson_righthand": {"rotation": [0, -90, 0], "translation": [1.13, 4.2, 1.13], "scale": [0.68, 0.68, 0.68]},
-    "firstperson_lefthand": {"rotation": [0, 90, 0], "translation": [1.13, 4.2, 1.13], "scale": [0.68, 0.68, 0.68]},
-    "head": {"rotation": [0, 180, 0], "translation": [0, 13, 7], "scale": [1, 1, 1]},
-}
+CENSER_GRIP = (8, 10.5, 8)   # the middle of the handle
 
 
-def soulfire_censer_held():
+def soulfire_censer_held(using=False):
     """The Soulfire Censer in the hand, hanging from it: the fist closes on a gold handle with a ring above it; under
     the fist a chain drops to the censer - a gold cap, a dark caged orb (stepped round) with soul fire burning behind cyan
     glass (glowing, animated), a gold band round it, and a gold finial hanging below. Held upright like a torch (vanilla
     item/generated's poses, model up = up), so the censer hangs under the hand."""
-    m = Model("soulfire_censer_held")
+    m = Model("soulfire_censer_held" + ("_using" if using else ""))
     m.part = True
     gd, st, hc, ir = RAMPS["gold"], RAMPS["boundsteel"], RAMPS["hollowcy"], RAMPS["iron"]
     t_gold = m.texture("gold", metal(gd, 621))
@@ -1866,48 +1916,169 @@ def soulfire_censer_held():
     prism(m, 4.6, -5.6, -4.6, t_steel)
     prism(m, 2.0, -6.6, -5.6, t_gold)                       # the finial, hanging below
     prism(m, 0.8, -8.2, -6.6, t_gold)
-    m.display = CENSER_DISPLAY
+    # arm hanging: down the arm is the model's -z, so turn the model's -y (the chain) onto it; arm raised forward (in
+    # use): down is the model's +z... which is where -y already points once the arm is up, so no turn
+    fp = {"firstperson_righthand": {"rotation": [0, -90, 0], "translation": [1.13, 4.2, 1.13], "scale": [0.68] * 3},
+          "firstperson_lefthand": {"rotation": [0, 90, 0], "translation": [1.13, 4.2, 1.13], "scale": [0.68] * 3}}
+    m.display = grip_display((0, 0, 0) if using else (90, 0, 0), CENSER_GRIP, 0.7, first_person=fp)
     return m
 
 
 def dreadlance_held():
-    """The Dreadlance in the hand, held like a trident: a long shaft of black-violet steel banded in crimson, a violet
-    pommel gem, two steel rings above the grip (the bone vamplate looked wrong in the hand), and a silver leaf-shaped head with a crimson fuller that
-    pulses (glowing). Built in the trident's frame (centred on x = z = 0, pointing up), lifted 16 px to stay inside a
-    model's bounds - the display's translations take the lift back out."""
+    """The Dreadlance in the hand, held like a trident - an ornate war-lance in the Hollow style: a cruciform head (a
+    broad leaf blade crossed by a narrower one, four flanges) of blackened steel with bright honed edges and a crimson
+    core glowing down both blades; a socket of aged gold with a crimson gem on each side and two swept-back wings; a
+    shaft of dark heartwood wound with gold wire, a leather grip, a gold ferrule and a short butt spike with a violet
+    gem. Built in the trident's frame (centred on x = z = 0, pointing up), lifted 16 px to stay inside a model's bounds;
+    the display's translations take the lift back out."""
     m = Model("dreadlance_held")
     m.part = True
-    st, cr, bone, vi, ir = RAMPS["boundsteel"], RAMPS["crimson"], RAMPS["bone"], RAMPS["violet"], RAMPS["iron"]
-    shaft = metal(st, 631, tone=1)
-    for y in (2, 9):
+    st, cr, gd, vi, wood, le, ink = (RAMPS["boundsteel"], RAMPS["crimson"], RAMPS["gold"], RAMPS["violet"], RAMPS["wood"],
+                                     RAMPS["leather"], RAMPS["ink"])
+    blade = blank()
+    for y in range(16):
         for x in range(16):
-            shaft.putpixel((x, y), cr[3])
-    t_shaft = m.texture("shaft", shaft)
-    t_gem = m.texture("gem", fill(vi, 4))
-    t_steel = m.texture("blade", metal(ir, 635, tone=4))
-    fullers = []
+            edge = x in (0, 1, 14, 15)
+            blade.putpixel((x, y), st[5] if x in (0, 15) else st[4] if edge else ink[3] if (x + y) % 5 else ink[2])
+    t_blade = m.texture("blade", blade)
+    cores = []
     for f in range(6):
         img = blank()
         for y in range(16):
-            img.putpixel((7, y), cr[[3, 4, 5, 4, 3, 2][(f + y // 3) % 6]])
-            img.putpixel((8, y), cr[[3, 4, 5, 4, 3, 2][(f + y // 3) % 6]])
-        fullers.append(img)
-    t_fuller = m.texture("fuller", fullers)
-    p = lambda w, y0, y1, tex, d=None, light=0: prism(m, w, y0, y1, tex, cx=0.0, cz=0.0, d=d, light=light)  # noqa: E731
-    p(1.8, -11, -9.4, t_gem, light=10)                      # pommel gem
-    p(1.0, -9.4, 12, (t_shaft, [7, 0, 8, 16]))              # the shaft
-    p(1.7, -1.2, -0.5, t_steel)                             # two steel rings above the grip
-    p(1.7, 0.6, 1.3, t_steel)
-    p(1.6, 12, 13, t_steel)                                 # the head's socket, then the leaf
-    p(2.4, 13, 15, t_steel, d=0.6)
-    p(3.0, 15, 17.2, t_steel, d=0.6)
-    p(2.2, 17.2, 18.6, t_steel, d=0.6)
-    p(1.2, 18.6, 19.6, t_steel, d=0.6)
-    p(0.5, 19.6, 20.4, t_steel, d=0.5)
-    m.box((-0.4, 13.2, -0.32), (0.4, 18.4, -0.32), {"north": (t_fuller, [7, 0, 9, 16])}, shade=False, light=15)
-    m.box((-0.4, 13.2, 0.32), (0.4, 18.4, 0.32), {"south": (t_fuller, [7, 0, 9, 16])}, shade=False, light=15)
+            c = cr[[3, 4, 5, 4, 3, 2][(f + y // 3) % 6]]
+            img.putpixel((7, y), c); img.putpixel((8, y), c)
+        cores.append(img)
+    t_core = m.texture("core", cores)
+    t_gold = m.texture("gold", metal(gd, 651))
+    shaft = blank()
+    for y in range(16):
+        for x in range(16):
+            shaft.putpixel((x, y), gd[3] if (y + x // 4) % 6 == 0 else wood[1] if x % 3 else wood[0])   # gold wire wound round
+    t_shaft = m.texture("shaft", shaft)
+    grip = blank()
+    for y in range(16):
+        for x in range(16):
+            grip.putpixel((x, y), le[3] if (x + y) % 4 < 2 else le[2])
+    t_grip = m.texture("grip", grip)
+    t_gem = m.texture("gem", fill(cr, 4))
+    t_vgem = m.texture("vgem", fill(vi, 4))
+    p = lambda w, y0, y1, tex, d=None, light=0, cx=0.0, cz=0.0: prism(m, w, y0, y1, tex, cx=cx, cz=cz, d=d, light=light)  # noqa: E731
+    p(0.8, -12.4, -11.2, t_gold)                            # butt spike
+    p(1.4, -11.2, -10.4, t_gold)
+    m.box((-0.9, -10.4, -0.9), (0.9, -9.2, 0.9), {d: (t_vgem, [0, 0, 2, 2]) for d in FACES_ALL}, light=12)
+    p(1.8, -9.2, -8.4, t_gold)                              # ferrule
+    p(1.4, -8.4, -1.0, (t_grip, [0, 0, 2, 8]))              # leather grip
+    p(1.8, -1.0, -0.4, t_gold)
+    p(1.4, -0.4, 10.6, (t_shaft, [6, 0, 8, 16]))            # the shaft, gold wire wound round
+    p(2.2, 10.6, 11.6, t_gold)                              # the socket
+    p(2.8, 11.6, 13.0, t_gold)
+    for sx in (-1, 1):                                      # a crimson gem each side, glowing
+        m.box((sx * 1.4 - 0.4, 11.9, -0.5), (sx * 1.4 + 0.4, 12.7, 0.5), {d: (t_gem, [0, 0, 1, 1]) for d in FACES_ALL}, light=15)
+        p(1.0, 10.0, 12.0, t_gold, cx=sx * 2.0, d=0.8)      # wings swept back from the socket
+        p(0.8, 9.0, 10.2, t_gold, cx=sx * 2.6, d=0.6)
+        p(0.6, 8.2, 9.2, t_gold, cx=sx * 3.0, d=0.5)
+    # the main leaf blade (wide in x)
+    for (w, y0, y1) in ((2.6, 13.0, 14.4), (3.8, 14.4, 16.6), (4.2, 16.6, 18.4), (3.4, 18.4, 19.8), (2.2, 19.8, 21.0),
+                        (1.2, 21.0, 22.0), (0.5, 22.0, 22.8)):
+        p(w, y0, y1, (t_blade, [0, 0, 16, 2]), d=0.7)
+    # the cross blade (wide in z), shorter
+    for (d_, y0, y1) in ((2.0, 13.4, 15.0), (2.8, 15.0, 17.6), (2.0, 17.6, 19.4), (1.0, 19.4, 20.4)):
+        p(0.6, y0, y1, (t_blade, [0, 0, 16, 2]), d=d_)
+    for (frm, to, faces) in (((-0.35, 14.0, -0.37), (0.35, 21.0, -0.37), ("north",)), ((-0.35, 14.0, 0.37), (0.35, 21.0, 0.37), ("south",)),
+                             ((-0.32, 14.4, -0.3), (-0.32, 19.4, 0.3), ("west",)), ((0.32, 14.4, -0.3), (0.32, 19.4, 0.3), ("east",))):
+        m.box(frm, to, {faces[0]: (t_core, [7, 0, 9, 16])}, shade=False, light=15)
     m.display = shifted_display(TRIDENT_DISPLAY, (0, 16, 0))
     return m
+
+
+def frenzy_cleaver_held():
+    """The Frenzy Cleaver in the hand: a broad butcher's cleaver - a wrapped wooden haft with a pommel cap, and a heavy
+    rectangular steel blade on the haft's top, thick at its spine and honed thin toward a serrated edge of frenzy-red
+    teeth that pulse (glowing); a rivet through the blade."""
+    m = Model("frenzy_cleaver_held")
+    m.part = True
+    ir, cr, wood, le = RAMPS["iron"], RAMPS["crimson"], RAMPS["wood"], RAMPS["leather"]
+    haft = blank()
+    for y in range(16):
+        for x in range(16):
+            haft.putpixel((x, y), wood[3] if x % 4 == 0 else wood[2] if (x + y) % 5 else wood[1])
+    t_haft = m.texture("haft", haft)
+    wrap = blank()
+    for y in range(16):
+        for x in range(16):
+            wrap.putpixel((x, y), le[3] if (y + x // 2) % 3 else le[1])
+    t_wrap = m.texture("wrap", wrap)
+    steel = blank()
+    for y in range(16):
+        for x in range(16):
+            steel.putpixel((x, y), ir[4] if x < 2 else ir[3] if (x * 2 + y) % 9 else ir[2])
+    t_steel = m.texture("steel", steel)
+    t_spine = m.texture("spine", metal(ir, 661, tone=2))
+    teeth = []
+    for f in range(6):
+        img = blank()
+        for y in range(16):
+            for x in range(16):
+                img.putpixel((x, y), cr[[3, 4, 5, 4, 3, 2][(f + y // 2) % 6]] if (x + y) % 2 == 0 else cr[1])
+        teeth.append(img)
+    t_teeth = m.texture("teeth", teeth)
+    prism(m, 2.0, -3, -1.8, t_spine)                        # pommel cap
+    prism(m, 1.6, -1.8, 5.0, (t_wrap, [0, 0, 2, 7]))        # wrapped grip
+    prism(m, 1.6, 5.0, 17.6, (t_haft, [6, 0, 8, 13]))       # haft up through the blade
+    prism(m, 2.0, 17.6, 18.6, t_spine)                      # cap
+    # the blade, to the -x side (up-left once laid on the diagonal), 8 tall, 6.5 wide
+    m.cube((1.6, 10.0, 7.5), (7.2, 18.0, 8.5), (t_steel, [0, 0, 6, 8]))          # body
+    m.cube((6.6, 9.6, 7.3), (7.4, 18.4, 8.7), (t_spine, [0, 0, 1, 9]))           # bound to the haft
+    m.cube((1.6, 17.4, 7.3), (7.2, 18.4, 8.7), (t_spine, [0, 0, 6, 1]))          # the thick spine along the top
+    m.box((0.6, 10.0, 7.7), (1.6, 17.4, 8.3), {"west": (t_teeth, [0, 0, 1, 7]), "north": (t_teeth, [0, 0, 1, 7]),
+          "south": (t_teeth, [0, 0, 1, 7]), "up": (t_teeth, [0, 0, 1, 1]), "down": (t_teeth, [0, 0, 1, 1])}, light=12)
+    m.cube((4.0, 15.0, 7.3), (5.0, 16.0, 8.7), (t_spine, [0, 0, 1, 1]))          # a rivet
+    m.display = HANDHELD_DISPLAY
+    return diagonal(m)
+
+
+def bone_scepter_held():
+    """The Bone Scepter in the hand: a staff of stacked vertebrae - knobbed discs with little spurs - topped by a
+    skull whose sockets burn with soul-green fire (glowing, animated), its jaw hanging slightly open, a wisp curling
+    above it. The skull looks out to the scepter's front (+x, forward once held)."""
+    m = Model("bone_scepter_held")
+    m.part = True
+    bone, gel, ink = RAMPS["bone"], RAMPS["gel"], RAMPS["ink"]
+    t_bone = m.texture("bone", bone_tex(671, tone=4))
+    t_dark = m.texture("bone_dark", bone_tex(673, tone=3))
+    face_frames = []
+    for f in range(6):
+        face = bone_tex(675, tone=4)
+        glow = gel[[3, 4, 5, 4, 3, 4][f]]
+        for (x0, x1) in ((3, 7), (9, 13)):                  # sockets
+            for y in range(4, 9):
+                for x in range(x0, x1):
+                    face.putpixel((x, y), ink[0])
+            put(face, [(x0 + 1, 6), (x0 + 2, 6), (x0 + 1, 7), (x0 + 2, 7)], glow)
+        put(face, [(7, 10), (8, 10), (7, 11), (8, 11)], ink[1])   # the nose
+        for x in range(3, 13):                              # teeth
+            face.putpixel((x, 13), bone[5] if x % 2 else ink[1])
+        face_frames.append(face)
+    t_face = m.texture("face", face_frames)
+    t_wisp = m.texture("wisp", fill(gel, 4))
+    prism(m, 2.2, -3, -1.6, t_dark)                         # a knob at the foot
+    y = -1.6
+    while y < 11.5:                                         # the vertebrae
+        prism(m, 2.2, y, y + 1.0, t_bone)
+        prism(m, 1.4, y + 1.0, y + 1.6, t_dark)
+        y += 1.6
+    for yy in (2.0, 6.8):                                    # spurs
+        prism(m, 3.6, yy, yy + 0.6, t_dark, d=0.8)
+    # the skull: cranium, face toward +x, jaw below
+    m.box((5.4, 13.0, 5.4), (10.6, 18.2, 10.6), {"east": (t_face, [2, 2, 14, 14]), "west": (t_bone, [0, 0, 5, 5]),
+          "north": (t_bone, [0, 0, 5, 5]), "south": (t_bone, [0, 0, 5, 5]), "up": (t_bone, [0, 0, 5, 5]),
+          "down": (t_bone, [0, 0, 5, 5])}, light=0)
+    m.box((10.62, 14.8, 6.2), (10.62, 17.0, 9.8), {"east": (t_face, [3, 5, 13, 9])}, shade=False, light=13)   # the burning sockets glow
+    prism(m, 4.0, 11.6, 13.0, t_dark, cx=8.8)               # the jaw, hanging a little open
+    for k in range(4):                                      # a wisp curling above
+        prism(m, 0.8, 18.6 + k * 0.9, 19.4 + k * 0.9, (t_wisp, [0, 0, 1, 1]), cx=8 + [0.6, 1.2, 0.8, 0.0][k], light=15, shade=False)
+    m.display = HANDHELD_DISPLAY
+    return diagonal(m)
 
 
 def occult_codex_held():
@@ -1980,6 +2151,23 @@ def heartwood_aegis(blocking=False):
     while os.path.exists(os.path.join(OUT, "..", "session-f", f"heartwood_aegis_shield_{i}.png")):
         frames.append(Image.open(os.path.join(OUT, "..", "session-f", f"heartwood_aegis_shield_{i}.png")).convert("RGBA"))
         i += 1
+    wood = RAMPS["wood"]
+    calm = []
+    for fr in frames:   # the back (x 14..25, y 1..22) repainted calmer: dark vertical boards, soft grain, two bands
+        fr = fr.copy()
+        for y in range(1, 23):
+            for x in range(14, 26):
+                board = (x - 14) // 3
+                t_ = 2 if board % 2 else 1
+                if (x - 14) % 3 == 2:
+                    t_ = 0
+                elif (y * 2 + x) % 9 == 0:
+                    t_ += 1
+                if y in (6, 17):
+                    t_ = 0
+                fr.putpixel((x, y), wood[max(0, min(3, t_))])
+        calm.append(fr)
+    frames = calm
     t = m.texture("shield", frames)
     q = lambda x0, y0, x1, y1: (t, [x0 / 4, y0 / 4, x1 / 4, y1 / 4])  # noqa: E731  (64 px texture -> 16 uv units)
     # the plate: entity box (-6,-11,-2) size 12x22x1 at uv (0,0); its renderer flips y and z, so it sits at z 1..2
@@ -1993,8 +2181,11 @@ def heartwood_aegis(blocking=False):
 
 
 G5 = [("Occult Codex (held)", occult_codex_held), ("Wyrmbreath (held)", wyrmbreath_held),
-      ("Guardian's Gaze (held)", guardians_gaze_held), ("Abyssal Anchor (held)", abyssal_anchor_held),
-      ("Dreadlance (held)", dreadlance_held), ("Soulfire Censer (held)", soulfire_censer_held),
+      ("Wyrmbreath (in use)", lambda: wyrmbreath_held(True)),
+      ("Guardian's Gaze (held)", guardians_gaze_held), ("Guardian's Gaze (in use)", lambda: guardians_gaze_held(True)),
+      ("Abyssal Anchor (held)", abyssal_anchor_held), ("Dreadlance (held)", dreadlance_held),
+      ("Soulfire Censer (held)", soulfire_censer_held), ("Soulfire Censer (in use)", lambda: soulfire_censer_held(True)),
+      ("Frenzy Cleaver (held)", frenzy_cleaver_held), ("Bone Scepter (held)", bone_scepter_held),
       ("Heartwood Aegis", heartwood_aegis), ("Heartwood Aegis (blocking)", lambda: heartwood_aegis(True))]
 
 

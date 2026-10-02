@@ -173,10 +173,14 @@ def main():
         base = key[:-len("_held")]
         if base.upper() not in items or base.upper() not in with_models:
             raise SystemExit(f"{key}: no item {base.upper()} with a 2D icon")
+        held = {"type": "minecraft:model", "model": f"{NS}:block/{key}"}
+        if os.path.isdir(os.path.join(gdir, key + "_using")):   # its pose while right-click is held
+            held = {"type": "minecraft:condition", "property": "minecraft:using_item", "on_false": held,
+                    "on_true": {"type": "minecraft:model", "model": f"{NS}:block/{key}_using"}}
         files[f"assets/{NS}/items/{base}.json"] = {"model": {
             "type": "minecraft:select", "property": "minecraft:display_context",
             "cases": [{"when": ["gui", "ground", "fixed"], "model": {"type": "minecraft:model", "model": model_ref(base)}}],
-            "fallback": {"type": "minecraft:model", "model": f"{NS}:block/{key}"}}}
+            "fallback": held}}
     # the Heartwood Aegis: a shield - its model while held, and its blocking model while in use (vanilla's shield)
     if os.path.isdir(os.path.join(gdir, "heartwood_aegis_shield")):
         files[f"assets/{NS}/items/heartwood_aegis.json"] = {"model": {

@@ -516,6 +516,24 @@ definition selects on `display_context`, as vanilla's trident does. Glowing part
   (item/generated's poses, slightly larger), the fist on a ringed handle, a chain dropping to the censer below. The
   Dreadlance's bone vamplate (odd in the hand) is now two slim steel rings. The Aegis is "not aligned correctly" in
   game - waiting on a screenshot to see how.
+- Second review (with an in-game screenshot): the Aegis looks right in game (it was fine); its back was hard on the
+  eye - repainted calm: dark vertical boards, soft grain, two bands. The screenshot also showed the hand's frame: with
+  no display rotation a model's +y points forward along the arm's front and its -z runs down the arm (vanilla
+  ItemInHandLayer), and where the fist really grips (`FIST`); `grip_display()` now poses models from that.
+  - Soulfire Censer - turned 90 degrees so its chain hangs down the arm from the fist (in use, arm raised: no turn).
+  - Guardian's Gaze - the eye is a ball (`eyeball_faces`): each face pixel is a point on it, iris or pupil by its angle
+    to the gaze, so the one pupil darts round and slides across the faces to look every way (16 frames).
+  - Wyrmbreath / Guardian's Gaze in use - right-click now uses the SPEAR pose (one arm raised forward) instead of the
+    bow's draw, with an "in use" model (`<key>_held_using`, switched on `using_item`) pointing straight down the arm;
+    flames and the beam now start at the staff's tip (`HeldWeapons.staffTip`), not the player's face.
+  - Dreadlance - redone after fantasy-mod lances: a cruciform head of blackened steel (a broad leaf crossed by a
+    narrower blade) with bright honed edges and a glowing crimson core, a gold socket with crimson gems and swept-back
+    wings, a shaft wound with gold wire, a leather grip, gold ferrule and a butt spike with a violet gem.
+  - Abyssal Anchor - a true anchor silhouette: round ring, ball-ended stock, runed shank, crown, arms in a smooth arc
+    out and down to broad arrowhead flukes (held by the ring, swung upside down like a war hammer).
+  - New: Frenzy Cleaver (wrapped haft, a heavy steel blade with a thick spine and pulsing frenzy-red serrated edge, a
+    rivet) and Bone Scepter (stacked vertebrae with spurs, a skull with soul-green burning sockets looking forward,
+    jaw hanging open, a wisp above).
 
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
