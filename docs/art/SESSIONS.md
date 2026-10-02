@@ -451,6 +451,26 @@ bow) is designed as that model's texture, not as an icon.
 | G5 | Held 3D models: Occult Codex, Wyrmbreath, Guardian's Gaze, Abyssal Anchor, Dreadlance, Soulfire Censer, Heartwood Aegis (shield model) | - |
 | G6 | Worn armor (`equippable` layers): Abyssal, Hollow | - |
 | G7 | Placed decorations (Moonlit Lily, Witchcap, Everliving Coral, jars, chime, orrery, brazier, obelisk, eyeblossom) | - |
+| **H** | **After the textures, before shipping: move the blocks to Nexo's note-block custom blocks** (see below) | - |
+
+**Direction (the user, 2026-10-01): the server runs Nexo, so Occultech's blocks are built for Nexo's custom-block
+system.** Every block is authored as its final Nexo look: a block model (`occultech:block/<key>`) on a full-cube
+note-block block - the hitbox is always a full block, but the model may show less than a block (bowls, egg, lantern,
+glyphs...). The display-entity skins are the interim way to see them until Session H; while they last, a skin still
+has to enclose its interim vanilla block.
+
+**Session H plan - Nexo note-block blocks**
+- Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
+  its model: real blocks, so they appear and vanish instantly, render at full distance, cost no entities and can't be
+  cleared by ClearLag. Animated textures keep working (they are textures in the model).
+- Blocks that look smaller than a block (Offering Bowl, Brood Egg, Abyssal Lantern, glyphs, ...) keep a full hitbox
+  and display as less than a full block.
+- Offering Bowls sit a little higher above the ground than today's carpet-level plate (a full hitbox no longer
+  forces them flat).
+- Parts that move stay displays: the Guardian Eye's turning eye, Prismatic Netherrack's coloured fire, holograms.
+- To work out: Slimefun + Nexo on the same block (placement through Nexo, Slimefun's block data and menus, breaking
+  and drops, right-click), variants (glyphs, Tidal Tile corals, the Forge's facing), Nexo's item config generated
+  from build_pack, a fallback to display skins when Nexo is absent.
 
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the

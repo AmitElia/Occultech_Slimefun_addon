@@ -210,21 +210,21 @@ def chalk_glyph(variant=0):
 
 
 def arcane_altar():
-    """The Arcane Altar (vanilla: enchanting table; the skin is a full cube so the floating book is hidden): a block of
-    dark stone banded in gold, its corners capped in gold, its sides set with ember-glowing arcane eyes; the top a slab
-    with an arcane circle and an infusion star that turn and glow (animated)."""
+    """The Arcane Altar (vanilla: enchanting table, 12 px tall): a low block of dark stone the table's height, so the
+    table's floating book shows above it - banded in gold, its corners capped in gold, its sides set with ember-glowing
+    arcane eyes; the top a slab with an arcane circle and an infusion star that turn and glow (animated)."""
     m = Model("arcane_altar")
     ash, gd, em, vi = RAMPS["ash"], RAMPS["gold"], RAMPS["ember"], RAMPS["violet"]
     side = bricks(ash, 21, row_h=5, brick_w=8, tones=(2, 2, 3))
-    for x in range(16):
-        side.putpixel((x, 0), gd[4]); side.putpixel((x, 1), gd[2]); side.putpixel((x, 15), gd[2]); side.putpixel((x, 14), gd[3])
-    for y in range(16):
+    for x in range(16):   # rows 4..15 show (the block is 12 tall): gold bands at its top and foot
+        side.putpixel((x, 4), gd[4]); side.putpixel((x, 5), gd[2]); side.putpixel((x, 15), gd[2]); side.putpixel((x, 14), gd[3])
+    for y in range(4, 16):
         for x in (0, 15):
             side.putpixel((x, y), gd[3] if x == 0 else gd[2])
-    eye = [(6, 7), (7, 6), (8, 6), (9, 7), (6, 8), (7, 9), (8, 9), (9, 8)]
+    eye = [(6, 9), (7, 8), (8, 8), (9, 9), (6, 10), (7, 11), (8, 11), (9, 10)]
     put(side, eye, gd[4])
-    put(side, [(7, 7), (8, 7), (7, 8), (8, 8)], em[4])
-    put(side, [(7, 7)], em[5])
+    put(side, [(7, 9), (8, 9), (7, 10), (8, 10)], em[4])
+    put(side, [(7, 9)], em[5])
     frames = []
     for f in range(4):
         top = slab_top(ash, 23, tone=2)
@@ -241,7 +241,7 @@ def arcane_altar():
             put(top, [(math.floor(7.5 + 6.6 * math.cos(a)), math.floor(7.5 + 6.6 * math.sin(a)))], vi[4])
         frames.append(top)
     t_side, t_top, t_bottom = m.texture("side", side), m.texture("top", frames), m.texture("bottom", slab_top(ash, 2, tone=1))
-    m.box((0, 0, 0), (16, 16, 16), {"north": t_side, "south": t_side, "west": t_side, "east": t_side,
+    m.box((0, 0, 0), (16, 12, 16), {"north": t_side, "south": t_side, "west": t_side, "east": t_side,
                                      "up": t_top, "down": t_bottom})
     return m
 
