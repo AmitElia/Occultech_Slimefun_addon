@@ -57,12 +57,14 @@ public final class ResourcePackService implements Listener {
     public static final String NAMESPACE = "occultech";
     private static final String PACK = "occultech-pack.zip";
     private static final String ITEMS = "occultech-pack-items.txt";
+    private static final String SKINS = "occultech-pack-skins.txt";
     /** A fixed id, so a client replaces the old version of our pack instead of stacking a new one. */
     private static final UUID PACK_ID = UUID.nameUUIDFromBytes("occultech:resource-pack".getBytes(StandardCharsets.UTF_8));
 
     private final JavaPlugin plugin;
     private final Logger log;
     private final Set<String> modelled = new HashSet<>();
+    private final java.util.Map<String, Integer> skins = new java.util.HashMap<>();
     private byte[] pack;
     private String sha1 = "";
     private boolean itemModels = true;
@@ -100,6 +102,21 @@ public final class ResourcePackService implements Listener {
         } catch (IOException e) {
             log.warning("Resource pack: could not read " + ITEMS + ": " + e.getMessage());
         }
+        try (InputStream in = plugin.getResource(SKINS)) {
+            if (in != null) {
+                new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).lines()
+                    .map(String::trim).filter(line -> !line.isEmpty() && !line.startsWith("#"))
+                    .map(line -> line.split(" ")).filter(parts -> parts.length == 2)
+                    .forEach(parts -> skins.put(parts[0], Integer.parseInt(parts[1])));
+            }
+        } catch (IOException | NumberFormatException e) {
+            log.warning("Resource pack: could not read " + SKINS + ": " + e.getMessage());
+        }
+    }
+
+    /** How many skin variants the pack has for a placed block of this recipes.yml item (0 = not skinned). */
+    public int skinVariants(@Nonnull String itemId) {
+        return itemModels && pack != null ? skins.getOrDefault(itemId, 0) : 0;
     }
 
     /** The {@code item_model} key for a recipes.yml item id, or null if the pack has no model for it (or models are off). */

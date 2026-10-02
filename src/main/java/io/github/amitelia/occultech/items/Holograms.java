@@ -112,7 +112,9 @@ public final class Holograms {
     }
 
     private Hologram create(Block block) {
-        Location base = block.getLocation().add(0.5, 0, 0.5);
+        // float just above what is there: a full block (an altar) or a low bowl (a carpet under its skin)
+        double top = org.bukkit.Tag.WOOL_CARPETS.isTagged(block.getType()) ? 0.35 : 1.0;
+        Location base = block.getLocation().add(0.5, top - 1.0, 0.5);
         ItemDisplay item = block.getWorld().spawn(base.clone().add(0, 1.35, 0), ItemDisplay.class, d -> {
             d.setPersistent(false);
             d.setBillboard(Display.Billboard.FIXED);

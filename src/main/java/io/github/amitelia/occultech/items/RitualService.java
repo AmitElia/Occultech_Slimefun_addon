@@ -484,6 +484,9 @@ public final class RitualService {
             BlockStorage.clearBlockInfo(altar);
             altar.setType(output.getItem().getType());
             BlockStorage.store(altar, output.getId());
+            if (io.github.amitelia.occultech.Occultech.instance().skins() != null) {
+                io.github.amitelia.occultech.Occultech.instance().skins().ensure(altar);   // the new altar's skin
+            }
             if (withEffects) {
                 altar.getWorld().spawnParticle(Particle.END_ROD, center(), 60, 0.4, 0.8, 0.4, 0.08);
                 altar.getWorld().playSound(center(), Sound.BLOCK_END_PORTAL_SPAWN, 0.6F, 1.4F);

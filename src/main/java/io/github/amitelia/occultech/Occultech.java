@@ -40,6 +40,7 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     private io.github.amitelia.occultech.items.TalismanService talismans;
     private ContentRegistrar registrar;
     private io.github.amitelia.occultech.pack.ResourcePackService resourcePack;
+    private io.github.amitelia.occultech.items.BlockSkinService skins;
 
     @Override
     public void onEnable() {
@@ -80,6 +81,8 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
 
         bosses.start();
         resourcePack.start();
+        skins = new io.github.amitelia.occultech.items.BlockSkinService(this, resourcePack);
+        skins.start();
         getServer().getPluginManager().registerEvents(new WeaponListener(this), this);
         getServer().getPluginManager().registerEvents(new GearListener(this), this);
         getServer().getPluginManager().registerEvents(new HeldWeapons(this), this);
@@ -157,6 +160,10 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     }
 
     @Nonnull
+    public io.github.amitelia.occultech.items.BlockSkinService skins() {
+        return skins;
+    }
+
     public io.github.amitelia.occultech.pack.ResourcePackService resourcePack() {
         return resourcePack;
     }

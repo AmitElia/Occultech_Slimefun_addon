@@ -11,7 +11,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **D** | Tier-1 item icons (23; the 6 placed blocks move to G) | **Done** - fixed after review |
 | **E** | Tier-2 item icons (26: materials, drops, weapons, armor, decor objects) | **Done** - fixed after review |
 | **F** | Tier-3 item icons (25 + bow states + the Aegis shield texture; Hollow Sigil from A) | **Done** - reworked after review |
-| G | Block faces and floor decals (incl. tier-0 blocks: altars, pedestal, bowl, glyph, trophy board, tile, Brood Egg; tier-1 blocks: Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil; tier-2 blocks: Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack; tier-3 blocks: Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) **and held 3D models** (first: the Occult Codex as a 3D book - see *Notes for G*) | - |
+| **G** | Blocks, held models, worn armor, placed decorations - split into G1-G7 (see *Session G*) | **G1 done** - awaiting review |
 | H | Menu backgrounds | - |
 | I | Effect sprites (motes, embers, shards, shockwave rings, beams) | - |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
@@ -438,4 +438,42 @@ crystal), an onion (eyeblossom).
 **Lessons:** for hero items, hand-drawn letter maps beat geometry (the armor); a tier's materials must stay a step
 apart in value from the tier below (tier-3 steel vs tier-1 steel); anything that is a vanilla model type (shield,
 bow) is designed as that model's texture, not as an icon.
+
+## Session G - blocks, held models, armor (2026-10-01)
+**Split** (the user asked to split G where needed):
+
+| Part | Content | Status |
+|---|---|---|
+| **G1** | The block-skin technique (block-model tools, 3D preview renderer, skin service in the plugin) + Initiate's Altar, Offering Bowl, Chalk Glyph (4 variants), Arcane Altar | **Done** |
+| G2 | Rest of tier 0 (Arcane Pedestal, Brood Egg, Trophy Board, Chiming Tile) + tier 1 (Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil) | next |
+| G3 | Tier-2 blocks (Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack) | - |
+| G4 | Tier-3 blocks (Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) | - |
+| G5 | Held 3D models: Occult Codex, Wyrmbreath, Guardian's Gaze, Abyssal Anchor, Dreadlance, Soulfire Censer, Heartwood Aegis (shield model) | - |
+| G6 | Worn armor (`equippable` layers): Abyssal, Hollow | - |
+| G7 | Placed decorations (Moonlit Lily, Witchcap, Everliving Coral, jars, chime, orrery, brazier, obelisk, eyeblossom) | - |
+
+**The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
+`items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the
+vanilla block; the display stands on top of the block so it is lit by the air above, its model shifted down into the
+block). Displays have no hitbox: clicks and breaking reach the real block. Skins are saved with the chunk, re-tracked on
+load, and removed when the block is really gone (type changed) - never just because Slimefun's data isn't loaded yet.
+New placements get a skin from `SlimefunBlockPlaceEvent`; altar upgrades and debug placement call `ensure`;
+`/occultech skins [radius]` skins blocks placed before skins existed. The inventory item uses the same 3D model.
+Rule: a skin must enclose its vanilla block's shape - so a block that should look low needs a low vanilla block.
+
+**Tools:** `tools/art/blockkit.py` (Model: textured boxes -> block-model JSON; `render_iso`: a 3D preview drawn like the
+inventory shows a block), `tools/art/session_g.py` (per-block models + textures into `docs/art/session-g/<key>/`),
+`build_pack.py` now packs block models, block-atlas textures (animated via mcmeta) and `occultech-pack-skins.txt`
+(id + variant count). Self-test: skins appear, never duplicate, vanish with their block (285 checks pass).
+
+**G1 blocks**
+- Initiate's Altar - chalk-stone masonry on a dark plinth, an ember rune band, bone trim, an Initiate-sigil top that
+  breathes, four burning candles.
+- Offering Bowl - first a blackstone pedestal with a bowl on top; **the user: bowls must be lower so they don't hide
+  the altar.** A skin can't be smaller than its vanilla block, so the Offering Bowl's vanilla block is now a black
+  carpet (recipes.yml) and the skin is a thin blackstone plate with a low hammered-iron bowl of embers, ~5 px tall;
+  holograms float just above whatever is there. (Bowls placed before this stay blackstone, unskinned, until replaced.)
+- Chalk Glyph - a thin dark-slate tile over the carpet with a chalk rune; 4 variants picked by position.
+- Arcane Altar - gold-banded dark stone, ember arcane eyes on the sides, a turning star on top (full cube, so the
+  enchanting table's floating book is hidden).
 

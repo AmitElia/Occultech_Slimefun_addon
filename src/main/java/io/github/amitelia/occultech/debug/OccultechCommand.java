@@ -111,6 +111,16 @@ public final class OccultechCommand implements TabExecutor {
             }
             return true;
         }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("skins")) {
+            if (!(sender instanceof org.bukkit.entity.Player player)) {
+                sender.sendMessage("Run it in game: it skins the Occultech blocks around you.");
+                return true;
+            }
+            int radius = args.length > 1 ? Math.min(64, Integer.parseInt(args[1])) : 24;
+            int made = plugin.skins().ensureAround(player.getLocation(), radius);
+            sender.sendMessage("Skinned " + made + " Occultech block(s) within " + radius + " blocks (" + plugin.skins().count() + " skins tracked).");
+            return true;
+        }
         if (args.length == 1 && args[0].equalsIgnoreCase("pack")) {
             var pack = plugin.resourcePack();
             sender.sendMessage("Resource pack: mode " + pack.mode() + ", " + pack.modelCount() + " item models, "
@@ -140,7 +150,7 @@ public final class OccultechCommand implements TabExecutor {
             }
             return true;
         }
-        sender.sendMessage("Usage: /" + label + " <selftest | showcase [clear] | restock x y z BOSS | inspect x y z | pack>");
+        sender.sendMessage("Usage: /" + label + " <selftest | showcase [clear] | restock x y z BOSS | inspect x y z | pack | skins [radius]>");
         return true;
     }
 

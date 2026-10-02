@@ -46,6 +46,9 @@ boss/tier2/      AbyssalWarden, Tidebreaker, BlazeChoir, Tempest, DrownedElder +
 boss/tier3/      HollowWarlord, HeartwoodHorror, DreadRiders, CorruptedColossus, Doppelganger (Mannequin), Gallus (final
                  boss, 3 phases) + Tier3Bosses
 debug/           /occultech command: selftest (in-game integration test), showcase [clear]
+pack/            ResourcePackService: the resource pack built by tools/art/build_pack.py (src/main/pack, unfiltered),
+                 item_model per item, Nexo hand-off or a self-hosted web server (config resource-pack.*)
+items/BlockSkinService  block skins: an item display with Occultech's model over each placed block (Session G)
 ```
 
 **Bosses:** recipes.yml `bosses:` gives name/tier/drops/offerings; behavior is a `BossBehavior` subclass registered in

@@ -232,12 +232,14 @@ final class SelfTest {
         ItemStack silver = SlimefunItem.getById(ItemKeys.slimefunId("WARDED_SILVER")).getItem();
         var model = silver.getItemMeta() == null ? null : silver.getItemMeta().getItemModel();
         check("items with art get their occultech model", model != null && model.toString().equals("occultech:warded_silver"), String.valueOf(model));
-        ItemStack altar = SlimefunItem.getById(ItemKeys.slimefunId("ARCANE_ALTAR")).getItem();
+        ItemStack altar = SlimefunItem.getById(ItemKeys.slimefunId("ARCANE_PEDESTAL")).getItem();   // (no art yet: Session G2)
         check("items without art keep their vanilla look", altar.getItemMeta() == null || !altar.getItemMeta().hasItemModel(), "has a model");
         long modelled = plugin.catalog().items().stream().filter(i -> i.tier() <= ContentRegistrar.IMPLEMENTED_TIER)
             .map(i -> SlimefunItem.getById(ItemKeys.slimefunId(i.id()))).filter(java.util.Objects::nonNull)
             .filter(i -> i.getItem().getItemMeta() != null && i.getItem().getItemMeta().hasItemModel()).count();
         check(pack.modelCount() + " registered items carry a model", modelled == pack.modelCount(), modelled + " carry one");
+        check("blocks are skinned (Initiate's Altar, Offering Bowl, glyphs...)", plugin.skins().isSkinned(ItemKeys.slimefunId("INITIATE_ALTAR"))
+            && plugin.skins().isSkinned(ItemKeys.slimefunId("OFFERING_BOWL")), "no skins in the pack");
         if ("self-host".equals(pack.mode()) && pack.url() != null) {
             try {
                 java.net.URI local = java.net.URI.create("http://localhost:" + pack.url().getPort() + pack.url().getPath());
@@ -280,6 +282,17 @@ final class SelfTest {
     }
 
     private void circleDetection() {
+        // block skins: the altar and the glyphs placed by the build got their skin displays
+        Block glyphBlock = altar.getRelative(-2, 0, -2);
+        org.bukkit.entity.ItemDisplay altarSkin = plugin.skins().ensure(altar);
+        check("the altar wears its skin", altarSkin != null && altarSkin.getItemStack().getItemMeta().hasItemModel()
+            && altarSkin.getItemStack().getItemMeta().getItemModel().toString().equals("occultech:initiate_altar"),
+            altarSkin == null ? "no skin" : String.valueOf(altarSkin.getItemStack().getItemMeta().getItemModel()));
+        org.bukkit.entity.ItemDisplay glyphSkin = plugin.skins().ensure(glyphBlock);
+        check("a chalk glyph wears one of its 4 skins", glyphSkin != null
+            && glyphSkin.getItemStack().getItemMeta().getItemModel().getKey().startsWith("chalk_glyph"),
+            glyphSkin == null ? "no skin (" + BlockStorage.checkID(glyphBlock) + ")" : String.valueOf(glyphSkin.getItemStack().getItemMeta().getItemModel()));
+        check("ensure is idempotent (no second skin)", plugin.skins().ensure(altar) == altarSkin, "a second display");
         Optional<RitualService.CircleCheck> check = rituals.checkCircle(altar);
         check("altar recognised", check.isPresent(), "id " + BlockStorage.checkID(altar));
         check("complete circle detected", check.isPresent() && check.get().complete(), check.map(c -> c.missing().size() + " missing").orElse("-"));
@@ -287,6 +300,8 @@ final class SelfTest {
         Block corner = altar.getRelative(-2, 0, -2);
         BlockStorage.clearBlockInfo(corner);
         corner.setType(Material.AIR);
+        plugin.skins().validate();
+        check("a removed block loses its skin", glyphSkin == null || !glyphSkin.isValid(), "the skin is still there");
         Optional<RitualService.CircleCheck> broken = rituals.checkCircle(altar);
         check("missing glyph detected", broken.isPresent() && broken.get().missing().size() == 1, broken.map(c -> c.missing().size() + " missing").orElse("-"));
         DebugWorld.placeSlimefun(corner, Circles.CHALK_GLYPH, block -> {});

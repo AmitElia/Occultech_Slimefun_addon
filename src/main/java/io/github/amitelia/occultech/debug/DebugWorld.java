@@ -47,6 +47,9 @@ final class DebugWorld {
             skull.update(true, false);
         }
         BlockStorage.store(block, id);
+        if (io.github.amitelia.occultech.Occultech.instance().skins() != null) {
+            io.github.amitelia.occultech.Occultech.instance().skins().ensure(block);
+        }
         return true;
     }
 
