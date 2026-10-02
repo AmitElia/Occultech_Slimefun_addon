@@ -311,7 +311,7 @@ def arcane_pedestal():
 def brood_egg():
     """The Brood Egg (vanilla: sniffer egg): blocky like the sniffer egg it covers - a squarish egg sac 14 wide, 12
     deep and a block tall - of spider silk wound with bands of thread, dark eggs pressing against it from inside,
-    crimson veins pulsing through it (animated); a low cap of silk on top with a strand rising from it."""
+    crimson veins pulsing through it (animated); a low cap of silk on top."""
     m = Model("brood_egg")
     bone, cr, ink = RAMPS["bone"], RAMPS["crimson"], RAMPS["ink"]
     frames = []
@@ -338,7 +338,6 @@ def brood_egg():
     t_top = m.texture("top", top)
     m.cube((0.8, 0, 1.8), (15.2, 16, 14.2), t, top=t_top, bottom=t_top)
     m.cube((3, 16, 4), (13, 17.2, 12), (t, [3, 0, 13, 1]), top=t_top)
-    m.box((7.5, 17.2, 7.5), (8.5, 20, 8.5), {d: (t, [0, 0, 1, 3]) for d in ("north", "south", "west", "east")})
     return m
 
 
@@ -1194,7 +1193,7 @@ VANILLA_FIRE = os.path.join(os.path.dirname(__file__), "vanilla_fire")   # fire_
 
 def prismatic_fire(palette=0):
     """Prismatic fire (shown by the plugin over a lit Prismatic Netherrack, in place of vanilla fire): vanilla's own
-    fire - its two flame textures and its floor-fire shape (four crossed, leaning planes) - recoloured so its hue runs
+    fire - its two flame textures, in the classic fire shape (a box of flame walls round an X) - recoloured so its hue runs
     through the palette, rolling upward and through time like the first version's sparks; the brightness of every
     pixel is vanilla's, so it flickers exactly like fire. Glows (light_emission). Animated like vanilla (32 frames)."""
     import colorsys
@@ -1229,14 +1228,16 @@ def prismatic_fire(palette=0):
         refs.append(m.texture(t_name.replace("fire", "flame"), frames))
         m.mcmeta[t_name.replace("fire", "flame")] = meta   # vanilla's timing
     f0, f1 = refs
-    # vanilla's floor fire (template_fire_floor), each plane drawn from both sides so the item display shows it all round
-    for (frm, to, axis, angle, faces, ref) in (
-            ((0, 0, 8.8), (16, 22.4, 8.8), "x", -22.5, ("south", "north"), f0),
-            ((0, 0, 7.2), (16, 22.4, 7.2), "x", 22.5, ("north", "south"), f1),
-            ((8.8, 0, 0), (8.8, 22.4, 16), "z", -22.5, ("west", "east"), f0),
-            ((7.2, 0, 0), (7.2, 22.4, 16), "z", 22.5, ("east", "west"), f1)):
-        el = m.box(frm, to, {faces[0]: (ref, [0, 0, 16, 16]), faces[1]: (ref, [16, 0, 0, 16])}, shade=False, light=15)
-        el["rotation"] = {"origin": [8, 8, 8], "axis": axis, "angle": angle, "rescale": True}
+    # the classic fire shape: a box of four flame walls just inside the block's sides and an X of two flames through
+    # its middle; every plane drawn from both sides so the item display shows it all round
+    for (frm, to, faces, ref) in (((0, 0, 0.3), (16, 16, 0.3), ("north", "south"), f0),
+                                  ((0, 0, 15.7), (16, 16, 15.7), ("south", "north"), f1),
+                                  ((0.3, 0, 0), (0.3, 16, 16), ("west", "east"), f1),
+                                  ((15.7, 0, 0), (15.7, 16, 16), ("east", "west"), f0)):
+        m.box(frm, to, {faces[0]: (ref, [0, 0, 16, 16]), faces[1]: (ref, [16, 0, 0, 16])}, shade=False, light=15)
+    for angle, ref in ((45, f0), (-45, f1)):
+        el = m.box((0, 0, 8), (16, 16, 8), {"north": (ref, [0, 0, 16, 16]), "south": (ref, [16, 0, 0, 16])}, shade=False, light=15)
+        el["rotation"] = {"origin": [8, 8, 8], "axis": "y", "angle": angle, "rescale": True}
     return m
 
 
