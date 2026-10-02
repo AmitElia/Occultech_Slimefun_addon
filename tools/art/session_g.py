@@ -434,15 +434,18 @@ def chiming_tile():
     return m
 
 
-def tier_glyph(key, chalk_ramp, base_ramp, glow_ramp, variant, glow=False):
+def tier_glyph(key, chalk_ramp, base_ramp, glow_ramp, variant, glow=False, base_img=None):
     """A circle glyph tile over a carpet: dark slate, a rune drawn in the tier's chalk, dust, a faint glow in the rune's
     heart. glow: the rune also burns with its own light - a second, emissive layer over the tile (light_emission 15, so
     it shines in the dark) with a soft halo round the strokes, pulsing (animated)."""
     m = Model(key + ("" if variant == 0 else f"_v{variant}"))
     rnd = random.Random(170 + variant)
-    top = slab_top(base_ramp, 160 + variant, tone=2)
-    for _ in range(18):
-        top.putpixel((rnd.randrange(16), rnd.randrange(16)), base_ramp[3])
+    if base_img is not None:   # the tier's own surface (Hollow: living sculk)
+        top = base_img.copy()
+    else:
+        top = slab_top(base_ramp, 160 + variant, tone=2)
+        for _ in range(18):
+            top.putpixel((rnd.randrange(16), rnd.randrange(16)), base_ramp[3])
     rune = GLYPH_RUNES[(variant + 1) % 4]
     strokes = [(4 + x, 4 + y) for y, row in enumerate(rune) for x, c in enumerate(row) if c == "#"]
     for (x, y) in strokes:
@@ -1292,109 +1295,248 @@ def sculk_stone(seed, tone=2):
     return img
 
 
-def hollow_assembler():
-    """The Hollow Assembler (vanilla: crafter): an armoured machine of sculk-black plate and old bone ribs; on each side
-    a ribbed vent where hollow-cyan light runs up in pulses (animated, glowing); a crimson core eye in each vent; its
-    top a 3x3 grid of glowing assembly cells (its nine input slots) in a bone frame, lighting in turn."""
-    m = Model("hollow_assembler")
-    sk, hc, bone, cr = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["bone"], RAMPS["crimson"]
-    plate_img = sculk_stone(401, tone=2)
-    rim(plate_img, sk[4], sk[0])
-    for x in range(16):
-        plate_img.putpixel((x, 2), bone[2]); plate_img.putpixel((x, 13), bone[2])
+DEEPSLATE = hexes("#141418", "#24242b", "#35353e", "#4a4a54", "#62626c", "#7e7e88")   # ancient-city stone
+
+
+def sculk(seed, frames=4, glow=True, spots=5):
+    """Sculk, tileable: irregular cells (a torus Voronoi) of dark teal, lighter at their hearts, split by near-black
+    crevices; a few cells hold soul spots that pulse in turn (animated). Returns frames (or one image)."""
+    sk, hc = RAMPS["sculk"], RAMPS["hollowcy"]
+    rnd = random.Random(seed)
+    cells = [(rnd.uniform(0, 16), rnd.uniform(0, 16)) for _ in range(11)]
+    soul = rnd.sample(range(len(cells)), spots)
+    base = blank()
+    owner = {}
     for y in range(16):
-        plate_img.putpixel((2, y), bone[3]); plate_img.putpixel((13, y), bone[1])
-    t_body = m.texture("body", plate_img)
-    vents = []
-    for f in range(8):
-        v = blank()
+        for x in range(16):
+            ds = []
+            for i, (cx, cy) in enumerate(cells):
+                dx, dy = abs(x + 0.5 - cx), abs(y + 0.5 - cy)
+                dx, dy = min(dx, 16 - dx), min(dy, 16 - dy)
+                ds.append((math.hypot(dx, dy), i))
+            ds.sort()
+            (d1, i1), (d2, _) = ds[0], ds[1]
+            owner[(x, y)] = (i1, d1)
+            if d2 - d1 < 0.9:
+                c = sk[0] if (x + y) % 3 else sk[1]
+            else:
+                c = sk[4] if d1 < 1.2 else sk[3] if d1 < 2.4 else sk[2]
+            base.putpixel((x, y), c)
+    if not glow:
+        return base
+    out = []
+    for f in range(frames):
+        img = base.copy()
+        for n, i in enumerate(soul):
+            level = [2, 3, 4, 5, 4, 3][(f + n * 2) % 6] if frames > 1 else 3
+            for (x, y), (o, d) in owner.items():
+                if o == i and d < 1.1:
+                    img.putpixel((x, y), hc[level])
+                elif o == i and d < 1.8 and level >= 4:
+                    img.putpixel((x, y), hc[2])
+        out.append(img)
+    return out if frames > 1 else out[0]
+
+
+def soul_glow(frames_imgs):
+    """Just the glowing soul pixels of sculk frames (for an emissive layer over the face)."""
+    hc = RAMPS["hollowcy"]
+    out = []
+    for img in frames_imgs:
+        g = blank()
         for y in range(16):
             for x in range(16):
-                rib = y % 3 == 0
-                pulse = (y + f * 2) % 16 < 4
-                v.putpixel((x, y), sk[1] if rib else (hc[3] if pulse else hc[1]))
-        put(v, [(7, 7), (8, 7), (7, 8), (8, 8)], cr[[3, 4, 5, 4, 3, 4, 5, 4][f]])
-        put(v, [(7, 7)], cr[5])
-        vents.append(v)
-    t_vent = m.texture("vent", vents)
+                c = img.getpixel((x, y))
+                if c in hc[3:]:
+                    g.putpixel((x, y), c)
+        out.append(g)
+    return out
+
+
+def bone_tex(seed, tone=3):
+    """Old bone: pale, with a lit edge, grain along its length and a few pits - not a flat fill."""
+    bone = RAMPS["bone"]
+    rnd = random.Random(seed)
+    img = blank()
+    for y in range(16):
+        for x in range(16):
+            t = tone + (1 if x < 3 else -1 if x > 12 else 0)
+            if (y * 3 + x) % 7 == 0:
+                t -= 1
+            img.putpixel((x, y), bone[max(1, min(5, t))])
+    for _ in range(6):
+        img.putpixel((rnd.randrange(16), rnd.randrange(16)), bone[1])
+    return img
+
+
+def deepslate_tiles(seed, overgrown=0, frames=1):
+    """Ancient-city deepslate tiles (4x4 tiles with dark seams), with sculk creeping down from the top over `overgrown`
+    rows in a ragged edge. Returns frames (or one image)."""
+    ds = DEEPSLATE
+    rnd = random.Random(seed)
+    tile = blank()
+    for y in range(16):
+        for x in range(16):
+            if y % 4 == 3 or x % 4 == 3:
+                tile.putpixel((x, y), ds[0])
+            else:
+                t = 2 + (1 if (x % 4 == 0 or y % 4 == 0) else 0) - (1 if rnd.random() < 0.12 else 0)
+                tile.putpixel((x, y), ds[t])
+    if not overgrown:
+        return tile
+    edge = [overgrown + rnd.choice((-2, -1, 0, 0, 1, 2)) for _ in range(16)]
+    sk_frames = sculk(seed + 7, frames=frames) if frames > 1 else [sculk(seed + 7, frames=1)]
+    out = []
+    for skf in sk_frames:
+        img = tile.copy()
+        for x in range(16):
+            for y in range(max(0, edge[x])):
+                img.putpixel((x, y), skf.getpixel((x, y)))
+            if 0 <= edge[x] < 16:
+                img.putpixel((x, edge[x]), RAMPS["sculk"][0])
+        out.append(img)
+    return out if frames > 1 else out[0]
+
+
+def hollow_assembler():
+    """The Hollow Assembler (vanilla: crafter): a forge of the ancient cities - a block of deepslate tiles in a frame of
+    reinforced deepslate, sculk creeping over its upper half and pulsing; on each side a bone-ribbed arch with soul fire
+    burning behind it (animated, glowing); on top nine bone sockets (its nine inputs) cut into sculk, a faint soul
+    light in each."""
+    m = Model("hollow_assembler")
+    sk, hc, bone, ds = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["bone"], DEEPSLATE
+    sides = deepslate_tiles(501, overgrown=6, frames=4)
+    flames = []
+    rnd = random.Random(503)
+    for f in range(8):
+        fl = blank()
+        for x in range(5, 11):   # soul fire in the arch
+            h = 3 + rnd.randrange(4) + (1 if 7 <= x <= 8 else 0)
+            for k in range(h):
+                fl.putpixel((x, 14 - k), hc[5] if k == 0 else hc[4] if k < 2 else hc[3] if k < h - 1 else hc[2])
+        flames.append(fl)
+    arch = []
+    for img in sides:
+        a = img.copy()
+        for y in range(7, 15):   # the dark of the arch
+            for x in range(5, 11):
+                if not (y == 7 and x in (5, 10)):
+                    a.putpixel((x, y), sk[0])
+        for y in range(8, 15):   # bone bars across it
+            for x in (6, 9):
+                a.putpixel((x, y), bone[3] if y % 2 else bone[2])
+        put(a, [(x, 6) for x in range(5, 11)] + [(4, y) for y in range(7, 15)] + [(11, y) for y in range(7, 15)], bone[4])
+        put(a, [(x, 15) for x in range(4, 12)], bone[2])
+        arch.append(a)
+    t_side, t_fire = m.texture("side", arch), m.texture("fire", flames)
+    t_glow = m.texture("souls", soul_glow(arch))
+    top_frames = sculk(505, frames=4, spots=3)
     tops = []
-    for f in range(9):
-        top = sculk_stone(403, tone=1)
-        rim(top, bone[3], bone[1])
+    for f, img in enumerate(top_frames):
+        top = img.copy()
         for i in range(3):
             for j in range(3):
                 x0, y0 = 2 + i * 4, 2 + j * 4
-                lit = (i + j * 3) == f
-                for y in range(y0, y0 + 4):
-                    for x in range(x0, x0 + 4):
-                        edge = x in (x0, x0 + 3) or y in (y0, y0 + 3)
-                        top.putpixel((x, y), sk[1] if edge else (hc[5] if lit else hc[3]))
+                for (x, y) in ((x0, y0), (x0 + 1, y0), (x0 + 2, y0), (x0, y0 + 1), (x0 + 2, y0 + 1), (x0, y0 + 2), (x0 + 1, y0 + 2), (x0 + 2, y0 + 2)):
+                    top.putpixel((x, y), bone[4] if (x == x0 or y == y0) else bone[2])
+                top.putpixel((x0 + 1, y0 + 1), hc[4] if (i + j * 3 + f) % 4 == 0 else hc[2])
         tops.append(top)
     t_top = m.texture("top", tops)
-    t_bone = m.texture("bone", rim(fill(bone, 2), bone[4], bone[1]))
-    m.cube((0, 0, 0), (16, 16, 16), t_body, top=t_top, bottom=t_body)
-    for (frm, to, d) in (((4, 3, -0.2), (12, 13, -0.2), "north"), ((4, 3, 16.2), (12, 13, 16.2), "south"),
-                         ((-0.2, 3, 4), (-0.2, 13, 12), "west"), ((16.2, 3, 4), (16.2, 13, 12), "east")):
-        m.box(frm, to, {d: (t_vent, [4, 3, 12, 13])}, light=10)
-    m.box((2, 16.05, 2), (14, 16.05, 14), {"up": (t_top, [2, 2, 14, 14])}, light=12)
-    for (x, z) in ((-0.3, -0.3), (14.8, -0.3), (-0.3, 14.8), (14.8, 14.8)):   # bone corner ribs
-        m.cube((x, 0, z), (x + 1.5, 16.3, z + 1.5), (t_bone, [0, 0, 2, 16]), top=(t_bone, [0, 0, 2, 2]))
+    frame_img = blank()
+    for y in range(16):
+        for x in range(16):
+            frame_img.putpixel((x, y), ds[3] if (x + y) % 5 else ds[2])
+    rim(frame_img, ds[5], ds[1])
+    t_frame = m.texture("frame", frame_img)
+    m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=t_frame)
+    for (d, frm, to) in (("north", (0, 0, -0.05), (16, 16, -0.05)), ("south", (0, 0, 16.05), (16, 16, 16.05)),
+                         ("west", (-0.05, 0, 0), (-0.05, 16, 16)), ("east", (16.05, 0, 0), (16.05, 16, 16))):
+        m.box(frm, to, {d: t_fire}, shade=False, light=13)
+        m.box(frm, to, {d: t_glow}, shade=False, light=15)
+    for (x, z) in ((-0.4, -0.4), (14.4, -0.4), (-0.4, 14.4), (14.4, 14.4)):   # reinforced corners
+        m.cube((x, 0, z), (x + 2, 16.2, z + 2), (t_frame, [0, 0, 2, 16]), top=(t_frame, [0, 0, 2, 2]))
+    m.cube((-0.4, 0, -0.4), (16.4, 1.5, 16.4), (t_frame, [0, 0, 16, 2]), top=(t_frame, [0, 0, 16, 16]))   # foot
     return m
 
 
 def hollow_glyph(variant=0):
-    """A Hollow Glyph (vanilla: gray carpet): hollow-cyan runes on sculk-black slate, burning with their own light."""
-    return tier_glyph("hollow_glyph", RAMPS["hollowcy"], RAMPS["sculk"], RAMPS["hollowcy"], variant, glow=True)
+    """A Hollow Glyph (vanilla: gray carpet): a thin slab of living sculk with a hollow-cyan rune burning in it."""
+    return tier_glyph("hollow_glyph", RAMPS["hollowcy"], RAMPS["sculk"], RAMPS["hollowcy"], variant, glow=True,
+                      base_img=sculk(520 + variant, frames=1, spots=2))
 
 
 def hollow_altar():
-    """The Hollow Altar (vanilla: crying obsidian; the Abyssal Altar upgrades into it): a block of sculk-black stone
-    split by glowing hollow-cyan rifts (animated, emitting light), gripped at its corners by old bone claws that curl up
-    past its top; on top the Hollow Sigil - the bold eight-pointed star - in cyan round a crimson heart that beats."""
+    """The Hollow Altar (vanilla: crying obsidian; the Abyssal Altar upgrades into it): the summit of the altars - an
+    ancient-city altar of deepslate tiles on a reinforced plinth, half swallowed by sculk that pulses with souls (its
+    soul spots glow); on top a sculk catalyst's crown - a bone-rimmed dais with the Hollow star burning in cyan round a
+    beating crimson heart; at its corners great bone fangs like a shrieker's curve up and inward, and between them
+    sculk-sensor tendrils of cyan light sway (animated, glowing)."""
     m = Model("hollow_altar")
-    sk, hc, bone, cr = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["bone"], RAMPS["crimson"]
-    base = bricks(sk, 451, row_h=5, brick_w=8, tones=(1, 2, 2))
-    rift = [(3, 15), (3, 14), (4, 13), (4, 12), (5, 11), (5, 10), (6, 9), (6, 8), (7, 7), (8, 6), (8, 5), (9, 4), (9, 3),
-            (10, 2), (10, 1), (11, 0), (5, 12), (12, 9), (12, 10), (13, 11)]
-    sides, glows = [], []
-    for f in range(6):
-        side = base.copy()
+    sk, hc, bone, cr, ds = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["bone"], RAMPS["crimson"], DEEPSLATE
+    sides = deepslate_tiles(551, overgrown=9, frames=6)
+    t_side = m.texture("side", sides)
+    t_souls = m.texture("souls", soul_glow(sides))
+    plinth = blank()
+    for y in range(16):
         for x in range(16):
-            side.putpixel((x, 0), bone[3]); side.putpixel((x, 15), sk[0])
-        sides.append(side)
-        g = blank()
-        for i, (x, y) in enumerate(rift):
-            g.putpixel((x, y), hc[[3, 4, 5, 4, 3, 2][(i // 3 + f) % 6]])
-        glows.append(g)
-    t_side, t_rift = m.texture("side", sides[0]), m.texture("rift", glows)
-    tops, stars = [], []
+            plinth.putpixel((x, y), ds[3] if (x // 2 + y) % 3 else ds[4])
+    rim(plinth, ds[5], ds[0])
+    t_plinth = m.texture("plinth", plinth)
+    dais = sculk(553, frames=1, spots=0)
+    rim(dais, bone[4], bone[2])
+    for i in range(16):   # the catalyst's bone rim, two pixels deep
+        dais.putpixel((i, 1), bone[3]); dais.putpixel((1, i), bone[3]); dais.putpixel((i, 14), bone[2]); dais.putpixel((14, i), bone[2])
+    t_dais = m.texture("dais", dais)
+    stars = [hollow_star(blank(), 8, 8, 6.2, 2.8, hc[3], hc[4], core=cr[[3, 4, 5, 5, 4, 3][f]]) for f in range(6)]
+    t_star = m.texture("star", stars)
+    t_bone = m.texture("bone", bone_tex(555, tone=3))
+    t_fang = m.texture("fang", bone_tex(557, tone=4))
+    tendrils = []
     for f in range(6):
-        top = sculk_stone(453, tone=1)
-        rim(top, bone[3], sk[0])
-        tops.append(top)
-        star = hollow_star(blank(), 8, 8, 7.2, 3.2, hc[3], hc[4], core=cr[[3, 4, 5, 5, 4, 3][f]])
-        stars.append(star)
-    t_top, t_star = m.texture("top", tops[0]), m.texture("star", stars)
-    t_bone = m.texture("bone", rim(fill(bone, 3), bone[5], bone[1]))
-    m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=t_top)
-    for (d, frm, to) in (("north", (0, 0, -0.05), (16, 16, -0.05)), ("south", (0, 0, 16.05), (16, 16, 16.05)),
-                         ("west", (-0.05, 0, 0), (-0.05, 16, 16)), ("east", (16.05, 0, 0), (16.05, 16, 16))):
-        m.box(frm, to, {d: t_rift}, shade=False, light=15)
-    m.box((0, 16.05, 0), (16, 16.05, 16), {"up": t_star}, shade=False, light=15)
-    for (x, z, dx, dz) in ((-0.6, -0.6, 1, 1), (14.1, -0.6, -1, 1), (-0.6, 14.1, 1, -1), (14.1, 14.1, -1, -1)):
-        m.cube((x, 1, z), (x + 2.5, 15, z + 2.5), (t_bone, [0, 0, 3, 14]), top=(t_bone, [0, 0, 3, 3]))   # the claw's shaft
-        m.cube((x, 15, z), (x + 2.5, 18, z + 2.5), (t_bone, [0, 0, 3, 3]), top=(t_bone, [0, 0, 3, 3]))
-        cx, cz = x + dx * 1.2, z + dz * 1.2   # its tip curling in over the top
-        m.cube((cx + 0.4, 18, cz + 0.4), (cx + 2.1, 20, cz + 2.1), (t_bone, [0, 0, 2, 2]), top=(t_bone, [0, 0, 2, 2]))
+        t = blank()
+        sway = [0, 1, 1, 0, -1, -1][f]
+        for y in range(16):
+            x = 7 + (sway if y < 6 else 0)
+            t.putpixel((x, y), hc[5] if y < 3 else hc[4] if y < 8 else hc[3])
+            t.putpixel((x + 1, y), hc[3] if y < 8 else hc[2])
+        tendrils.append(t)
+    t_tendril = m.texture("tendril", tendrils)
+    # the block, its glowing souls, the plinth
+    m.cube((0, 1.5, 0), (16, 16, 16), (t_side, [0, 0, 16, 14.5]), top=t_dais, bottom=t_plinth)
+    for (d, frm, to) in (("north", (0, 1.5, -0.05), (16, 16, -0.05)), ("south", (0, 1.5, 16.05), (16, 16, 16.05)),
+                         ("west", (-0.05, 1.5, 0), (-0.05, 16, 16)), ("east", (16.05, 1.5, 0), (16.05, 16, 16))):
+        m.box(frm, to, {d: (t_souls, [0, 0, 16, 14.5])}, shade=False, light=15)
+    m.cube((-0.6, 0, -0.6), (16.6, 1.5, 16.6), (t_plinth, [0, 0, 16, 2]), top=t_plinth, bottom=t_plinth)
+    # the dais and the star
+    m.cube((3, 16, 3), (13, 17.2, 13), (t_dais, [3, 0, 13, 1]), top=(t_dais, [3, 3, 13, 13]))
+    m.box((3.2, 17.25, 3.2), (12.8, 17.25, 12.8), {"up": (t_star, [1, 1, 15, 15])}, shade=False, light=15)
+    # fangs: from each corner a slim bone tooth rising and hooking inward, like a shrieker's, in narrowing steps
+    for (sx, sz) in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
+        cx, cz = (1.4 if sx < 0 else 14.6), (1.4 if sz < 0 else 14.6)   # the fang's root at the corner
+        steps = ((2.4, 13.5, 17.0, 0.0), (2.0, 17.0, 19.5, 0.5), (1.6, 19.5, 21.5, 1.2), (1.1, 21.5, 23.0, 2.0), (0.7, 23.0, 24.2, 2.8))
+        for (w, y0, y1, lean) in steps:
+            x, z = cx - sx * lean, cz - sz * lean   # leaning in toward the middle as it rises
+            m.cube((x - w / 2, y0, z - w / 2), (x + w / 2, y1, z + w / 2), (t_fang, [0, 0, max(1, round(w)), round(y1 - y0)]),
+                   top=(t_fang, [0, 0, max(1, round(w)), max(1, round(w))]))
+    # sensor tendrils between the fangs, mid-edge
+    for (x, z, faces) in ((7.5, 0.6, ("north", "south")), (7.5, 15.4, ("north", "south")),
+                          (0.6, 7.5, ("west", "east")), (15.4, 7.5, ("west", "east"))):
+        if faces[0] == "north":
+            m.box((x - 1, 16, z), (x + 1, 21, z), {faces[0]: (t_tendril, [6, 0, 9, 16]), faces[1]: (t_tendril, [9, 0, 6, 16])},
+                  shade=False, light=15)
+        else:
+            m.box((x, 16, z - 1), (x, 21, z + 1), {faces[0]: (t_tendril, [6, 0, 9, 16]), faces[1]: (t_tendril, [9, 0, 6, 16])},
+                  shade=False, light=15)
     return m
 
 
 def servitor_nexus():
-    """The Servitor Nexus (vanilla: conduit, a small cube in the middle of its block): a bone-and-sculk cage - a
-    stepped plinth, four bone posts, a crowning ring - holding a heart of hollow-cyan light that churns (animated,
-    glowing), the linked shrines' spirits circling inside it."""
+    """The Servitor Nexus (vanilla: conduit, a small cube in the middle of its block): a heart of hollow-cyan light
+    held in a ribcage - curved bone ribs round it from a spine at its back, open at the front where the ribs fall
+    short of meeting - the whole cage rooted in a mound of sculk; the heart churns, the linked spirits circling in it
+    (animated, glowing)."""
     m = Model("servitor_nexus")
-    sk, hc, bone, cr = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["bone"], RAMPS["crimson"]
+    sk, hc, bone = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["bone"]
     hearts = []
     for f in range(8):
         h = fill(hc, 3)
@@ -1408,20 +1550,35 @@ def servitor_nexus():
             put(h, [(int(sx), int(sy))], (255, 255, 255, 255))
         hearts.append(h)
     t_heart = m.texture("heart", hearts)
-    t_bone = m.texture("bone", rim(fill(bone, 3), bone[5], bone[1]))
-    stone = sculk_stone(471, tone=2)
-    rim(stone, sk[4], sk[0])
-    hollow_star(stone, 8, 8, 6.4, 2.8, bone[2], bone[3])
-    t_stone = m.texture("stone", stone)
-    m.cube((1, 0, 1), (15, 2, 15), (t_stone, [1, 0, 15, 2]), top=t_stone, bottom=t_stone)          # plinth
-    m.cube((3, 2, 3), (13, 3.5, 13), (t_stone, [3, 0, 13, 2]), top=t_stone)
+    t_rib = m.texture("rib", bone_tex(571, tone=3))
+    t_spine = m.texture("spine", bone_tex(573, tone=2))
+    mound = sculk(575, frames=4, spots=3)
+    t_mound = m.texture("mound", mound)
+    t_mound_glow = m.texture("mound_glow", soul_glow(mound))
+    # the sculk mound it grows from
+    m.cube((1, 0, 1), (15, 2, 15), (t_mound, [1, 0, 15, 2]), top=t_mound, bottom=t_mound)
+    m.cube((3, 2, 3), (13, 3.5, 13), (t_mound, [3, 0, 13, 2]), top=(t_mound, [3, 3, 13, 13]))
+    m.box((1, 2.05, 1), (15, 2.05, 15), {"up": (t_mound_glow, [1, 1, 15, 15])}, shade=False, light=15)
+    # the heart
     m.box((4.6, 4.6, 4.6), (11.4, 11.4, 11.4), {d: (t_heart, [2, 2, 14, 14]) for d in FACES_ALL}, shade=False, light=15)
-    for (x, z) in ((2, 2), (12.5, 2), (2, 12.5), (12.5, 12.5)):
-        m.cube((x, 3.5, z), (x + 1.5, 14, z + 1.5), (t_bone, [0, 0, 2, 11]), top=(t_bone, [0, 0, 2, 2]))
-    for (frm, to) in (((2, 14, 2), (14, 15.5, 3.5)), ((2, 14, 12.5), (14, 15.5, 14)),
-                      ((2, 14, 3.5), (3.5, 15.5, 12.5)), ((12.5, 14, 3.5), (14, 15.5, 12.5))):   # the crowning ring
-        m.cube(frm, to, (t_bone, [0, 0, 12, 2]), top=(t_bone, [0, 0, 12, 2]), bottom=(t_bone, [0, 0, 12, 2]))
-    m.box((7, 15.5, 7), (9, 18, 9), {d: (t_heart, [7, 7, 9, 9]) for d in FACES_ALL}, shade=False, light=15)   # a crest
+    # the spine at the back (south, +z), vertebrae stepping
+    for y in range(3, 16, 2):
+        m.cube((7, y, 13.2), (9, y + 1.6, 15), (t_spine, [0, 0, 2, 2]), top=(t_spine, [0, 0, 2, 2]))
+    # ribs: four, each curving from the spine round one side toward the front and sloping down as real ribs do,
+    # stopping short of meeting; longest in the middle of the cage
+    for y, reach in ((6.0, 0.8), (8.8, 1.0), (11.6, 0.9), (14.0, 0.55)):
+        h, r = 0.9, 3.2 + 3.2 * reach
+        for side in (-1, 1):
+            segs = [((8 + side * 1, 13.4), (8 + side * 4.0, 14.3), 0.0),          # leaving the spine
+                    ((8 + side * 4.0, 11.4), (8 + side * (r - 0.4), 13.4), -0.4),  # bending round the back
+                    ((8 + side * (r - 0.4), 6.0), (8 + side * (r + 0.6), 11.4), -0.9),  # down the side
+                    ((8 + side * (r - 1.6), 4.0), (8 + side * (r - 0.4), 6.0), -1.5),   # turning to the front
+                    ((8 + side * (r - 3.2), 3.2), (8 + side * (r - 1.6), 4.2), -2.0)]   # the tip
+            for (ax, az), (bx, bz), dy in segs:
+                x0, x1 = sorted((ax, bx))
+                z0, z1 = sorted((az, bz))
+                m.cube((x0, y + dy, z0), (x1, y + dy + h, z1), (t_rib, [0, 0, max(1, round(x1 - x0)), 1]),
+                       top=(t_rib, [0, 0, max(1, round(x1 - x0)), max(1, round(z1 - z0))]))
     return m
 
 

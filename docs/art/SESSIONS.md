@@ -473,6 +473,21 @@ crimson heart; glowing parts emit light (`light_emission`), as they will on Nexo
 - Resin Tile - polished amber-resin bricks (`RESIN`, warm but not loud; v1 was loud orange, v2 read as wood), the
   same on every side and seamless as a floor; light pools in each brick, a fly caught in one, a glint slides across.
 
+**G4 redo** (the user: "not sculky enough, a little flat and boring; the Hollow Altar looks like a major downgrade, the
+Assembler too futuristic; the Nexus nice but the bones could be nicer - maybe a ribcage"). New materials:
+`sculk()` - tileable sculk (torus Voronoi cells, dark crevices, soul spots pulsing in turn) with `soul_glow()` for an
+emissive layer of just the spots; `DEEPSLATE` / `deepslate_tiles()` - ancient-city tiles with sculk creeping down
+over them in a ragged edge; `bone_tex()` - grained, pitted bone instead of flat fills.
+- Hollow Assembler - an ancient-city forge: deepslate tiles in reinforced-deepslate corners and foot, sculk
+  overgrowing its upper half; a bone-barred arch on each side with soul fire burning behind it; nine bone sockets cut
+  into sculk on top, a soul light in each.
+- Hollow Altar - the summit of the altars: deepslate on a reinforced plinth, half swallowed by pulsing sculk; a
+  catalyst's bone-rimmed dais on top with the Hollow star and its crimson heart; slim bone fangs at the corners rising
+  and hooking inward like a shrieker's (v2's were chunky "bone towers"), sculk-sensor tendrils of light between them.
+- Servitor Nexus - the heart of light now sits in a ribcage: a vertebral spine at the back, four ribs curving round
+  and sloping down toward the front, falling short of meeting; the cage rooted in a mound of glowing sculk.
+- Hollow Glyph - its slab is living sculk now, the rune burning in it.
+
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
   its model: real blocks, so they appear and vanish instantly, render at full distance, cost no entities and can't be
