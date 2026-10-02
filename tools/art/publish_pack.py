@@ -1,14 +1,14 @@
 """Publish the resource pack into the occultech-pack folder (the public texture-pack repository).
 
 Copies the pack built by build_pack.py (src/main/pack/occultech-pack.zip - the very file packaged in the plugin jar)
-into occultech-pack/, unzips it next to it (so textures can be browsed and diffed on GitHub) and refreshes the README
+into the pack repository's clone (occultech_texture_pack_v1.0/occultech_texture_pack_v1.0), unzips it next to it (so textures can be browsed and diffed on GitHub) and refreshes the README
 with the pack's SHA-1. The server checks that hash, so the uploaded zip must be this exact file.
 
 Players download it from the raw link:
     https://raw.githubusercontent.com/AmitElia/occultech_texture_pack_v1.0/main/occultech-pack.zip
 (resource-pack.external-url in the server's plugins/Occultech/config.yml).
 
-Run after build_pack.py, then commit and push occultech-pack:
+Run after build_pack.py, then commit and push that clone:
     python tools/art/build_pack.py && python tools/art/publish_pack.py
 """
 import datetime
@@ -19,7 +19,7 @@ import zipfile
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 SRC = os.path.join(ROOT, "src", "main", "pack")
-DEST = os.path.join(ROOT, "occultech-pack")
+DEST = os.path.join(ROOT, "occultech_texture_pack_v1.0", "occultech_texture_pack_v1.0")   # the pack repository's clone
 REPO = "AmitElia/occultech_texture_pack_v1.0"
 RAW = f"https://raw.githubusercontent.com/{REPO}/main/occultech-pack.zip"
 
