@@ -564,6 +564,31 @@ carved mask, crystals and cloth).
   rune-marked panels with a gold hem, wrapped boots with bone toe caps; crystal vanes (wings layer).
 - Not seen in game yet.
 
+**G6 v4** (the user on v3: good direction, but it looks like a reskin - give it vanilla armor's 3D shape and
+pauldrons, don't cover the whole body (the hands), make the back a layer of 3D detail on the chestplate rather than an
+elytra, open the Abyssal mask up, angle its fins like the reference, real scales and cool leggings, blockier Hollow horns
+thrusting forward, a mask closer to the Psi shaman's, better textures; the electric crystals were liked).
+- **Coverage is vanilla netherite's** (`tools/art/vanilla_armor`, `CoveredCanvas`): vanilla armor reads as 3D because of
+  where it covers - chest piece with a shaped edge, pauldrons on the upper arms only, bare forearms and hands, boots,
+  leggings with a waist - with the body showing between. Painting every pixel made it a skin.
+- **The back as a chestplate layer:** the elytra's wing geometry worked out (each wing hinges at a shoulder, x = +-5,
+  crosses the back ~2 px behind it, tilted 15 degrees, flaring out lower down); `back_tex(shape(h, v, spine))` paints
+  only each wing's own half, from the hinge to where it crosses the spine, so the halves meet at the spine as a raised
+  plate across the shoulder blades and nothing hangs. Checked by projecting every painted pixel through the wings'
+  transform onto a back view (hip fins tried first - they landed beside the arms: dropped).
+- Abyssal: scales drawn as real scales (`SCALE_CELL`: a lit crown, body and the shadow cast on the row below, rows
+  offset); a keel plate down the breastbone with a sea-glow gem, pectoral rims, pauldrons of three big layered scales,
+  scale leggings with knee plates and hip fins, plated boots with a glowing toe line; back: a pair of spined fins fanning
+  from the spine up to the shoulders (rays, lit membrane, glowing rim) over a spine ridge. Helm: open-faced (the whole
+  face shows) - a crown of clean plates, a brow band with a sea-glow gem, cheek guards, two fan fins a side tilted up
+  and out (22.5 and 45 degrees), a dorsal crest.
+- Hollow: bone plaques carved with a dark groove, cloth in soft folds, a cyan crystal heart in gold, pauldrons ridged
+  like vertebrae with a crystal each, a gold sash with a crimson gem over rune-marked skirt panels; back: a gold-edged
+  carved bone plate and a fan of cut crystal shards from the spine with a few sparks. Helm: a tall Psi-style shaman mask
+  of carved bone over a dark head-wrap - flat front, carved bands with glowing marks, a heavy brow, a long nose ridge,
+  carved teeth, eye holes, a stepped crest above the head and a gold boss; blocky bone horns thrusting forward from the
+  temples with a gold band; the crystal cluster with lightning, kept.
+
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
   its model: real blocks, so they appear and vanish instantly, render at full distance, cost no entities and can't be
