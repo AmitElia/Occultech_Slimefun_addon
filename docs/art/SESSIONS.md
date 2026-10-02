@@ -510,6 +510,12 @@ definition selects on `display_context`, as vanilla's trident does. Glowing part
   puts them, so Session F's 64x64 texture (vanilla shield UV layout, animated rune) maps on unchanged; held and blocking
   models with vanilla's shield / shield_blocking displays, switched on `using_item`. Its inventory look is the model.
   (The preview can't tell whether the design is mirrored; check the rune's side in game.)
+- After review: Wyrmbreath and Guardian's Gaze have four claws at the orb's corners, hooking only over its top edges so
+  the orb/eye stays in view; the eye looks out of the scepter's tip with one round pupil roaming in a wide circle
+  (16 frames), veined sclera on its other faces. The Soulfire Censer hangs from the hand: held upright like a torch
+  (item/generated's poses, slightly larger), the fist on a ringed handle, a chain dropping to the censer below. The
+  Dreadlance's bone vamplate (odd in the hand) is now two slim steel rings. The Aegis is "not aligned correctly" in
+  game - waiting on a screenshot to see how.
 
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing

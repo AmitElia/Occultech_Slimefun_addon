@@ -1717,8 +1717,10 @@ def orb_frames(ramp, n=8, swirl=0.7):
 
 
 def scepter(key, metal_ramp, orb_ramp, eye=False):
-    """A scepter (Wyrmbreath, Guardian's Gaze): a pommel, a wrapped grip, a ringed collar, a cup from which three claw
-    prongs - one behind, two in front - rise round a glowing orb (or a guardian's eye) and hook in over it."""
+    """A scepter (Wyrmbreath, Guardian's Gaze): a pommel, a wrapped grip, a ringed collar, a cup from which four claw
+    prongs rise at the orb's corners and just hook over its top edges - the orb (or the guardian's eye) stays in full
+    view. The eye looks out of the scepter's tip (its top face): one slit-less round pupil in a sea-glow iris that
+    roams round in a wide circle (animated, 16 frames); its other faces are veined sclera."""
     m = Model(key + "_held")
     m.part = True
     t_metal = m.texture("metal", metal(metal_ramp, 601))
@@ -1727,32 +1729,41 @@ def scepter(key, metal_ramp, orb_ramp, eye=False):
         for x in range(16):
             grip.putpixel((x, y), metal_ramp[1])
     t_grip = m.texture("grip", grip)
-    if eye:
-        sg, bone, ab = RAMPS["seaglow"], RAMPS["bone"], RAMPS["abyss"]
-        frames = []
-        for f in range(8):
-            img = fill(bone, 4)
-            for y in range(16):
-                for x in range(16):
-                    dd = math.hypot(x - 7.5 - [0, 0, 1, 1, 0, 0, -1, -1][f], y - 7.5)
-                    if dd < 5.5:
-                        img.putpixel((x, y), sg[2] if dd > 4.5 else sg[4] if dd > 2.2 else ab[0])
-            put(img, [(5, 5), (6, 5)], (255, 255, 255, 255))
-            frames.append(img)
-        t_orb = m.texture("orb", frames)
-    else:
-        t_orb = m.texture("orb", orb_frames(orb_ramp))
     prism(m, 2.4, -3, -1.6, t_metal)                       # pommel
     prism(m, 1.6, -1.6, 8, t_grip)                          # grip
     prism(m, 3.0, 8, 9.4, t_metal)                          # collar
     prism(m, 1.8, 9.4, 10, t_metal)
     prism(m, 4.2, 10, 11.2, t_metal)                        # the cup
-    prism(m, 4.4, 11.2, 15.6, (t_orb, [3, 3, 13, 13]), light=15, shade=False)   # the orb
-    for (px, pz) in ((8, 10.6), (5.9, 6.2), (10.1, 6.2)):   # prongs: one behind, two in front
-        prism(m, 1.0, 10.4, 16.2, t_metal, cx=px, cz=pz)
-        ix, iz = px + (8 - px) * 0.45, pz + (8 - pz) * 0.45   # each hooks in over the orb
-        prism(m, 1.0, 16.2, 17.4, t_metal, cx=ix, cz=iz)
-        prism(m, 0.7, 17.4, 18.4, t_metal, cx=ix + (8 - ix) * 0.5, cz=iz + (8 - iz) * 0.5)
+    if eye:
+        sg, bone, ab, cr = RAMPS["seaglow"], RAMPS["bone"], RAMPS["abyss"], RAMPS["crimson"]
+        sclera = fill(bone, 4)
+        put(sclera, [(2, 5), (3, 6), (4, 6), (5, 7), (12, 9), (11, 10), (10, 10), (13, 3), (12, 4)], cr[3])   # veins
+        rim(sclera, bone[5], bone[3])
+        t_sclera = m.texture("sclera", sclera)
+        frames = []
+        for f in range(16):
+            a = f * math.pi / 8
+            cx, cy = 7.5 + 2.4 * math.cos(a), 7.5 + 2.4 * math.sin(a)   # the gaze roams round
+            img = fill(bone, 4)
+            for y in range(16):
+                for x in range(16):
+                    dd = math.hypot(x + 0.5 - cx - 0.5, y + 0.5 - cy - 0.5)
+                    if dd < 5.2:
+                        img.putpixel((x, y), ab[0] if dd < 2.3 else sg[4] if dd < 4.0 else sg[2])
+            put(img, [(int(cx) - 1, int(cy) - 1)], (255, 255, 255, 255))   # a catchlight
+            rim(img, bone[5], bone[3])
+            frames.append(img)
+        t_iris = m.texture("iris", frames)
+        m.box((5.8, 11.2, 5.8), (10.2, 15.6, 10.2), {"up": (t_iris, [1, 1, 15, 15]), "north": (t_sclera, [2, 2, 14, 14]),
+              "south": (t_sclera, [2, 2, 14, 14]), "west": (t_sclera, [2, 2, 14, 14]), "east": (t_sclera, [2, 2, 14, 14]),
+              "down": (t_sclera, [2, 2, 14, 14])}, light=12)
+    else:
+        t_orb = m.texture("orb", orb_frames(orb_ramp))
+        prism(m, 4.4, 11.2, 15.6, (t_orb, [3, 3, 13, 13]), light=15, shade=False)   # the orb
+    for (sx, sz) in ((-1, -1), (1, -1), (-1, 1), (1, 1)):   # four claws at the orb's corners
+        px, pz = 8 + sx * 2.7, 8 + sz * 2.7
+        prism(m, 1.0, 10.4, 15.2, t_metal, cx=px, cz=pz)
+        prism(m, 0.9, 15.2, 16.2, t_metal, cx=8 + sx * 2.05, cz=8 + sz * 2.05)   # hooking just over the corner
     m.display = HANDHELD_DISPLAY
     return m
 
@@ -1807,9 +1818,20 @@ def abyssal_anchor_held():
     return diagonal(m)
 
 
+CENSER_DISPLAY = {   # vanilla item/generated's, a little larger: held in the fist like a torch, so the censer hangs
+    "thirdperson_righthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.7, 0.7, 0.7]},
+    "thirdperson_lefthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.7, 0.7, 0.7]},
+    "firstperson_righthand": {"rotation": [0, -90, 0], "translation": [1.13, 4.2, 1.13], "scale": [0.68, 0.68, 0.68]},
+    "firstperson_lefthand": {"rotation": [0, 90, 0], "translation": [1.13, 4.2, 1.13], "scale": [0.68, 0.68, 0.68]},
+    "head": {"rotation": [0, 180, 0], "translation": [0, 13, 7], "scale": [1, 1, 1]},
+}
+
+
 def soulfire_censer_held():
-    """The Soulfire Censer in the hand: a gold-ringed handle, a short chain, and its censer - a dark caged orb with soul
-    fire burning behind cyan glass (glowing, animated), a gold band round it, a gold cap and finial."""
+    """The Soulfire Censer in the hand, hanging from it: the fist closes on a gold handle with a ring above it; under
+    the fist a chain drops to the censer - a gold cap, a dark caged orb (stepped round) with soul fire burning behind cyan
+    glass (glowing, animated), a gold band round it, and a gold finial hanging below. Held upright like a torch (vanilla
+    item/generated's poses, model up = up), so the censer hangs under the hand."""
     m = Model("soulfire_censer_held")
     m.part = True
     gd, st, hc, ir = RAMPS["gold"], RAMPS["boundsteel"], RAMPS["hollowcy"], RAMPS["iron"]
@@ -1829,27 +1851,28 @@ def soulfire_censer_held():
                 img.putpixel((x, y), st[2])
         fires.append(img)
     t_fire = m.texture("fire", fires)
-    for x in (6.2, 9.8):                                   # the ring at the grip
-        prism(m, 0.8, -3, 0.0, t_gold, cx=x)
-    prism(m, 4.4, -3, -2.2, t_gold)
-    prism(m, 4.4, -0.8, 0.0, t_gold)
-    prism(m, 1.4, 0.0, 3.0, t_gold)                        # the handle
-    for i in range(4):                                      # a short chain
-        prism(m, 1.2 if i % 2 == 0 else 0.5, 3 + i * 1.5, 4.6 + i * 1.5, t_chain, d=0.5 if i % 2 == 0 else 1.2)
-    prism(m, 3.0, 9.0, 10.0, t_gold)                        # the cap
-    prism(m, 4.6, 10.0, 11.0, t_steel)                      # the orb, stepped round
-    prism(m, 6.0, 11.0, 15.0, (t_fire, [2, 2, 14, 14]), light=15, shade=False)
-    prism(m, 6.4, 12.6, 13.4, t_gold)                       # its band
-    prism(m, 4.6, 15.0, 16.0, t_steel)
-    prism(m, 2.0, 16.0, 17.0, t_gold)                       # the finial
-    prism(m, 0.8, 17.0, 18.6, t_gold)
-    m.display = HANDHELD_DISPLAY
-    return diagonal(m)
+    for x in (6.6, 9.4):                                   # the ring on top of the handle
+        prism(m, 0.7, 13.0, 15.6, t_gold, cx=x)
+    prism(m, 3.5, 15.6, 16.3, t_gold)
+    prism(m, 1.6, 8.0, 13.0, t_gold)                        # the handle, in the fist
+    prism(m, 2.6, 7.4, 8.0, t_gold)
+    for i in range(4):                                      # the chain, hanging
+        y1 = 7.4 - i * 1.5
+        prism(m, 1.2 if i % 2 == 0 else 0.5, y1 - 1.6, y1, t_chain, d=0.5 if i % 2 == 0 else 1.2)
+    prism(m, 2.6, 0.4, 1.4, t_gold)                         # the cap
+    prism(m, 4.6, -0.6, 0.4, t_steel)                       # the orb, stepped round
+    prism(m, 6.0, -4.6, -0.6, (t_fire, [2, 2, 14, 14]), light=15, shade=False)
+    prism(m, 6.4, -3.0, -2.2, t_gold)                       # its band
+    prism(m, 4.6, -5.6, -4.6, t_steel)
+    prism(m, 2.0, -6.6, -5.6, t_gold)                       # the finial, hanging below
+    prism(m, 0.8, -8.2, -6.6, t_gold)
+    m.display = CENSER_DISPLAY
+    return m
 
 
 def dreadlance_held():
     """The Dreadlance in the hand, held like a trident: a long shaft of black-violet steel banded in crimson, a violet
-    pommel gem, a bone-white vamplate flaring over the hand, and a silver leaf-shaped head with a crimson fuller that
+    pommel gem, two steel rings above the grip (the bone vamplate looked wrong in the hand), and a silver leaf-shaped head with a crimson fuller that
     pulses (glowing). Built in the trident's frame (centred on x = z = 0, pointing up), lifted 16 px to stay inside a
     model's bounds - the display's translations take the lift back out."""
     m = Model("dreadlance_held")
@@ -1860,7 +1883,6 @@ def dreadlance_held():
         for x in range(16):
             shaft.putpixel((x, y), cr[3])
     t_shaft = m.texture("shaft", shaft)
-    t_bone = m.texture("bone", bone_tex(633, tone=4))
     t_gem = m.texture("gem", fill(vi, 4))
     t_steel = m.texture("blade", metal(ir, 635, tone=4))
     fullers = []
@@ -1874,9 +1896,8 @@ def dreadlance_held():
     p = lambda w, y0, y1, tex, d=None, light=0: prism(m, w, y0, y1, tex, cx=0.0, cz=0.0, d=d, light=light)  # noqa: E731
     p(1.8, -11, -9.4, t_gem, light=10)                      # pommel gem
     p(1.0, -9.4, 12, (t_shaft, [7, 0, 8, 16]))              # the shaft
-    p(4.4, -1.4, -0.4, t_bone)                              # the vamplate, flaring toward the hand
-    p(3.4, -0.4, 0.8, t_bone)
-    p(2.2, 0.8, 2.0, t_bone)
+    p(1.7, -1.2, -0.5, t_steel)                             # two steel rings above the grip
+    p(1.7, 0.6, 1.3, t_steel)
     p(1.6, 12, 13, t_steel)                                 # the head's socket, then the leaf
     p(2.4, 13, 15, t_steel, d=0.6)
     p(3.0, 15, 17.2, t_steel, d=0.6)
