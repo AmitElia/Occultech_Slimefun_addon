@@ -489,8 +489,11 @@ inventory shows a block), `tools/art/session_g.py` (per-block models + textures 
 - Bound Altar - violet masonry gripped by silver corner clamps, a pulsing band of spirit light, the Bound sigil on top
   and the spirit rising from it as a glowing orb.
 - Phantom Roost - a lattice of bone ribs with dusk membrane between them, a dark nest and crossed perch bones on top.
-- Frenzy Idol - crimson stone carved into a snarling face (recess, brows, glowing eyes, fanged maw that pulses), bone
-  horns. v1's face was too small (a red brick block).
+- Frenzy Idol - **redone after review** (the user: "more benevolent, but still angry/serious, orange undertones, a
+  non-human face"): a ram guardian in dark terracotta - a pale amber ram's muzzle with flared nostrils, a heavy brow bearing
+  down over calm amber eyes, a gold sun on its forehead that breathes light, ivory ridged horns spiralling down its sides.
+  First pass was one flat gold (no value contrast, horns like logs); darker stone and a pale muzzle fixed it. (The first
+  design - a snarling crimson face with fangs - read as hostile.)
 - Servitor Shrine - violet stone framed in silver, an arched niche on each side with its spirit glowing in it, a
   stepped silver roof and finial.
 - Floor Sigil - stone with a violet five-pointed sigil turning on its top.

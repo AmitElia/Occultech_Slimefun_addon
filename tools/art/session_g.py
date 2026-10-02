@@ -477,37 +477,61 @@ def phantom_roost():
     return m
 
 
+RAM_FACE = [  # B brow, E eye glow, e eye edge, S muzzle, s muzzle shade, h muzzle highlight, N nostril, G sun, g rays
+    ".......gg.......",
+    "......gGGg......",
+    ".......GG.......",
+    ".BBB...gg...BBB.",
+    "..BBBBSSSSBBBB..",
+    "..eEEeShhSeEEe..",
+    "...eEeShSSeEe...",
+    "......ShSS......",
+    "......ShSs......",
+    ".....SSSSss.....",
+    "....SShSSSss....",
+    "....SSSSSSss....",
+    "....SNNSSNNs....",
+    ".....sssssss....",
+    "................",
+    "................",
+]
+
+
 def frenzy_idol():
-    """The Frenzy Idol (vanilla: chiseled resin bricks): dark crimson-stained stone carved into a snarling face - a deep
-    recess, heavy brows, big eyes and a wide fanged maw glowing with frenzy (pulsing, animated) - with two bone horns
-    curling up from its top."""
+    """The Frenzy Idol (vanilla: chiseled resin bricks): a ram guardian carved in warm terracotta - benevolent but stern.
+    Dark terracotta stone; a long pale-amber ram's muzzle down its face with flared nostrils; a heavy brow bearing down
+    toward the centre over calm almond eyes glowing warm amber; a gold sun on its brow; ivory horns ridged like a ram's,
+    spiralling down each side of its head. Animated: the eyes and the sun breathe light."""
     m = Model("frenzy_idol")
-    ash, cr, bone = RAMPS["ash"], RAMPS["crimson"], RAMPS["bone"]
+    am, em, gd, bone, wood = RAMPS["amber"], RAMPS["ember"], RAMPS["gold"], RAMPS["bone"], RAMPS["wood"]
+    stone = [wood[0], wood[1], em[1], wood[2], em[2]]   # dark terracotta
     frames = []
     for f in range(4):
-        face = bricks(cr, 81, row_h=8, brick_w=16, tones=(1, 2))
-        for y in range(3, 14):   # the carved recess
-            for x in range(2, 14):
-                face.putpixel((x, y), cr[1] if (x + y) % 7 else cr[0])
-        glow, hot = cr[[3, 4, 5, 4][f]], cr[[4, 5, 5, 5][f]]
-        put(face, [(2, 4), (3, 4), (4, 5), (5, 5), (6, 6), (9, 6), (10, 5), (11, 5), (12, 4), (13, 4)], ash[0])   # brows
-        put(face, [(4, 6), (5, 6), (4, 7), (5, 7), (10, 6), (11, 6), (10, 7), (11, 7)], glow)                   # eyes
-        put(face, [(4, 6), (11, 6)], hot)
-        for x in range(3, 13):   # the maw
-            put(face, [(x, 10), (x, 11), (x, 12)], ash[0])
-            put(face, [(x, 11)], glow if x % 2 else ash[0])
-        put(face, [(3, 10), (5, 10), (7, 10), (9, 10), (11, 10), (4, 12), (6, 12), (8, 12), (10, 12), (12, 12)], bone[4])
+        face = bricks(stone, 81, row_h=8, brick_w=16, tones=(2, 3))
+        cols = {"B": wood[0], "E": [em[3], em[4], em[5], em[4]][f], "e": em[2], "S": am[4], "s": am[3], "h": am[5],
+                "N": wood[0], "G": [gd[3], gd[4], gd[5], gd[4]][f], "g": gd[3]}
+        for y, row in enumerate(RAM_FACE):
+            for x, c in enumerate(row):
+                if c in cols:
+                    face.putpixel((x, y), cols[c])
         frames.append(face)
-    plain = bricks(cr, 83, row_h=8, brick_w=16, tones=(1, 2))
+    plain = bricks(stone, 83, row_h=8, brick_w=16, tones=(2, 3))
     t_face, t_plain = m.texture("face", frames), m.texture("plain", plain)
-    t_top = m.texture("top", rim(slab_top(cr, 85, tone=2), cr[3], cr[0]))
-    t_horn = m.texture("horn", rim(fill(bone, 3), bone[5], bone[1]))
+    top = rim(slab_top(stone, 85, tone=3), stone[4], stone[0])
+    put(top, circle_pts(7.5, 7.5, 3.2), gd[3])
+    put(top, [(7, 7), (8, 7), (7, 8), (8, 8)], gd[4])
+    t_top = m.texture("top", top)
+    horn = blank()
+    for y in range(16):
+        for x in range(16):
+            horn.putpixel((x, y), bone[2] if (x + y) % 3 == 0 else bone[3])   # ridged
+    t_horn = m.texture("horn", rim(horn, bone[4], bone[1]))
     m.box((0, 0, 0), (16, 16, 16), {"north": t_face, "south": t_face, "west": t_plain, "east": t_plain,
                                      "up": t_top, "down": t_plain})
-    for x in (1, 12):
-        m.cube((x, 16, 6), (x + 3, 19, 10), (t_horn, [0, 0, 3, 3]))
-        tx = x - 1 if x < 8 else x + 2
-        m.cube((tx, 19, 7), (tx + 2, 22, 9), (t_horn, [0, 0, 2, 3]))
+    for side in (-1, 1):   # a spiral on the side of the head: up from the crown, back, down, and forward to the tip
+        x0, x1 = (-2.5, 0.5) if side < 0 else (15.5, 18.5)
+        for (y0, z0, y1, z1) in ((14, 5, 18, 9), (15, 9, 18, 13), (11, 11, 15, 14), (8, 8, 11, 13), (8, 4.5, 10.5, 8)):
+            m.cube((x0, y0, z0), (x1, y1, z1), (t_horn, [0, 0, 3, 3]))
     return m
 
 
