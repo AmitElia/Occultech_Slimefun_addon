@@ -310,6 +310,32 @@ final class SelfTest {
         check("missing glyph detected", broken.isPresent() && broken.get().missing().size() == 1, broken.map(c -> c.missing().size() + " missing").orElse("-"));
         DebugWorld.placeSlimefun(corner, Circles.CHALK_GLYPH, block -> {});
         check("altar menu exists", BlockStorage.getInventory(altar) != null, "no menu");
+
+        // skins that follow their block: a Tidal Tile's coral (right-click swaps it), an Occult Forge's front
+        Block tile = altar.getRelative(0, 0, 6);
+        DebugWorld.placeSlimefun(tile, ItemKeys.slimefunId("TIDAL_TILE"), block -> previous.putIfAbsent(block, block.getBlockData()));
+        org.bukkit.entity.ItemDisplay tileSkin = plugin.skins().ensure(tile);
+        tile.setBlockData(Material.BRAIN_CORAL_BLOCK.createBlockData(), false);
+        org.bukkit.entity.ItemDisplay swapped = plugin.skins().ensure(tile);
+        plugin.skins().validate();
+        check("a Tidal Tile's skin follows its coral", tileSkin != null && swapped == tileSkin && tileSkin.isValid()
+            && "tidal_tile_v1".equals(tileSkin.getItemStack().getItemMeta().getItemModel().getKey()),
+            tileSkin == null ? "no skin" : tileSkin.isValid() + " " + tileSkin.getItemStack().getItemMeta().getItemModel());
+        Block forge = altar.getRelative(2, 0, 6);
+        DebugWorld.placeSlimefun(forge, ItemKeys.slimefunId("OCCULT_FORGE"), block -> previous.putIfAbsent(block, block.getBlockData()));
+        org.bukkit.block.data.Directional facing = (org.bukkit.block.data.Directional) forge.getBlockData();
+        facing.setFacing(org.bukkit.block.BlockFace.EAST);
+        forge.setBlockData(facing, false);
+        org.bukkit.entity.ItemDisplay forgeSkin = plugin.skins().ensure(forge);
+        org.joml.Quaternionf turn = forgeSkin == null ? null : forgeSkin.getTransformation().getLeftRotation();
+        org.joml.Quaternionf east = new org.joml.Quaternionf().rotationY((float) Math.PI / 2);
+        check("an Occult Forge's skin turns to its front", turn != null && Math.abs(turn.y - east.y) < 1e-3 && Math.abs(turn.w - east.w) < 1e-3,
+            String.valueOf(turn));
+        for (Block block : List.of(tile, forge)) {
+            BlockStorage.clearBlockInfo(block);
+            block.setType(Material.AIR);
+        }
+        plugin.skins().validate();
     }
 
     private void fillForHolograms() {

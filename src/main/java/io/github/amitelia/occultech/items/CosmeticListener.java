@@ -32,7 +32,7 @@ import me.mrCookieSlime.Slimefun.api.BlockStorage;
  * <ul>
  * <li>Step tiles: a chime (amethyst) or a splash (coral) when walked on; nothing while sneaking. Only checked when a
  * player moves onto a new block, with a cheap material filter before any Slimefun lookup, and a short cooldown.</li>
- * <li>Everliving coral never dries out of water.</li>
+ * <li>Everliving coral, Tidal Tiles and Pearl Beds never dry out of water.</li>
  * <li>Decorative flowers: breaking the block under one pops the Occultech item, never a plain vanilla flower.</li>
  * </ul>
  */
@@ -41,7 +41,8 @@ public final class CosmeticListener implements Listener {
     private static final String CHIMING = ItemKeys.slimefunId("CHIMING_TILE");
     private static final String TIDAL = ItemKeys.slimefunId("TIDAL_TILE");
     private static final String RESIN = ItemKeys.slimefunId("RESIN_TILE");
-    private static final Set<String> NEVER_DRY = Set.of(TIDAL, ItemKeys.slimefunId("EVERLIVING_CORAL"));
+    private static final Set<String> NEVER_DRY = Set.of(TIDAL, ItemKeys.slimefunId("EVERLIVING_CORAL"),
+        ItemKeys.slimefunId("PEARL_BED"));
     private static final Set<String> FLOWERS = Set.of(ItemKeys.slimefunId("MOONLIT_LILY"), ItemKeys.slimefunId("WITCHCAP"),
         ItemKeys.slimefunId("EVERLIVING_CORAL"), ItemKeys.slimefunId("WATCHFUL_EYEBLOSSOM"));
     private static final long STEP_COOLDOWN_MS = 250;

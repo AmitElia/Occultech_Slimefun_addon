@@ -446,7 +446,7 @@ bow) is designed as that model's texture, not as an icon.
 |---|---|---|
 | **G1** | The block-skin technique (block-model tools, 3D preview renderer, skin service in the plugin) + Initiate's Altar, Offering Bowl, Chalk Glyph (4 variants), Arcane Altar | **Done** |
 | **G2** | Rest of tier 0 (Arcane Pedestal, Brood Egg, Trophy Board, Chiming Tile) + tier 1 (Bound Glyph, Bound Altar, Phantom Roost, Frenzy Idol, Servitor Shrine, Floor Sigil) | **Done** |
-| G3 | Tier-2 blocks (Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack) | - |
+| **G3** | Tier-2 blocks (Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack) | **Done** |
 | G4 | Tier-3 blocks (Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) | - |
 | G5 | Held 3D models: Occult Codex, Wyrmbreath, Guardian's Gaze, Abyssal Anchor, Dreadlance, Soulfire Censer, Heartwood Aegis (shield model) | - |
 | G6 | Worn armor (`equippable` layers): Abyssal, Hollow | - |
@@ -503,4 +503,32 @@ inventory shows a block), `tools/art/session_g.py` (per-block models + textures 
 - Floor Sigil - stone with a violet five-pointed sigil turning on its top.
 - The self-test's "items without art" check now picks any item the pack has no model for (it broke each time a block
   got art).
+
+**G3 blocks** (`python tools/art/session_g.py g3`) - the Abyssal family: deep teal and prismarine, iron and gold
+fittings, sea glow; fire blocks in ember.
+- New in the skin service: **skins turn with a block's front** (a horizontal `Directional` block: the model's north face
+  is its front; item displays draw a model half a turn round, which the base angle undoes - check the Forge's mouth
+  faces you in game) and **skins follow a tile's look** (`StepTile.lookVariant`: variant 0 is the item's own block,
+  then the other looks by name; right-click updates the skin in place instead of the type change deleting it).
+  Pearl Beds no longer dry into dead coral out of water. Self-test checks both (287 pass).
+- Occult Forge - abyss stone bound in riveted iron, gold corner fittings; its front an arched furnace mouth with ember
+  fire licking (animated); a sea-glow Abyssal rune on each iron flank; a glowing grate and a short chimney on top.
+- Soul Condenser - an iron cage with gold-capped posts, smoky glass panes with a sea-glow wisp circling behind each,
+  trailing its tail (animated, 8 frames); a gold condenser coil round a pulsing core on top. (v1's wisp was scattered
+  dots on near-black glass - it didn't read.)
+- Abyssal Glyph - sea-glow runes on abyss slate; 4 variants.
+- Abyssal Altar - deep-teal masonry banded in gold, a rolling sea-glow tide in a dark band round its middle, prismarine
+  crystal spires at the corners, the Abyssal eye sigil on top with a drifting pupil. (v1's tide was lost in the bricks.)
+- Guardian Eye - a guardian made sentry: teal scaled hide, amber spikes at its corners and edges, a great eye on every
+  side whose slit pupil glances left and right (16 frames, so the gaze holds).
+- Pearl Bed - sea-floor rock with a coral crust along its top edge; on top a blush-pink scallop fan standing open
+  behind a big glowing pearl. (v1's ivory shell read as a chair and hid the pearl.)
+- Ember Brazier - a squat black-iron stove: riveted plates, a barred grille with coals glowing behind, a gold lip, and
+  coal lumps with fire breathing between them on top. (v1's all-over slats read as a crate.)
+- Abyssal Lantern - dark iron cap and foot rimmed in gold, iron posts, sea-glow panes brightest at the heart with
+  bubbles rising; an iron hanging ring. (v1's gold cap overpowered it.)
+- Tidal Tile - living coral in a worn prismarine frame, a water film glinting over the top; 5 variants (tube, brain,
+  bubble, fire, horn), shown for whichever coral the tile is set to.
+- Prismatic Netherrack - dark nether rock split by two crystal cracks whose light runs through the rainbow (8 frames);
+  the top stays flat for the fire. (v1's scattered vein pixels didn't read as cracks.)
 

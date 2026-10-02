@@ -11,6 +11,8 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.Directional;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.event.EventHandler;
@@ -41,6 +43,10 @@ import java.util.UUID;
  * model is shifted down into the block. It is tagged with {@link #SKIN} ({@code "x,y,z|ITEM_ID"}) and saved with the
  * chunk; on load it is tracked again. A skin is removed when its block is really gone - the block's type no longer
  * matches the item's - never merely because Slimefun's data for the chunk isn't loaded yet.
+ *
+ * <p>A block with a front (a horizontal {@link Directional}, like the Occult Forge's blast furnace) turns its skin so
+ * the model's north face is its front. A tile that swaps its vanilla block ({@link StepTile} looks) shows the skin
+ * variant for its current block.
  */
 public final class BlockSkinService implements Listener {
 
@@ -76,29 +82,34 @@ public final class BlockSkinService implements Listener {
         if (!isSkinned(id)) {
             return null;
         }
-        String key = key(block);
-        UUID existing = tracked.get(key);
-        if (existing != null && Bukkit.getEntity(existing) instanceof ItemDisplay display && display.isValid()) {
-            if (id.equals(skinOf(display))) {
-                return display;
-            }
-            display.remove();   // the block changed into another Occultech block (an altar upgrade)
+        NamespacedKey model = modelFor(block, id);
+        if (model == null) {
+            return null;
         }
-        String item = stripPrefix(id);
-        int variants = pack.skinVariants(item);
-        int variant = variants <= 1 ? 0 : Math.floorMod(block.getX() * 31 + block.getZ() * 17 + block.getY() * 7, variants);
-        NamespacedKey model = new NamespacedKey(ResourcePackService.NAMESPACE, item.toLowerCase(java.util.Locale.ROOT)
-            + (variant == 0 ? "" : "_v" + variant));
         ItemStack stack = new ItemStack(Material.PAPER);
         ItemMeta meta = stack.getItemMeta();
         meta.setItemModel(model);
         stack.setItemMeta(meta);
+        Transformation transformation = new Transformation(new Vector3f(0F, -0.5F, 0F), new AxisAngle4f(yaw(block), 0F, 1F, 0F),
+            new Vector3f(SCALE, SCALE, SCALE), new AxisAngle4f());
+        String key = key(block);
+        UUID existing = tracked.get(key);
+        if (existing != null && Bukkit.getEntity(existing) instanceof ItemDisplay display && display.isValid()) {
+            if (id.equals(skinOf(display))) {
+                ItemStack shown = display.getItemStack();
+                if (shown.getItemMeta() == null || !model.equals(shown.getItemMeta().getItemModel())) {
+                    display.setItemStack(stack);   // a tile changed its look
+                }
+                display.setTransformation(transformation);
+                return display;
+            }
+            display.remove();   // the block changed into another Occultech block (an altar upgrade)
+        }
         Location at = block.getLocation().add(0.5, 1.0, 0.5);
         ItemDisplay display = block.getWorld().spawn(at, ItemDisplay.class, d -> {
             d.setItemStack(stack);
             d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-            d.setTransformation(new Transformation(new Vector3f(0F, -0.5F, 0F), new AxisAngle4f(),
-                new Vector3f(SCALE, SCALE, SCALE), new AxisAngle4f()));
+            d.setTransformation(transformation);
             d.setShadowRadius(0F);
             d.setPersistent(true);
             d.getPersistentDataContainer().set(SKIN, PersistentDataType.STRING,
@@ -179,13 +190,52 @@ public final class BlockSkinService implements Listener {
             Block block = data == null ? null : blockOf(entity.getWorld(), data);
             String id = data == null ? null : data.substring(data.indexOf('|') + 1);
             SlimefunItem item = id == null ? null : SlimefunItem.getById(id);
-            boolean gone = block == null || item == null || block.getType() != item.getItem().getType()
+            boolean gone = block == null || item == null || !isLook(item, block.getType())
                 || (BlockStorage.hasBlockInfo(block) && !id.equals(BlockStorage.checkID(block)));
             if (gone) {
                 entity.remove();
             }
             return gone;
         });
+    }
+
+    /** The model for this block: its look's variant (tiles), else a variant picked by position. Null: no skin. */
+    @Nullable
+    private NamespacedKey modelFor(Block block, String id) {
+        String item = stripPrefix(id);
+        int variants = pack.skinVariants(item);
+        int variant;
+        if (SlimefunItem.getById(id) instanceof StepTile tile) {
+            variant = tile.lookVariant(block.getType());
+            if (variant < 0 || variant >= variants) {
+                return null;
+            }
+        } else {
+            variant = variants <= 1 ? 0 : Math.floorMod(block.getX() * 31 + block.getZ() * 17 + block.getY() * 7, variants);
+        }
+        return new NamespacedKey(ResourcePackService.NAMESPACE, item.toLowerCase(java.util.Locale.ROOT) + (variant == 0 ? "" : "_v" + variant));
+    }
+
+    /** Whether a block of this type can still be this item (a tile may have swapped to another of its looks). */
+    private static boolean isLook(SlimefunItem item, Material type) {
+        return item instanceof StepTile tile ? tile.lookVariant(type) >= 0 : type == item.getItem().getType();
+    }
+
+    /**
+     * The skin's turn about the vertical axis so the model's north face is the block's front. Item displays draw a
+     * model turned half a turn from a placed block, which the base angle undoes.
+     */
+    static float yaw(Block block) {
+        if (!(block.getBlockData() instanceof Directional directional)) {
+            return 0F;
+        }
+        float half = (float) Math.PI;
+        return switch (directional.getFacing()) {
+            case EAST -> half - half / 2;
+            case SOUTH -> 0F;
+            case WEST -> half + half / 2;
+            default -> directional.getFacing() == BlockFace.NORTH ? half : 0F;
+        };
     }
 
     public int count() {

@@ -1,5 +1,6 @@
 package io.github.amitelia.occultech.items;
 
+import java.util.Comparator;
 import java.util.List;
 
 import org.bukkit.Material;
@@ -17,8 +18,11 @@ import io.github.thebusybiscuit.slimefun4.core.handlers.BlockUseHandler;
  */
 public class StepTile extends SlimefunItem {
 
+    private final List<Material> looks;
+
     public StepTile(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, List<Material> looks) {
         super(group, item, type, recipe, output);
+        this.looks = looks;
 
         if (looks.size() > 1) {
             addItemHandler((BlockUseHandler) e -> e.getClickedBlock().ifPresent(block -> {
@@ -30,8 +34,25 @@ public class StepTile extends SlimefunItem {
                 Material next = looks.get((current + 1) % looks.size());
                 // no physics: coral out of water must not be updated into dead coral
                 block.setBlockData(next.createBlockData(), false);
+                if (io.github.amitelia.occultech.Occultech.instance().skins() != null) {
+                    io.github.amitelia.occultech.Occultech.instance().skins().ensure(block);   // the skin follows the look
+                }
                 e.getPlayer().sendActionBar(MenuUtils.color("&d" + getItemName() + "&7: " + MenuUtils.pretty(next)));
             }));
         }
+    }
+
+    /**
+     * The block skin variant for a look: 0 for the item's own block, then the other looks by name (the art pipeline
+     * draws them in that order); -1 if the type isn't one of this tile's looks.
+     */
+    public int lookVariant(Material type) {
+        Material own = getItem().getType();
+        if (type == own) {
+            return 0;
+        }
+        List<Material> others = looks.stream().filter(m -> m != own).sorted(Comparator.comparing(Material::name)).toList();
+        int index = others.indexOf(type);
+        return index < 0 ? -1 : index + 1;
     }
 }
