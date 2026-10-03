@@ -2023,26 +2023,32 @@ def dreadlance_held():
     t_soul = m.texture("soul", [fill(hc, [3, 4, 5, 4][f]) for f in range(4)])
     t_gem = m.texture("gem", [fill(vi, [3, 4, 5, 4][f]) for f in range(4)])
     t_head = m.texture("head", dreadlance_head())
-    p = lambda w, y0, y1, tex, d=None, light=0, cx=8.0: prism(m, w, y0, y1, tex, cx=cx, d=d if d else w * 2, light=light)  # noqa: E731
+    def p(w, y0, y1, tex, d=None, light=0, cx=8.0):
+        """A round part: an octagonal section (two crossed boxes, corners cut), drawn twice as deep as wide so vanilla's
+        0.85x depth against 1.7x in-plane makes it come out round; the inner box is a hair shorter so the caps don't
+        fight."""
+        d = d if d else w * 2
+        prism(m, w, y0, y1, tex, cx=cx, d=d * 0.58, light=light)
+        prism(m, w * 0.58, y0 + 0.02, y1 - 0.02, tex, cx=cx, d=d, light=light)
     p(0.5, -3.0, -2.2, t_steel)                            # butt spike
     p(0.9, -2.2, -1.4, t_steel)
     p(1.0, -1.4, -0.6, t_soul, light=15)                   # soul gem
-    p(1.3, -0.6, 0.0, t_steel)                             # ferrule
-    p(1.1, 0.0, 0.5, t_dark)
-    p(0.9, 0.5, 5.0, (t_grip, [0, 0, 2, 5]))               # wrapped grip
-    p(1.2, 5.0, 5.6, t_steel)                              # collar
-    p(0.8, 5.6, 12.0, (t_shaft, [6, 0, 8, 16]))            # the shaft
+    p(1.15, -0.6, 0.0, t_steel)                            # ferrule
+    p(1.0, 0.0, 0.5, t_dark)
+    p(0.8, 0.5, 5.0, (t_grip, [0, 0, 2, 5]))               # wrapped grip
+    p(1.05, 5.0, 5.6, t_steel)                             # collar
+    p(0.7, 5.6, 12.0, (t_shaft, [6, 0, 8, 16]))            # the shaft
     for y in (7.2, 9.6):                                    # raised steel rings, soul light inlaid
-        p(1.1, y, y + 0.5, t_steel)
-        p(1.12, y + 0.15, y + 0.35, t_soul, light=15)
-    p(1.2, 12.0, 12.6, t_steel)                            # socket
-    p(1.6, 12.6, 13.4, t_dark)
+        p(0.95, y, y + 0.5, t_steel)
+        p(0.97, y + 0.15, y + 0.35, t_soul, light=15)
+    p(1.05, 12.0, 12.6, t_steel)                           # socket
+    p(1.4, 12.6, 13.4, t_dark)
     for sx in (-1, 1):
-        m.box((8 + sx * 0.95 - 0.25, 12.7, 7.4), (8 + sx * 0.95 + 0.25, 13.3, 8.6), {d: (t_gem, [0, 0, 1, 1]) for d in FACES_ALL},
+        m.box((8 + sx * 0.82 - 0.25, 12.7, 7.4), (8 + sx * 0.82 + 0.25, 13.3, 8.6), {d: (t_gem, [0, 0, 1, 1]) for d in FACES_ALL},
               light=15)                                    # a purple gem each side
         p(0.4, 11.8, 13.2, t_steel, cx=8 + sx * 1.25, d=0.7)   # lugs swept back from the socket
         p(0.3, 11.0, 12.0, t_steel, cx=8 + sx * 1.55, d=0.5)
-    p(1.0, 13.4, 13.9, t_dark)                             # neck, between the barbs
+    p(0.9, 13.4, 13.9, t_dark)                             # neck, between the barbs
     dreadlance_head_boxes(m, t_head, 13.4)                  # the head: vanilla's spear head, one pixel thick
     m.display = SPEAR_DISPLAY
     return diagonal(m, angle=45)

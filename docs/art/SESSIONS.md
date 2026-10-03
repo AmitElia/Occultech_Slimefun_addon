@@ -673,6 +673,9 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   upright (a triangle widening to 7 px with two barbs at its back corners, half a unit per pixel - vanilla's own size),
   built as voxels 1 unit deep (vanilla's 0.85 depth scale makes that as deep as a pixel is wide), one box per pixel run,
   shaded like vanilla's: a bright steel ridge, a lit half, a shadowed half, no accent colour.
+  Then (the user): the staff shouldn't look wide, it should look round. Every staff part is now an octagonal section
+  (two crossed boxes with the corners cut) and a little slimmer. Note: previews of spear models must squash depth by
+  half (vanilla scales a spear 0.85 deep vs 1.7 in-plane); an unsquashed preview shows the staff twice as deep as it is.
 
 **Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
