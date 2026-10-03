@@ -4183,7 +4183,27 @@ G7 = [("Wisp Jar", wisp_jar), ("Bottled Gale", bottled_gale), ("Wind Chime", win
       ("Occult Orrery", occult_orrery), ("Soulfire Brazier", soulfire_brazier), ("Rune Obelisk", rune_obelisk)]
 
 
-GROUPS = {"g1": G1, "g2": G2, "g3": G3, "g4": G4, "g5": G5, "g7": G7}
+# ---------------------------------------------------------------- ritual sigils (Session B's tier sigils on the floor)
+def ritual_sigil(name, key):
+    """A tier sigil from Session B as a glowing hologram for the ritual floor: one flat plane, 16 units square at the
+    model's centre height, the 64 px sigil on both faces (glowing, unshaded). The plugin lays it on the circle, scaled
+    to the circle and turning while a ritual runs."""
+    m = Model(key)
+    m.part = True
+    sigil = Image.open(os.path.join(os.path.dirname(OUT), "session-b", f"sigil_{name}.png")).convert("RGBA")
+    t = m.texture("sigil", sigil)
+    m.box((0, 8, 0), (16, 8, 16), {"up": (t, [0, 0, 16, 16]), "down": (t, [0, 16, 16, 0])}, shade=False, light=15)
+    return m
+
+
+SIGILS = [("Initiate sigil", lambda: ritual_sigil("initiate", "ritual_sigil_t0")),
+          ("Bound sigil", lambda: ritual_sigil("bound", "ritual_sigil_t1")),
+          ("Abyssal sigil", lambda: ritual_sigil("abyssal", "ritual_sigil_t2")),
+          ("Hollow sigil", lambda: ritual_sigil("hollow", "ritual_sigil_t3")),
+          ("Summoning pentagram", lambda: ritual_sigil("pentagram", "ritual_sigil_summon"))]
+
+
+GROUPS = {"g1": G1, "g2": G2, "g3": G3, "g4": G4, "g5": G5, "g7": G7, "sigils": SIGILS}
 
 
 def save(model):

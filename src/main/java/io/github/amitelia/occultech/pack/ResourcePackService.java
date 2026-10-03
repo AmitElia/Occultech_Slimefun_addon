@@ -145,6 +145,11 @@ public final class ResourcePackService implements Listener {
         return itemModels && pack != null ? blockLines : java.util.List.of();
     }
 
+    /** Whether the pack has the ritual sigils (flat holograms laid on the circle while a ritual runs). */
+    public boolean hasSigils() {
+        return itemModels && pack != null;
+    }
+
     /** Whether the pack draws this armor set worn (an equipment asset occultech:{@code set}, e.g. "abyssal"). */
     public boolean hasEquipment(@Nonnull String set) {
         return itemModels && pack != null && equipment.contains(set);

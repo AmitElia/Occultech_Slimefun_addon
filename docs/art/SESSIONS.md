@@ -788,6 +788,14 @@ flat - circles stay walkable); **no light** for lanterns/braziers (only their te
 - With Nexo installed, `custom-blocks.mode: auto` keeps display skins and the pack handed to Nexo drops our
   blockstates (Nexo owns those states) until the hookup in docs/nexo-migration.md.
 
+**Ritual sigils on the floor (2026-10-03, the user: "can the tier pentagrams from Session A/B be added to rituals as a
+rotating hologram on the floor?").** Session B's tier sigils (Initiate, Bound, Abyssal, Hollow) became flat glowing
+models (`ritual_sigil_t0..t3`, `python tools/art/session_g.py sigils`: one plane, the 64 px sigil, light 15). While a
+ritual runs (`items/RitualSigil`), the altar's tier sigil unfolds across the circle (as wide as the circle), turns a
+quarter turn a second, and folds away when the ritual ends or breaks; a summoning adds Session B's pentagram,
+1.5 blocks wider and turning back at two thirds of the speed. The client does the turning (interpolated
+transformations), the server sends one update a second; the displays are never saved. Self-test checks all three.
+
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the
 vanilla block; the display stands on top of the block so it is lit by the air above, its model shifted down into the

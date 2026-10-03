@@ -514,11 +514,22 @@ final class SelfTest {
         check("crafting ritual starts", rituals.begin(null, altar) == RitualService.Outcome.STARTED, "did not start");
         check("offerings consumed at start", bowlsEmpty(), "bowls not empty");
         check("altar locked during ritual", rituals.isLocked(altar.getLocation()), "not locked");
+        check("the circle's sigil glows on the floor during the ritual", sigils().contains("ritual_sigil_t0"), String.valueOf(sigils()));
+    }
+
+    /** The ritual sigil holograms around the altar (their models). */
+    private List<String> sigils() {
+        return altar.getWorld().getNearbyEntitiesByType(org.bukkit.entity.ItemDisplay.class, altar.getLocation().add(0.5, 0.1, 0.5), 1.5).stream()
+            .map(d -> d.getItemStack().getItemMeta())
+            .filter(meta -> meta != null && meta.hasItemModel() && meta.getItemModel().getKey().startsWith("ritual_sigil"))
+            .map(meta -> meta.getItemModel().getKey()).toList();
     }
 
     private void craftingResult() {
         check("ritual produced Sovereign's Catalyst", CATALYST.equals(idIn(RitualAltar.CENTER_SLOT)), String.valueOf(idIn(RitualAltar.CENTER_SLOT)));
         check("altar unlocked afterwards", !rituals.isLocked(altar.getLocation()), "still locked");
+        Bukkit.getScheduler().runTaskLater(plugin, () -> check("the sigil folds away after the ritual", sigils().isEmpty(),
+            String.valueOf(sigils())), 15L);
     }
 
     private void summonRitual() {
@@ -527,6 +538,8 @@ final class SelfTest {
         fill(recipe);
         snapshotSlimes();
         check("summoning ritual starts with an empty altar", rituals.begin(null, altar) == RitualService.Outcome.STARTED, "did not start");
+        check("a summoning adds the pentagram to the sigil", sigils().containsAll(List.of("ritual_sigil_t0", "ritual_sigil_summon")),
+            String.valueOf(sigils()));
     }
 
     private void summonResult() {

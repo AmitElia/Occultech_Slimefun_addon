@@ -366,6 +366,7 @@ public final class RitualService {
         private final ItemStack repaired;
         private BukkitTask task;
         private int elapsed;
+        @Nullable private RitualSigil sigil;
 
         /**
          * @param repaired for a repair ritual: the mended weapon to hand back (null for recipes)
@@ -384,6 +385,10 @@ public final class RitualService {
         void start() {
             altar.getWorld().playSound(center(), recipe.isSummon() ? Sound.ENTITY_EVOKER_PREPARE_SUMMON : Sound.BLOCK_BEACON_ACTIVATE, 1F, 0.8F);
             task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, STEP_TICKS, STEP_TICKS);
+            OptionalInt tier = Circles.tierOfAltar(String.valueOf(BlockStorage.checkID(altar)));
+            if (tier.isPresent()) {   // the circle's sigil, glowing and turning on the floor
+                sigil = RitualSigil.show(altar, tier.getAsInt(), 2 * Circles.forTier(tier.getAsInt()).radius() + 1, recipe.isSummon());
+            }
         }
 
         private void tick() {
@@ -395,6 +400,9 @@ public final class RitualService {
             if (elapsed >= DURATION_TICKS) {
                 finish(true);
                 return;
+            }
+            if (sigil != null && elapsed % RitualSigil.step() == 0) {
+                sigil.turn();
             }
             effects();
         }
@@ -532,6 +540,10 @@ public final class RitualService {
         private void end() {
             if (task != null) {
                 task.cancel();
+            }
+            if (sigil != null) {
+                sigil.close();
+                sigil = null;
             }
             sessions.remove(altar.getLocation());
             locked.remove(altar.getLocation());
