@@ -17,7 +17,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **O1** | Block fixes: blue bottoms (smaller models -> chorus-plant states), stacking on custom blocks, Rune Obelisk (thinner base, less flat, clean edges), Soulfire Brazier (aligned textures, full rim), boss fights keep the turning sigil (no second pentagram) | **Done** |
 | **O2** | Art retouch: the tier sigils and pentagrams crisp and finished; the armor inventory icons professional and symmetric | **Done** |
 | **O3** | Trophy Board as a real pedestal with bosses shown at one size; the Arcane Altar reworked with the Session B pentagram | **Done** |
-| O4 | Floor telegraphs for boss attacks (fire, poison, hits...) like the sigil holograms | next |
+| **O4** | Floor markings for boss fights: attack warnings and ground zones (the user's picks) | **Done** |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
 
 ## Session A - style and toolkit (2026-10-01)
@@ -850,6 +850,22 @@ transformations), the server sends one update a second; the displays are never s
   again (the floating book stays); an infusion lays O2's pentagram across the pedestal ring as a glowing floor hologram
   (`ritual_sigil_pentagram`, 5.6 blocks), turning faster as it builds (a quarter turn in 20, 12, then 8 ticks) and
   folding away when it finishes, the altar breaks or the server stops. Without the pack the old particle pentagram stays.
+
+**Session O4 - floor markings for boss fights (2026-10-03).** Options offered: attack warnings, ground zones, impact
+marks, boss-themed colours; the user chose **warnings** and **zones**. Both replace the fight's potion-particle clouds
+(kept as the fallback without the pack) and go through the two calls every boss already used, so all fourteen attacks
+and three zones changed at once (`boss/FloorDecals`; art `tools/art/session_o4.py`; sheets
+`session-g/review-o4.png`, `review-o4-floor.png`).
+- **Warnings:** a ring at the exact hit radius (it snaps out in 6 ticks), a see-through fill that grows from the centre
+  and reaches the edge as the hit lands, and the attack's symbol in the middle (slam, dive, web, flame, storm, spikes,
+  wind, roots, sweep, danger). Drawn in shaded light greys and tinted per attack by the item model's dye tint
+  (`tint.txt` in a part folder -> `tints: [dye]` in its item definition; faces carry `tintindex`), so each attack keeps
+  its colour; very dark colours (the Hollow Warlord's near-black sweep) are lifted to stay visible.
+- **Zones:** animated, fully coloured 32 px surfaces sized to the damage radius - acid (bubbles swell and pop, glows),
+  web (strands with gaps, a glint runs round), yolk (white rim, glossy yolk) for the existing three, and fire (charred
+  cracks, flickering flames, glows), poison (a slow swirl), frost (cracked ice, a glint), shadow (turning tendrils)
+  ready for new attacks. They unfold and shrink away at the end.
+- Every marking is an item display spawned through the fight (removed with it), never saved, animated by the client.
 
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the

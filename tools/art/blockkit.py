@@ -66,7 +66,8 @@ class Model:
             for extra in ("light_emission", "rotation"):
                 if extra in e:
                     out[extra] = e[extra]
-            out["faces"] = {d: {"texture": f["texture"], "uv": f["uv"]} for d, f in e["faces"].items()}
+            out["faces"] = {d: {"texture": f["texture"], "uv": f["uv"], **({"tintindex": f["tintindex"]} if "tintindex" in f else {})}
+                            for d, f in e["faces"].items()}
             elements.append(out)
         model = {"parent": "minecraft:block/block", "textures": textures, "elements": elements}
         model.update(self.extra)

@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier3;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -226,7 +228,7 @@ public final class DreadRiders extends BossBehavior {
             if (victim != null) {
                 rainSpot = victim.getLocation();
                 rainAt = now + 30;
-                fight.telegraph(rainSpot, 3.5, 35, STORM);
+                fight.telegraph(rainSpot, 3.5, 35, STORM, FloorDecals.Mark.STORM);
                 outrider.getWorld().playSound(outrider.getLocation(), Sound.ITEM_CROSSBOW_LOADING_END, 2F, 0.6F);
             }
         }

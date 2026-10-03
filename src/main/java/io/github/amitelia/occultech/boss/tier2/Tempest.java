@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier2;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -103,7 +105,7 @@ public final class Tempest extends BossBehavior {
         }
         if (every(BURST_INTERVAL) && burstAt < 0) {
             burstAt = now + 20;
-            fight.telegraph(tempest.getLocation(), 4.5, 25, WIND);
+            fight.telegraph(tempest.getLocation(), 4.5, 25, WIND, FloorDecals.Mark.WIND);
             tempest.getWorld().playSound(tempest.getLocation(), Sound.ENTITY_BREEZE_INHALE, 2F, 0.6F);
         }
         if (burstAt >= 0 && now >= burstAt) {

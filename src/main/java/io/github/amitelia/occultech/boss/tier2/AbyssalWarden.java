@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier2;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -125,7 +127,7 @@ public final class AbyssalWarden extends BossBehavior {
 
         if (every(SPIKE_INTERVAL) && spikesAt < 0) {
             spikesAt = now + 20;
-            fight.telegraph(ground(warden.getLocation()), 5, 25, SPIKES);
+            fight.telegraph(ground(warden.getLocation()), 5, 25, SPIKES, FloorDecals.Mark.SPIKES);
             warden.getWorld().playSound(warden.getLocation(), Sound.ENTITY_GUARDIAN_FLOP, 2F, 0.5F);
         }
         if (spikesAt >= 0 && now >= spikesAt) {

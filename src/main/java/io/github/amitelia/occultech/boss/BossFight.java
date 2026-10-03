@@ -72,7 +72,7 @@ public final class BossFight {
     private static final double BONUS_DROP_CHANCE = 0.25;
 
     /** A zone on the ground that affects players standing in it, drawn with a colored lingering cloud. */
-    private record Hazard(Location center, double radius, int until, Consumer<Player> effect, AreaEffectCloud cloud) {}
+    private record Hazard(Location center, double radius, int until, Consumer<Player> effect, Entity visual) {}
 
     /** A hittable object (egg sac, ward crystal): an item display with an interaction hitbox. */
     public final class FightObject {
@@ -225,6 +225,20 @@ public final class BossFight {
      * Uses a lingering-potion cloud for the visual, never the dragon-breath particle (bottles could collect it).
      */
     public void addHazard(Location at, double radius, int durationTicks, Color color, Consumer<Player> effect) {
+        addHazard(at, radius, durationTicks, color, null, effect);
+    }
+
+    /**
+     * A ground hazard drawn as its {@code zone}'s animated surface (Session O4 floor markings) when the resource pack is
+     * in use; otherwise (or without a zone) a coloured potion-cloud circle.
+     */
+    public void addHazard(Location at, double radius, int durationTicks, Color color, @Nullable FloorDecals.Zone zone,
+        Consumer<Player> effect) {
+        if (zone != null && FloorDecals.enabled()) {
+            Entity surface = FloorDecals.zone(this, at, radius, durationTicks, zone);
+            hazards.add(new Hazard(at.clone(), radius, elapsed + durationTicks, effect, surface));
+            return;
+        }
         AreaEffectCloud cloud = spawnExtra(AreaEffectCloud.class, at, c -> {
             c.setRadius((float) radius);
             c.setRadiusPerTick(0);
@@ -237,6 +251,19 @@ public final class BossFight {
 
     /** A short-lived colored circle warning where something will hit. */
     public void telegraph(Location at, double radius, int durationTicks, Color color) {
+        telegraph(at, radius, durationTicks, color, FloorDecals.Mark.DANGER);
+    }
+
+    /**
+     * Warns where an attack will land: with the resource pack, a floor marking (Session O4) - a ring at the exact hit
+     * radius, a fill growing to it as the hit nears, the attack's {@code mark} - tinted to {@code color}; without it, a
+     * coloured particle circle.
+     */
+    public void telegraph(Location at, double radius, int durationTicks, Color color, FloorDecals.Mark mark) {
+        if (FloorDecals.enabled()) {
+            FloorDecals.warning(this, at, radius, durationTicks, color, mark);
+            return;
+        }
         spawnExtra(AreaEffectCloud.class, at, c -> {
             c.setRadius((float) radius);
             c.setRadiusPerTick(0);
@@ -662,7 +689,7 @@ public final class BossFight {
     private void applyHazards() {
         hazards.removeIf(h -> {
             if (elapsed >= h.until()) {
-                h.cloud().remove();
+                h.visual().remove();
                 return true;
             }
             return false;

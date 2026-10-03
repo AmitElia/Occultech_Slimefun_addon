@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier2;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -129,7 +131,7 @@ public final class BlazeChoir extends BossBehavior {
             chorus.clear();
             for (Player player : fight.players()) {
                 chorus.add(player.getLocation());
-                fight.telegraph(player.getLocation(), 2.5, CHORUS_WARNING + 5, FLAME);
+                fight.telegraph(player.getLocation(), 2.5, CHORUS_WARNING + 5, FLAME, FloorDecals.Mark.FLAME);
             }
             chorusAt = now + CHORUS_WARNING;
             fight.center().getWorld().playSound(fight.center(), Sound.ENTITY_BLAZE_AMBIENT, 2F, 0.5F);

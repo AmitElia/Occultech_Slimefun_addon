@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier0;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,12 +92,12 @@ public final class BroodMother extends BossBehavior {
             if (target != null) {
                 webTarget = target.getLocation();
                 webAt = now + WEB_WARNING;
-                fight.telegraph(webTarget, 3, WEB_WARNING, WEB);
+                fight.telegraph(webTarget, 3, WEB_WARNING, WEB, FloorDecals.Mark.WEB);
                 target.playSound(target.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 1F, 0.6F);
             }
         }
         if (now == webAt) {
-            fight.addHazard(webTarget, 3, 160, WEB,
+            fight.addHazard(webTarget, 3, 160, WEB, FloorDecals.Zone.WEB,
                 player -> player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1, false, true)));
             webTarget.getWorld().spawnParticle(Particle.BLOCK, webTarget, 30, 1.5, 0.1, 1.5, Material.COBWEB.createBlockData());
         }

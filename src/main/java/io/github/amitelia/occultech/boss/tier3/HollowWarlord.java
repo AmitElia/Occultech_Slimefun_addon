@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier3;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -109,7 +111,7 @@ public final class HollowWarlord extends BossBehavior {
             sweepAt = now + 20;
             Location ground = warlord.getLocation();
             ground.setY(Abyss.groundY(ground));
-            fight.telegraph(ground, SWEEP_RADIUS, 25, Color.fromRGB(40, 40, 40));
+            fight.telegraph(ground, SWEEP_RADIUS, 25, Color.fromRGB(40, 40, 40), FloorDecals.Mark.SWEEP);
             warlord.getWorld().playSound(warlord.getLocation(), Sound.ENTITY_WITHER_SKELETON_AMBIENT, 2F, 0.5F);
         }
         if (sweepAt >= 0 && now >= sweepAt) {

@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier0;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,7 +88,7 @@ public final class GelatinousSovereign extends BossBehavior {
 
         if (enraged && every(PUDDLE_INTERVAL)) {
             Location at = sovereign.getLocation();
-            fight.addHazard(at, 2.5, 200, ACID, player -> player.damage(2, sovereign));
+            fight.addHazard(at, 2.5, 200, ACID, FloorDecals.Zone.ACID, player -> player.damage(2, sovereign));
             at.getWorld().playSound(at, Sound.BLOCK_SLIME_BLOCK_FALL, 1F, 0.6F);
         }
     }
@@ -97,7 +99,7 @@ public final class GelatinousSovereign extends BossBehavior {
             if (target != null) {
                 slamTarget = target.getLocation();
                 leapAt = now + SLAM_WARNING;
-                fight.telegraph(slamTarget, 3.5, SLAM_WARNING + 10, LIME);
+                fight.telegraph(slamTarget, 3.5, SLAM_WARNING + 10, LIME, FloorDecals.Mark.SLAM);
                 sovereign.getWorld().playSound(sovereign.getLocation(), Sound.ENTITY_SLIME_SQUISH, 2F, 0.5F);
             }
         }

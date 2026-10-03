@@ -552,6 +552,16 @@ final class SelfTest {
     private void summonResult() {
         currentFight = bosses.fightAt(altar).orElse(null);
         check("the sigil stays on the floor, turning, through the boss fight", sigils().contains("ritual_sigil_t0"), String.valueOf(sigils()));
+        if (currentFight != null && io.github.amitelia.occultech.boss.FloorDecals.enabled()) {   // Session O4 floor markings
+            org.bukkit.Location spot = altar.getLocation().add(4.5, 0, 0.5);
+            currentFight.telegraph(spot, 2, 40, org.bukkit.Color.RED, io.github.amitelia.occultech.boss.FloorDecals.Mark.SLAM);
+            currentFight.addHazard(spot.clone().add(0, 0, 3), 2, 60, org.bukkit.Color.LIME, io.github.amitelia.occultech.boss.FloorDecals.Zone.ACID, p -> { });
+            List<String> marks = altar.getWorld().getNearbyEntitiesByType(org.bukkit.entity.ItemDisplay.class, spot, 6).stream()
+                .map(d -> d.getItemStack().getItemMeta()).filter(m -> m != null && m.hasItemModel() && m.getItemModel().getKey().startsWith("floor_"))
+                .map(m -> m.getItemModel().getKey()).sorted().toList();
+            check("boss attacks mark the floor (a warning ring, fill and symbol; an acid zone)",
+                marks.containsAll(List.of("floor_warning_ring", "floor_warning_fill", "floor_mark_slam", "floor_zone_acid")), String.valueOf(marks));
+        }
         check("summoning ritual spawned the Brood Mother", currentFight != null && !currentFight.bosses().isEmpty(), "no fight");
         if (currentFight != null) {
             check("boss is tagged as summoned", currentFight.bosses().stream().allMatch(Keys::isSummoned), "untagged");

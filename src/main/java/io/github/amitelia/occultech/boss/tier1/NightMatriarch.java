@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier1;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -122,7 +124,7 @@ public final class NightMatriarch extends BossBehavior {
             if (target != null) {
                 diveTarget = target.getLocation();
                 diveAt = now + DIVE_WARNING;
-                fight.telegraph(diveTarget, 3, DIVE_WARNING + 10, SHADOW);
+                fight.telegraph(diveTarget, 3, DIVE_WARNING + 10, SHADOW, FloorDecals.Mark.DIVE);
                 matriarch.getWorld().playSound(matriarch.getLocation(), Sound.ENTITY_PHANTOM_SWOOP, 2F, 0.6F);
             }
         }

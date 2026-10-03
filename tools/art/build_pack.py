@@ -319,6 +319,9 @@ def main():
             plain = {"type": "minecraft:select", "property": "minecraft:display_context",
                      "cases": [{"when": "none", "model": plain}],
                      "fallback": {"type": "minecraft:model", "model": f"{NS}:block/{key}_inventory"}}
+        if os.path.exists(os.path.join(gdir, key, "tint.txt")):
+            # tinted by the item's dyed colour (the floor warnings take each attack's colour, Session O4)
+            plain = dict(plain, tints=[{"type": "minecraft:dye", "default": -1}])
         files[f"assets/{NS}/items/{key}.json"] = {"model": plain}
         for tex_ref in set(model["textures"].values()):
             name = tex_ref.split("/")[-1][len(key) + 1:]

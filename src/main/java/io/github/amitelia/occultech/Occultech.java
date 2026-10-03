@@ -75,6 +75,7 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         servitors.setRituals(rituals);
         resourcePack = new io.github.amitelia.occultech.pack.ResourcePackService(this);
         resourcePack.load();
+        io.github.amitelia.occultech.boss.FloorDecals.enable(this, resourcePack.hasSigils());   // boss-fight floor markings
         registrar = new ContentRegistrar(this, catalog, rituals);
         registrar.registerAll();
         registrar.problems().forEach(problem -> getLogger().warning("Content problem: " + problem));

@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier3;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -389,7 +391,7 @@ public final class Gallus extends BossBehavior {
             leapSpot = target.getLocation();
             leapSpot.setY(Abyss.groundY(leapSpot));
             leapAt = now + 20;
-            fight.telegraph(leapSpot, 5, 60, YOLK);
+            fight.telegraph(leapSpot, 5, 60, YOLK, FloorDecals.Mark.SLAM);
             gallus.getWorld().playSound(gallus.getLocation(), Sound.ENTITY_CHICKEN_AMBIENT, 2F, 0.4F);
         }
         if (leapAt >= 0 && now >= leapAt) {
@@ -448,7 +450,7 @@ public final class Gallus extends BossBehavior {
             it.remove();
             Location at = egg.getValue().clone();
             at.setY(Abyss.groundY(at));
-            fight.addHazard(at, 2, 80, YOLK, player -> {
+            fight.addHazard(at, 2, 80, YOLK, FloorDecals.Zone.YOLK, player -> {
                 Abyss.magic(player, 6, gallus);
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 1));
             });

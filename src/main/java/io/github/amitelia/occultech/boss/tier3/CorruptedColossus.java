@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier3;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -120,7 +122,7 @@ public final class CorruptedColossus extends BossBehavior {
             slamAt = now + 25;
             slamCenter = colossus.getLocation();
             slamCenter.setY(Abyss.groundY(slamCenter));
-            fight.telegraph(slamCenter, SLAM_RADIUS, 30, CORRUPT);
+            fight.telegraph(slamCenter, SLAM_RADIUS, 30, CORRUPT, FloorDecals.Mark.SLAM);
             colossus.playEffect(EntityEffect.ENTITY_ATTACK);
             colossus.getWorld().playSound(colossus.getLocation(), Sound.ENTITY_IRON_GOLEM_ATTACK, 2F, 0.5F);
         }

@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier3;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -135,7 +137,7 @@ public final class HeartwoodHorror extends BossBehavior {
             if (victim != null) {
                 snareSpot = victim.getLocation();
                 snareAt = now + 30;
-                fight.telegraph(snareSpot, 2.5, 35, ROOTS);
+                fight.telegraph(snareSpot, 2.5, 35, ROOTS, FloorDecals.Mark.ROOTS);
             }
         }
         if (snareAt >= 0 && now >= snareAt) {
