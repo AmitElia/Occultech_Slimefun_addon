@@ -1,11 +1,13 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "shell": "occultech:block/abyssal_helmet_head_shell",
+    "helm_top": "occultech:block/abyssal_helmet_head_helm_top",
+    "helm_side": "occultech:block/abyssal_helmet_head_helm_side",
+    "helm_back": "occultech:block/abyssal_helmet_head_helm_back",
     "brow": "occultech:block/abyssal_helmet_head_brow",
     "fin": "occultech:block/abyssal_helmet_head_fin",
     "gem": "occultech:block/abyssal_helmet_head_gem",
-    "particle": "occultech:block/abyssal_helmet_head_shell"
+    "particle": "occultech:block/abyssal_helmet_head_helm_top"
   },
   "elements": [
     {
@@ -22,56 +24,56 @@
       "shade": true,
       "faces": {
         "north": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
             0,
-            15,
+            16,
             2
           ]
         },
         "south": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
             0,
-            15,
+            16,
             2
           ]
         },
         "west": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
             0,
-            15,
+            16,
             2
           ]
         },
         "east": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
             0,
-            15,
+            16,
             2
           ]
         },
         "up": {
-          "texture": "#brow",
+          "texture": "#helm_top",
           "uv": [
             0,
             0,
-            15,
-            15
+            16,
+            16
           ]
         },
         "down": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
             0,
-            15,
+            16,
             2
           ]
         }
@@ -91,56 +93,56 @@
       "shade": true,
       "faces": {
         "north": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
             0,
-            12,
+            16,
             1
           ]
         },
         "south": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
             0,
-            12,
+            16,
             1
           ]
         },
         "west": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
             0,
-            12,
+            16,
             1
           ]
         },
         "east": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
             0,
-            12,
+            16,
             1
           ]
         },
         "up": {
-          "texture": "#brow",
+          "texture": "#helm_top",
           "uv": [
-            0,
-            0,
-            12,
-            12
+            2,
+            2,
+            14,
+            14
           ]
         },
         "down": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
             0,
-            12,
+            16,
             1
           ]
         }
@@ -159,58 +161,49 @@
       ],
       "shade": true,
       "faces": {
-        "north": {
-          "texture": "#shell",
+        "south": {
+          "texture": "#helm_back",
           "uv": [
             0,
-            0,
-            15,
-            13
+            2,
+            16,
+            16
           ]
         },
-        "south": {
-          "texture": "#shell",
+        "north": {
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            15,
-            13
+            2,
+            16,
+            16
           ]
         },
         "west": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            15,
-            13
+            2,
+            2,
+            16
           ]
         },
         "east": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            15,
-            13
-          ]
-        },
-        "up": {
-          "texture": "#shell",
-          "uv": [
-            0,
-            0,
-            15,
-            13
+            2,
+            2,
+            16
           ]
         },
         "down": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            15,
-            13
+            14,
+            16,
+            16
           ]
         }
       }
@@ -229,57 +222,57 @@
       "shade": true,
       "faces": {
         "north": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         },
         "south": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         },
         "west": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         },
         "east": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         },
         "up": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         },
         "down": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         }
       }
@@ -298,57 +291,57 @@
       "shade": true,
       "faces": {
         "north": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         },
         "south": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         },
         "west": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         },
         "east": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         },
         "up": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         },
         "down": {
-          "texture": "#shell",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
-            14,
-            12
+            3,
+            16,
+            16
           ]
         }
       }

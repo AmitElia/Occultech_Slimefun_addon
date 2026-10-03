@@ -3051,16 +3051,18 @@ def abyssal_helm_worn():
     m = Model("abyssal_helmet_head")
     m.part = True
     ab, sg = RAMPS["abyss"], RAMPS["seaglow"]
-    t_shell = m.texture("shell", tex_plates(ab, band=4, tone=3))
+    top_i, side_i, back_i = tex_helm(ab, tone=3)
+    t_top, t_side, t_back = m.texture("helm_top", top_i), m.texture("helm_side", side_i), m.texture("helm_back", back_i)
     t_brow = m.texture("brow", tex_smooth(ab, tone=4))
     t_fin = m.texture("fin", tex_fin_shape(ab, sg))
     t_gem = m.texture("gem", [fill(sg, [3, 4, 5, 4][f]) for f in range(4)])
     T = lambda t, w, h: (t, [0, 0, max(1, min(16, round(w))), max(1, min(16, round(h)))])  # noqa: E731
-    m.cube((0.6, 14.6, 0.6), (15.4, 16.0, 15.6), T(t_shell, 15, 2), top=T(t_brow, 15, 15))     # crown
-    m.cube((2.2, 16.0, 2.2), (13.8, 16.8, 14.4), T(t_brow, 12, 1), top=T(t_brow, 12, 12))
-    m.cube((0.6, 2.0, 14.6), (15.4, 14.6, 16.0), T(t_shell, 15, 13))                          # back
+    m.cube((0.6, 14.6, 0.6), (15.4, 16.0, 15.6), (t_side, [0, 0, 16, 2]), top=(t_top, [0, 0, 16, 16]))   # crown
+    m.cube((2.2, 16.0, 2.2), (13.8, 16.8, 14.4), (t_side, [0, 0, 16, 1]), top=(t_top, [2, 2, 14, 14]))
+    m.box((0.6, 2.0, 14.6), (15.4, 14.6, 16.0), {"south": (t_back, [0, 2, 16, 16]), "north": (t_side, [0, 2, 16, 16]),
+          "west": (t_side, [0, 2, 2, 16]), "east": (t_side, [0, 2, 2, 16]), "down": (t_side, [0, 14, 16, 16])})   # back
     for x0 in (0.0, 14.6):
-        m.cube((x0, 3.0, 0.6), (x0 + 1.4, 14.6, 14.6), T(t_shell, 14, 12))                    # sides
+        m.cube((x0, 3.0, 0.6), (x0 + 1.4, 14.6, 14.6), (t_side, [0, 3, 16, 16]))              # sides
     m.cube((0.2, 11.2, -0.4), (15.8, 14.6, 1.2), T(t_brow, 16, 3))                            # brow band (forehead only)
     m.box((7.0, 12.0, -0.7), (9.0, 13.8, -0.4), {d: (t_gem, [0, 0, 2, 2]) for d in FACES_ALL}, light=15)
     for x0 in (0.2, 14.0):
@@ -3163,6 +3165,88 @@ SOUL = RAMPS["hollowcy"]      # the light-blue soul power
 STEEL = DEEPSLATE             # black and greys, reinforced-deepslate style
 
 
+# ---------------------------------------------------------------- G6 v6: helmet shells that look like helmets; the
+# Hollow horns are the warden's tendrils (vanilla's own shape, recoloured purple), mounted at the helmet's sides
+
+def tex_helm(ramp, tone=3):
+    """A helmet's shell, three textures: a domed top with a raised crest down its middle and rivets at the corners; the
+    sides with a raised ear plate, a rim band along the bottom edge and rivets on it; the back with the crest running
+    down to a flared neck rim. Shaded from one light at the top-left - no stripes."""
+    def base(img):
+        for y in range(16):
+            for x in range(16):
+                s = (x * 0.6 + y) / 24
+                img.putpixel((x, y), ramp[tone + 1] if s < 0.18 else ramp[tone] if s < 0.62 else ramp[tone - 1])
+        return img
+    top = base(blank())
+    for y in range(16):                                  # the crest, front to back
+        top.putpixel((6, y), ramp[tone - 1]); top.putpixel((7, y), ramp[tone + 2]); top.putpixel((8, y), ramp[tone + 1])
+        top.putpixel((9, y), ramp[tone - 2])
+    for (x, y) in ((2, 2), (13, 2), (2, 13), (13, 13)):
+        top.putpixel((x, y), ramp[tone + 2]); top.putpixel((x + 1, y + 1), ramp[tone - 2])
+    side = base(blank())
+    for y in range(4, 11):                               # the raised ear plate (a rounded rectangle)
+        for x in range(4, 12):
+            if (x, y) in ((4, 4), (11, 4), (4, 10), (11, 10)):
+                continue
+            edge_lit = y == 4 or x == 4
+            edge_dark = y == 10 or x == 11
+            side.putpixel((x, y), ramp[tone + 1] if edge_lit else ramp[tone - 1] if edge_dark else ramp[tone])
+    for x in range(16):                                  # the rim band
+        side.putpixel((x, 13), ramp[tone + 1]); side.putpixel((x, 14), ramp[tone]); side.putpixel((x, 15), ramp[tone - 2])
+    for x in (2, 8, 13):
+        side.putpixel((x, 14), ramp[tone + 2])            # rivets on the rim
+    back = base(blank())
+    for y in range(13):
+        back.putpixel((7, y), ramp[tone + 2]); back.putpixel((8, y), ramp[tone + 1]); back.putpixel((9, y), ramp[tone - 2])
+    for x in range(16):
+        back.putpixel((x, 12), ramp[tone + 1]); back.putpixel((x, 13), ramp[tone + 2])
+        back.putpixel((x, 14), ramp[tone]); back.putpixel((x, 15), ramp[tone - 2])
+    return top, side, back
+
+
+VANILLA_WARDEN = os.path.join(os.path.dirname(__file__), "vanilla_warden", "warden.png")
+
+
+def warden_tendrils(ramp):
+    """The warden's two tendrils (its 'horns', vanilla's own 16x16 artwork from warden.png), recoloured into `ramp` by
+    brightness: (right one, left one)."""
+    w = Image.open(VANILLA_WARDEN).convert("RGBA")
+    crops = [w.crop((52, 32, 68, 48)), w.crop((58, 0, 74, 16))]
+    lums = sorted({round(0.3 * r + 0.59 * g + 0.11 * b) for crop in crops for (r, g, b, a) in crop.getdata() if a})
+    out = []
+    for crop in crops:
+        img = blank()
+        for y in range(16):
+            for x in range(16):
+                r, g, b, a = crop.getpixel((x, y))
+                if not a:
+                    continue
+                l = round(0.3 * r + 0.59 * g + 0.11 * b)
+                k = lums.index(l) / max(1, len(lums) - 1)        # 0 = darkest .. 1 = brightest
+                img.putpixel((x, y), ramp[1 + round(k * (len(ramp) - 2))])
+        out.append(img)
+    return out
+
+
+def tendril_lightning(shape, frames=6):
+    """Soul lightning crackling over a tendril: random bolts kept inside its shape, a new pattern each frame."""
+    out = []
+    for f in range(frames):
+        img = blank()
+        rnd = random.Random(811 + f)
+        pts = [(x, y) for y in range(16) for x in range(16) if shape.getpixel((x, y))[3]]
+        for _ in range(3):
+            x, y = rnd.choice(pts)
+            for _ in range(6):
+                if shape.getpixel((x, y))[3]:
+                    img.putpixel((x, y), (255, 255, 255, 255) if rnd.random() < 0.4 else SOUL[4])
+                x = max(0, min(15, x + rnd.choice((-1, 0, 1))))
+                y = max(0, min(15, y + rnd.choice((-1, 0, 1))))
+        out.append(img)
+    return out
+
+
 def hollow_armor():
     """Hollow, worn - a sculk soul machine, endgame armour: heavy plates of black-grey reinforced steel (clean bevels,
     like reinforced deepslate), sculk in the vents and gaps between them, soul power in light blue - a soul reactor core
@@ -3234,41 +3318,26 @@ def hollow_armor():
 
 
 def hollow_helm_worn():
-    """The Hollow Crown worn - the head of a sculk soul machine, open-faced (the whole face shows): a helm of black-grey
-    reinforced steel plates with sculk growing over the crown (its soul spots glowing), a brow band with a soul core
-    and a soul conduit across it, cheek guards; and rising from the head two purple horns shaped like the warden's,
-    climbing up and out and hooking over at the tips - conducting soul lightning, which arcs between them and crackles
-    along them (animated, glowing)."""
+    """The Hollow Crown worn - the head of a sculk soul machine, open-faced (the whole face shows): a helmet of
+    black-grey reinforced steel (a domed top grown over with sculk, its soul spots glowing; ear plates and a rim band on
+    the sides; a crest down the back to a flared neck rim), a brow band with a soul conduit and core, cheek guards; and
+    at the helmet's sides the warden's two tendrils - vanilla's own shape, recoloured purple - set exactly as on the
+    warden's head (flat, reaching out and up from the sides), conducting soul lightning: it crackles over each tendril
+    and arcs between their tips (animated, glowing)."""
     m = Model("hollow_helmet_head")
     m.part = True
-    vi, sk = RAMPS["violet"], RAMPS["sculk"]
-    t_steel = m.texture("steel", tex_plates(STEEL, band=4, tone=3))
+    vi = RAMPS["violet"]
+    top_i, side_i, back_i = tex_helm(STEEL, tone=3)
+    t_side, t_back = m.texture("helm_side", side_i), m.texture("helm_back", back_i)
     t_brow = m.texture("brow", tex_smooth(STEEL, tone=3))
     crown = sculk(781, frames=6, spots=3)
     t_sculk = m.texture("sculk", crown)
     t_souls = m.texture("souls", soul_glow(crown))
     t_core = m.texture("core", [fill(SOUL, [3, 4, 5, 5, 4, 3][f]) for f in range(6)])
     t_conduit = m.texture("conduit", tex_glow_lines(SOUL, [[(x, 7) for x in range(1, 15)], [(x, 8) for x in range(1, 15)]]))
-    horn = blank()
-    for y in range(16):
-        for x in range(16):
-            t = 4 if (x < 2 or y < 2) else 2 if (x > 13 or y > 13) else 3
-            horn.putpixel((x, y), vi[t])
-        if y % 5 == 4:
-            for x in range(16):
-                horn.putpixel((x, y), vi[1])          # ridges like the warden's
-    t_horn = m.texture("horn", horn)
-    crackle = []
-    for f in range(6):
-        cimg = blank()
-        rnd = random.Random(791 + f)
-        x = 7
-        for y in range(16):                           # a bolt running up the horn
-            x = max(1, min(14, x + rnd.choice((-1, 0, 1))))
-            if (y + f) % 3:
-                cimg.putpixel((x, y), (255, 255, 255, 255) if y % 4 == f % 4 else SOUL[4])
-        crackle.append(cimg)
-    t_crackle = m.texture("crackle", crackle)
+    right_t, left_t = warden_tendrils(vi)
+    t_tr, t_tl = m.texture("tendril_r", right_t), m.texture("tendril_l", left_t)
+    t_zr, t_zl = m.texture("zap_r", tendril_lightning(right_t)), m.texture("zap_l", tendril_lightning(left_t))
     bolts = []
     for f in range(6):
         b = blank()
@@ -3281,36 +3350,27 @@ def hollow_helm_worn():
                 b.putpixel((x, max(0, y - 2)), vi[5])
         bolts.append(b)
     t_bolt = m.texture("bolt", bolts)
-    T = lambda t, w, h: (t, [0, 0, max(1, min(16, round(w))), max(1, min(16, round(h)))])  # noqa: E731
-    # the helm: crown (sculk-grown), back, sides
-    m.cube((0.6, 14.6, 0.6), (15.4, 16.0, 15.6), T(t_steel, 15, 2), top=T(t_sculk, 15, 15))
-    m.box((0.6, 16.05, 0.6), (15.4, 16.05, 15.6), {"up": (t_souls, [0, 0, 15, 15])}, shade=False, light=15)
-    m.cube((0.6, 1.4, 14.6), (15.4, 14.6, 16.0), T(t_steel, 15, 13))
+    # the helmet: a sculk-grown dome, sides with ear plates and a rim, a back with a crest and neck rim
+    m.cube((0.6, 14.6, 0.6), (15.4, 16.0, 15.6), (t_side, [0, 0, 16, 2]), top=(t_sculk, [0, 0, 16, 16]))
+    m.box((0.6, 16.05, 0.6), (15.4, 16.05, 15.6), {"up": (t_souls, [0, 0, 16, 16])}, shade=False, light=15)
+    m.box((0.6, 1.4, 14.6), (15.4, 14.6, 16.0), {"south": (t_back, [0, 2, 16, 16]), "north": (t_side, [0, 2, 16, 16]),
+          "west": (t_side, [0, 2, 2, 16]), "east": (t_side, [0, 2, 2, 16]), "down": (t_side, [0, 14, 16, 16])})
     for x0 in (0.0, 14.6):
-        m.cube((x0, 2.0, 0.6), (x0 + 1.4, 14.6, 14.6), T(t_steel, 14, 13))
+        m.cube((x0, 2.0, 0.6), (x0 + 1.4, 14.6, 14.6), (t_side, [0, 3, 16, 16]))
     # brow band with a soul conduit and core; cheek guards (the face stays open)
-    m.cube((0.2, 10.6, -0.4), (15.8, 14.6, 1.2), T(t_brow, 16, 4))
+    m.cube((0.2, 10.6, -0.4), (15.8, 14.6, 1.2), (t_brow, [0, 0, 16, 4]))
     m.box((0.4, 10.6, -0.45), (15.6, 12.2, -0.45), {"north": (t_conduit, [0, 6, 16, 9])}, shade=False, light=15)
     m.box((6.8, 11.6, -1.0), (9.2, 13.8, -0.4), {d: (t_core, [0, 0, 2, 2]) for d in FACES_ALL}, light=15)
     for x0 in (0.2, 14.0):
-        m.cube((x0, 2.0, -0.2), (x0 + 1.8, 10.6, 1.2), T(t_brow, 2, 8))
-    # the warden horns: up and out from the crown, hooking over at the tips
-    segs = ((1.0, 4.8, 15.6, 19.0, 5.0, 10.0), (-0.4, 3.2, 19.0, 22.6, 5.6, 9.6), (-2.2, 1.2, 22.6, 25.8, 6.0, 9.2),
-            (-4.6, -0.8, 25.0, 27.6, 6.4, 8.8), (-5.8, -3.6, 23.0, 25.4, 6.8, 8.4))
-    for side in (0, 1):
-        for (x0, x1, y0, y1, z0, z1) in segs:
-            a, b = (x0, x1) if side == 0 else (16 - x1, 16 - x0)
-            m.cube((a, y0, z0), (b, y1, z1), T(t_horn, b - a, y1 - y0))
-        # lightning crackling along the horn: on each segment's front and back faces
-        for k, (x0, x1, y0, y1, z0, z1) in enumerate(segs[:4]):
-            a, b = (x0, x1) if side == 0 else (16 - x1, 16 - x0)
-            uv = [k * 4 % 16, 0, k * 4 % 16 + 4, 16]
-            m.box((a, y0, z0 - 0.05), (b, y1, z0 - 0.05), {"north": (t_crackle, uv)}, shade=False, light=15)
-            m.box((a, y0, z1 + 0.05), (b, y1, z1 + 0.05), {"south": (t_crackle, uv)}, shade=False, light=15)
-    # soul lightning arcing between the horns
-    m.box((-5.0, 22.0, 7.6), (21.0, 29.0, 7.6), {"north": (t_bolt, [0, 0, 16, 16]), "south": (t_bolt, [16, 0, 0, 16])},
-          shade=False, light=15)
-    m.box((-1.0, 18.0, 6.4), (17.0, 23.0, 6.4), {"north": (t_bolt, [16, 0, 0, 16]), "south": (t_bolt, [0, 0, 16, 16])},
+        m.cube((x0, 2.0, -0.2), (x0 + 1.8, 10.6, 1.2), (t_brow, [0, 0, 2, 8]))
+    # the warden's tendrils, flat at the helmet's sides as on the warden (16 px out, from 7 below the top to 9 above):
+    # each drawn on both faces with its base at the helmet; lightning crackling over it
+    for (x0, x1, tex, zap, flip) in ((-16.0, 0.0, t_tr, t_zr, False), (16.0, 32.0, t_tl, t_zl, False)):
+        m.box((x0, 9.0, 8.0), (x1, 25.0, 8.0), {"south": (tex, [0, 0, 16, 16]), "north": (tex, [16, 0, 0, 16])}, light=6)
+        m.box((x0, 9.0, 7.9), (x1, 25.0, 7.9), {"north": (zap, [16, 0, 0, 16])}, shade=False, light=15)
+        m.box((x0, 9.0, 8.1), (x1, 25.0, 8.1), {"south": (zap, [0, 0, 16, 16])}, shade=False, light=15)
+    # soul lightning arcing between the tendrils' tips
+    m.box((-12.0, 21.0, 8.0), (28.0, 28.0, 8.0), {"north": (t_bolt, [0, 0, 16, 16]), "south": (t_bolt, [16, 0, 0, 16])},
           shade=False, light=15)
     m.display = HEAD_DISPLAY
     return m

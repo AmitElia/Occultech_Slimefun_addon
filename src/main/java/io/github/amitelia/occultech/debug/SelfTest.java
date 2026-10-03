@@ -984,8 +984,10 @@ final class SelfTest {
         BlockMenu menu = BlockStorage.getInventory(bound);
         ItemStack out = menu == null ? null : menu.getItemInSlot(RitualAltar.CENTER_SLOT);
         SlimefunItem item = out == null || out.getType().isAir() ? null : SlimefunItem.getByItem(out);
+        long dropped = bound.getWorld().getNearbyEntities(bound.getLocation().add(0.5, 1, 0.5), 3, 3, 3, e -> e instanceof Item).size();
         check("ritual produced the Abyssal Helm", item != null && item.getId().equals(ItemKeys.slimefunId("ABYSSAL_HELMET")),
-            item == null ? "nothing" : item.getId());
+            (item == null ? "nothing" : item.getId()) + " (slot: " + (menu == null ? "no menu" : out == null ? "empty" : out.getType())
+                + ", ritual still running: " + rituals.isLocked(bound.getLocation()) + ", " + dropped + " dropped)");
         check("the helmet's enchantments carry over (Protection IV)", out != null && out.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 4,
             out == null ? "nothing" : out.getEnchantments().toString());
         DebugWorld.setAltarCenter(bound, null);

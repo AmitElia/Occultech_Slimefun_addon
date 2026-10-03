@@ -601,6 +601,16 @@ players wear capes and elytras; the Hollow set needs a full rework).
   soul lightning: it crackles along each horn and arcs between them (animated, glowing).
 - The Hollow item icons (Session F: violet steel, aged gold, bone) no longer match the worn set - to redo.
 
+**G6 v6** (the user: the horns look like bunny ears - make them exactly like the warden's, purple, from the sides of
+the helmet; both helmets' base texture is boring horizontal lines - make it look like a helmet; the body is good).
+- `tex_helm`: three textures per helmet - a domed top with a raised crest and corner rivets, sides with a raised ear
+  plate and a riveted rim band, a back with the crest running down to a flared neck rim; one light, no stripes. Both
+  helms use it (Hollow's top stays grown over with sculk).
+- Hollow horns = the warden's tendrils: vanilla's own 16x16 tendril artwork (`tools/art/vanilla_warden/warden.png`, as
+  with the vanilla fire) recoloured into the violet ramp by brightness (`warden_tendrils`), set exactly as on the
+  warden's head - flat planes at the helmet's sides, 16 px out, from 7 below the top to 9 above - softly glowing;
+  soul lightning crackles over each (`tendril_lightning`, kept inside the shape) and arcs between their tips.
+
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
   its model: real blocks, so they appear and vanish instantly, render at full distance, cost no entities and can't be
