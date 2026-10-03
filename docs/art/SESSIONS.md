@@ -625,6 +625,12 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   raised sculk (lit cell crowns, dark crevices, a dark rim where they rise off the steel, a soul spot) on the abdomen,
   shoulder blade, a pauldron, a thigh, the back of a leg and a boot, each with a thin crack of soul light running
   through it and on across the plates (replacing the straight conduit lines); the cores and purple trim stay.
+- Then (the user): the sparks were too small and looked like flying birds (tiny sideways zigzags read as wings);
+  bigger, fewer, more sporadic; make the infection understandable with colour gradients; less random. Now: four bolts
+  a horn on 6-unit planes, each a jagged downward stroke with a fork, alive 2-3 frames of a 16-frame cycle at its own
+  moment; the infection is a radial gradient (glowing soul heart, bright sculk, darker sculk, veins reaching out over the
+  plates, a shadow under its raised edge) placed on purpose - spreading from the chest reactor with a mirrored pair of
+  cracks, climbing the spine behind, a matching patch on each pauldron and thigh - over a calm, gradient underlayer.
 
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing

@@ -3247,104 +3247,97 @@ def tendril_lightning(shape, frames=6):
     return out
 
 
-def infection(c, F, cx, cy, r, seed, crack_to=None):
-    """A patch of sculk infection on a face: a ragged blob of raised sculk (lit cell crowns, dark crevices, a soul spot,
-    a dark rim where it rises off the steel), and a jagged crack of lightning running through it - and on across the
-    plate to `crack_to` - a white-hot core with soul-blue edges."""
+def infection(c, F, cx, cy, r, veins=()):
+    """Sculk infection growing on the steel, read by its gradient: a glowing soul heart, bright sculk round it, darker
+    sculk toward the edge, veins of it reaching out over the plates at the given angles (degrees, 0 = right, 90 =
+    down), and a shadow under its raised lower edge."""
     sk = RAMPS["sculk"]
-    rnd = random.Random(seed)
     w, h = F[3], F[4]
-    reach = {}
-    for k in range(8):                                   # a ragged outline
-        reach[k] = r + rnd.choice((-0.6, 0, 0.4, 0.8))
-    cells = []
     for v in range(h):
         for u in range(w):
-            ang = math.atan2(v - cy, u - cx)
-            k = int(((ang + math.pi) / (2 * math.pi)) * 8) % 8
             d = math.hypot(u - cx, v - cy)
-            if d <= reach[k]:
-                cells.append((u, v, d, reach[k]))
-    for (u, v, d, rr) in cells:
-        if d > rr - 0.8:
-            col = sk[0] if v >= cy else sk[1]           # the rim: shadowed below, darker all round
-        else:
-            col = sk[3] if (u + 2 * v) % 3 == 0 else sk[2] if (u + v) % 2 else sk[1]
-            if u < cx and v < cy and (u + v) % 3 == 0:
-                col = sk[4]                              # cell crowns lit from the top-left
-        c.px(F, u, v, col)
-    if cells:
-        u, v, _, _ = min(cells, key=lambda t: abs(t[0] - cx + 0.6) + abs(t[1] - cy + 0.6))
-        c.px(F, u, v, SOUL[3])                          # a soul spot
-    # the crack: a jagged bolt from one side of the patch, through it and on
-    tx, ty = crack_to if crack_to else (cx + r + 2, cy + 1)
-    x, y = cx - r, cy - 1
-    steps = int(abs(tx - x) + abs(ty - y)) + 1
-    for k in range(steps):
-        x += (tx - x) / max(1, steps - k) + rnd.choice((-0.6, 0, 0.6))
-        y += (ty - y) / max(1, steps - k) + rnd.choice((-0.8, 0, 0.8))
-        u, v = int(round(x)), int(round(y))
-        c.px(F, u, v, SOUL[5] if k % 3 == 1 else SOUL[4])  # a thin crack of light, hot in places
-        if k == steps // 2:
-            c.px(F, u + 1, v - 1, RAMPS["violet"][4])    # one purple spark off it
+            if d <= r * 0.3:
+                col = SOUL[4] if d < 0.6 else SOUL[3]          # its glowing heart
+            elif d <= r * 0.6:
+                col = sk[4]
+            elif d <= r - 0.5:
+                col = sk[3]
+            elif d <= r:
+                col = sk[2]
+            elif d <= r + 0.8 and v > cy:
+                col = sk[0]                                   # the shadow under its raised edge
+            else:
+                continue
+            c.px(F, u, v, col)
+    for ang in veins:                                         # veins reaching out over the plates
+        a = math.radians(ang)
+        for k in range(int(r * 10), int((r + 2.6) * 10)):
+            t = k / 10
+            c.px(F, int(round(cx + math.cos(a) * t)), int(round(cy + math.sin(a) * t)), sk[2] if t < r + 1.4 else sk[1])
+
+
+def crack(c, F, pts):
+    """A crack of soul lightning through the steel along a fixed jagged path: light blue, white-hot at its middle."""
+    for k, (u, v) in enumerate(pts):
+        c.px(F, u, v, SOUL[5] if k == len(pts) // 2 else SOUL[4])
 
 
 def hollow_armor():
-    """Hollow, worn - a sculk soul machine, endgame armour: heavy plates of black-grey reinforced steel (clean bevels,
-    like reinforced deepslate), sculk in the vents and gaps between them, soul power in light blue - a soul reactor core
-    in the chest, cores in the pauldrons, belt and knees - and purple trim; sculk infection eating at the plates in
-    spots (raised, cell-shaded, a soul spot in each) with soul lightning cracking through it and across the steel. No back piece (capes and elytras stay free)."""
+    """Hollow, worn - a sculk soul machine, endgame armour, laid out on purpose: heavy plates of black-grey reinforced
+    steel over a dark sculk underlayer; the soul reactor in the chest, infected - sculk spreading round it in a clear
+    gradient, two cracks of soul lightning running from it in a mirrored pair; the infection climbing the spine behind;
+    a matching patch on each pauldron and each thigh, each with its crack; purple trim; light-blue soles. No back piece."""
     sk, vi = RAMPS["sculk"], RAMPS["violet"]
     c = covered_canvas()
     H, L = "humanoid", "humanoid_leggings"
-    vent = [sk[0], sk[1], sk[2], sk[2], sk[3], sk[3]]
-    for layer in (H, L):                                   # the dark sculk underlayer everywhere it covers
+    for layer in (H, L):                                     # the calm underlayer: dark sculk, darker toward the bottom
         for part in ("body", "arm", "leg"):
             for face in ("front", "back", "right", "left", "top", "bottom"):
                 F = c.face(layer, part, face)
                 for v in range(F[4]):
                     for u in range(F[3]):
-                        c.px(F, u, v, vent[1 + (u + v) % 2])
-    # chest: two heavy pectoral plates, the reactor core between, abdominal plates, conduits to the shoulders
+                        c.px(F, u, v, sk[1] if v < F[4] - 2 else sk[0])
+    # chest: pectorals, abdominal plates, the infected reactor and its two cracks
     F = c.face(H, "body", "front")
     c.plate(F, 0, 0, 2, 4, STEEL, 3); c.plate(F, 5, 0, 7, 4, STEEL, 3)
-    c.rect(F, 2, 1, 5, 5, STEEL[1]); c.px(F, 2, 1, STEEL[4])               # the core's frame
-    c.gem(F, 3, 2, 4, 4, SOUL)                                             # the soul reactor core
-    c.px(F, 0, 1, vi[4]); c.px(F, 7, 1, vi[3])                             # purple trim at the collar
-    for v in (6, 8, 10):
+    for v in (6, 8):
         c.plate(F, 1, v, 6, v + 1, STEEL, 3)
-    infection(c, F, 1.5, 8.5, 2.2, 901, crack_to=(4, 5))                   # sculk eating at the abdomen, a crack to the core
+    infection(c, F, 3.5, 3.0, 2.6, veins=(150, 30))
+    c.rect(F, 2, 2, 5, 4, STEEL[1]); c.px(F, 2, 2, STEEL[4])
+    c.gem(F, 3, 2, 4, 3, SOUL)                                # the soul reactor core
+    crack(c, F, [(2, 5), (2, 6), (1, 7), (1, 8), (2, 9), (1, 10)])
+    crack(c, F, [(5, 5), (5, 6), (6, 7), (6, 8), (5, 9), (6, 10)])
     for u in range(8):
         c.px(F, u, 11, vi[3] if u % 2 else vi[2])
     F = c.face(H, "body", "back")
-    c.plate(F, 0, 0, 3, 5, STEEL, 3); c.plate(F, 4, 0, 7, 5, STEEL, 3)
-    c.plate(F, 1, 7, 6, 9, STEEL, 2)
-    infection(c, F, 5.5, 2.5, 2.4, 903, crack_to=(1, 8))                   # across the shoulder blade, cracking down
+    c.plate(F, 0, 0, 2, 5, STEEL, 3); c.plate(F, 5, 0, 7, 5, STEEL, 3); c.plate(F, 1, 7, 6, 9, STEEL, 2)
+    infection(c, F, 3.5, 5.0, 2.2, veins=(-90,))             # climbing the spine
+    crack(c, F, [(3, 8), (4, 9), (3, 10)])
     for u in range(8):
         c.px(F, u, 11, vi[2])
     for face in ("right", "left"):
         F = c.face(H, "body", face)
         c.plate(F, 0, 0, 3, 4, STEEL, 2); c.plate(F, 0, 6, 3, 9, STEEL, 2)
     c.plate(c.face(H, "body", "top"), 0, 0, 7, 3, STEEL, 3)
-    # pauldrons: two heavy stacked plates, purple rim, a soul light
+    # pauldrons: two plates, purple rim, a soul core; the same small infection on each
     for face in ("front", "back", "right", "left"):
         F = c.face(H, "arm", face)
         c.plate(F, 0, 0, 3, 2, STEEL, 4); c.plate(F, 0, 3, 3, 5, STEEL, 3)
         c.rect(F, 0, 6, 3, 6, vi[3])
     for face in ("right", "left"):
-        c.gem(c.face(H, "arm", face), 1, 1, 2, 1, SOUL)
-    infection(c, c.face(H, "arm", "front"), 2.0, 4.0, 1.8, 905, crack_to=(0, 1))   # a pauldron infected
+        F = c.face(H, "arm", face)
+        c.gem(F, 1, 1, 2, 1, SOUL)
+        infection(c, F, 1.5, 4.0, 1.4)
     F = c.face(H, "arm", "top")
     c.plate(F, 0, 0, 3, 3, STEEL, 4); c.gem(F, 1, 1, 2, 2, SOUL)
-    # boots: heavy plates, a light-blue sole line, purple toe trim
+    # boots: clean - heavy plates, purple toe trim, light-blue sole
     for face in ("front", "back", "right", "left"):
         F = c.face(H, "leg", face)
         c.plate(F, 0, 7, 3, 10, STEEL, 3)
         c.rect(F, 0, 11, 3, 11, SOUL[3] if face == "front" else STEEL[1])
     c.rect(c.face(H, "leg", "front"), 0, 10, 3, 10, vi[3])
-    infection(c, c.face(H, "leg", "right"), 1.5, 9.0, 1.5, 911, crack_to=(3, 11))   # sculk creeping up a boot
     c.rect(c.face(H, "leg", "bottom"), 0, 0, 3, 3, STEEL[1])
-    # leggings: belt with a core, thigh plates, a conduit down the outer thigh, knee guards
+    # leggings: belt with a core, thigh plates, knee guards; the same infection on each thigh's outer side
     for face in ("front", "back", "right", "left"):
         F = c.face(L, "body", face)
         for u in range(F[3]):
@@ -3352,8 +3345,10 @@ def hollow_armor():
         G = c.face(L, "leg", face)
         c.plate(G, 0, 0, 3, 3, STEEL, 3); c.plate(G, 0, 7, 3, 8, STEEL, 2)
     c.gem(c.face(L, "body", "front"), 3, 8, 4, 9, SOUL)
-    infection(c, c.face(L, "leg", "right"), 1.5, 2.0, 2.0, 907, crack_to=(2, 7))   # a thigh infected, cracking down
-    infection(c, c.face(L, "leg", "back"), 2.0, 6.0, 1.6, 909, crack_to=(1, 1))
+    for face in ("right", "left"):
+        F = c.face(L, "leg", face)
+        infection(c, F, 1.5, 2.5, 1.6, veins=(90,))
+        crack(c, F, [(1, 5), (2, 6), (1, 7)])
     F = c.face(L, "leg", "front")
     c.plate(F, 0, 4, 3, 6, STEEL, 4); c.px(F, 0, 4, vi[4]); c.px(F, 3, 4, vi[3]); c.gem(F, 1, 5, 2, 5, SOUL)
     c.plate(c.face(L, "leg", "top"), 0, 0, 3, 3, STEEL, 3)
@@ -3396,20 +3391,26 @@ def hollow_helm_worn():
     t_tr, t_tl = m.texture("tendril_r", right_t), m.texture("tendril_l", left_t)
     t_zr, t_zl = m.texture("zap_r", tendril_lightning(right_t)), m.texture("zap_l", tendril_lightning(left_t))
     sparks = []
-    for f in range(8):   # little cracks of plasma: four quadrants, each a tiny zigzag bolt or nothing (they flicker)
+    fire = {0: (0, 1), 1: (5, 6, 7), 2: (10, 11), 3: (13, 14)}   # when each quadrant's bolt is alive (of 16 frames)
+    for f in range(16):   # bolts of plasma: in each quadrant, a jagged downward stroke with a fork - or nothing
         b = blank()
-        rnd = random.Random(821 + f * 7)
-        for (qx, qy) in ((0, 0), (8, 0), (0, 8), (8, 8)):
-            if rnd.random() < 0.3:
+        for q, (qx, qy) in enumerate(((0, 0), (8, 0), (0, 8), (8, 8))):
+            if f not in fire[q]:
                 continue
-            x, y = qx + rnd.randrange(1, 3), qy + rnd.randrange(1, 7)
-            for k in range(6):
-                if 0 <= x - qx < 8 and 0 <= y - qy < 8:
-                    b.putpixel((x, y), (255, 255, 255, 255) if k % 2 == 0 else SOUL[4])
-                    if k == 3 and y - qy + 1 < 8:
-                        b.putpixel((x, y + 1), RAMPS["violet"][5])
-                x += 1
-                y += rnd.choice((-1, -1, 1, 1, 0))
+            rnd = random.Random(831 + q * 13 + f)
+            x = qx + 3 + rnd.choice((-1, 0, 1))
+            fork_at = rnd.randrange(2, 5)
+            for y in range(qy, qy + 8):
+                b.putpixel((x, y), (255, 255, 255, 255) if (y - qy) % 3 else SOUL[5])
+                if 0 <= x + 1 - qx < 8:
+                    b.putpixel((x + 1, y), SOUL[3])            # a glow beside the stroke
+                if y - qy == fork_at:                          # the fork
+                    fx = x
+                    for k in range(1, 4):
+                        fx = fx - 1 if 0 < fx - qx else fx
+                        if y + k < qy + 8:
+                            b.putpixel((fx, y + k), RAMPS["violet"][5] if k == 3 else SOUL[4])
+                x = max(qx, min(qx + 6, x + rnd.choice((-1, 0, 1))))
         sparks.append(b)
     t_spark = m.texture("spark", sparks)
     # the helmet: a sculk-grown dome, sides with ear plates and a rim, a back with a crest and neck rim
@@ -3433,15 +3434,13 @@ def hollow_helm_worn():
         m.box((x0, 9.0, 8.1), (x1, 25.0, 8.1), {"south": (zap, [0, 0, 16, 16])}, shade=False, light=15)
     # little cracks of plasma in the air round each tendril: small planes facing every way, each showing one quadrant
     # of the flickering spark texture (so neighbours never flicker together)
-    spots = ((-13.0, 23.5, 6.2, "z"), (-10.0, 26.0, 9.6, "x"), (-14.5, 18.5, 9.4, "y45"), (-7.0, 22.0, 5.6, "z"),
-             (-4.5, 16.0, 10.2, "x"), (-11.5, 13.5, 6.8, "y45"), (-2.5, 24.0, 7.0, "z"), (-8.5, 18.0, 10.6, "x"),
-             (-14.0, 25.5, 8.0, "z"), (-5.5, 27.5, 8.6, "y45"))
+    spots = ((-11.0, 20.0, 5.6, "z"), (-7.0, 23.0, 10.4, "x"), (-13.0, 14.0, 9.8, "y45"), (-4.0, 17.0, 5.8, "x"))
     for side in (0, 1):
         for k, (x, y, z, orient) in enumerate(spots):
             px = x if side == 0 else 16 - x
             q = [(0, 0), (8, 0), (0, 8), (8, 8)][(k + side) % 4]
             uv = [q[0], q[1], q[0] + 8, q[1] + 8]
-            sz = 2.6
+            sz = 6.0
             if orient == "x":
                 el = m.box((px, y, z - sz / 2), (px, y + sz, z + sz / 2), {"west": (t_spark, uv), "east": (t_spark, uv)},
                            shade=False, light=15)
