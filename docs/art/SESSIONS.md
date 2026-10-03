@@ -694,6 +694,8 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   third-person hand frame **+x points toward the body** (not outward). The user chose "open, held by its edge": the
   fist grips the near end of the spine and the open book hangs down beside the leg, pages facing outward (rotation
   0,-90,90; left hand 0,90,-90).
+  Then (screenshot: hanging, it looked carried at the side): back to lying open and flat, pages up, but the fist
+  grips the near end of the spine so the book reaches ahead from the hand (rotation 0,0,0, grip at the spine's end).
   Previews of rotated models: `tools/art/render3d.py` (true 3D, honours element rotations; blockkit's render_iso does not).
 
 **Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)

@@ -2260,12 +2260,10 @@ def lichs_grimoire_held():
               shade=False, light=15)                                                                # rising souls
     fp = {"firstperson_righthand": {"rotation": [-50, -10, 0], "translation": [0.0, 3.5, -1.5], "scale": [0.55] * 3},
           "firstperson_lefthand": {"rotation": [-50, 10, 0], "translation": [0.0, 3.5, -1.5], "scale": [0.55] * 3}}
-    # third person (the arm hangs, so nothing can hold an open book up from below): the fist grips the near end of the
-    # spine and the open book hangs down beside the leg, pages facing outward. In the hand frame +y is ahead, +z up and
-    # +x toward the body (the user's screenshot of a book held by its inner half showed it reaching across the body), so
-    # the turn sends the book's +y (its far end) down, its +z (the pages) out (-x) and its +x ahead.
-    m.display = grip_display((0, -90, 90), (8, 2.2, 5.9), 0.55, first_person=fp)
-    m.display["thirdperson_lefthand"] = dict(m.display["thirdperson_righthand"], rotation=[0, 90, -90])
+    # third person: lying open and flat, pages up, reaching ahead from the fist, which grips the near end of the spine
+    # (in the hand frame +y is ahead, +z up; a book gripped mid-spine looked like it came out of the hand, one hung down
+    # by the spine looked carried at the side)
+    m.display = grip_display((0, 0, 0), (8, 2.2, 5.9), 0.55, first_person=fp)
     return m
 
 
