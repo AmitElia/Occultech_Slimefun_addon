@@ -182,7 +182,7 @@ def main():
                     "on_true": {"type": "minecraft:model", "model": f"{NS}:block/{key}_using"}}
         files[f"assets/{NS}/items/{base}.json"] = {"model": {
             "type": "minecraft:select", "property": "minecraft:display_context",
-            "cases": [{"when": ["gui", "ground", "fixed"], "model": {"type": "minecraft:model", "model": model_ref(base)}}],
+            "cases": [{"when": ["gui", "ground", "fixed", "on_shelf"], "model": {"type": "minecraft:model", "model": model_ref(base)}}],
             "fallback": held}}
     # worn helmets (Session G6): <key>_head is the 3D helm drawn on the wearer's head (display context "head"); the
     # inventory and everything else keep the 2D icon

@@ -635,7 +635,25 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   later armour: vanilla coverage (netherite's mask), all 3D in the helm (open face, horns/fins as flat silhouette planes
   as the warden does it), no back pieces (capes/elytras), clean bevelled plates and a calm underlayer, accents placed
   on the armour's structure and mirrored, gradients that explain a material (the infection), sporadic animated bolts.
-  Still open: the Hollow icons (Session F) don't match the worn set.
+  The Hollow icons (Session F) and the Abyssal Helm icon (Session E) were then redrawn to match the worn sets.
+
+**Checked against the real 26.2 client** (the official client.jar, read with javap - unobfuscated since 26.1):
+- Item displays turn their item half a turn about y (`DisplayRenderer$ItemDisplayRenderer`, `Axis.YP.rotation(pi)`):
+  the Occult Forge's facing and the Guardian Eye's aim, which assume it, are right.
+- Head items (`CustomHeadLayer.translateToHead`): head centre, turned 180 about y, scaled (0.625, -0.625, -0.625); an
+  equippable with an asset is drawn as armour, without one the item model is drawn (`HumanoidArmorLayer.shouldRender`)
+  - the helms sit on the head as built (head = model units 1.6..14.4, face toward -z).
+- Display transforms: translate, rotate (`rotationXYZ`), scale, then -0.5 (`ItemTransform.apply`) - as `grip_display`
+  and `shifted_display` assume. The hand's frame (`ItemInHandLayer`: x -90 then y 180) confirms the screenshot:
+  model +y ahead out of the fist, -z down the arm.
+- The SPEAR use pose raises the arm forward following the look (`SpearAnimations.thirdPersonHandUse`, x -90 deg) - as the
+  staffs' in-use models assume.
+- `light_emission` is applied to item quads too (`VertexConsumer` via `ItemFeatureRenderer`): the glows work.
+- **Fixed:** the Bone Scepter's skull looked up, not ahead - in the sword pose a model's +x points up and its +y (the
+  tip) ahead; the face is now on the skull's tip side. **Changed:** the Dreadlance (a netherite spear) now uses vanilla's
+  own `spear_in_hand` transforms (its sprite runs head top-left to butt bottom-right: laid on the +45 diagonal; parts
+  drawn twice as deep as wide because vanilla scales a spear 1.7 in-plane, 0.85 in depth). Held models' 2D icon cases
+  now include 26.x's `on_shelf` context.
 
 **Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
@@ -646,6 +664,12 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
 - Offering Bowls sit a little higher above the ground than today's carpet-level plate (a full hitbox no longer
   forces them flat).
 - Parts that move stay displays: the Guardian Eye's turning eye, Prismatic Netherrack's coloured fire, holograms.
+- **Plants stay vanilla** (decided 2026-10-02): the Moonlit Lily (lily of the valley), Witchcap (crimson fungus),
+  Everliving Coral and Watchful Eyeblossom keep their vanilla blocks and looks - no skins, no note blocks. A note block
+  is a full solid cube; a plant must be walk-through and small, and the vanilla plants already look right (the
+  eyeblossom even opens and closes natively). Their Occultech character is their effects (motes, spores, stars,
+  bubbles). If a unique plant look is ever wanted, Nexo's string-block (tripwire) mechanic gives non-solid custom
+  blocks - not note blocks.
 - To work out: Slimefun + Nexo on the same block (placement through Nexo, Slimefun's block data and menus, breaking
   and drops, right-click), variants (glyphs, Tidal Tile corals, the Forge's facing), Nexo's item config generated
   from build_pack, a fallback to display skins when Nexo is absent.

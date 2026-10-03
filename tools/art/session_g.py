@@ -1690,12 +1690,12 @@ def shifted_display(display, offset):
     return out
 
 
-def diagonal(m):
-    """Lays a model built upright (along y, centred on x = z = 8, from y -3 to 19) along the diagonal a sword sprite
-    takes - grip at the bottom-left, head at the top-right - by turning every element 45 degrees about z."""
+def diagonal(m, angle=-45):
+    """Lays a model built upright (along y, centred on x = z = 8, from y -3 to 19) along the diagonal a sprite takes:
+    -45 = a sword's (grip bottom-left, head top-right); +45 = vanilla's spear's (head top-left, butt bottom-right)."""
     for e in m.elements:
         assert "rotation" not in e
-        e["rotation"] = {"origin": [8, 8, 8], "axis": "z", "angle": -45}
+        e["rotation"] = {"origin": [8, 8, 8], "axis": "z", "angle": angle}
     return m
 
 
@@ -1929,13 +1929,22 @@ def soulfire_censer_held(using=False):
     return m
 
 
+SPEAR_DISPLAY = {   # vanilla 26.2 item/spear_in_hand: how a spear is held (its sprite runs head top-left to butt bottom-right)
+    "firstperson_righthand": {"rotation": [-20, 90, -35], "translation": [3.13, 2.0, 0.13], "scale": [1.36, 1.36, 0.68]},
+    "firstperson_lefthand": {"rotation": [-20, -90, 35], "translation": [3.13, 2.0, 0.13], "scale": [1.36, 1.36, 0.68]},
+    "thirdperson_righthand": {"rotation": [5, 270, -40], "translation": [0, 2, 2], "scale": [1.7, 1.7, 0.85]},
+    "thirdperson_lefthand": {"rotation": [5, -270, 40], "translation": [0, 2, 2], "scale": [1.7, 1.7, 0.85]},
+}
+
+
 def dreadlance_held():
-    """The Dreadlance in the hand, held like a trident - an ornate war-lance in the Hollow style: a cruciform head (a
-    broad leaf blade crossed by a narrower one, four flanges) of blackened steel with bright honed edges and a crimson
-    core glowing down both blades; a socket of aged gold with a crimson gem on each side and two swept-back wings; a
-    shaft of dark heartwood wound with gold wire, a leather grip, a gold ferrule and a short butt spike with a violet
-    gem. Built in the trident's frame (centred on x = z = 0, pointing up), lifted 16 px to stay inside a model's bounds;
-    the display's translations take the lift back out."""
+    """The Dreadlance in the hand, held exactly as vanilla holds a spear (it is a netherite spear: vanilla's own
+    spear_in_hand transforms, read from the 26.2 client). Built upright and laid on the spear's diagonal (+45 about z).
+    Vanilla stretches a spear 1.7x in its plane but only 0.85x in depth, so every part is drawn twice as deep (z) as it
+    is wide (x) to come out round. An ornate war-lance in the Hollow style: a butt spike and violet gem, a gold ferrule,
+    a leather grip, a shaft wound with gold wire, a gold socket with crimson gems and swept-back wings, and a cruciform
+    head of blackened steel - a broad leaf blade crossed by a narrower one - with bright honed edges and a crimson
+    core glowing down both blades."""
     m = Model("dreadlance_held")
     m.part = True
     st, cr, gd, vi, wood, le, ink = (RAMPS["boundsteel"], RAMPS["crimson"], RAMPS["gold"], RAMPS["violet"], RAMPS["wood"],
@@ -1950,15 +1959,15 @@ def dreadlance_held():
     for f in range(6):
         img = blank()
         for y in range(16):
-            c = cr[[3, 4, 5, 4, 3, 2][(f + y // 3) % 6]]
-            img.putpixel((7, y), c); img.putpixel((8, y), c)
+            col = cr[[3, 4, 5, 4, 3, 2][(f + y // 3) % 6]]
+            img.putpixel((7, y), col); img.putpixel((8, y), col)
         cores.append(img)
     t_core = m.texture("core", cores)
     t_gold = m.texture("gold", metal(gd, 651))
     shaft = blank()
     for y in range(16):
         for x in range(16):
-            shaft.putpixel((x, y), gd[3] if (y + x // 4) % 6 == 0 else wood[1] if x % 3 else wood[0])   # gold wire wound round
+            shaft.putpixel((x, y), gd[3] if (y + x // 4) % 6 == 0 else wood[1] if x % 3 else wood[0])
     t_shaft = m.texture("shaft", shaft)
     grip = blank()
     for y in range(16):
@@ -1967,33 +1976,29 @@ def dreadlance_held():
     t_grip = m.texture("grip", grip)
     t_gem = m.texture("gem", fill(cr, 4))
     t_vgem = m.texture("vgem", fill(vi, 4))
-    p = lambda w, y0, y1, tex, d=None, light=0, cx=0.0, cz=0.0: prism(m, w, y0, y1, tex, cx=cx, cz=cz, d=d, light=light)  # noqa: E731
-    p(0.8, -12.4, -11.2, t_gold)                            # butt spike
-    p(1.4, -11.2, -10.4, t_gold)
-    m.box((-0.9, -10.4, -0.9), (0.9, -9.2, 0.9), {d: (t_vgem, [0, 0, 2, 2]) for d in FACES_ALL}, light=12)
-    p(1.8, -9.2, -8.4, t_gold)                              # ferrule
-    p(1.4, -8.4, -1.0, (t_grip, [0, 0, 2, 8]))              # leather grip
-    p(1.8, -1.0, -0.4, t_gold)
-    p(1.4, -0.4, 10.6, (t_shaft, [6, 0, 8, 16]))            # the shaft, gold wire wound round
-    p(2.2, 10.6, 11.6, t_gold)                              # the socket
-    p(2.8, 11.6, 13.0, t_gold)
-    for sx in (-1, 1):                                      # a crimson gem each side, glowing
-        m.box((sx * 1.4 - 0.4, 11.9, -0.5), (sx * 1.4 + 0.4, 12.7, 0.5), {d: (t_gem, [0, 0, 1, 1]) for d in FACES_ALL}, light=15)
-        p(1.0, 10.0, 12.0, t_gold, cx=sx * 2.0, d=0.8)      # wings swept back from the socket
-        p(0.8, 9.0, 10.2, t_gold, cx=sx * 2.6, d=0.6)
-        p(0.6, 8.2, 9.2, t_gold, cx=sx * 3.0, d=0.5)
-    # the main leaf blade (wide in x)
-    for (w, y0, y1) in ((2.6, 13.0, 14.4), (3.8, 14.4, 16.6), (4.2, 16.6, 18.4), (3.4, 18.4, 19.8), (2.2, 19.8, 21.0),
-                        (1.2, 21.0, 22.0), (0.5, 22.0, 22.8)):
-        p(w, y0, y1, (t_blade, [0, 0, 16, 2]), d=0.7)
-    # the cross blade (wide in z), shorter
-    for (d_, y0, y1) in ((2.0, 13.4, 15.0), (2.8, 15.0, 17.6), (2.0, 17.6, 19.4), (1.0, 19.4, 20.4)):
-        p(0.6, y0, y1, (t_blade, [0, 0, 16, 2]), d=d_)
-    for (frm, to, faces) in (((-0.35, 14.0, -0.37), (0.35, 21.0, -0.37), ("north",)), ((-0.35, 14.0, 0.37), (0.35, 21.0, 0.37), ("south",)),
-                             ((-0.32, 14.4, -0.3), (-0.32, 19.4, 0.3), ("west",)), ((0.32, 14.4, -0.3), (0.32, 19.4, 0.3), ("east",))):
-        m.box(frm, to, {faces[0]: (t_core, [7, 0, 9, 16])}, shade=False, light=15)
-    m.display = shifted_display(TRIDENT_DISPLAY, (0, 16, 0))
-    return m
+    p = lambda w, y0, y1, tex, d=None, light=0, cx=8.0: prism(m, w, y0, y1, tex, cx=cx, d=d if d else w * 2, light=light)  # noqa: E731
+    p(0.6, -3.0, -2.0, t_gold)                             # butt spike
+    p(1.0, -2.0, -1.0, t_vgem, light=12)                   # violet gem
+    p(1.2, -1.0, -0.4, t_gold)                             # ferrule
+    p(0.9, -0.4, 5.0, (t_grip, [0, 0, 2, 5]))              # leather grip
+    p(1.1, 5.0, 5.5, t_gold)
+    p(0.8, 5.5, 12.0, (t_shaft, [6, 0, 8, 16]))            # the shaft, gold wire wound round
+    p(1.2, 12.0, 13.0, t_gold)                             # the socket
+    p(1.6, 13.0, 13.8, t_gold)
+    for sx in (-1, 1):
+        m.box((8 + sx * 0.95 - 0.25, 13.1, 7.4), (8 + sx * 0.95 + 0.25, 13.7, 8.6), {d: (t_gem, [0, 0, 1, 1]) for d in FACES_ALL},
+              light=15)                                    # a crimson gem each side
+        p(0.5, 12.0, 13.4, t_gold, cx=8 + sx * 1.3, d=0.8)  # wings swept back from the socket
+        p(0.4, 11.0, 12.2, t_gold, cx=8 + sx * 1.7, d=0.6)
+    for (w, y0, y1) in ((1.6, 13.8, 14.8), (2.4, 14.8, 16.2), (2.6, 16.2, 17.4), (2.0, 17.4, 18.2), (1.2, 18.2, 18.8),
+                        (0.5, 18.8, 19.4)):
+        p(w, y0, y1, (t_blade, [0, 0, 16, 2]), d=0.6)        # the broad leaf blade (in the sprite's plane)
+    for (dz, y0, y1) in ((2.4, 14.2, 15.6), (3.4, 15.6, 17.0), (2.2, 17.0, 18.0), (1.0, 18.0, 18.6)):
+        p(0.35, y0, y1, (t_blade, [0, 0, 16, 2]), d=dz)      # the narrower cross blade (in depth)
+    for (frm, to, face) in (((7.75, 14.4, 7.68), (8.25, 18.4, 7.68), "north"), ((7.75, 14.4, 8.32), (8.25, 18.4, 8.32), "south")):
+        m.box(frm, to, {face: (t_core, [7, 0, 9, 16])}, shade=False, light=15)
+    m.display = SPEAR_DISPLAY
+    return diagonal(m, angle=45)
 
 
 def frenzy_cleaver_held():
@@ -2046,8 +2051,8 @@ def frenzy_cleaver_held():
 
 def bone_scepter_held():
     """The Bone Scepter in the hand: a staff of stacked vertebrae - knobbed discs with little spurs - topped by a
-    skull whose sockets burn with soul-green fire (glowing, animated), its jaw hanging slightly open, a wisp curling
-    above it. The skull looks out to the scepter's front (+x, forward once held)."""
+    skull whose sockets burn with soul-green fire (glowing, animated), a wisp curling up from its crown. The skull
+    looks where the scepter points."""
     m = Model("bone_scepter_held")
     m.part = True
     bone, gel, ink = RAMPS["bone"], RAMPS["gel"], RAMPS["ink"]
@@ -2076,14 +2081,19 @@ def bone_scepter_held():
         y += 1.6
     for yy in (2.0, 6.8):                                    # spurs
         prism(m, 3.6, yy, yy + 0.6, t_dark, d=0.8)
-    # the skull: cranium, face toward +x, jaw below
-    m.box((5.4, 13.0, 5.4), (10.6, 18.2, 10.6), {"east": (t_face, [2, 2, 14, 14]), "west": (t_bone, [0, 0, 5, 5]),
-          "north": (t_bone, [0, 0, 5, 5]), "south": (t_bone, [0, 0, 5, 5]), "up": (t_bone, [0, 0, 5, 5]),
-          "down": (t_bone, [0, 0, 5, 5])}, light=0)
-    m.box((10.62, 14.8, 6.2), (10.62, 17.0, 9.8), {"east": (t_face, [3, 5, 13, 9])}, shade=False, light=13)   # the burning sockets glow
-    prism(m, 4.0, 11.6, 13.0, t_dark, cx=8.8)               # the jaw, hanging a little open
-    for k in range(4):                                      # a wisp curling above
-        prism(m, 0.8, 18.6 + k * 0.9, 19.4 + k * 0.9, (t_wisp, [0, 0, 1, 1]), cx=8 + [0.6, 1.2, 0.8, 0.0][k], light=15, shade=False)
+    # the skull, looking where the scepter points. Held in vanilla's sword pose the model's +y (its tip) points
+    # ahead and its +x points up (worked out from the 26.2 client's hand transforms), so the face goes on the skull's
+    # +y side, turned so its brow is toward +x; the cranium's crown is toward +x too.
+    face_up = [f.rotate(-90) for f in face_frames]                # brow toward +x on an up face
+    t_face_up = m.texture("face_up", face_up)
+    m.box((5.4, 12.0, 5.4), (10.6, 17.2, 10.6), {"up": (t_face_up, [2, 2, 14, 14]), "west": (t_bone, [0, 0, 5, 5]),
+          "north": (t_bone, [0, 0, 5, 5]), "south": (t_bone, [0, 0, 5, 5]), "east": (t_bone, [0, 0, 5, 5]),
+          "down": (t_bone, [0, 0, 5, 5])})
+    m.box((6.2, 17.22, 5.8), (9.8, 17.22, 10.2), {"up": (t_face_up, [4, 3, 12, 13])}, shade=False, light=13)   # sockets glow
+    prism(m, 4.0, 11.2, 12.0, t_dark, cx=7.4)               # where the skull meets the staff
+    for k in range(4):                                      # a wisp curling up from the crown (+x is up)
+        m.box((10.6 + k * 0.8, 14.0 + [0.4, 0.9, 0.5, 0.0][k], 7.6), (11.4 + k * 0.8, 14.8 + [0.4, 0.9, 0.5, 0.0][k], 8.4),
+              {d: (t_wisp, [0, 0, 1, 1]) for d in FACES_ALL}, light=15, shade=False)
     m.display = HANDHELD_DISPLAY
     return diagonal(m)
 
