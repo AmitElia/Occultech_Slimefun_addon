@@ -1,0 +1,81 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "streak": "occultech:block/air_bolt_2_streak",
+    "particle": "occultech:block/air_bolt_2_streak"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0.0,
+        8
+      ],
+      "to": [
+        16,
+        16.0,
+        8
+      ],
+      "shade": false,
+      "light_emission": 15,
+      "faces": {
+        "north": {
+          "texture": "#streak",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "tintindex": 0
+        },
+        "south": {
+          "texture": "#streak",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "tintindex": 0
+        }
+      }
+    },
+    {
+      "from": [
+        8,
+        0.0,
+        0
+      ],
+      "to": [
+        8,
+        16.0,
+        16
+      ],
+      "shade": false,
+      "light_emission": 15,
+      "faces": {
+        "east": {
+          "texture": "#streak",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "tintindex": 0
+        },
+        "west": {
+          "texture": "#streak",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "tintindex": 0
+        }
+      }
+    }
+  ]
+}

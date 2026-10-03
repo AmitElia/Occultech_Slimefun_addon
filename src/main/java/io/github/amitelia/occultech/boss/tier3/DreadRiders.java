@@ -207,8 +207,9 @@ public final class DreadRiders extends BossBehavior {
         }
         for (Abyss.Beam snipe : snipes) {
             for (Player hit : snipe.step(fight, now)) {
-                // visual lightning only: no fire, no transformed mobs
+                // visual lightning only: no fire, no transformed mobs - and a plasma bolt with it (Session O5)
                 hit.getWorld().strikeLightningEffect(hit.getLocation());
+                io.github.amitelia.occultech.boss.AirEffects.bolt(fight, hit.getLocation(), STORM);
             }
         }
         snipes.removeIf(Abyss.Beam::done);
@@ -235,6 +236,7 @@ public final class DreadRiders extends BossBehavior {
         if (rainAt >= 0 && now >= rainAt) {
             rainAt = -1;
             rainSpot.getWorld().strikeLightningEffect(rainSpot);
+            io.github.amitelia.occultech.boss.AirEffects.bolt(fight, rainSpot, STORM);
             rainSpot.getWorld().spawnParticle(Particle.CRIT, rainSpot.clone().add(0, 2, 0), 80, 2, 2, 2, 0.4);
             for (Player player : fight.players()) {
                 if (player.getLocation().distanceSquared(rainSpot) <= 3.5 * 3.5) {

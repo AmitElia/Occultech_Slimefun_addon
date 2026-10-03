@@ -581,6 +581,15 @@ final class SelfTest {
                     flame.get(0).getLocation().getYaw(), flame.get(0).getLocation().getY(), floorTop));
             List<String> shapes = altar.getWorld().getNearbyEntitiesByType(org.bukkit.entity.ItemDisplay.class, altar.getLocation(), 9).stream()
                 .map(d -> d.getItemStack().getItemMeta()).filter(m -> m != null && m.hasItemModel()).map(m -> m.getItemModel().getKey()).toList();
+            // effects in the air (Session O5): a beam between two points and a bolt from the sky
+            io.github.amitelia.occultech.boss.AirEffects.Streak.create(currentFight, "air_beam", altar.getLocation().add(0.5, 3, 0.5),
+                altar.getLocation().add(6.5, 1, 0.5), org.bukkit.Color.AQUA, 0.4F);
+            io.github.amitelia.occultech.boss.AirEffects.bolt(currentFight, altar.getLocation().add(-6.5, 0, -6.5), org.bukkit.Color.PURPLE);
+            List<String> air = altar.getWorld().getNearbyEntitiesByType(org.bukkit.entity.ItemDisplay.class, altar.getLocation(), 12).stream()
+                .map(d -> d.getItemStack().getItemMeta()).filter(m -> m != null && m.hasItemModel()).map(m -> m.getItemModel().getKey())
+                .filter(k -> k.startsWith("air_")).toList();
+            check("effects in the air appear (a beam, a plasma bolt)", air.contains("air_beam") && air.stream().anyMatch(k -> k.startsWith("air_bolt_")),
+                String.valueOf(air));
             check("wedge, lane, wave and splash markings appear", shapes.containsAll(List.of("floor_warning_wedge", "floor_warning_lane",
                 "floor_wave", "floor_splash")), String.valueOf(shapes.stream().filter(k -> k.startsWith("floor_")).distinct().toList()));
         }

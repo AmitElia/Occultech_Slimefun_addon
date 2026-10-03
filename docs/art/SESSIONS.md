@@ -876,6 +876,21 @@ and three zones changed at once (`boss/FloorDecals`; art `tools/art/session_o4.p
   Mother's pounce landing, and the Doppelganger's echo path in shadow before the echo walks it. Each keeps its old
   particles as the no-pack fallback. Self-test: markings lie flat from a tilted spot in the air; the new shapes appear.
 
+**Session O5 phase 1 - effects in the air: beams, chains, bolts (2026-10-03).** Plan agreed with the user: beams and
+bolts, then hit bursts, auras, projectile skins - each phase reviewed in game first. The global-clock problem (an
+animated texture can start mid-animation): these textures are seamless loops scrolling along the effect, and every
+"start" is the display's own interpolated motion (`boss/AirEffects`, art `tools/art/session_o5.py`, sheet
+`session-g/review-o5.png`). Models: two crossed planes along y, the texture repeated 8 times along a beam/chain, tinted.
+- **Beams** - one change in the shared `Abyss.Beam` covers the Abyssal Warden, the Drowned Elder and its guardians, the
+  Colossus pylons, the Outrider's snipe and Gallus's hollow echoes: the beam shoots out to its target, tracks it
+  (re-aimed once a boss step, interpolated), thickens as it charges, turns white for its warning, flashes white and
+  wide as it fires, collapses and goes.
+- **Soul chains** - the Hollow Warlord's chains to each living guard while two or more shield it; a chain snaps when its
+  guard dies or the shield drops.
+- **Plasma bolts** - three jagged shapes at random: one drops from the sky in 3 ticks, flashes, thins away; at the
+  Outrider's snipe hit and on its arrow rain, alongside the vanilla lightning flash and thunder.
+- Without the pack, fights keep their particle lines.
+
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the
 vanilla block; the display stands on top of the block so it is lit by the air above, its model shifted down into the

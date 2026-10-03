@@ -36,6 +36,9 @@ import io.github.amitelia.occultech.boss.tier2.Abyss;
  */
 public final class HollowWarlord extends BossBehavior {
 
+    /** The soul chains to the guards shielding it, drawn in the air (Session O5). */
+    private final java.util.Map<WitherSkeleton, io.github.amitelia.occultech.boss.AirEffects.Streak> chains = new java.util.HashMap<>();
+
     private static final double HEALTH = 400;
     private static final double ARMOR = 0.18;
     private static final double GUARDED = 0.6;
@@ -101,7 +104,32 @@ public final class HollowWarlord extends BossBehavior {
         if (every(GUARD_INTERVAL)) {
             callWarband();
         }
-        if (liveGuards() >= 2 && every(10)) {
+        boolean bound = liveGuards() >= 2;
+        if (io.github.amitelia.occultech.boss.AirEffects.enabled()) {
+            // soul chains to each living guard while they shield it (Session O5); a chain snaps when its guard dies
+            chains.entrySet().removeIf(entry -> {
+                boolean keep = bound && entry.getKey().isValid() && !entry.getKey().isDead() && entry.getValue().valid();
+                if (!keep) {
+                    entry.getValue().snap();
+                }
+                return !keep;
+            });
+            if (bound) {
+                for (WitherSkeleton guard : guards) {
+                    if (!guard.isValid() || guard.isDead()) {
+                        continue;
+                    }
+                    Location from = warlord.getLocation().add(0, 2, 0);
+                    Location to = guard.getLocation().add(0, 1.2, 0);
+                    io.github.amitelia.occultech.boss.AirEffects.Streak chain = chains.get(guard);
+                    if (chain == null) {
+                        chains.put(guard, io.github.amitelia.occultech.boss.AirEffects.Streak.create(fight, "air_chain", from, to, SOUL, 0.45F));
+                    } else {
+                        chain.aim(from, to, 0.45F, io.github.amitelia.occultech.boss.BossService.STEP);
+                    }
+                }
+            }
+        } else if (bound && every(10)) {
             for (WitherSkeleton guard : guards) {
                 Abyss.line(warlord.getLocation().add(0, 2, 0), guard.getLocation().add(0, 1.2, 0), new Particle.DustOptions(SOUL, 0.6F), 0.7);
             }

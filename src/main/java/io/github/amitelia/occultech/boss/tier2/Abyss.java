@@ -163,6 +163,10 @@ public final class Abyss {
         private final Color color;
         private Vector aim;
         private boolean done;
+        /** The beam drawn in the air (Session O5), with the resource pack; else particles. */
+        @Nullable private io.github.amitelia.occultech.boss.AirEffects.Streak fx;
+        private final int startedAt;
+        private boolean warned;
 
         public Beam(LivingEntity source, Player target, int now, int chargeTicks, double damage, Color color) {
             this.source = source;
@@ -170,6 +174,7 @@ public final class Abyss {
             this.fireAt = now + chargeTicks;
             this.damage = damage;
             this.color = color;
+            this.startedAt = now;
             source.getWorld().playSound(source.getLocation(), Sound.ENTITY_GUARDIAN_ATTACK, 1.5F, 0.6F);
         }
 
@@ -184,6 +189,9 @@ public final class Abyss {
             }
             if (!source.isValid() || !target.isValid() || target.getWorld() != source.getWorld()) {
                 done = true;
+                if (fx != null) {
+                    fx.snap();
+                }
                 return List.of();
             }
             Location eye = source.getEyeLocation();
@@ -193,11 +201,29 @@ public final class Abyss {
             Location end = eye.clone().add(aim.clone().normalize().multiply(Math.max(aim.length(), 4) + 4));
             if (now < fireAt) {
                 boolean warning = now >= fireAt - WARN_BEFORE;
-                line(eye, end, new Particle.DustOptions(warning ? Color.WHITE : color, warning ? 1.2F : 0.6F), 0.6);
+                if (io.github.amitelia.occultech.boss.AirEffects.enabled()) {
+                    // a beam that thickens as it charges, turning white for its warning
+                    float charge = (now - startedAt) / (float) Math.max(1, fireAt - startedAt);
+                    if (fx == null) {
+                        fx = io.github.amitelia.occultech.boss.AirEffects.Streak.create(fight, "air_beam", eye, end, color, 0.25F);
+                    } else {
+                        fx.aim(eye, end, 0.25F + 0.45F * charge, io.github.amitelia.occultech.boss.BossService.STEP);
+                    }
+                    if (warning && !warned) {
+                        warned = true;
+                        fx.tint(Color.fromRGB(235, 245, 255));
+                    }
+                } else {
+                    line(eye, end, new Particle.DustOptions(warning ? Color.WHITE : color, warning ? 1.2F : 0.6F), 0.6);
+                }
                 return List.of();
             }
             done = true;
-            line(eye, end, new Particle.DustOptions(color, 2F), 0.3);
+            if (fx != null) {
+                fx.fire(eye, end);
+            } else {
+                line(eye, end, new Particle.DustOptions(color, 2F), 0.3);
+            }
             eye.getWorld().playSound(eye, Sound.ENTITY_ELDER_GUARDIAN_HURT, 1.5F, 0.6F);
             List<Player> hit = alongBeam(fight.players(), eye, aim, eye.distance(end), WIDTH);
             for (Player player : hit) {
