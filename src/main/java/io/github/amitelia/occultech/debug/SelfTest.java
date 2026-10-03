@@ -333,7 +333,27 @@ final class SelfTest {
             String.valueOf(turn));
         plugin.skins().remove(forge);   // what breaking, burning or an explosion does, in the same tick
         check("a skin comes off in the same tick its block breaks", forgeSkin != null && !forgeSkin.isValid(), "still there");
-        for (Block block : List.of(tile, forge)) {
+        // decorations whose skins are upright objects stand their sideways-placed vanilla block up (G7)
+        Block chime = altar.getRelative(4, 0, 6);
+        Block rod = altar.getRelative(5, 0, 6);
+        previous.putIfAbsent(chime, chime.getBlockData());
+        previous.putIfAbsent(rod, rod.getBlockData());
+        org.bukkit.block.data.Orientable sideways = (org.bukkit.block.data.Orientable) Material.IRON_CHAIN.createBlockData();
+        sideways.setAxis(org.bukkit.Axis.X);
+        chime.setBlockData(sideways, false);
+        org.bukkit.block.data.Directional wall = (org.bukkit.block.data.Directional) Material.LIGHTNING_ROD.createBlockData();
+        wall.setFacing(org.bukkit.block.BlockFace.EAST);
+        rod.setBlockData(wall, false);
+        io.github.amitelia.occultech.items.BlockSkinService.upright(chime);
+        io.github.amitelia.occultech.items.BlockSkinService.upright(rod);
+        check("a Wind Chime's chain and an Orrery's rod stand upright under their skins",
+            ((org.bukkit.block.data.Orientable) chime.getBlockData()).getAxis() == org.bukkit.Axis.Y
+                && ((org.bukkit.block.data.Directional) rod.getBlockData()).getFacing() == org.bukkit.block.BlockFace.UP,
+            chime.getBlockData().getAsString() + " " + rod.getBlockData().getAsString());
+        check("the six decorations have skins (G7)", java.util.stream.Stream.of("WISP_JAR", "BOTTLED_GALE", "WIND_CHIME",
+            "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "RUNE_OBELISK").allMatch(id -> plugin.skins().isSkinned(ItemKeys.slimefunId(id))),
+            "a decoration has no skin");
+        for (Block block : List.of(tile, forge, chime, rod)) {
             BlockStorage.clearBlockInfo(block);
             block.setType(Material.AIR);
         }

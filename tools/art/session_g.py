@@ -3738,7 +3738,329 @@ G2 = [("Arcane Pedestal", arcane_pedestal), ("Brood Egg", brood_egg), ("Trophy B
 G1 = [("Initiate's Altar", initiate_altar), ("Offering Bowl", offering_bowl), ("Chalk Glyph", chalk_glyph),
       ("Chalk Glyph v1", lambda: chalk_glyph(1)), ("Chalk Glyph v2", lambda: chalk_glyph(2)),
       ("Chalk Glyph v3", lambda: chalk_glyph(3)), ("Arcane Altar", arcane_altar)]
-GROUPS = {"g1": G1, "g2": G2, "g3": G3, "g4": G4, "g5": G5}
+# ---------------------------------------------------------------- G7: placed decorations
+# Each is authored as its final Nexo look (Session N) and, while the display skins last, encloses its interim vanilla
+# block: flower pot (5..11 x 0..6), iron chain (6.5..9.5, full height, kept upright), lightning rod (7..9 rod, 6..10
+# cap at 12..16, kept upright), soul lantern (5..11 x 0..7, cap and handle to 11, kept standing), chiseled polished
+# blackstone (a full cube). Their effects (particles, orbiting runes and worlds) come from DecorationService.
+
+def tex(w, h, fn):
+    """A texture whose used area is w x h texels (uv [0, 0, w, h]); fn(x, y) gives each texel's colour (None = clear)."""
+    img = blank()
+    for y in range(h):
+        for x in range(w):
+            c = fn(x, y)
+            if c is not None:
+                img.putpixel((x, y), c)
+    return img
+
+
+def side_box(m, frm, to, side, top=None, bottom=None, light=0, shade=True):
+    """A box with one texture on its four sides (uv sized to each face) and its own top and bottom."""
+    w, d, h = to[0] - frm[0], to[2] - frm[2], to[1] - frm[1]
+    def uv(a, b):
+        return [0, 0, max(0.5, min(16, a)), max(0.5, min(16, b))]
+    faces = {"north": (side, uv(w, h)), "south": (side, uv(w, h)), "west": (side, uv(d, h)), "east": (side, uv(d, h)),
+             "up": (top or side, uv(w, d)), "down": (bottom or top or side, uv(w, d))}
+    return m.box(frm, to, faces, light=light, shade=shade)
+
+
+def octagon_ring(m, c, r, t, plane, texture, light=0):
+    """A ring of 8 bars round centre c, radius r, bar thickness t - in the horizontal plane ("xz") or upright ("xy").
+    Each bar lies along the ring's tangent; diagonal bars are turned 45 degrees about the ring's axis (one axis per
+    element, as models allow)."""
+    half = r * math.tan(math.pi / 8) + t * 0.2
+    for k in range(8):
+        a = math.radians(k * 45)
+        across = k in (2, 6)                     # at 90 and 270 degrees the tangent is along x
+        if plane == "xz":
+            px, py, pz = c[0] + r * math.cos(a), c[1], c[2] + r * math.sin(a)
+            hx, hz = (half, t / 2) if across else (t / 2, half)
+            frm, to = (px - hx, py - t / 2, pz - hz), (px + hx, py + t / 2, pz + hz)
+            axis, ang = "y", [0, -45, 0, 45, 0, -45, 0, 45][k]
+        else:
+            px, py, pz = c[0] + r * math.cos(a), c[1] + r * math.sin(a), c[2]
+            hx, hy = (half, t / 2) if across else (t / 2, half)
+            frm, to = (px - hx, py - hy, pz - t / 2), (px + hx, py + hy, pz + t / 2)
+            axis, ang = "z", [0, 45, 0, -45, 0, 45, 0, -45][k]
+        e = m.box(frm, to, {d: (texture, [0, 0, 1, 1]) for d in FACES_ALL}, light=light)
+        if ang:
+            e["rotation"] = {"origin": [px, py, pz], "axis": axis, "angle": ang}
+
+
+def round_box(m, w, y0, y1, side, top=None, light=0, ratio=0.72):
+    """A round-looking section centred on x = z = 8: two crossed boxes (an octagon), the second a hair shorter so the
+    caps don't fight."""
+    a, b = 8 - w / 2, 8 + w / 2
+    n = w * ratio / 2
+    side_box(m, (a, y0, 8 - n), (b, y1, 8 + n), side, top=top, light=light)
+    side_box(m, (8 - n, y0 + 0.01, a), (8 + n, y1 - 0.01, b), side, top=top, light=light)
+
+
+JAR_GLASS = hexes("#120a24", "#24143e", "#3a2260", "#583a86", "#8a6cb8", "#c8b4ec")   # dark violet tinted glass
+
+
+def wisp_jar():
+    """The Wisp Jar (vanilla: flower pot): a round jar of dark violet glass - foot, belly, shoulder and neck, each an
+    octagonal section - an iron lid with a knob, the glass catching the light in a curved highlight; three wisps drift
+    inside, blinking in turn (a glowing layer just over the glass, animated)."""
+    m = Model("wisp_jar")
+    gl, ir, po = JAR_GLASS, RAMPS["iron"], RAMPS["pollen"]
+    def glass(w, h, dark=0):
+        def f(x, y):
+            if y == 0:
+                return gl[3 - dark]
+            if y == h - 1:
+                return gl[1]
+            if x == 1 and 1 <= y <= h - 3:
+                return gl[5] if y in (2, 3) else gl[4]          # the highlight
+            return gl[2 - dark] if (x + y) % 7 else gl[3 - dark]
+        return tex(w, h, f)
+    t_body = m.texture("body", glass(9, 8))
+    t_shoulder = m.texture("shoulder", glass(9, 2, dark=1))
+    t_glass_top = m.texture("glass_top", tex(9, 9, lambda x, y: gl[2] if 0 < x < 8 and 0 < y < 8 else gl[1]))
+    t_lid = m.texture("lid", tex(5, 5, lambda x, y: ir[4] if x == 0 or y == 0 else ir[1] if x == 4 or y == 4 else ir[2]))
+    t_lid_side = m.texture("lid_side", tex(5, 2, lambda x, y: ir[3] if y == 0 else ir[1]))
+    wisps = []
+    spots = [(1, 2), (4, 4), (2, 6)]
+    for f in range(8):
+        def w(x, y, f=f):
+            for i, (sx, sy) in enumerate(spots):
+                on = (f + i * 3) % 8
+                if on in (0, 1, 2):
+                    dx, dy = sx + (f % 2) * (1 if i != 1 else -1), sy - (f // 4)
+                    if (x, y) == (dx, dy):
+                        return po[4] if on == 1 else po[3]
+                    if on == 1 and abs(x - dx) + abs(y - dy) == 1:
+                        return po[2][:3] + (150,)
+            return None
+        wisps.append(tex(7, 8, w))
+    t_wisps = m.texture("wisps", wisps)
+    round_box(m, 8.6, 0, 1, t_shoulder, top=t_glass_top)                  # foot (wide enough to hide the pot)
+    round_box(m, 9.4, 1, 9, t_body, top=t_glass_top)                      # belly
+    round_box(m, 7.4, 9, 10.2, t_shoulder, top=t_glass_top)               # shoulder
+    round_box(m, 4.0, 10.2, 11.5, t_shoulder, top=t_glass_top)            # neck
+    round_box(m, 5.2, 11.5, 13, t_lid_side, top=t_lid)                    # lid
+    side_box(m, (7.2, 13, 7.2), (8.8, 14, 8.8), t_lid_side, top=t_lid)    # knob
+    n, o = 9.4 * 0.72 / 2, 0.04                                           # the wisps, over the belly's four wide faces
+    a, b = 8 - 9.4 / 2 - o, 8 + 9.4 / 2 + o
+    for d, frm, to in (("south", (8 - n, 1, b), (8 + n, 9, b)), ("north", (8 - n, 1, a), (8 + n, 9, a)),
+                       ("east", (b, 1, 8 - n), (b, 9, 8 + n)), ("west", (a, 1, 8 - n), (a, 9, 8 + n))):
+        m.box(frm, to, {d: (t_wisps, [0, 0, 7, 8])}, light=15, shade=False)
+    return m
+
+
+GALE_GLASS = hexes("#0c2624", "#18443f", "#2a6a62", "#45938a", "#79c0b4", "#c2ece4")   # pale sea-green glass
+
+
+def bottled_gale():
+    """Bottled Gale (vanilla: flower pot): a tall round bottle of pale sea-green glass (octagonal sections), a long
+    neck and a cork; inside, a white tornado funnel - wide at the top, a point at the bottom - its bands of wind turning
+    (animated). The gale itself spills out above the cork (DecorationService's particles)."""
+    m = Model("bottled_gale")
+    gl, wd, wood = GALE_GLASS, RAMPS["wind"], RAMPS["wood"]
+    sides = []
+    for f in range(8):
+        def g(x, y, f=f):
+            if y == 0:
+                return gl[4]
+            if y == 9:
+                return gl[1]
+            half = 0.5 + (9 - y) * 0.36                                   # the funnel, wide at the top
+            k = x - 3.5
+            if abs(k) <= half and 1 <= y <= 8:
+                band = (y * 2 + f + (1 if k > 0 else 0)) % 4
+                return wd[5] if band == 0 else wd[4] if band in (1, 3) else wd[3]
+            return gl[4] if x == 0 and 1 < y < 7 else gl[2]
+        sides.append(tex(7, 10, g))
+    t_side = m.texture("side", sides)
+    t_top = m.texture("glass_top", tex(9, 9, lambda x, y: gl[3] if 0 < x < 8 and 0 < y < 8 else gl[1]))
+    t_neck = m.texture("neck", tex(7, 3, lambda x, y: gl[4] if x == 0 else gl[2] if x < 5 else gl[1]))
+    t_cork = m.texture("cork", tex(4, 3, lambda x, y: wood[4] if y == 0 else wood[3] if (x + y) % 2 else wood[2]))
+    round_box(m, 9.2, 0, 10, t_side, top=t_top)                       # the body
+    round_box(m, 6.6, 10, 11.2, t_neck, top=t_top)                    # shoulder
+    round_box(m, 3.4, 11.2, 13.4, t_neck, top=t_top)                  # neck
+    round_box(m, 3.8, 13.0, 15.4, t_cork, top=t_cork)                 # cork
+    return m
+
+
+def wind_chime():
+    """The Wind Chime (vanilla: iron chain, kept upright): an iron chain from above to a thin wooden ring; six metal
+    tubes - silver and gold, each its own length - hang from the ring on short threads; down the middle the chain runs
+    on through a wooden striker disc to a sea-glass pendant that glows (it catches the wind)."""
+    m = Model("wind_chime")
+    wood, ir, gd, sg, tw = RAMPS["wood"], RAMPS["iron"], RAMPS["gold"], RAMPS["seaglow"], RAMPS["twine"]
+    def chain(x, y):
+        link = y % 4
+        if link in (0, 3):
+            return ir[1] if x in (0, 3) else ir[3]
+        return ir[4] if x == 0 else ir[2] if x in (1, 2) else ir[1]
+    t_chain = m.texture("chain", tex(4, 16, chain))
+    t_ring = m.texture("ring", tex(12, 1, lambda x, y: wood[3] if x % 4 else wood[2]))
+    t_ring_top = m.texture("ring_top", tex(12, 12, lambda x, y: wood[4] if (x + y) % 5 else wood[3]))
+    t_silver = m.texture("silver", tex(2, 10, lambda x, y: ir[5] if x == 0 else ir[3]))
+    t_gold = m.texture("gold", tex(2, 10, lambda x, y: gd[5] if x == 0 else gd[3]))
+    t_cap = m.texture("cap", fill(ir, 1))
+    t_thread = m.texture("thread", fill(tw, 1))
+    t_disc = m.texture("disc", tex(7, 1, lambda x, y: wood[4]))
+    t_disc_top = m.texture("disc_top", tex(7, 7, lambda x, y: wood[3] if (x + y) % 3 else wood[2]))
+    t_crystal = m.texture("crystal", [tex(5, 4, lambda x, y, f=f: sg[[3, 4, 5, 4][(f + y) % 4]] if x != 4 else sg[2])
+                                      for f in range(4)])
+    side_box(m, (6.5, 14.2, 6.5), (9.5, 16, 9.5), t_chain)                        # the chain, from above
+    for y0 in (13.4,):                                                            # the thin wooden ring
+        octagon_ring(m, (8, y0, 8), 4.6, 0.8, "xz", t_ring_top)
+    for (x0, z0) in ((6.2, 3.0), (6.2, 12.2)):
+        side_box(m, (x0, 13.0, z0 - 0.4), (x0 + 3.6, 13.8, z0 + 0.4), t_ring)     # cross-bars to the chain
+    for (x0, z0) in ((3.0, 6.2), (12.2, 6.2)):
+        side_box(m, (x0 - 0.4, 13.0, z0), (x0 + 0.4, 13.8, z0 + 3.6), t_ring)
+    side_box(m, (6.5, 8.0, 6.5), (9.5, 14.2, 9.5), t_chain)                       # on down the middle
+    round_box(m, 6.6, 7.2, 8.0, t_disc, top=t_disc_top)                           # the striker disc
+    side_box(m, (6.5, 3.6, 6.5), (9.5, 7.2, 9.5), t_chain)
+    round_box(m, 4.0, 0, 3.6, t_crystal, top=t_crystal, light=12)                 # the sea-glass pendant
+    for i, bottom in enumerate((4.6, 6.4, 3.4, 7.0, 5.2, 2.8)):                    # six tubes on threads
+        a = math.radians(i * 60 + 30)
+        x, z = 8 + 4.6 * math.cos(a), 8 + 4.6 * math.sin(a)
+        side_box(m, (x - 0.12, 12.2, z - 0.12), (x + 0.12, 13.0, z + 0.12), t_thread)
+        side_box(m, (x - 0.6, bottom, z - 0.6), (x + 0.6, 12.2, z + 0.6), t_gold if i % 2 else t_silver, top=t_cap)
+    return m
+
+
+def occult_orrery():
+    """The Occult Orrery (vanilla: lightning rod, kept upright): a brass orrery - an abyss-stone foot ringed in gold with
+    sea-glow gems, a fluted gold column banded twice, a slim rod up to a cup that holds the sun (the sun and its worlds
+    are DecorationService's displays, 1.2 above the block's centre), and two gold armillary rings round the sun, one
+    level and one upright, inside the worlds' orbits."""
+    m = Model("occult_orrery")
+    gd, ab, sg = RAMPS["gold"], RAMPS["abyss"], RAMPS["seaglow"]
+    t_foot = m.texture("foot", tex(10, 2, lambda x, y: gd[5] if y == 0 else gd[3]))
+    t_foot_top = m.texture("foot_top", tex(10, 10, lambda x, y: gd[4] if x in (0, 9) or y in (0, 9) else
+                                           ab[2] if (x + y) % 4 else ab[3]))
+    t_column = m.texture("column", tex(5, 13, lambda x, y: gd[5] if x == 0 else gd[2] if x in (2, 4) else gd[4]))
+    t_band = m.texture("band", tex(6, 1, lambda x, y: gd[5]))
+    t_rod = m.texture("rod", tex(2, 8, lambda x, y: gd[5] if x == 0 else gd[3]))
+    t_ring = m.texture("ring", fill(gd, 4))
+    t_gem = m.texture("gem", [fill(sg, [3, 4, 5, 4][f]) for f in range(4)])
+    side_box(m, (3, 0, 3), (13, 1.5, 13), t_foot, top=t_foot_top, bottom=t_foot_top)   # the foot
+    side_box(m, (4.5, 1.5, 4.5), (11.5, 3, 11.5), t_foot, top=t_foot_top)
+    for (x, z) in ((3.6, 7.4), (11.2, 7.4), (7.4, 3.6), (7.4, 11.2)):                    # sea-glow gems
+        side_box(m, (x, 1.5, z), (x + 1.2, 2.3, z + 1.2), t_gem, light=12)
+    side_box(m, (5.8, 3, 5.8), (10.2, 16, 10.2), t_column)                              # the column
+    for y in (6.0, 12.0):
+        side_box(m, (5.4, y, 5.4), (10.6, y + 0.8, 10.6), t_band)
+    side_box(m, (5.4, 15.4, 5.4), (10.6, 16.4, 10.6), t_band)
+    side_box(m, (7.1, 16.4, 7.1), (8.9, 24.2, 8.9), t_rod)                              # the rod
+    side_box(m, (6.2, 24.2, 6.2), (9.8, 24.9, 9.8), t_band)                             # the sun's cup
+    sun = (8.0, 27.2, 8.0)
+    octagon_ring(m, sun, 4.6, 0.6, "xz", t_ring)                                        # level ring
+    octagon_ring(m, sun, 4.0, 0.6, "xy", t_ring)                                        # upright ring
+    side_box(m, (7.7, 22.6, 7.7), (8.3, 23.4, 8.3), t_ring)
+    return m
+
+
+def soulfire_brazier():
+    """The Soulfire Brazier (vanilla: soul lantern, kept standing): a pedestal brazier of bound steel - a broad foot, a
+    riveted stem, a deep bowl ringed with soul runes that glow, a raised rim - full of dark coals with heat breathing
+    in the cracks between them (glowing, animated). The flames are DecorationService's particles (soul or ember)."""
+    m = Model("soulfire_brazier")
+    st, sp, ash = RAMPS["boundsteel"], RAMPS["spirit"], RAMPS["ash"]
+    t_foot = m.texture("foot", tex(10, 2, lambda x, y: st[4] if y == 0 else st[2]))
+    t_foot_top = m.texture("foot_top", tex(10, 10, lambda x, y: st[3] if x in (0, 9) or y in (0, 9) else st[2]))
+    t_stem = m.texture("stem", tex(7, 6, lambda x, y: st[4] if x == 0 else st[1] if x == 6 else
+                                   st[4] if (x, y) in ((2, 1), (4, 1), (2, 4), (4, 4)) else st[2]))
+    runes = []
+    for f in range(4):
+        def b(x, y, f=f):
+            if y == 0:
+                return st[4]
+            if y == 3:
+                return st[1]
+            if y in (1, 2) and x % 4 in (1, 2):
+                rune = (x // 4 + f) % 3
+                return sp[[3, 4, 5][rune]] if (x + y) % 2 == 0 or rune == 2 else st[2]
+            return st[2] if x % 4 else st[3]
+        runes.append(tex(16, 4, b))
+    t_bowl = m.texture("bowl", runes)
+    t_bowl_low = m.texture("bowl_low", tex(16, 1, lambda x, y: st[2]))
+    t_rim = m.texture("rim", tex(16, 1, lambda x, y: st[5] if x % 5 else st[4]))
+    coals = []
+    for f in range(4):
+        rnd = random.Random(707)
+        img = tex(12, 12, lambda x, y, f=f: sp[[2, 3, 4, 3][(x + y + f) % 4]])        # heat in the cracks
+        for _ in range(18):
+            cx, cy = rnd.randrange(0, 11), rnd.randrange(0, 11)
+            put(img, [(cx, cy), (cx + 1, cy), (cx, cy + 1), (cx + 1, cy + 1)], ash[1])
+            put(img, [(cx, cy)], ash[3])
+        coals.append(img)
+    t_coals = m.texture("coals", coals)
+    side_box(m, (3, 0, 3), (13, 1.5, 13), t_foot, top=t_foot_top, bottom=t_foot_top)    # the foot
+    side_box(m, (4.8, 1.5, 4.8), (11.2, 7, 11.2), t_stem, top=t_foot_top)               # the stem
+    side_box(m, (3, 7, 3), (13, 8, 13), t_bowl_low, top=t_foot_top, bottom=t_foot_top)  # the bowl
+    m.box((2, 8, 2), (14, 11.4, 14), {d: (t_bowl, [0, 0, 12, 3.4]) for d in ("north", "south", "west", "east")} |
+          {"down": (t_foot_top, [0, 0, 10, 10])}, light=0)
+    m.box((2.6, 11.2, 2.6), (13.4, 11.25, 13.4), {"up": (t_coals, [0, 0, 11, 11])}, light=15, shade=False)  # the coals
+    for (frm, to) in (((1.5, 11, 1.5), (14.5, 12.2, 2.6)), ((1.5, 11, 13.4), (14.5, 12.2, 14.5)),
+                      ((1.5, 11, 2.6), (2.6, 12.2, 13.4)), ((13.4, 11, 2.6), (14.5, 12.2, 13.4))):  # the rim
+        side_box(m, frm, to, t_rim)
+    return m
+
+
+OBELISK_RUNE = ["..#..", "#.#.#", ".###.", "..#..", ".#.#."]
+
+
+def rune_obelisk():
+    """The Rune Obelisk (vanilla: chiseled polished blackstone, a full cube): a plinth of dark dressed stone - chiseled
+    border, a sea-glow inlay round its top - and on it a tapering blackstone obelisk to a small pyramidion, a rune
+    carved down each face glowing in sea glow (pulsing), a glowing point at its tip. Three runes orbit the plinth
+    (DecorationService's displays)."""
+    m = Model("rune_obelisk")
+    ink, ash, sg = RAMPS["ink"], RAMPS["ash"], RAMPS["seaglow"]
+    stone = [ink[1], ink[2], ink[3], ash[1], ash[2]]
+    def plinth(x, y):
+        if x in (0, 15) or y in (0, 15):
+            return stone[3]                                   # dressed edge
+        if y == 2:
+            return sg[3]                                      # the inlay
+        if 3 <= x <= 12 and 4 <= y <= 13:                     # a recessed panel
+            if x == 3 or y == 4:
+                return stone[0]
+            if x == 12 or y == 13:
+                return stone[2]
+            return stone[1] if (x * 5 + y * 3) % 11 else stone[0]
+        return stone[2]
+    t_plinth = m.texture("plinth", tex(16, 16, plinth))
+    t_plinth_top = m.texture("plinth_top", tex(16, 16, lambda x, y: stone[3] if x in (0, 15) or y in (0, 15) else
+                                                stone[0] if x in (1, 14) or y in (1, 14) else stone[2]))
+    t_shaft = m.texture("shaft", tex(8, 12, lambda x, y: stone[3] if x == 0 else stone[0] if x == 7 else stone[1]))
+    glows = []
+    for f in range(4):
+        def g(x, y, f=f):
+            r, c = y - 2, x - 1
+            if 0 <= r < 5 and 0 <= c < 5 and OBELISK_RUNE[r][c] == "#":
+                return sg[[3, 4, 5, 4][f]]
+            return None
+        glows.append(tex(7, 9, g))
+    t_glow = m.texture("glow", glows)
+    t_tip = m.texture("tip", [fill(sg, [4, 5, 5, 4][f]) for f in range(4)])
+    side_box(m, (0, 0, 0), (16, 16, 16), t_plinth, top=t_plinth_top, bottom=t_plinth_top)   # the plinth
+    side_box(m, (2, 16, 2), (14, 17, 14), t_shaft, top=t_plinth_top)
+    side_box(m, (4, 17, 4), (12, 19, 12), t_shaft, top=t_plinth_top)
+    for (a, y0, y1) in ((4.5, 19, 28), (5.2, 28, 29.4)):                                     # the shaft
+        side_box(m, (a, y0, a), (16 - a, y1, 16 - a), t_shaft)
+    side_box(m, (6.0, 29.4, 6.0), (10.0, 30.4, 10.0), t_shaft)                               # pyramidion
+    side_box(m, (6.9, 30.4, 6.9), (9.1, 31.2, 9.1), t_shaft)
+    side_box(m, (7.5, 31.2, 7.5), (8.5, 31.9, 8.5), t_tip, light=15)
+    o = 0.03
+    for d, frm, to in (("south", (4.5, 19, 11.5 + o), (11.5, 28, 11.5 + o)), ("north", (4.5, 19, 4.5 - o), (11.5, 28, 4.5 - o)),
+                       ("east", (11.5 + o, 19, 4.5), (11.5 + o, 28, 11.5)), ("west", (4.5 - o, 19, 4.5), (4.5 - o, 28, 11.5))):
+        m.box(frm, to, {d: (t_glow, [0, 0, 7, 9])}, light=15, shade=False)
+    return m
+
+
+G7 = [("Wisp Jar", wisp_jar), ("Bottled Gale", bottled_gale), ("Wind Chime", wind_chime),
+      ("Occult Orrery", occult_orrery), ("Soulfire Brazier", soulfire_brazier), ("Rune Obelisk", rune_obelisk)]
+
+
+GROUPS = {"g1": G1, "g2": G2, "g3": G3, "g4": G4, "g5": G5, "g7": G7}
 
 
 def save(model):

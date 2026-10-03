@@ -13,6 +13,12 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Directional;
+import org.bukkit.Axis;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Orientable;
+import org.bukkit.block.data.type.Lantern;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.event.EventHandler;
@@ -153,11 +159,43 @@ public final class BlockSkinService implements Listener {
     }
 
     /** A player placed a block: skin it now, from the item in hand (the same tick the block appears). */
+    /** A skinned decoration on a soul lantern (the Soulfire Brazier) must stand: its skin has no hanging version. */
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onPlaceHanging(BlockPlaceEvent event) {
+        if (event.getBlockPlaced().getType() != Material.SOUL_LANTERN
+            || !(event.getBlockPlaced().getBlockData() instanceof Lantern lantern) || !lantern.isHanging()) {
+            return;
+        }
+        SlimefunItem item = SlimefunItem.getByItem(event.getItemInHand());
+        if (item != null && isSkinned(item.getId())) {
+            event.setCancelled(true);
+            event.getPlayer().sendActionBar(Component.text(item.getItemName().replaceAll("§.", "") + " must stand on a block",
+                NamedTextColor.GRAY));
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         SlimefunItem item = SlimefunItem.getByItem(event.getItemInHand());
         if (item != null && isSkinned(item.getId())) {
+            upright(event.getBlockPlaced());
             ensure(event.getBlockPlaced(), item.getId());
+        }
+    }
+
+    /**
+     * Stands a skinned block's interim vanilla block upright when it was placed sideways: a chain (Wind Chime) along y,
+     * a lightning rod (Occult Orrery) facing up - their skins are upright objects. Neither needs support, so nothing
+     * pops off. Other blocks are left as placed.
+     */
+    public static void upright(@Nonnull Block block) {
+        BlockData data = block.getBlockData();
+        if (block.getType() == Material.IRON_CHAIN && data instanceof Orientable chain && chain.getAxis() != Axis.Y) {
+            chain.setAxis(Axis.Y);
+            block.setBlockData(chain, false);
+        } else if (block.getType() == Material.LIGHTNING_ROD && data instanceof Directional rod && rod.getFacing() != BlockFace.UP) {
+            rod.setFacing(BlockFace.UP);
+            block.setBlockData(rod, false);
         }
     }
 

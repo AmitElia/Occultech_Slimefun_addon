@@ -450,7 +450,7 @@ bow) is designed as that model's texture, not as an icon.
 | **G4** | Tier-3 blocks (Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) | **Done** |
 | **G5** | Held 3D models: Occult Codex, Wyrmbreath, Guardian's Gaze, Abyssal Anchor, Dreadlance, Soulfire Censer, Heartwood Aegis (shield model) | **Done** |
 | **G6** | Worn armor (`equippable` layers): Abyssal, Hollow | **Done - final, approved** (v10) |
-| G7 | Placed decorations (Moonlit Lily, Witchcap, Everliving Coral, jars, chime, orrery, brazier, obelisk, eyeblossom) | - |
+| **G7** | Placed decorations: Wisp Jar, Bottled Gale, Wind Chime, Occult Orrery, Soulfire Brazier, Rune Obelisk (the plants stay vanilla) | **Done** (in-game check pending) |
 | **N** | **After the textures, before shipping: move the blocks to Nexo's note-block custom blocks** (see below) | - |
 
 **Direction (the user, 2026-10-01): the server runs Nexo, so Occultech's blocks are built for Nexo's custom-block
@@ -698,7 +698,30 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   grips the near end of the spine so the book reaches ahead from the hand (rotation 0,0,0, grip at the spine's end).
   Previews of rotated models: `tools/art/render3d.py` (true 3D, honours element rotations; blockkit's render_iso does not).
 
-**Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)
+**G7 - placed decorations** (`python tools/art/session_g.py g7`; 3D preview [review-g7-3d.png](session-g/review-g7-3d.png)
+from `tools/art/render3d.py`). Each model is the final Nexo look and, while skins last, encloses its interim vanilla
+block; the effects (particles, orbiting runes and worlds) stay DecorationService's. The plants (Moonlit Lily, Witchcap,
+Everliving Coral, Watchful Eyeblossom) stay vanilla blocks, as decided.
+- Wisp Jar (flower pot) - a round jar of dark violet glass (octagonal sections: two crossed boxes), iron lid and knob,
+  a curved highlight; three wisps blink inside on a glowing layer just over the glass.
+- Bottled Gale (flower pot) - a tall round bottle of pale sea-green glass, long neck, cork; a white tornado funnel
+  turning inside (animated); the gale's particles spill out above.
+- Wind Chime (iron chain) - an iron chain from above to a thin octagonal wooden ring with cross-bars; six silver and
+  gold tubes of different lengths on threads; the chain runs on through a wooden striker disc to a glowing sea-glass
+  pendant. (v1's wide plank ring hid the tubes and read as a stool.)
+- Occult Orrery (lightning rod) - abyss-stone foot ringed in gold with sea-glow gems, a fluted gold column, a slim rod
+  to the sun's cup, and two gold armillary rings (level and upright) round the sun display, inside the worlds' orbits.
+  `octagon_ring`: bars lie along the tangent - v1 laid the 90/270-degree bars the wrong way (a tangle, and one bar
+  past y 32).
+- Soulfire Brazier (soul lantern) - a bound-steel pedestal brazier: foot, riveted stem, a deep bowl ringed with soul
+  runes that glow, a raised rim, glowing coals with heat in the cracks; the flames are the particles (soul or ember).
+- Rune Obelisk (chiseled polished blackstone) - a full-cube plinth of dark dressed stone with a recessed panel on each
+  face and a sea-glow inlay, a tapering obelisk above to a pyramidion with a glowing point, a sea-glow rune down each
+  face (pulsing). Two blocks tall: the obelisk rises into the block above.
+- **Upright interim blocks:** the skins are upright objects, so `BlockSkinService.upright` stands a sideways-placed
+  chain (Wind Chime) or lightning rod (Orrery) up (neither needs support), and a Soulfire Brazier can't be hung from a
+  ceiling (placement cancelled with a message). Self-test checks both, and that the six have skins.
+ (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
   its model: real blocks, so they appear and vanish instantly, render at full distance, cost no entities and can't be
   cleared by ClearLag. Animated textures keep working (they are textures in the model).
