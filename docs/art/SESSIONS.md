@@ -731,6 +731,22 @@ Everliving Coral, Watchful Eyeblossom) stay vanilla blocks, as decided.
   Orrery: the foot's tops are dials - abyss stone with a soft radial gradient in bevelled gold frames, an engraved gold
   ring and ticks - and the column is fluted (ridges lit, grooves dark, brighter toward the top).
   Preview note: render3d's painter sort can interleave a glowing layer with the face just under it; it's fine in game.
+- **Bug (the user): an Occult Orrery lost its skin when its lightning rod oxidized** - lightning rods are copper and
+  weather (exposed/weathered/oxidized), changing the block's type, so the skin was taken off. Fixed in
+  BlockSkinService: weathering (`BlockFormEvent`) is cancelled on skinned Occultech blocks; a block already weathered
+  or waxed is put back to its own type (state kept); and decoration tickers (DecorationBlock, WindChime) re-skin a
+  block whose skin is missing (`ensureIfMissing`) - so old decorations also get their skins without
+  `/occultech skins`. Self-test checks all three.
+- **Wind Chime redone like a real one** (the user's screenshot: the middle - a thick chain stack, a disc, a glowing
+  pendant - looked odd): the vanilla chain's two diagonal planes fit a 2.3-wide core (`CHIME_CORE`), not 3.2, so the
+  middle is now a slim dark cord. A short iron chain to a round wooden top disc (radial shading), six round silver
+  tubes graded long to short round the circle on strings, a wooden striker disc at their middle, and below them a
+  wooden wind sail (one plaque, a carved swirl). `round_box` caps now sample one square by position (the octagon's two
+  boxes showed seams).
+- **Bug (the user): a skin under a block was pitch black.** A display is lit by the light where it stands, and every
+  skin stood a block up (y+1) - inside the ceiling for a hung Wind Chime. Skins of blocks that let light through
+  (chain, pot, lantern, carpet...) now stand inside their own block (y+0.5, no offset); solid cubes keep standing above.
+  Old skins move on their next `ensure` (decoration tickers re-anchor theirs).
  (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
   its model: real blocks, so they appear and vanish instantly, render at full distance, cost no entities and can't be

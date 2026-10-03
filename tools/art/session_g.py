@@ -3793,8 +3793,14 @@ def round_box(m, w, y0, y1, side, top=None, light=0, ratio=0.72):
     caps don't fight."""
     a, b = 8 - w / 2, 8 + w / 2
     n = w * ratio / 2
-    side_box(m, (a, y0, 8 - n), (b, y1, 8 + n), side, top=top, light=light)
-    side_box(m, (8 - n, y0 + 0.01, a), (8 + n, y1 - 0.01, b), side, top=top, light=light)
+    k = min(16, w)                                     # both boxes' caps sample one k x k square, by position
+    lo, hi = (w / 2 - n) * k / w, (w / 2 + n) * k / w
+    for (frm, to, cap) in (((a, y0, 8 - n), (b, y1, 8 + n), [0, lo, k, hi]),
+                           ((8 - n, y0 + 0.01, a), (8 + n, y1 - 0.01, b), [lo, 0, hi, k])):
+        e = side_box(m, frm, to, side, top=top, light=light)
+        cap_tex = (top or side)
+        e["faces"]["up"] = {"texture": cap_tex, "uv": cap}
+        e["faces"]["down"] = {"texture": cap_tex, "uv": cap}
 
 
 JAR_GLASS = hexes("#120a24", "#24143e", "#3a2260", "#583a86", "#8a6cb8", "#c8b4ec")   # dark violet tinted glass
@@ -3884,47 +3890,6 @@ def bottled_gale():
     return m
 
 
-def wind_chime():
-    """The Wind Chime (vanilla: iron chain, kept upright): an iron chain from above to a thin wooden ring; six metal
-    tubes - silver and gold, each its own length - hang from the ring on short threads; down the middle the chain runs
-    on through a wooden striker disc to a sea-glass pendant that glows (it catches the wind)."""
-    m = Model("wind_chime")
-    wood, ir, gd, sg, tw = RAMPS["wood"], RAMPS["iron"], RAMPS["gold"], RAMPS["seaglow"], RAMPS["twine"]
-    def chain(x, y):
-        link = y % 4
-        if link in (0, 3):
-            return ir[1] if x in (0, 3) else ir[3]
-        return ir[4] if x == 0 else ir[2] if x in (1, 2) else ir[1]
-    t_chain = m.texture("chain", tex(4, 16, chain))
-    t_ring = m.texture("ring", tex(12, 1, lambda x, y: wood[3] if x % 4 else wood[2]))
-    t_ring_top = m.texture("ring_top", tex(12, 12, lambda x, y: wood[4] if (x + y) % 5 else wood[3]))
-    t_silver = m.texture("silver", tex(2, 10, lambda x, y: ir[5] if x == 0 else ir[3]))
-    t_gold = m.texture("gold", tex(2, 10, lambda x, y: gd[5] if x == 0 else gd[3]))
-    t_cap = m.texture("cap", fill(ir, 1))
-    t_thread = m.texture("thread", fill(tw, 1))
-    t_disc = m.texture("disc", tex(7, 1, lambda x, y: wood[4]))
-    t_disc_top = m.texture("disc_top", tex(7, 7, lambda x, y: wood[3] if (x + y) % 3 else wood[2]))
-    t_crystal = m.texture("crystal", [tex(5, 4, lambda x, y, f=f: sg[[3, 4, 5, 4][(f + y) % 4]] if x != 4 else sg[2])
-                                      for f in range(4)])
-    side_box(m, (6.5, 14.2, 6.5), (9.5, 16, 9.5), t_chain)                        # the chain, from above
-    for y0 in (13.4,):                                                            # the thin wooden ring
-        octagon_ring(m, (8, y0, 8), 4.6, 0.8, "xz", t_ring_top)
-    for (x0, z0) in ((6.2, 3.0), (6.2, 12.2)):
-        side_box(m, (x0, 13.0, z0 - 0.4), (x0 + 3.6, 13.8, z0 + 0.4), t_ring)     # cross-bars to the chain
-    for (x0, z0) in ((3.0, 6.2), (12.2, 6.2)):
-        side_box(m, (x0 - 0.4, 13.0, z0), (x0 + 0.4, 13.8, z0 + 3.6), t_ring)
-    side_box(m, (6.5, 8.0, 6.5), (9.5, 14.2, 9.5), t_chain)                       # on down the middle
-    round_box(m, 6.6, 7.2, 8.0, t_disc, top=t_disc_top)                           # the striker disc
-    side_box(m, (6.5, 3.6, 6.5), (9.5, 7.2, 9.5), t_chain)
-    round_box(m, 4.0, 0, 3.6, t_crystal, top=t_crystal, light=12)                 # the sea-glass pendant
-    for i, bottom in enumerate((4.6, 6.4, 3.4, 7.0, 5.2, 2.8)):                    # six tubes on threads
-        a = math.radians(i * 60 + 30)
-        x, z = 8 + 4.6 * math.cos(a), 8 + 4.6 * math.sin(a)
-        side_box(m, (x - 0.12, 12.2, z - 0.12), (x + 0.12, 13.0, z + 0.12), t_thread)
-        side_box(m, (x - 0.6, bottom, z - 0.6), (x + 0.6, 12.2, z + 0.6), t_gold if i % 2 else t_silver, top=t_cap)
-    return m
-
-
 def tone(ramp, t):
     """The ramp's colour at t (0 = darkest, 1 = brightest), in clean steps."""
     return ramp[max(0, min(len(ramp) - 1, round(t * (len(ramp) - 1))))]
@@ -3965,6 +3930,67 @@ def engraved_dial(n, ramp_stone, ramp_gold, ring_r):
         lit = 0.65 - d / (n * 0.9) - (dx + dy) / (n * 3.0)
         return tone(ramp_stone, lit)
     return tex(n, n, f)
+
+
+CHIME_CORE = (6.85, 9.15)   # the vanilla chain's two diagonal planes fit inside this 2.3-wide core, full height
+
+
+def wind_chime():
+    """The Wind Chime (vanilla: iron chain, kept upright), like a real one: a short iron chain from above to a round
+    wooden top disc (grain in rings, a bevelled edge); six round silver tubes, graded long to short round the circle,
+    hang from its rim on strings; down the middle a slim dark cord carries a wooden striker disc at the tubes' middle and,
+    below them, a leaf-shaped wooden wind sail with a carved swirl. Everything down the middle stays inside the chain's
+    2.3-wide core, so the chain never shows."""
+    m = Model("wind_chime")
+    wood, ir, tw = RAMPS["wood"], RAMPS["iron"], RAMPS["twine"]
+    a, b = CHIME_CORE
+    def chain(x, y):
+        link = y % 4
+        if link in (0, 3):
+            return ir[1] if x in (0, 2) else ir[3]
+        return ir[4] if x == 0 else ir[2] if x == 1 else ir[1]
+    t_chain = m.texture("chain", tex(3, 16, chain))
+    t_disc_side = m.texture("disc_side", tex(8, 2, lambda x, y: tone(wood, (0.85 if y == 0 else 0.45) - x * 0.03)))
+    def grain(x, y):                                                # soft radial shading, a darker rim
+        d = math.hypot(x - 4.5, y - 4.5)
+        return tone(wood, (0.8 - d * 0.05 - (x + y) * 0.015) if d < 4.3 else 0.35)
+    t_disc_top = m.texture("disc_top", tex(10, 10, grain))
+    t_tube = m.texture("tube", tex(2, 10, lambda x, y: tone(ir, (0.98 if x == 0 else 0.55) - y * 0.025)))
+    t_tube_end = m.texture("tube_end", tex(2, 2, lambda x, y: ir[1]))
+    t_string = m.texture("string", fill(tw, 1))
+    ink = RAMPS["ink"]
+    t_cord = m.texture("cord", tex(3, 16, lambda x, y: ink[2] if (x + y) % 4 == 0 else ink[1]))   # dark, so it recedes
+    t_striker = m.texture("striker", tex(6, 1, lambda x, y: tone(wood, 0.8 - x * 0.06)))
+    t_striker_top = m.texture("striker_top", tex(6, 6, lambda x, y: tone(wood, 0.7 - math.hypot(x - 2.5, y - 2.5) * 0.08)))
+    swirl = {(3, 1), (4, 1), (5, 2), (5, 3), (4, 4), (3, 4), (2, 3), (3, 2)}
+    def sail(x, y):
+        if (x, y) in swirl:
+            return wood[1]                                          # the carved swirl
+        if x == 0 or y == 0:
+            return tone(wood, 0.85)
+        if x == 7 or y == 6:
+            return tone(wood, 0.3)
+        return tone(wood, 0.72 - y * 0.05 - x * 0.025)
+    t_sail = m.texture("sail", tex(8, 7, sail))
+    t_sail_edge = m.texture("sail_edge", tex(3, 5, lambda x, y: tone(wood, 0.45 - y * 0.05)))
+    side_box(m, (a, 14.6, a), (b, 16, b), t_chain)                                        # the chain from above
+    round_box(m, 10.0, 13.4, 14.6, t_disc_side, top=t_disc_top)                           # the top disc
+    lengths = (7.0, 6.2, 5.4, 4.7, 4.1, 3.6)                                               # graded round the circle
+    for i, length in enumerate(lengths):
+        ang = math.radians(i * 60 + 30)
+        x, z = 8 + 3.7 * math.cos(ang), 8 + 3.7 * math.sin(ang)
+        side_box(m, (x - 0.1, 12.6, z - 0.1), (x + 0.1, 13.4, z + 0.1), t_string)
+        side_box(m, (x - 0.6, 12.6 - length, z - 0.6), (x + 0.6, 12.6, z + 0.6), t_tube, top=t_tube_end)
+    side_box(m, (a, 4.4, a), (b, 13.4, b), t_cord)                                        # the cord
+    round_box(m, 5.6, 7.0, 7.8, t_striker, top=t_striker_top)                             # the striker
+    # the wind sail, below the tubes: one plaque, rounded off at the corners (each row's uv its slice of one texture)
+    for (x0, x1, y0, y1) in ((5.4, 10.6, 0, 0.6), (4.6, 11.4, 0.6, 3.8), (5.4, 10.6, 3.8, 4.4)):
+        u0, u1 = (x0 - 4.6) * 8 / 6.8, (x1 - 4.6) * 8 / 6.8
+        v0, v1 = (4.4 - y1) * 7 / 4.4, (4.4 - y0) * 7 / 4.4
+        m.box((x0, y0, a), (x1, y1, b), {"south": (t_sail, [u0, v0, u1, v1]), "north": (t_sail, [u1, v0, u0, v1]),
+              "west": (t_sail_edge, [0, 0, 2.3, 1]), "east": (t_sail_edge, [0, 0, 2.3, 1]),
+              "up": (t_sail_edge, [0, 0, 3, 2]), "down": (t_sail_edge, [0, 0, 3, 2])})
+    return m
 
 
 def occult_orrery():

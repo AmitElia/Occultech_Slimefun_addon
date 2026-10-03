@@ -46,6 +46,7 @@ public class WindChime extends SlimefunItem {
 
             @Override
             public void tick(Block block, SlimefunItem sfItem, Config data) {
+                io.github.amitelia.occultech.Occultech.instance().skins().ensureIfMissing(block, sfItem);
                 Location center = block.getLocation().add(0.5, 0.5, 0.5);
                 for (Player player : block.getWorld().getNearbyPlayers(center, RADIUS)) {
                     refresh(player, PotionEffectType.SPEED);

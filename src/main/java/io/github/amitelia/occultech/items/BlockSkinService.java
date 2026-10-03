@@ -27,6 +27,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
@@ -109,7 +110,12 @@ public final class BlockSkinService implements Listener {
         ItemMeta meta = stack.getItemMeta();
         meta.setItemModel(model);
         stack.setItemMeta(meta);
-        Transformation transformation = new Transformation(new Vector3f(0F, -0.5F, 0F), new AxisAngle4f(yaw(block), 0F, 1F, 0F),
+        // A display is lit by the light where it stands. Inside a block that lets light through (a chain, a pot, a lantern,
+        // a carpet) that's the block itself; inside a solid cube it's dark, so a solid block's skin stands just above it.
+        // (Standing above put a Wind Chime hung under a ceiling inside the ceiling - pitch black.)
+        boolean solid = block.getType().isOccluding();
+        Location at = block.getLocation().add(0.5, solid ? 1.0 : 0.5, 0.5);
+        Transformation transformation = new Transformation(new Vector3f(0F, solid ? -0.5F : 0F, 0F), new AxisAngle4f(yaw(block), 0F, 1F, 0F),
             new Vector3f(SCALE, SCALE, SCALE), new AxisAngle4f());
         String key = key(block);
         UUID existing = tracked.get(key);
@@ -120,11 +126,13 @@ public final class BlockSkinService implements Listener {
                     display.setItemStack(stack);   // a tile changed its look
                 }
                 display.setTransformation(transformation);
+                if (Math.abs(display.getLocation().getY() - at.getY()) > 1e-3) {
+                    display.teleport(at);   // skins made before they were anchored by their block's light
+                }
                 return display;
             }
             display.remove();   // the block changed into another Occultech block (an altar upgrade)
         }
-        Location at = block.getLocation().add(0.5, 1.0, 0.5);
         ItemDisplay display = block.getWorld().spawn(at, ItemDisplay.class, d -> {
             d.setItemStack(stack);
             d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
@@ -271,6 +279,52 @@ public final class BlockSkinService implements Listener {
         }
     }
 
+    /**
+     * Copper weathering (a lightning rod turning exposed, weathered, oxidized) would change an Occultech block's type
+     * and so cost it its skin: Occultech blocks don't weather.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onWeather(BlockFormEvent event) {
+        if (event.getBlock().getType() != event.getNewState().getType() && isSkinned(BlockStorage.checkID(event.getBlock()))) {
+            event.setCancelled(true);
+        }
+    }
+
+    /**
+     * Puts a skinned block back to its item's own block when it became a weathered or waxed variant of it (an Occult
+     * Orrery's lightning rod that oxidized before weathering was stopped), keeping its state (facing, water).
+     * Returns whether the block is (now) the item's own type.
+     */
+    public static boolean restoreWeathered(@Nonnull Block block, @Nonnull SlimefunItem item) {
+        Material own = item.getItem().getType();
+        Material now = block.getType();
+        if (now == own) {
+            return true;
+        }
+        String ownName = own.name();
+        if (!now.name().endsWith(ownName) || !(now.name().startsWith("WAXED_") || now.name().startsWith("EXPOSED_")
+            || now.name().startsWith("WEATHERED_") || now.name().startsWith("OXIDIZED_"))) {
+            return false;
+        }
+        String state = block.getBlockData().getAsString();
+        block.setBlockData(Bukkit.createBlockData(state.replace(now.getKey().toString(), own.getKey().toString())), false);
+        return block.getType() == own;
+    }
+
+    /** Cheap per-tick check for a block's ticker: re-skins it only if its skin is missing (a block placed before
+     * skins, a skin lost to a type change). */
+    public void ensureIfMissing(@Nonnull Block block, @Nonnull SlimefunItem item) {
+        if (!isSkinned(item.getId()) || !restoreWeathered(block, item)) {
+            return;   // the rod goes back first, whether or not the skin is still there
+        }
+        UUID existing = tracked.get(key(block));
+        if (existing != null && Bukkit.getEntity(existing) instanceof ItemDisplay display && display.isValid()
+            && Math.abs(display.getLocation().getY() - block.getY() - (block.getType().isOccluding() ? 1.0 : 0.5)) < 1e-3) {
+            return;
+        }
+        ensure(block, item.getId());   // missing, or standing where its block's light doesn't reach
+    }
+
     /** Removes skins whose block is really gone (its type no longer the item's). */
     public void validate() {
         tracked.entrySet().removeIf(entry -> {
@@ -282,6 +336,10 @@ public final class BlockSkinService implements Listener {
             Block block = data == null ? null : blockOf(entity.getWorld(), data);
             String id = data == null ? null : data.substring(data.indexOf('|') + 1);
             SlimefunItem item = id == null ? null : SlimefunItem.getById(id);
+            if (block != null && item != null && !(item instanceof StepTile) && BlockStorage.hasBlockInfo(block)
+                && id.equals(BlockStorage.checkID(block))) {
+                restoreWeathered(block, item);   // a weathered rod is still the orrery
+            }
             boolean gone = block == null || item == null || !isLook(item, block.getType())
                 || (BlockStorage.hasBlockInfo(block) && !id.equals(BlockStorage.checkID(block)));
             if (gone) {

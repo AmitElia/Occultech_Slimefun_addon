@@ -350,10 +350,23 @@ final class SelfTest {
             ((org.bukkit.block.data.Orientable) chime.getBlockData()).getAxis() == org.bukkit.Axis.Y
                 && ((org.bukkit.block.data.Directional) rod.getBlockData()).getFacing() == org.bukkit.block.BlockFace.UP,
             chime.getBlockData().getAsString() + " " + rod.getBlockData().getAsString());
+        // an Occult Orrery whose copper rod weathered gets its rod (and its skin) back
+        Block orrery = altar.getRelative(6, 0, 6);
+        DebugWorld.placeSlimefun(orrery, ItemKeys.slimefunId("OCCULT_ORRERY"), block -> previous.putIfAbsent(block, block.getBlockData()));
+        orrery.setType(Material.OXIDIZED_LIGHTNING_ROD, false);
+        plugin.skins().ensureIfMissing(orrery, io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem.getById(ItemKeys.slimefunId("OCCULT_ORRERY")));
+        org.bukkit.entity.ItemDisplay orrerySkin = plugin.skins().ensure(orrery);
+        check("an oxidized Occult Orrery turns back to its rod and keeps its skin", orrery.getType() == Material.LIGHTNING_ROD
+            && orrerySkin != null && orrerySkin.isValid(), orrery.getType() + " " + orrerySkin);
+        org.bukkit.block.BlockState aged = orrery.getState();
+        aged.setType(Material.EXPOSED_LIGHTNING_ROD);
+        org.bukkit.event.block.BlockFormEvent weathering = new org.bukkit.event.block.BlockFormEvent(orrery, aged);
+        Bukkit.getPluginManager().callEvent(weathering);
+        check("an Occult Orrery's rod doesn't weather", weathering.isCancelled(), "weathering went ahead");
         check("the six decorations have skins (G7)", java.util.stream.Stream.of("WISP_JAR", "BOTTLED_GALE", "WIND_CHIME",
             "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "RUNE_OBELISK").allMatch(id -> plugin.skins().isSkinned(ItemKeys.slimefunId(id))),
             "a decoration has no skin");
-        for (Block block : List.of(tile, forge, chime, rod)) {
+        for (Block block : List.of(tile, forge, chime, rod, orrery)) {
             BlockStorage.clearBlockInfo(block);
             block.setType(Material.AIR);
         }

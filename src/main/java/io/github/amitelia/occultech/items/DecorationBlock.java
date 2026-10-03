@@ -33,6 +33,7 @@ public class DecorationBlock extends SlimefunItem {
             @Override
             public void tick(Block block, SlimefunItem sfItem, Config data) {
                 decorations.register(block, kind);
+                io.github.amitelia.occultech.Occultech.instance().skins().ensureIfMissing(block, sfItem);
             }
         });
 
