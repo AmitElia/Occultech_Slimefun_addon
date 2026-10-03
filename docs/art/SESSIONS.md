@@ -15,8 +15,8 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | H | Menu backgrounds | later (moved after N) |
 | ~~I~~ | ~~Effect sprites~~ - **dropped** (the user: retexturing particles would change other plugins' and vanilla effects) | - |
 | **O1** | Block fixes: blue bottoms (smaller models -> chorus-plant states), stacking on custom blocks, Rune Obelisk (thinner base, less flat, clean edges), Soulfire Brazier (aligned textures, full rim), boss fights keep the turning sigil (no second pentagram) | **Done** |
-| O2 | Art retouch: the tier sigils and pentagrams crisp and finished; the armor inventory icons professional and symmetric | next |
-| O3 | Trophy Board as a real pedestal with bosses shown at one size; the Arcane Altar reworked with the Session B pentagram | - |
+| **O2** | Art retouch: the tier sigils and pentagrams crisp and finished; the armor inventory icons professional and symmetric | **Done** |
+| O3 | Trophy Board as a real pedestal with bosses shown at one size; the Arcane Altar reworked with the Session B pentagram | next |
 | O4 | Floor telegraphs for boss attacks (fire, poison, hits...) like the sigil holograms | - |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
 
@@ -817,6 +817,21 @@ transformations), the server sends one update a second; the displays are never s
   texture covers its short bars (they sampled past a 2-row texture - the missing pieces); collars round the stem.
 - **Boss fights:** the summoning's second pentagram is gone; the circle's sigil stays on the floor through the fight,
   turning a quarter turn every 4 s, and folds away when the fight is over.
+
+**Session O2 - art retouch (2026-10-03).**
+- **Sigils** (`tools/art/session_o2.py`, replacing Session B's six in `session-b/sigil_*.png` and so the ritual floor
+  holograms): the user wanted crisp pixelated edges and a finished look. Half of every old sigil's pixels were a
+  semi-transparent bloom (a haze, not pixel art), lines stepped unevenly and nothing held the edges. Now: every pixel
+  fully solid or clear; rings shaded as round tubes (the crest lit top-left, the bottom-right rim catching light) and
+  every bar a tube of even width; a 1 px outline in the sigil's own darkest tone; faceted gem cores with a glint (the
+  Session B gem style); glowing rune marks in the band; shapes mirror-symmetric (checked: 1-6 px, the glint). The
+  Abyssal eye's lids are two arcs meeting at the corners; the Bound spirit is bound by three spokes.
+- **Armor icons** (`tools/art/session_o2_armor.py`; session_e/f's functions draw from it): vanilla's armor
+  silhouettes (what players read as armor at a glance), each drawn as its left half and mirrored - exactly symmetric -
+  the mirrored half a step darker (light from the top-left). Abyssal: teal plate, scale arcs (the old checker of
+  scales broke the no-checker rule), fins, sea-glow brow, gem and soles. Hollow: black-grey steel, purple horns, cuffs
+  and hem, sculk creeping on cheeks and thighs, a soul core and soul-blue soles. v1's boots read as bottles -> wide
+  shafts with cuffs, toes and glowing soles. Sheet: `session-e/review-armor-o2.png`.
 
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the

@@ -542,6 +542,11 @@ ABYSSAL_HELM_ICON = [   # redrawn to match the worn helm (G6): open-faced, fins 
 def abyssal_helmet(frame=0):
     """The Abyssal Helm: an open-faced helm of abyssal plate - a brow band with a sea-glow gem (pulsing), cheek guards,
     fan fins tilted up and out from its sides and a crest along its top."""
+    # redrawn in Session O2 (vanilla silhouette, exactly symmetric): session_o2_armor.py
+    import session_o2_armor as o2
+    icon = Icon(16)
+    icon.img = o2.icon("abyssal_helm", frame)
+    return icon
     from session_d import pixmap
     icon = Icon(16)
     ab, sg = RAMPS["abyss"], RAMPS["seaglow"]
@@ -556,6 +561,11 @@ def abyssal_helmet(frame=0):
 def abyssal_chestplate(frame=0):
     """The Abyssal Chestplate: shoulder plates with fins, a sea-glow seam down the middle, gill-like glowing lines on the
     chest (Thorns), a belt (the glow pulses)."""
+    # redrawn in Session O2 (vanilla silhouette, exactly symmetric): session_o2_armor.py
+    import session_o2_armor as o2
+    icon = Icon(16)
+    icon.img = o2.icon("abyssal_chestplate", frame)
+    return icon
     icon = Icon(16)
     ab = RAMPS["abyss"]
     armor_base(icon, CHEST, 7.0, 6.0, 7.0, 7.0)
@@ -573,6 +583,11 @@ def abyssal_chestplate(frame=0):
 
 def abyssal_leggings(frame=0):
     """The Abyssal Greaves: a belt with a glowing buckle, fins down the outer sides of the legs, knee plates."""
+    # redrawn in Session O2 (vanilla silhouette, exactly symmetric): session_o2_armor.py
+    import session_o2_armor as o2
+    icon = Icon(16)
+    icon.img = o2.icon("abyssal_greaves", frame)
+    return icon
     icon = Icon(16)
     ab = RAMPS["abyss"]
     armor_base(icon, LEGS, 7.0, 5.0, 7.0, 8.0)
@@ -587,6 +602,11 @@ def abyssal_leggings(frame=0):
 
 def abyssal_boots(frame=0):
     """The Abyssal Boots: cuffs with sea-glow trim, fins at the heels, dark soles."""
+    # redrawn in Session O2 (vanilla silhouette, exactly symmetric): session_o2_armor.py
+    import session_o2_armor as o2
+    icon = Icon(16)
+    icon.img = o2.icon("abyssal_boots", frame)
+    return icon
     icon = Icon(16)
     ab = RAMPS["abyss"]
     armor_base(icon, BOOTS, 7.0, 7.0, 7.0, 6.0)

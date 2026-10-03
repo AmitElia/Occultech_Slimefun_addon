@@ -644,23 +644,43 @@ def hollow_armor(rows, frame):
 def hollow_helmet(frame=0):
     """The Hollow Crown: an open-faced helm of black-grey reinforced steel, a soul conduit burning across its brow,
     sculk creeping up its cheek guards, and the warden's tendrils in purple rising from its sides."""
+    # redrawn in Session O2 (vanilla silhouette, exactly symmetric): session_o2_armor.py
+    import session_o2_armor as o2
+    icon = Icon(16)
+    icon.img = o2.icon("hollow_crown", frame)
+    return icon
     return hollow_armor(HOLLOW_HELM, frame)
 
 
 def hollow_chestplate(frame=0):
     """The Hollow Cuirass: heavy steel pauldrons with soul cores, the soul reactor in the chest infected with sculk,
     cracks of soul light running down from it, a purple hem."""
+    # redrawn in Session O2 (vanilla silhouette, exactly symmetric): session_o2_armor.py
+    import session_o2_armor as o2
+    icon = Icon(16)
+    icon.img = o2.icon("hollow_cuirass", frame)
+    return icon
     return hollow_armor(HOLLOW_CHEST, frame)
 
 
 def hollow_leggings(frame=0):
     """The Hollow Greaves: a steel belt with a soul core, plated legs with sculk infection on the thighs, purple-trimmed
     knee guards with soul cores."""
+    # redrawn in Session O2 (vanilla silhouette, exactly symmetric): session_o2_armor.py
+    import session_o2_armor as o2
+    icon = Icon(16)
+    icon.img = o2.icon("hollow_greaves", frame)
+    return icon
     return hollow_armor(HOLLOW_LEGS, frame)
 
 
 def hollow_boots(frame=0):
     """The Hollow Sabatons: heavy steel boots with purple cuffs, a touch of sculk, glowing soul soles."""
+    # redrawn in Session O2 (vanilla silhouette, exactly symmetric): session_o2_armor.py
+    import session_o2_armor as o2
+    icon = Icon(16)
+    icon.img = o2.icon("hollow_sabatons", frame)
+    return icon
     return hollow_armor(HOLLOW_BOOTS, frame)
 
 
