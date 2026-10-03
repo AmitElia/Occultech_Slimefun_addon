@@ -11,7 +11,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **D** | Tier-1 item icons (23; the 6 placed blocks move to G) | **Done** - fixed after review |
 | **E** | Tier-2 item icons (26: materials, drops, weapons, armor, decor objects) | **Done** - fixed after review |
 | **F** | Tier-3 item icons (25 + bow states + the Aegis shield texture; Hollow Sigil from A) | **Done** - reworked after review |
-| **G** | Blocks, held models, worn armor, placed decorations - split into G1-G7 (see *Session G*) | **G1-G6 done**, G7 next |
+| **G** | Blocks, held models, worn armor, placed decorations - split into G1-G7 (see *Session G*) | **Done** (G1-G7) |
 | H | Menu backgrounds | - |
 | I | Effect sprites (motes, embers, shards, shockwave rings, beams) | - |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
