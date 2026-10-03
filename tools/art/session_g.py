@@ -1937,66 +1937,88 @@ SPEAR_DISPLAY = {   # vanilla 26.2 item/spear_in_hand: how a spear is held (its 
 }
 
 
+def dreadlance_blade(frame):
+    """The Dreadlance's blade as a flat sprite (16 px, tip at the top) - drawn like a vanilla spear head, upgraded: a
+    leaf of blackened steel, a purple ridge down its middle that pulses, a sheen beside it, the left edge honed and
+    catching soul-blue light, the right edge in shadow, outlined in the steel's own black."""
+    ds = [(16, 16, 20, 255), (30, 30, 37, 255), (46, 46, 56, 255), (66, 66, 78, 255), (92, 92, 106, 255), (126, 126, 140, 255)]
+    vi, hc = RAMPS["violet"], RAMPS["hollowcy"]
+    half = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4, 4, 3.5, 3, 2.5, 2, 1.5, 1]   # the leaf's half-width, tip (top) to base
+    img = blank()
+    for y in range(16):
+        h = half[y]
+        for x in range(16):
+            k = x - 7.5
+            if abs(k) > h:
+                continue
+            if abs(k) < 0.6:
+                col = [vi[3], vi[4], vi[5], vi[4]][frame % 4]          # the ridge
+            elif abs(k) > h - 1.0:
+                col = [hc[3], hc[4], hc[3], hc[2]][frame % 4] if k < 0 else ds[1]   # honed edges
+            elif k < 0 and abs(k) < 1.6:
+                col = ds[4]                                            # sheen beside the ridge
+            else:
+                col = ds[3] if k < 0 else ds[2]
+            img.putpixel((x, y), col)
+    filled = {(x, y) for y in range(16) for x in range(16) if img.getpixel((x, y))[3]}
+    for (x, y) in list(filled):
+        for (dx, dy) in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            q = (x + dx, y + dy)
+            if 0 <= q[0] < 16 and 0 <= q[1] < 16 and q not in filled:
+                img.putpixel(q, ds[0])
+    return img
+
+
 def dreadlance_held():
-    """The Dreadlance in the hand, held exactly as vanilla holds a spear (it is a netherite spear: vanilla's own
-    spear_in_hand transforms, read from the 26.2 client). Built upright and laid on the spear's diagonal (+45 about z).
-    Vanilla stretches a spear 1.7x in its plane but only 0.85x in depth, so every part is drawn twice as deep (z) as it
-    is wide (x) to come out round. An ornate war-lance in the Hollow style: a butt spike and violet gem, a gold ferrule,
-    a leather grip, a shaft wound with gold wire, a gold socket with crimson gems and swept-back wings, and a cruciform
-    head of blackened steel - a broad leaf blade crossed by a narrower one - with bright honed edges and a crimson
-    core glowing down both blades."""
+    """The Dreadlance in the hand, held exactly as vanilla holds a spear (vanilla's own spear_in_hand transforms, read
+    from the 26.2 client; built upright, laid on the spear's +45 diagonal; vanilla stretches a spear 1.7x in its plane
+    and 0.85x in depth, so the staff's parts are drawn twice as deep as wide to come out round).
+    A detailed 3D staff in the Hollow armour's scheme - a steel butt spike with a soul gem, a ferrule, a violet-black
+    wrapped grip between steel collars, a dark sculk shaft with raised steel rings inlaid with soul light, a socket with
+    glowing purple gems and swept-back lugs - and a flat 2D blade like a vanilla spear head (a plane in the sprite's
+    plane, so vanilla's stretch makes it big and crisp): blackened steel, a pulsing purple ridge, a honed soul-blue edge."""
     m = Model("dreadlance_held")
     m.part = True
-    st, cr, gd, vi, wood, le, ink = (RAMPS["boundsteel"], RAMPS["crimson"], RAMPS["gold"], RAMPS["violet"], RAMPS["wood"],
-                                     RAMPS["leather"], RAMPS["ink"])
-    blade = blank()
-    for y in range(16):
-        for x in range(16):
-            edge = x in (0, 1, 14, 15)
-            blade.putpixel((x, y), st[5] if x in (0, 15) else st[4] if edge else ink[3] if (x + y) % 5 else ink[2])
-    t_blade = m.texture("blade", blade)
-    cores = []
-    for f in range(6):
-        img = blank()
-        for y in range(16):
-            col = cr[[3, 4, 5, 4, 3, 2][(f + y // 3) % 6]]
-            img.putpixel((7, y), col); img.putpixel((8, y), col)
-        cores.append(img)
-    t_core = m.texture("core", cores)
-    t_gold = m.texture("gold", metal(gd, 651))
+    sk, vi, hc, ink = RAMPS["sculk"], RAMPS["violet"], RAMPS["hollowcy"], RAMPS["ink"]
+    st = STEEL
+    t_steel = m.texture("steel", metal(st, 651, tone=3))
+    t_dark = m.texture("steel_dark", metal(st, 652, tone=2))
     shaft = blank()
     for y in range(16):
         for x in range(16):
-            shaft.putpixel((x, y), gd[3] if (y + x // 4) % 6 == 0 else wood[1] if x % 3 else wood[0])
+            shaft.putpixel((x, y), sk[3] if x % 4 == 0 else sk[2] if (x + y) % 5 else sk[1])   # dark sculk grain
     t_shaft = m.texture("shaft", shaft)
     grip = blank()
     for y in range(16):
         for x in range(16):
-            grip.putpixel((x, y), le[3] if (x + y) % 4 < 2 else le[2])
+            band = (y + x // 3) % 4
+            grip.putpixel((x, y), vi[2] if band == 0 else ink[3] if band in (1, 2) else ink[2])   # violet-black wrap
     t_grip = m.texture("grip", grip)
-    t_gem = m.texture("gem", fill(cr, 4))
-    t_vgem = m.texture("vgem", fill(vi, 4))
+    t_soul = m.texture("soul", [fill(hc, [3, 4, 5, 4][f]) for f in range(4)])
+    t_gem = m.texture("gem", [fill(vi, [3, 4, 5, 4][f]) for f in range(4)])
+    t_blade = m.texture("blade", [dreadlance_blade(f) for f in range(4)])
     p = lambda w, y0, y1, tex, d=None, light=0, cx=8.0: prism(m, w, y0, y1, tex, cx=cx, d=d if d else w * 2, light=light)  # noqa: E731
-    p(0.6, -3.0, -2.0, t_gold)                             # butt spike
-    p(1.0, -2.0, -1.0, t_vgem, light=12)                   # violet gem
-    p(1.2, -1.0, -0.4, t_gold)                             # ferrule
-    p(0.9, -0.4, 5.0, (t_grip, [0, 0, 2, 5]))              # leather grip
-    p(1.1, 5.0, 5.5, t_gold)
-    p(0.8, 5.5, 12.0, (t_shaft, [6, 0, 8, 16]))            # the shaft, gold wire wound round
-    p(1.2, 12.0, 13.0, t_gold)                             # the socket
-    p(1.6, 13.0, 13.8, t_gold)
+    p(0.5, -3.0, -2.2, t_steel)                            # butt spike
+    p(0.9, -2.2, -1.4, t_steel)
+    p(1.0, -1.4, -0.6, t_soul, light=15)                   # soul gem
+    p(1.3, -0.6, 0.0, t_steel)                             # ferrule
+    p(1.1, 0.0, 0.5, t_dark)
+    p(0.9, 0.5, 5.0, (t_grip, [0, 0, 2, 5]))               # wrapped grip
+    p(1.2, 5.0, 5.6, t_steel)                              # collar
+    p(0.8, 5.6, 12.0, (t_shaft, [6, 0, 8, 16]))            # the shaft
+    for y in (7.2, 9.6):                                    # raised steel rings, soul light inlaid
+        p(1.1, y, y + 0.5, t_steel)
+        p(1.12, y + 0.15, y + 0.35, t_soul, light=15)
+    p(1.2, 12.0, 12.6, t_steel)                            # socket
+    p(1.6, 12.6, 13.4, t_dark)
     for sx in (-1, 1):
-        m.box((8 + sx * 0.95 - 0.25, 13.1, 7.4), (8 + sx * 0.95 + 0.25, 13.7, 8.6), {d: (t_gem, [0, 0, 1, 1]) for d in FACES_ALL},
-              light=15)                                    # a crimson gem each side
-        p(0.5, 12.0, 13.4, t_gold, cx=8 + sx * 1.3, d=0.8)  # wings swept back from the socket
-        p(0.4, 11.0, 12.2, t_gold, cx=8 + sx * 1.7, d=0.6)
-    for (w, y0, y1) in ((1.6, 13.8, 14.8), (2.4, 14.8, 16.2), (2.6, 16.2, 17.4), (2.0, 17.4, 18.2), (1.2, 18.2, 18.8),
-                        (0.5, 18.8, 19.4)):
-        p(w, y0, y1, (t_blade, [0, 0, 16, 2]), d=0.6)        # the broad leaf blade (in the sprite's plane)
-    for (dz, y0, y1) in ((2.4, 14.2, 15.6), (3.4, 15.6, 17.0), (2.2, 17.0, 18.0), (1.0, 18.0, 18.6)):
-        p(0.35, y0, y1, (t_blade, [0, 0, 16, 2]), d=dz)      # the narrower cross blade (in depth)
-    for (frm, to, face) in (((7.75, 14.4, 7.68), (8.25, 18.4, 7.68), "north"), ((7.75, 14.4, 8.32), (8.25, 18.4, 8.32), "south")):
-        m.box(frm, to, {face: (t_core, [7, 0, 9, 16])}, shade=False, light=15)
+        m.box((8 + sx * 0.95 - 0.25, 12.7, 7.4), (8 + sx * 0.95 + 0.25, 13.3, 8.6), {d: (t_gem, [0, 0, 1, 1]) for d in FACES_ALL},
+              light=15)                                    # a purple gem each side
+        p(0.4, 11.8, 13.2, t_steel, cx=8 + sx * 1.25, d=0.7)   # lugs swept back from the socket
+        p(0.3, 11.0, 12.0, t_steel, cx=8 + sx * 1.55, d=0.5)
+    # the blade: a flat sprite in the spear's plane (x-y), seen from both sides
+    m.box((5.2, 13.0, 8.0), (10.8, 20.6, 8.0), {"south": (t_blade, [0, 0, 16, 16]), "north": (t_blade, [16, 0, 0, 16])},
+          shade=False)
     m.display = SPEAR_DISPLAY
     return diagonal(m, angle=45)
 
@@ -2201,7 +2223,7 @@ G5 = [("Occult Codex (held)", occult_codex_held), ("Wyrmbreath (held)", wyrmbrea
       ("Wyrmbreath (in use)", lambda: wyrmbreath_held(True)),
       ("Guardian's Gaze (held)", guardians_gaze_held), ("Guardian's Gaze (in use)", lambda: guardians_gaze_held(True)),
       ("Abyssal Anchor (held)", abyssal_anchor_held), 
-      ("Soulfire Censer (held)", soulfire_censer_held), ("Soulfire Censer (in use)", lambda: soulfire_censer_held(True)),
+      ("Dreadlance (held)", dreadlance_held), ("Soulfire Censer (held)", soulfire_censer_held), ("Soulfire Censer (in use)", lambda: soulfire_censer_held(True)),
       ("Frenzy Cleaver (held)", frenzy_cleaver_held), ("Bone Scepter (held)", bone_scepter_held),
       ("Heartwood Aegis", heartwood_aegis), ("Heartwood Aegis (blocking)", lambda: heartwood_aegis(True))]
 

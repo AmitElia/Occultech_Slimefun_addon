@@ -661,6 +661,13 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   scheme: a leaf blade of blackened steel with a pulsing purple ridge, a sheen beside it and one honed soul-blue edge
   catching the light, a steel socket with swept lugs and a purple gem, a dark sculk shaft with soft soul bands, a
   violet-black wrapped grip, a steel pommel with a soul gem (`spear_sprite` in session_f.py).
+  Then (the user): the 3D staff was better - keep it 3D and detailed, but in new colours, with the blade 2D like a
+  vanilla spear's. Now: the 3D model is back on vanilla's spear transforms, in the dark scheme (steel butt spike and soul
+  gem, ferrule, violet-black wrapped grip, steel collar, a dark sculk shaft with raised steel rings inlaid with soul
+  light, a socket with glowing purple gems and swept lugs), and its blade is a flat sprite in the spear's plane
+  (`dreadlance_blade`: a leaf of blackened steel, pulsing purple ridge, sheen, one honed soul-blue edge, outlined) -
+  vanilla's 1.7x stretch makes it big and crisp like a vanilla spear head. The in-hand sprite is retired; the dark icon
+  stays.
 
 **Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing

@@ -923,8 +923,6 @@ def render(which, version):
             animated.append((name, [i.img for i in icons]))
         statics.append((name, icons[0].img))
     if which == "f3":
-        for f in range(4):   # the Dreadlance's in-hand sprite (vanilla's spear layout)
-            dreadlance_in_hand(f).save(os.path.join(OUT, f"dreadlance_in_hand_{f}.png"))
         bows = [stormstring_bow(i) for i in range(4)]
         for st, icon in zip(BOW_STATES, bows):
             icon.save(os.path.join(OUT, f"stormstring_bow_{st}.png"))
