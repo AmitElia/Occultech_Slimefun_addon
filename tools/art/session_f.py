@@ -15,6 +15,7 @@ from session_c import cut, put, flat_face, line_px  # noqa: E402
 from session_d import bar, pixmap, mirror_silhouette  # noqa: E402
 from session_e import mask_part, dome_normals  # noqa: E402
 import review  # noqa: E402
+from PIL import Image  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "art", "session-f")
 os.makedirs(OUT, exist_ok=True)
@@ -343,41 +344,88 @@ F2 = [("Warlord's Brand", warlords_brand, 4), ("Heartwood Resin", heartwood_resi
 
 # ================================================================== F3: weapons
 
+DREAD_STEEL = [(16, 16, 20, 255), (30, 30, 37, 255), (46, 46, 56, 255), (66, 66, 78, 255), (92, 92, 106, 255),
+               (126, 126, 140, 255)]   # blackened steel, black to grey
+
+
+def spear_sprite(size, frame, head_at_left):
+    """The Dreadlance drawn like vanilla's spears, upgraded - a pixel sprite along the diagonal. size 32: the in-hand
+    sprite (vanilla's layout: head top-left, butt bottom-right); size 16: the icon (head top-right, butt bottom-left).
+    Parts along the spear, from the tip: a leaf blade of blackened steel with honed soul-blue edges and a purple ridge
+    that pulses (animated); a steel socket with swept lugs and a purple gem; a dark sculk shaft banded in soul blue; a
+    grip wrapped in violet-black leather; a steel pommel with a soul gem. Coloured outline in the steel's own black."""
+    st, sk, vi, hc = DREAD_STEEL, RAMPS["sculk"], RAMPS["violet"], RAMPS["hollowcy"]
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    big = size == 32
+    span = 2 * (size - 1)                                # s runs 0 (tip) .. span (butt)
+    sc = span / 62.0                                     # the 32 px layout, scaled
+    pulse = [vi[3], vi[4], vi[5], vi[4]][frame % 4]
+    edge_lit = [hc[3], hc[4], hc[3], hc[2]][frame % 4]
+    blade_end, socket_end, shaft_end, grip_end = 18 * sc, 23 * sc, 44 * sc, 56 * sc
+
+    def half(sv):                                         # the leaf's half-width along the blade
+        prof = [(0, 0), (2, 1), (5, 2), (8, 3), (11, 4), (14, 3), (16, 2), (18, 1)]
+        sv = sv / sc
+        for (a, ha), (b, hb) in zip(prof, prof[1:]):
+            if a <= sv <= b:
+                return (ha + (hb - ha) * (sv - a) / (b - a)) * (1 if big else 0.85)
+        return 0
+    for y in range(size):
+        for x in range(size):
+            if head_at_left:
+                sv, k = x + y, x - y                     # s from the tip at (0, 0); k across (+ = upper right)
+            else:
+                xx = size - 1 - x
+                sv, k = xx + y, y - xx                   # mirrored: tip at (size-1, 0)
+            col = None
+            if sv <= blade_end:
+                h = half(sv)
+                if abs(k) <= h + 0.01:
+                    if k == 0:
+                        col = pulse                      # the glowing ridge
+                    elif abs(k) >= h - 0.5:
+                        col = edge_lit if k > 0 else st[1]   # the honed edge catches the light on the upper side only
+                    elif k == 1:
+                        col = st[4]                      # a sheen beside the ridge
+                    else:
+                        col = st[3] if k > 0 else st[2]
+            elif sv <= socket_end:
+                mid = (blade_end + socket_end) / 2
+                if abs(k) <= (2 if big else 1):
+                    col = vi[4] if (k == 0 and abs(sv - mid) < 1) else st[4] if k > 0 else st[3]
+                elif big and abs(k) == 3 and sv > mid:
+                    col = st[4]                          # the lugs, swept back
+            elif sv <= shaft_end:
+                if k in (0, 1):
+                    band = big and int(sv) % 7 == 0
+                    col = hc[2] if band else (sk[3] if k == 1 else sk[2])
+            elif sv <= grip_end:
+                if k in (0, 1) or (big and k == -1):
+                    col = vi[2] if int(sv) % 3 == 0 else (RAMPS["ink"][3] if k == 1 else RAMPS["ink"][2])
+            elif sv <= span:
+                if abs(k) <= (1 if big else 0) or k == 1:
+                    col = hc[4] if (big and abs(sv - (grip_end + span) / 2) < 1 and k == 0) else st[4] if k > 0 else st[3]
+            if col is not None:
+                img.putpixel((x, y), col)
+    filled = {(x, y) for y in range(size) for x in range(size) if img.getpixel((x, y))[3]}
+    for (x, y) in list(filled):                          # a coloured outline in the steel's own black
+        for (dx, dy) in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            q = (x + dx, y + dy)
+            if 0 <= q[0] < size and 0 <= q[1] < size and q not in filled:
+                img.putpixel(q, st[0])
+    return img
+
+
 def dreadlance(frame=0):
-    """The Dreadlance, drawn as its 3D model would look and meant to frighten: a shaft of black wood with crimson runes
-    smouldering along it, a bone vamplate bristling with thorns, a long barbed head of blackened steel - harpoon barbs
-    on both edges, a blood channel glowing crimson down its middle - and a tattered ribbon fluttering under it; blood
-    gathers and drips from the point (animated)."""
+    """The Dreadlance's icon - a spear like vanilla's, upgraded and dark (see spear_sprite)."""
     icon = Icon(16)
-    ink, bone, cr, st = RAMPS["ink"], RAMPS["bone"], RAMPS["crimson"], RAMPS["boundsteel"]
-    d, pp = (0.7071, -0.7071), (0.7071, 0.7071)
-
-    def at(u, v):
-        return (3.4 + d[0] * u + pp[0] * v, 12.6 + d[1] * u + pp[1] * v)
-
-    shaft = icon.tubes([((0.4, 15.6), at(6.4, 0))], 0.75)
-    icon.paint(shaft, ink, bias=0.25)
-    for i, u in enumerate((-2.0, -0.8)):
-        x, y = at(u, 0)
-        put(icon, [(math.floor(x), math.floor(y))], cr[4] if (i + frame) % 2 else cr[3])
-    vamp = icon.polygon([at(0, -1.0), at(0, 1.0), at(3.0, 3.0), at(3.0, -3.0)], bevel=1.0)
-    icon.paint(vamp, bone, bias=0.0, outline_ramp=[ink[0], ink[0]], outline_over=True)
-    for v in (-3.6, 3.6):   # thorns off the vamplate's rim
-        x, y = at(2.6, v)
-        put(icon, [(math.floor(x), math.floor(y))], bone[5])
-    head_pts = [at(5.6, 1.1), at(6.8, 2.9), at(7.4, 1.3), at(9.2, 2.3), at(9.9, 1.1), at(14.9, 0), at(9.9, -1.1),
-                at(9.2, -2.3), at(7.4, -1.3), at(6.8, -2.9), at(5.6, -1.1)]
-    head = icon.polygon(head_pts, bevel=1.0)
-    icon.paint(head, st, bias=-0.05, outline_ramp=[ink[0], ink[0]], outline_over=True)
-    put(icon, [p for p in line_px(at(6.0, 0), at(13.4, 0)) if p in head.normals], cr[4] if frame % 4 != 2 else cr[5])
-    put(icon, [p for p in line_px(at(6.6, -1.6), at(13.0, -0.4)) if p in head.normals], st[4])   # the lit edge
-    k = frame % 4
-    rib = [at(4.6, 0.6), at(4.0, 1.8 + k * 0.2), at(3.0, 2.6), at(2.6, 3.6 + (k % 2) * 0.6)]
-    put(icon, [p for a, b in zip(rib, rib[1:]) for p in line_px(a, b)], cr[2])
-    put(icon, [(math.floor(rib[-1][0]), math.floor(rib[-1][1]))], ink[2])
-    drip = [[], [(15, 1)], [(15, 2)], [(15, 4)]][k]
-    put(icon, drip, cr[4])
+    icon.img = spear_sprite(16, frame, head_at_left=False)
     return icon
+
+
+def dreadlance_in_hand(frame=0):
+    """The Dreadlance in the hand: a 32 px sprite in vanilla's spear_in_hand layout (head top-left)."""
+    return spear_sprite(32, frame, head_at_left=True)
 
 
 def soulfire_censer(frame=0):
@@ -875,6 +923,8 @@ def render(which, version):
             animated.append((name, [i.img for i in icons]))
         statics.append((name, icons[0].img))
     if which == "f3":
+        for f in range(4):   # the Dreadlance's in-hand sprite (vanilla's spear layout)
+            dreadlance_in_hand(f).save(os.path.join(OUT, f"dreadlance_in_hand_{f}.png"))
         bows = [stormstring_bow(i) for i in range(4)]
         for st, icon in zip(BOW_STATES, bows):
             icon.save(os.path.join(OUT, f"stormstring_bow_{st}.png"))

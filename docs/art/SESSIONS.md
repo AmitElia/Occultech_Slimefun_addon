@@ -654,6 +654,13 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   own `spear_in_hand` transforms (its sprite runs head top-left to butt bottom-right: laid on the +45 diagonal; parts
   drawn twice as deep as wide because vanilla scales a spear 1.7 in-plane, 0.85 in depth). Held models' 2D icon cases
   now include 26.x's `on_shelf` context.
+- **Dreadlance overhauled** (the user: darker, a new colour scheme, a nicer texture like the vanilla spear but upgraded,
+  needn't be 3D): the 3D model is retired. It is now drawn like vanilla's spears - a 16 px icon (head top-right) and a
+  32 px in-hand sprite in vanilla's layout (head top-left) shown through vanilla's own `minecraft:item/spear_in_hand`
+  model (build_pack: `<slug>_in_hand_N.png` -> `<key>_in_hand`, selected outside the inventory) - in the Hollow armour's
+  scheme: a leaf blade of blackened steel with a pulsing purple ridge, a sheen beside it and one honed soul-blue edge
+  catching the light, a steel socket with swept lugs and a purple gem, a dark sculk shaft with soft soul bands, a
+  violet-black wrapped grip, a steel pommel with a soul gem (`spear_sprite` in session_f.py).
 
 **Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing

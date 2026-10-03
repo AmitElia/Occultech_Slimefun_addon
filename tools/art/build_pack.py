@@ -168,6 +168,31 @@ def main():
             with_models.append(key.upper())
             without[:] = [w for w in without if f" {key.upper()} " not in w]
 
+    # in-hand sprites (a spear drawn like vanilla's): <slug>_in_hand_N.png in the item's art session, shown in the hand
+    # with vanilla's own spear_in_hand model; the inventory keeps the icon
+    for item_id, item in items.items():
+        key = item_id.lower()
+        for session in SESSIONS:
+            d = os.path.join(ART, session)
+            frames = []
+            while os.path.exists(os.path.join(d, f"{slug(item['name'])}_in_hand_{len(frames)}.png")):
+                frames.append(os.path.join(d, f"{slug(item['name'])}_in_hand_{len(frames)}.png"))
+            if not frames:
+                continue
+            fw, fh = Image.open(frames[0]).size
+            strip = Image.new("RGBA", (fw, fh * len(frames)))
+            for i, fp in enumerate(frames):
+                strip.paste(Image.open(fp).convert("RGBA"), (0, fh * i))
+            files[f"assets/{NS}/textures/item/{key}_in_hand.png"] = png_bytes(strip)
+            if len(frames) > 1:
+                files[f"assets/{NS}/textures/item/{key}_in_hand.png.mcmeta"] = {"animation": {"frametime": FRAMETIME}}
+            files[f"assets/{NS}/models/item/{key}_in_hand.json"] = {"parent": "minecraft:item/spear_in_hand",
+                                                                    "textures": {"layer0": model_ref(key + "_in_hand")}}
+            files[f"assets/{NS}/items/{key}.json"] = {"model": {
+                "type": "minecraft:select", "property": "minecraft:display_context",
+                "cases": [{"when": ["gui", "ground", "fixed", "on_shelf"], "model": {"type": "minecraft:model", "model": model_ref(key)}}],
+                "fallback": {"type": "minecraft:model", "model": model_ref(key + "_in_hand")}}}
+
     # held 3D models (Session G5): <key>_held is what the hand holds; the inventory, the ground and item frames keep
     # the 2D icon - like vanilla's trident, the item definition selects on display_context
     for key in sorted(os.listdir(gdir)) if os.path.isdir(gdir) else []:

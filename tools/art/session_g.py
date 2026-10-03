@@ -2200,7 +2200,7 @@ def heartwood_aegis(blocking=False):
 G5 = [("Occult Codex (held)", occult_codex_held), ("Wyrmbreath (held)", wyrmbreath_held),
       ("Wyrmbreath (in use)", lambda: wyrmbreath_held(True)),
       ("Guardian's Gaze (held)", guardians_gaze_held), ("Guardian's Gaze (in use)", lambda: guardians_gaze_held(True)),
-      ("Abyssal Anchor (held)", abyssal_anchor_held), ("Dreadlance (held)", dreadlance_held),
+      ("Abyssal Anchor (held)", abyssal_anchor_held), 
       ("Soulfire Censer (held)", soulfire_censer_held), ("Soulfire Censer (in use)", lambda: soulfire_censer_held(True)),
       ("Frenzy Cleaver (held)", frenzy_cleaver_held), ("Bone Scepter (held)", bone_scepter_held),
       ("Heartwood Aegis", heartwood_aegis), ("Heartwood Aegis (blocking)", lambda: heartwood_aegis(True))]
