@@ -687,8 +687,9 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   sculk-leather halves tipped 22.5 degrees into a V (element rotations about y, checked in the 26.2 client:
   right-handed about the axis), bone-white pages with faded script and a printed rune, a glowing overlay where the runes
   pulse and a line writes itself, bone corner guards, a ridged spine with bone bands, a skull on the spine's far end, a
-  crimson ribbon, four souls (blue, crimson) flickering out of step over the gutter. Third person: open on the palm,
-  tilted toward the holder; first person: tipped up toward the eye (to check in game).
+  crimson ribbon, four souls (blue, crimson) flickering out of step over the gutter. First person: tipped up toward
+  the eye (the user: perfect). Third person, after the user's screenshot (tilted 30 degrees at scale 0.75 it stood up
+  like a board showing its cover, half inside the hip): flat on the palm, pages up, scale 0.55, held by its inner half.
   Previews of rotated models: `tools/art/render3d.py` (true 3D, honours element rotations; blockkit's render_iso does not).
 
 **Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)

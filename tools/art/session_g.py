@@ -2260,7 +2260,9 @@ def lichs_grimoire_held():
               shade=False, light=15)                                                                # rising souls
     fp = {"firstperson_righthand": {"rotation": [-50, -10, 0], "translation": [0.0, 3.5, -1.5], "scale": [0.55] * 3},
           "firstperson_lefthand": {"rotation": [-50, 10, 0], "translation": [0.0, 3.5, -1.5], "scale": [0.55] * 3}}
-    m.display = grip_display((30, 0, 0), (8, 8, 5.5), 0.75, first_person=fp)
+    # third person: lying flat on the palm, pages up (tipped, its cover faced whoever stood in front), smaller, and
+    # held by its inner half so it sits out beside the hip instead of in it (+x is outward from the body)
+    m.display = grip_display((0, 0, 0), (4.5, 8, 5.5), 0.55, first_person=fp)
     return m
 
 
