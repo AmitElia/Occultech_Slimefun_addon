@@ -690,6 +690,10 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   crimson ribbon, four souls (blue, crimson) flickering out of step over the gutter. First person: tipped up toward
   the eye (the user: perfect). Third person, after the user's screenshot (tilted 30 degrees at scale 0.75 it stood up
   like a board showing its cover, half inside the hip): flat on the palm, pages up, scale 0.55, held by its inner half.
+  Then (screenshot): flat, it looked like it came out of the hand - and it reached across the body, so in the
+  third-person hand frame **+x points toward the body** (not outward). The user chose "open, held by its edge": the
+  fist grips the near end of the spine and the open book hangs down beside the leg, pages facing outward (rotation
+  0,-90,90; left hand 0,90,-90).
   Previews of rotated models: `tools/art/render3d.py` (true 3D, honours element rotations; blockkit's render_iso does not).
 
 **Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)
