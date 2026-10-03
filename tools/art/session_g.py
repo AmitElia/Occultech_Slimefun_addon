@@ -2146,6 +2146,124 @@ def frenzy_cleaver_held():
     return diagonal(m)
 
 
+GRIMOIRE_RUNE = ["..#..", ".#.#.", "#.#.#", ".#.#.", "..#.."]
+
+
+def grimoire_pages():
+    """Both pages, 1 texel a unit (left page u 0-6, right page u 8-14, 12 rows, far end at the top): bone-white
+    parchment, darker toward the gutter, lines of dark script, the rune printed faintly (its glow is the overlay)."""
+    bone, ink = RAMPS["bone"], RAMPS["ink"]
+    img = blank()
+    for u0, gutter in ((0, 6), (8, 8)):
+        for v in range(12):
+            for k in range(7):
+                u = u0 + k
+                outer = (u == u0) if gutter != u0 else (u == u0 + 6)
+                col = bone[3] if u == gutter else bone[4] if outer or v in (0, 11) else bone[5]
+                if v in (1, 9, 10) and u != gutter and not outer and (u * 3 + v * 5) % 4:
+                    col = bone[2] if (u + v) % 3 else ink[3]           # script, faded
+                img.putpixel((u, v), col)
+        rx = u0 + 1
+        for r, row in enumerate(GRIMOIRE_RUNE):
+            for c, ch in enumerate(row):
+                if ch == "#":
+                    img.putpixel((rx + c, 3 + r), bone[3])             # the rune, printed
+    for v in range(16):                                                # page edges (u 15)
+        img.putpixel((15, v), bone[4] if v % 2 else bone[3])
+    return img
+
+
+def grimoire_glow(f):
+    """The glowing overlay (8 frames): each rune pulses in soul blue, and a line of script writes itself in faint
+    soul light, one letter a frame (left page's last line, right page's first)."""
+    hc = RAMPS["hollowcy"]
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    pulse = hc[[3, 4, 5, 4, 3, 4, 5, 4][f]]
+    for rx in (1, 9):
+        for r, row in enumerate(GRIMOIRE_RUNE):
+            for c, ch in enumerate(row):
+                if ch == "#":
+                    img.putpixel((rx + c, 3 + r), pulse)
+    for (u0, v) in ((1, 10), (9, 1)):
+        for k in range(min(f, 5)):
+            u = u0 + k
+            if (u * 3 + v * 5) % 4:
+                img.putpixel((u, v), hc[3] if k < f - 1 else hc[5])
+    return img
+
+
+def lichs_grimoire_held():
+    """The Lich's Grimoire in the hand, held open on the palm: two halves of sculk-black leather tipped up 22.5 degrees
+    into a V, each carrying a block of bone-white pages with dark script and a soul rune that pulses while a line writes
+    itself (glowing overlay); bone corner guards, a ridged spine with bone bands, a small skull capping the spine's far
+    end, a crimson ribbon trailing from the near end, and souls - two blue, two crimson - rising from the gutter
+    (glowing, flickering out of step). Built lying in the x-y plane, pages facing +z, spine along y: in the hand +y
+    points ahead and +z up, so the book lies open on the palm; first person tips it up toward the eye."""
+    m = Model("lichs_phylactery_held")
+    m.part = True
+    sk, bone, cr, hc = RAMPS["sculk"], RAMPS["bone"], RAMPS["crimson"], RAMPS["hollowcy"]
+    leather = blank()
+    for y in range(16):
+        for x in range(16):
+            leather.putpixel((x, y), sk[2] if x in (0, 15) or y in (0, 15) else sk[1] if (x * 2 + y) % 7 else sk[0])
+    t_leather = m.texture("leather", leather)
+    t_pages = m.texture("pages", grimoire_pages())
+    t_glow = m.texture("glow", [grimoire_glow(f) for f in range(8)])
+    t_bone = m.texture("bone", fill(bone, 4))
+    t_bone_dark = m.texture("bone_dark", fill(bone, 3))
+    t_ribbon = m.texture("ribbon", fill(cr, 2))
+    skull = blank()
+    for y in range(16):
+        for x in range(16):
+            skull.putpixel((x, y), bone[4] if y < 9 else bone[3])
+    for (x, y) in ((3, 6), (4, 6), (3, 7), (4, 7), (11, 6), (12, 6), (11, 7), (12, 7), (7, 10), (8, 10)):
+        skull.putpixel((x, y), sk[0])                                  # sockets, nose
+    for x in range(4, 12, 2):
+        skull.putpixel((x, 13), sk[0])                                 # teeth
+    t_skull = m.texture("skull", skull)
+    motes = [m.texture(f"soul{i}", [fill(ramp, [2, 3, 4, 5, 5, 4, 3, 2][(f + 2 * i) % 8]) for f in range(8)])
+             for i, ramp in enumerate((hc, cr, hc, cr))]
+    pivot = [8.0, 8.0, 6.3]
+
+    def half(sign):
+        """One half of the open book; sign -1 the left (x < 8), +1 the right."""
+        lo = (lambda a, b: (8 - b, 8 - a)) if sign < 0 else (lambda a, b: (8 + a, 8 + b))  # noqa: E731
+        uv0 = 0 if sign < 0 else 8
+        els = []
+        x0, x1 = lo(0.0, 7.5)
+        els.append(m.box((x0, 1.5, 5.8), (x1, 14.5, 6.3), {d: (t_leather, [0, 0, 8, 13] if d in ("north", "south") else [0, 0, 1, 13])
+                                                            for d in ("north", "south", "east", "west")} |
+                         {"up": (t_leather, [0, 0, 8, 1]), "down": (t_leather, [0, 0, 8, 1])}))          # the cover
+        x0, x1 = lo(0.0, 7.0)
+        els.append(m.box((x0, 2.0, 6.3), (x1, 14.0, 7.7), {"south": (t_pages, [uv0, 0, uv0 + 7, 12]),
+                         "east": (t_pages, [15, 0, 16, 12]), "west": (t_pages, [15, 0, 16, 12]),
+                         "up": (t_pages, [15, 0, 16, 7]), "down": (t_pages, [15, 0, 16, 7])}))         # the pages
+        els.append(m.box((x0, 2.0, 7.72), (x1, 14.0, 7.72), {"south": (t_glow, [uv0, 0, uv0 + 7, 12])}, shade=False,
+                         light=15))                                                                  # runes and script
+        for y in (1.3, 13.5):                                                                         # corner guards
+            cx0, cx1 = lo(6.3, 7.7)
+            els.append(m.box((cx0, y, 5.6), (cx1, y + 1.2, 6.5), {d: (t_bone, [0, 0, 1, 1]) for d in FACES_ALL}))
+        for e in els:
+            e["rotation"] = {"origin": pivot, "axis": "y", "angle": 22.5 if sign < 0 else -22.5}
+
+    half(-1)
+    half(+1)
+    m.box((7.1, 1.5, 5.5), (8.9, 14.5, 6.3), {d: (t_leather, [0, 0, 2, 13]) for d in FACES_ALL})  # the spine
+    for y in (3.5, 7.4, 11.3):                                                                       # bone bands
+        m.box((6.9, y, 5.3), (9.1, y + 0.8, 6.2), {d: (t_bone_dark, [0, 0, 1, 1]) for d in FACES_ALL})
+    m.box((6.9, 14.5, 5.0), (9.1, 16.3, 7.0), {"up": (t_skull, [2, 2, 14, 14]), "north": (t_bone, [0, 0, 2, 2]),
+          "south": (t_bone, [0, 0, 2, 2]), "east": (t_bone, [0, 0, 2, 2]), "west": (t_bone, [0, 0, 2, 2]),
+          "down": (t_bone, [0, 0, 2, 2])})                                                          # skull on the spine
+    m.box((7.7, -1.8, 5.9), (8.3, 1.5, 6.1), {d: (t_ribbon, [0, 0, 1, 3]) for d in FACES_ALL})       # the ribbon
+    for (x, y, z), t in zip(((7.4, 6.0, 8.6), (8.7, 9.2, 9.6), (7.7, 11.0, 10.9), (8.4, 7.6, 12.0)), motes):
+        m.box((x - 0.35, y - 0.35, z - 0.35), (x + 0.35, y + 0.35, z + 0.35), {d: (t, [0, 0, 1, 1]) for d in FACES_ALL},
+              shade=False, light=15)                                                                # rising souls
+    fp = {"firstperson_righthand": {"rotation": [-50, -10, 0], "translation": [0.0, 3.5, -1.5], "scale": [0.55] * 3},
+          "firstperson_lefthand": {"rotation": [-50, 10, 0], "translation": [0.0, 3.5, -1.5], "scale": [0.55] * 3}}
+    m.display = grip_display((30, 0, 0), (8, 8, 5.5), 0.75, first_person=fp)
+    return m
+
+
 def bone_scepter_held():
     """The Bone Scepter in the hand: a staff of stacked vertebrae - knobbed discs with little spurs - topped by a
     skull whose sockets burn with soul-green fire (glowing, animated), a wisp curling up from its crown. The skull
@@ -2298,7 +2416,7 @@ G5 = [("Occult Codex (held)", occult_codex_held), ("Wyrmbreath (held)", wyrmbrea
       ("Wyrmbreath (in use)", lambda: wyrmbreath_held(True)),
       ("Guardian's Gaze (held)", guardians_gaze_held), ("Guardian's Gaze (in use)", lambda: guardians_gaze_held(True)),
       ("Abyssal Anchor (held)", abyssal_anchor_held), 
-      ("Dreadlance (held)", dreadlance_held), ("Soulfire Censer (held)", soulfire_censer_held), ("Soulfire Censer (in use)", lambda: soulfire_censer_held(True)),
+      ("Lich's Grimoire (held)", lichs_grimoire_held), ("Dreadlance (held)", dreadlance_held), ("Soulfire Censer (held)", soulfire_censer_held), ("Soulfire Censer (in use)", lambda: soulfire_censer_held(True)),
       ("Frenzy Cleaver (held)", frenzy_cleaver_held), ("Bone Scepter (held)", bone_scepter_held),
       ("Heartwood Aegis", heartwood_aegis), ("Heartwood Aegis (blocking)", lambda: heartwood_aegis(True))]
 

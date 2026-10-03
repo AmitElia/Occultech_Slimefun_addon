@@ -162,7 +162,7 @@ the result has its own enchantments.
 ### Mini-bosses
 | Boss | Base | Fight | Drop -> purpose |
 |------|------|-------|-----------------|
-| Hollow Warlord | Wither Skeleton, netherite gear | wither-aura sweeps, bodyguard squad, speeds up as it weakens | Warlord's Brand -> Hollow armor, Lich's Phylactery |
+| Hollow Warlord | Wither Skeleton, netherite gear | wither-aura sweeps, bodyguard squad, speeds up as it weakens | Warlord's Brand -> Hollow armor, Lich's Grimoire |
 | Heartwood Horror | Creaking (no real creaking heart) | only moves while nobody looks at it; invulnerable until its heart markers (display entities) are broken, so someone must look away | Heartwood Resin -> Heartwood Aegis, Watchful Eyeblossom, Resin Tile |
 | Dread Riders | Outrider: Skeleton on a Skeleton Horse; Vanguard: Zombie on a Zombie Horse with a spear | see below | Lancer's Pennant (Vanguard) -> Dreadlance; Outrider's Fletching -> Stormstring Bow |
 | Corrupted Colossus | Iron Golem | warned shockwave slams; the tech-meets-occult boss | Corrupted Circuit -> Hollow Assembler, Servitor Nexus |
@@ -202,7 +202,7 @@ Summoned with the Hollow Effigy (one drop of each mini-boss). Fight length 6-8 m
   damage from summoned creatures and faint soul wisps drifting off the armor (subtle).
 - **Dreadlance**: every hit heals 15% of the damage dealt (capped per second). **Stormstring Bow**: arrows call visual
   lightning on the mob hit and arc to 2 more hostile mobs; never players or pets, never fires.
-- Soulfire Censer, Lich's Phylactery, Heartwood Aegis (as before).
+- Soulfire Censer, Lich's Grimoire, Heartwood Aegis (as before).
 - **Servitor Nexus**: links up to 8 shrines within 24 blocks - one shared store (cargo/Networks), shared supplies,
   empower all at once, and an overview menu showing every linked shrine's contract, area and status, with contract
   swapping. Shrines show "Servitor Nexus: linked" in their range readout.

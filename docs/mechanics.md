@@ -28,7 +28,7 @@ Networks or Infinity.
 
 ## 2. Necromancy weapons
 Items: Bone Scepter (tier 1: 2 skeleton archers for 30s), Grave Lantern (tier 2: 3 wither-skeleton knights for 30s),
-Lich's Phylactery (tier 3: up to 4 Hollow Knights that stay until killed).
+Lich's Grimoire (tier 3: up to 4 Hollow Knights that stay until killed).
 
 **Feasibility: high.** Spawning tagged vanilla mobs and controlling their targets is standard Paper API
 (target events plus the Paper Mob Goals API).
@@ -38,7 +38,7 @@ Lich's Phylactery (tier 3: up to 4 Hollow Knights that stay until killed).
 - **Targeting:** minions attack what the owner hits and what hits the owner. They never target the owner, other players' minions, villagers
   or passive animals (unless the owner attacked them), or other players unless PvP is allowed at that spot.
 - **Following:** minions follow the owner and teleport back if they fall behind (same world only, like tamed wolves).
-- **Despawning:** minions despawn on owner logout, death or world change, and on chunk unload or server stop. The Phylactery's knights are re-summoned after the owner
+- **Despawning:** minions despawn on owner logout, death or world change, and on chunk unload or server stop. The Grimoire's knights are re-summoned after the owner
   logs back in; they are never saved into the world.
 - **Limits:** a per-player cap, and all minions count toward the server's entity budget. A cooldown applies, and each summon uses durability
   (see "Durability" below).

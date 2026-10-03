@@ -66,7 +66,7 @@ public final class MinionService implements Listener {
         SKELETON_ARCHER,
         /** Grave Lantern (tier 2): wither skeleton knights with swords and armor, 40 HP. */
         WITHER_KNIGHT,
-        /** Lich's Phylactery (tier 3): hollow knights in netherite, 80 HP, that stay until killed. */
+        /** Lich's Grimoire (tier 3): hollow knights in netherite, 80 HP, that stay until killed. */
         HOLLOW_KNIGHT
     }
 

@@ -466,30 +466,42 @@ def soulfire_censer(frame=0):
     return icon
 
 
-def lichs_phylactery(frame=0):
-    """The Lich's Phylactery: a skull for a stopper, a narrow neck bound in gold, a round glass bulb with a crimson soul
-    turning inside it and glowing through the glass, a pointed bone finial below (animated)."""
+GRIMOIRE_ICON = [   # an open grimoire, seen a little from above: two pages, a soul rune on each, the cover below
+    "................",
+    "................",
+    "................",
+    "................",
+    ".PPPPPPqqPPPPPP.",
+    ".PttPtPqqPtPttP.",
+    ".PPPPPPqqPPPPPP.",
+    ".PpgGgpqqpgGgpP.",
+    ".PpGGGpqqpGGGpP.",
+    ".PpgGgpqqpgGgpP.",
+    ".PPPPPPqqPPPPPP.",
+    ".PtPttPqqPttPtP.",
+    ".ppppppqqpppppp.",
+    "lLLLLLLKKLLLLLLl",
+    ".KKKKKKBBKKKKKK.",
+    "................",
+]
+GRIMOIRE_WISPS = [[(7, 3), (9, 1), (6, 0)], [(8, 2), (9, 0), (7, 3)], [(8, 1), (7, 3), (8, 0)], [(7, 0), (8, 2), (9, 3)]]
+
+
+def lichs_grimoire(frame=0):
+    """The Lich's Grimoire: an open book of bone-white pages in a sculk-leather cover with a bone clasp, a soul rune
+    burning on each page (pulsing) and souls rising from the gutter, blue and crimson (animated)."""
     icon = Icon(16)
-    bone, gd, cr, sc, hc, gl = RAMPS["bone"], RAMPS["gold"], RAMPS["crimson"], RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["glass"]
-    bulb = icon.sphere(8.0, 10.0, 4.6)
-    icon.paint(bulb, sc, bias=0.2, outline_ramp=[sc[0], sc[0]])
+    bone, sc, hc, cr, ink = RAMPS["bone"], RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["crimson"], RAMPS["ink"]
+    for row in GRIMOIRE_ICON:
+        assert len(row) == 16, row
     k = frame % 4
-    soul = icon.sphere(8.0 + [0, 1, 0, -1][k] * 0.5, 10.2, 2.4)
-    for (x, y) in soul.keys():
-        d = math.hypot(x + 0.5 - 8.0, y + 0.5 - 10.2)
-        put(icon, [(x, y)], cr[5] if d < 0.9 else cr[4] if d < 1.7 else cr[2])
-    put(icon, [(5, 8), (5, 9), (6, 7)], gl[4])                 # the glass catches the light
-    neck = icon.box(6.4, 3.8, 9.6, 6.4, bevel=0.6)
-    icon.paint(neck, sc, bias=0.3, outline_over=False)
-    put(icon, [(x, 5) for x in range(6, 10)], gd[4])
-    skull = icon.sphere(8.0, 2.4, 2.5)
-    icon.paint(skull, bone, bias=0.2, outline_over=False)
-    put(icon, [(7, 2), (9, 2)], sc[0])
-    if k in (1, 2):
-        put(icon, [(7, 2), (9, 2)], hc[4])
-    finial = icon.polygon([(6.4, 14.0), (9.6, 14.0), (8.0, 15.9)], bevel=0.6)
-    icon.paint(finial, bone, bias=0.0, outline_over=False)
-    mirror_silhouette(icon)
+    cols = {"P": bone[5], "p": bone[4], "q": bone[3], "t": ink[2], "G": hc[[3, 4, 5, 4][k]], "g": hc[2],
+            "L": sc[1], "l": sc[2], "K": sc[0], "B": bone[3]}
+    pixmap(icon, GRIMOIRE_ICON, 0, 0, cols)
+    mask = {(x, y) for y, row in enumerate(GRIMOIRE_ICON) for x, c in enumerate(row) if c != "."}
+    icon.outline(Part({q: (0, 0, 1) for q in mask}), [sc[0], sc[0]], over=False)
+    for n, (x, y) in enumerate(GRIMOIRE_WISPS[k]):   # souls rising from the gutter
+        put(icon, [(x, y)], hc[4] if n != 1 else cr[4])
     return icon
 
 
@@ -527,7 +539,7 @@ def stormstring_bow(state=0):
     return icon
 
 
-F3 = [("Dreadlance", dreadlance, 4), ("Soulfire Censer", soulfire_censer, 4), ("Lich's Phylactery", lichs_phylactery, 4)]
+F3 = [("Dreadlance", dreadlance, 4), ("Soulfire Censer", soulfire_censer, 4), ("Lich's Grimoire", lichs_grimoire, 4)]
 BOW_STATES = ["standby", "pulling_0", "pulling_1", "pulling_2"]
 
 

@@ -680,6 +680,16 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   are gone. The blade's flat is plain forged steel (`CLEAVER_STEEL`, untinted): a bright honed bevel and dark grind
   line along the edge, a smooth gradient across the flat and one soft diagonal reflection; blood over it
   (`CLEAVER_BLOOD`: dried, fresh and a wet highlight - heaviest along the edge, runs inward, spatter), no light emission.
+- **Lich's Phylactery -> Lich's Grimoire** (the user chose an open book over an orb of souls; the Occult Codex is a
+  closed book with another job). Only the display name changed - the id stays `LICHS_PHYLACTERY` (items already made keep
+  their old name). Icon `lichs_grimoire` (session_f): an open book, soul runes pulsing on both pages, souls rising.
+  Held model `lichs_grimoire_held` (folder `lichs_phylactery_held`, keyed by id): held open on the palm - two
+  sculk-leather halves tipped 22.5 degrees into a V (element rotations about y, checked in the 26.2 client:
+  right-handed about the axis), bone-white pages with faded script and a printed rune, a glowing overlay where the runes
+  pulse and a line writes itself, bone corner guards, a ridged spine with bone bands, a skull on the spine's far end, a
+  crimson ribbon, four souls (blue, crimson) flickering out of step over the gutter. Third person: open on the palm,
+  tilted toward the holder; first person: tipped up toward the eye (to check in game).
+  Previews of rotated models: `tools/art/render3d.py` (true 3D, honours element rotations; blockkit's render_iso does not).
 
 **Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
