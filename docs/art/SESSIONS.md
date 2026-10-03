@@ -614,6 +614,10 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   soul-blue body, purple glow, re-forking each frame) arcing from tendril tip to tendril tip up over the head; the
   sculk-grown top is gone (a steel dome with its crest); instead sculk creeps over the steel from the rim on the sides
   and back, along the brow band's lower edge and at the foot of the cheek guards.
+- That arc's plane reached y 34 - past a model's -16..32 bounds - and the game rejected the whole helm (a black and
+  purple missing model in game). build_pack now refuses any element outside -16..32. The arc is now plasma, lower,
+  just above the tendril tips: a white core in a soul-blue sheath with three filaments splitting well off it,
+  writhing and rejoining at the tips, a new pattern each of 8 frames, on two planes for depth.
 
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing

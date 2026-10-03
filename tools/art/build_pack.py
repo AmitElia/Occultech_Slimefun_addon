@@ -128,6 +128,9 @@ def main():
             continue
         with open(mpath, encoding="utf-8") as f:
             model = json.load(f)
+        for el in model["elements"]:   # the game rejects a whole model (black and purple) if one element leaves -16..32
+            if any(c < -16 or c > 32 for c in el["from"] + el["to"]):
+                raise SystemExit(f"{key}: an element leaves the -16..32 model bounds: {el['from']} .. {el['to']}")
         files[f"assets/{NS}/models/block/{key}.json"] = model
         plain = {"type": "minecraft:model", "model": f"{NS}:block/{key}"}
         if os.path.isdir(os.path.join(gdir, key + "_inventory")):

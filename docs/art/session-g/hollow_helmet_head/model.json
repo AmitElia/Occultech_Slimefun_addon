@@ -824,17 +824,26 @@
     {
       "from": [
         -14.0,
-        20.0,
-        8.0
+        18.5,
+        7.6
       ],
       "to": [
         30.0,
-        34.0,
-        8.0
+        29.0,
+        7.6
       ],
       "shade": false,
       "light_emission": 15,
       "faces": {
+        "south": {
+          "texture": "#bolt",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
         "north": {
           "texture": "#bolt",
           "uv": [
@@ -843,8 +852,33 @@
             0,
             16
           ]
-        },
+        }
+      }
+    },
+    {
+      "from": [
+        -14.0,
+        18.5,
+        8.4
+      ],
+      "to": [
+        30.0,
+        29.0,
+        8.4
+      ],
+      "shade": false,
+      "light_emission": 15,
+      "faces": {
         "south": {
+          "texture": "#bolt",
+          "uv": [
+            16,
+            0,
+            0,
+            16
+          ]
+        },
+        "north": {
           "texture": "#bolt",
           "uv": [
             0,

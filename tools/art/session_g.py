@@ -3323,7 +3323,7 @@ def hollow_helm_worn():
     to a flared neck rim), sculk creeping over it from the rim and along the brow, a brow band with a soul conduit and core, cheek guards; and
     at the helmet's sides the warden's two tendrils - vanilla's own shape, recoloured purple - set exactly as on the
     warden's head (flat, reaching out and up from the sides), conducting soul lightning: it crackles over each tendril
-    and a thick bolt arcs from tip to tip over the head (animated, glowing)."""
+    and plasma arcs from tip to tip just above them (animated, glowing)."""
     m = Model("hollow_helmet_head")
     m.part = True
     vi = RAMPS["violet"]
@@ -3353,17 +3353,24 @@ def hollow_helm_worn():
     t_tr, t_tl = m.texture("tendril_r", right_t), m.texture("tendril_l", left_t)
     t_zr, t_zl = m.texture("zap_r", tendril_lightning(right_t)), m.texture("zap_l", tendril_lightning(left_t))
     bolts = []
-    for f in range(6):   # a thick bolt arcing from horn tip to horn tip: a white core, soul-blue body, purple glow
+    for f in range(8):   # plasma arcing from tendril tip to tendril tip: a hot core, filaments splitting off and rejoining
         b = blank()
         rnd = random.Random(801 + f)
-        for x in range(16):
-            arc = 12.5 - 10.5 * math.sin(math.pi * (x + 0.5) / 16)      # up over the head and down to the other tip
-            y = int(round(arc + rnd.choice((-1, 0, 0, 1))))
-            for dy, col in ((-2, vi[4]), (-1, SOUL[4]), (0, (255, 255, 255, 255)), (1, SOUL[4]), (2, vi[4])):
-                if 0 <= y + dy < 16 and b.getpixel((x, y + dy))[3] == 0 or dy in (-1, 0, 1) and 0 <= y + dy < 16:
-                    b.putpixel((x, y + dy), col)
-            if rnd.random() < 0.25 and 0 <= y + 3 < 16:
-                b.putpixel((x, y + 3), SOUL[3])                          # a fork flicking off
+        main = [11.5 - 6.5 * math.sin(math.pi * (x + 0.5) / 16) + rnd.choice((-0.6, 0, 0, 0.6)) for x in range(16)]
+
+        def dot(x, y, col, over=False):
+            y = int(round(y))
+            if 0 <= x < 16 and 0 <= y < 16 and (over or b.getpixel((x, y))[3] == 0):
+                b.putpixel((x, y), col)
+        for k in range(3):                                    # filaments: split well off the core, writhe, rejoin
+            amp = 2.8 + k * 0.9
+            phase = rnd.random() * math.pi * 2 + f * 0.9
+            for x in range(16):
+                env = math.sin(math.pi * (x + 0.5) / 16)      # pinched to the core at both tips
+                dot(x, main[x] + amp * env * math.sin(x * (0.7 + 0.25 * k) + phase), SOUL[3] if k else vi[5], over=True)
+        for x in range(16):                                   # the core: soul-blue sheath, white heart
+            dot(x, main[x] - 1, SOUL[4], over=True); dot(x, main[x] + 1, SOUL[4], over=True)
+            dot(x, main[x], (255, 255, 255, 255), over=True)
         bolts.append(b)
     t_bolt = m.texture("bolt", bolts)
     # the helmet: a sculk-grown dome, sides with ear plates and a rim, a back with a crest and neck rim
@@ -3385,9 +3392,11 @@ def hollow_helm_worn():
         m.box((x0, 9.0, 8.0), (x1, 25.0, 8.0), {"south": (tex, [0, 0, 16, 16]), "north": (tex, [16, 0, 0, 16])}, light=6)
         m.box((x0, 9.0, 7.9), (x1, 25.0, 7.9), {"north": (zap, [16, 0, 0, 16])}, shade=False, light=15)
         m.box((x0, 9.0, 8.1), (x1, 25.0, 8.1), {"south": (zap, [0, 0, 16, 16])}, shade=False, light=15)
-    # soul lightning arcing from tendril tip to tendril tip, up over the head
-    m.box((-14.0, 20.0, 8.0), (30.0, 34.0, 8.0), {"north": (t_bolt, [16, 0, 0, 16]), "south": (t_bolt, [0, 0, 16, 16])},
-          shade=False, light=15)
+    # plasma arcing from tendril tip to tendril tip, just above them (two planes, so it has some depth; all within
+    # a model's -16..32 bounds - a plane reaching y 34 made the whole helm a missing model)
+    for (z, flip) in ((7.6, False), (8.4, True)):
+        uv_a, uv_b = ([0, 0, 16, 16], [16, 0, 0, 16]) if not flip else ([16, 0, 0, 16], [0, 0, 16, 16])
+        m.box((-14.0, 18.5, z), (30.0, 29.0, z), {"south": (t_bolt, uv_a), "north": (t_bolt, uv_b)}, shade=False, light=15)
     m.display = HEAD_DISPLAY
     return m
 
