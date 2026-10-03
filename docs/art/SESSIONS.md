@@ -866,6 +866,15 @@ and three zones changed at once (`boss/FloorDecals`; art `tools/art/session_o4.p
   cracks, flickering flames, glows), poison (a slow swirl), frost (cracked ice, a glint), shadow (turning tendrils)
   ready for new attacks. They unfold and shrink away at the end.
 - Every marking is an item display spawned through the fight (removed with it), never saved, animated by the client.
+- **Fix (the user): markings spawned tilted, half under the floor.** A display takes its spawn spot's rotation, and
+  spots taken from a player carry their pitch and yaw. Markings now drop the rotation and snap to the top of the floor
+  under the spot (`FloorDecals.floor`: out of solid blocks, down to the floor, the block's real top - slabs, carpets).
+- **More attacks marked** (the user: every boss fight that needs it). New shapes: a **wedge** (The Unbound's cleave),
+  a **lane** (Tidebreaker's ram, the Vanguard's lance charge), a **travelling ring** (the Sovereign's landing shockwave,
+  the Drowned Elder's tidal waves, the Tempest's squall closing in and holding), a **splash** (where the Witch Coven's
+  harming potions burst), a **curse** mark (the coven's curser), small rings on each Archevoker fang, the Brood
+  Mother's pounce landing, and the Doppelganger's echo path in shadow before the echo walks it. Each keeps its old
+  particles as the no-pack fallback. Self-test: markings lie flat from a tilted spot in the air; the new shapes appear.
 
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the

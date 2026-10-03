@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier3;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -179,6 +181,9 @@ public final class Doppelganger extends BossBehavior {
         if (every(300) && echoIndex < 0 && trail.size() >= ECHO_SAMPLES / 2) {
             echo = new ArrayList<>(trail);
             echoIndex = 0;
+            for (int i = 0; i < echo.size(); i += 2) {
+                FloorDecals.patch(fight, echo.get(i), 0.9, echo.size() * 5 + 10, FloorDecals.Zone.SHADOW);
+            }
             echoHit.clear();
             fight.broadcast("&8Your echo walks again - &fdon't stand where you were.");
         }

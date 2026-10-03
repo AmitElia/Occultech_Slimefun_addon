@@ -119,6 +119,7 @@ public final class GelatinousSovereign extends BossBehavior {
         Location at = sovereign.getLocation();
         at.getWorld().playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 0.8F, 0.6F);
         at.getWorld().spawnParticle(Particle.BLOCK, at, 60, 2.5, 0.2, 2.5, Material.SLIME_BLOCK.createBlockData());
+        FloorDecals.wave(fight, at, 0.5, 4, 8, LIME);
         for (Player player : fight.players()) {
             if (player.getLocation().distanceSquared(at) <= 16 && player.isOnGround()) {
                 player.damage(6, sovereign);

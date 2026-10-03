@@ -301,7 +301,10 @@ public final class DreadRiders extends BossBehavior {
         nextCharge = now + 180;
         Location from = vanguardHorse.getLocation().add(0, 0.2, 0);
         Particle.DustOptions dust = new Particle.DustOptions(LANCE, 1.6F);
-        for (double d = 0; d < 18; d += 0.5) {
+        if (FloorDecals.enabled()) {
+            FloorDecals.lane(fight, vanguardHorse.getLocation(), chargeDirection, 18, 3, CHARGE_WARNING, LANCE);
+        }
+        for (double d = 0; d < 18 && !FloorDecals.enabled(); d += 0.5) {
             from.getWorld().spawnParticle(Particle.DUST, from.clone().add(chargeDirection.clone().multiply(d)), 1, 0.3, 0, 0.3, 0, dust);
         }
         if (message != null) {

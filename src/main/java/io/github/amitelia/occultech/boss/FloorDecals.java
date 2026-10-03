@@ -13,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Transformation;
+import org.bukkit.util.Vector;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 
@@ -36,7 +37,7 @@ import java.util.Locale;
 public final class FloorDecals {
 
     /** The symbol in the middle of an attack warning. */
-    public enum Mark { SLAM, DIVE, WEB, FLAME, STORM, SPIKES, WIND, ROOTS, SWEEP, DANGER }
+    public enum Mark { SLAM, DIVE, WEB, FLAME, STORM, SPIKES, WIND, ROOTS, SWEEP, CURSE, DANGER }
 
     /** A ground zone's surface. Acid and fire glow. */
     public enum Zone {
@@ -67,38 +68,169 @@ public final class FloorDecals {
         return enabled && plugin != null;
     }
 
-    /** An attack warning at {@code at} (the floor under the hit), {@code radius} blocks, landing in {@code ticks}. */
-    static void warning(@Nonnull BossFight fight, @Nonnull Location at, double radius, int ticks, @Nonnull Color color, @Nonnull Mark mark) {
+    /**
+     * An attack warning at {@code at} (on the floor under the hit), {@code radius} blocks, landing in {@code ticks}:
+     * the ring, the fill growing to it, and the {@code mark} in the middle (none: a small warning, e.g. one fang).
+     */
+    static void warning(@Nonnull BossFight fight, @Nonnull Location at, double radius, int ticks, @Nonnull Color color, @Nullable Mark mark) {
         Color tint = visible(color);
         float across = (float) (radius * 2);
-        ItemDisplay fill = decal(fight, at.clone().add(0, WARNING_HEIGHT, 0), "floor_warning_fill", tint, true, 0.01F);
-        ItemDisplay ring = decal(fight, at.clone().add(0, WARNING_HEIGHT + 0.01, 0), "floor_warning_ring", tint, true, across * 0.6F);
-        ItemDisplay symbol = decal(fight, at.clone().add(0, WARNING_HEIGHT + 0.02, 0),
+        Location floor = floor(at);
+        ItemDisplay fill = decal(fight, floor.clone().add(0, WARNING_HEIGHT, 0), "floor_warning_fill", tint, true, 0.01F);
+        ItemDisplay ring = decal(fight, floor.clone().add(0, WARNING_HEIGHT + 0.01, 0), "floor_warning_ring", tint, true, across * 0.6F);
+        ItemDisplay symbol = mark == null ? null : decal(fight, floor.clone().add(0, WARNING_HEIGHT + 0.02, 0),
             "floor_mark_" + mark.name().toLowerCase(Locale.ROOT), tint, true, 0.01F);
         float symbolSize = (float) Math.min(1.8, Math.max(0.9, radius * 0.7));
         later(2, () -> {
             grow(ring, across, UNFOLD);                       // the ring snaps out to the hit's edge
-            grow(symbol, symbolSize, UNFOLD);
+            if (symbol != null) {
+                grow(symbol, symbolSize, UNFOLD);
+            }
             grow(fill, across, Math.max(1, ticks - 2));       // the fill reaches the edge as the hit lands
         });
-        later(ticks + 2, () -> {
-            fill.remove();
-            ring.remove();
-            symbol.remove();
+        later(ticks + 2, () -> remove(fill, ring, symbol));
+    }
+
+    /** A wedge from {@code origin} along {@code direction}, {@code range} long and 90 degrees wide (a cleave). */
+    public static void wedge(@Nonnull BossFight fight, @Nonnull Location origin, @Nonnull Vector direction, double range, int ticks,
+        @Nonnull Color color) {
+        aimed(fight, origin, direction, range, range, ticks, color, "floor_warning_wedge");
+    }
+
+    /** A lane from {@code origin} along {@code direction}, {@code length} long and {@code width} wide (a charge). */
+    public static void lane(@Nonnull BossFight fight, @Nonnull Location origin, @Nonnull Vector direction, double length, double width,
+        int ticks, @Nonnull Color color) {
+        aimed(fight, origin, direction, length, width, ticks, color, "floor_warning_lane");
+    }
+
+    /**
+     * An outline and a fill that grows from {@code origin} outward to {@code length} (it's full as the hit lands), turned
+     * to point along {@code direction}. The models point north from the middle of their south edge.
+     */
+    private static void aimed(BossFight fight, Location origin, Vector direction, double length, double width, int ticks, Color color,
+        String model) {
+        if (!enabled()) {
+            return;
+        }
+        Vector dir = direction.clone().setY(0);
+        if (dir.lengthSquared() < 1e-6) {
+            return;
+        }
+        dir.normalize();
+        float yaw = (float) Math.atan2(-dir.getX(), -dir.getZ());
+        Color tint = visible(color);
+        Location floor = floor(origin);
+        ItemDisplay outline = decal(fight, floor.clone().add(0, WARNING_HEIGHT + 0.01, 0), model, tint, true, 0.01F);
+        ItemDisplay fill = decal(fight, floor.clone().add(0, WARNING_HEIGHT, 0), model + "_fill", tint, true, 0.01F);
+        outline.setTransformation(aim(dir, yaw, (float) width, 0.01F));
+        fill.setTransformation(aim(dir, yaw, (float) width, 0.01F));
+        later(2, () -> {
+            animate(outline, aim(dir, yaw, (float) width, (float) length), UNFOLD);
+            animate(fill, aim(dir, yaw, (float) width, (float) length), Math.max(1, ticks - 2));
         });
+        later(ticks + 2, () -> remove(outline, fill));
+    }
+
+    /** Turned to {@code yaw}, {@code width} across and {@code length} long, its south edge's middle at the entity. */
+    private static Transformation aim(Vector dir, float yaw, float width, float length) {
+        Vector3f shift = new Vector3f((float) dir.getX() * length / 2, 0F, (float) dir.getZ() * length / 2);
+        return new Transformation(shift, new AxisAngle4f(yaw, 0F, 1F, 0F), new Vector3f(width, 1F, length), new AxisAngle4f());
+    }
+
+    /**
+     * A wave travelling over the floor from {@code fromRadius} to {@code toRadius} (outward, or closing in) over
+     * {@code ticks} - a shockwave, a tidal wave, a squall. It goes when it arrives.
+     */
+    public static void wave(@Nonnull BossFight fight, @Nonnull Location center, double fromRadius, double toRadius, int ticks,
+        @Nonnull Color color) {
+        wave(fight, center, fromRadius, toRadius, ticks, color, 0);
+    }
+
+    /** As {@link #wave}, then staying where it arrived for {@code hold} more ticks (a squall that closed in). */
+    public static void wave(@Nonnull BossFight fight, @Nonnull Location center, double fromRadius, double toRadius, int ticks,
+        @Nonnull Color color, int hold) {
+        if (!enabled()) {
+            return;
+        }
+        ItemDisplay wave = decal(fight, floor(center).add(0, WARNING_HEIGHT, 0), "floor_wave", visible(color), true,
+            (float) Math.max(0.01, fromRadius * 2));
+        later(2, () -> grow(wave, (float) (toRadius * 2), Math.max(1, ticks - 2)));
+        later(ticks + 2L + hold, wave::remove);
+    }
+
+    /** A splat where something burst ({@code radius} blocks): it pops out and fades away within a second. */
+    public static void splash(@Nonnull BossFight fight, @Nonnull Location at, double radius, @Nonnull Color color) {
+        if (!enabled()) {
+            return;
+        }
+        ItemDisplay splat = decal(fight, floor(at).add(0, WARNING_HEIGHT, 0), "floor_splash", visible(color), true, 0.01F);
+        later(1, () -> grow(splat, (float) (radius * 2), 3));
+        later(10, () -> grow(splat, 0.01F, 8));
+        later(20, splat::remove);
+    }
+
+    /** A patch of a zone's surface that does nothing itself (the boss's own code hurts) - e.g. the echo's path. */
+    public static void patch(@Nonnull BossFight fight, @Nonnull Location at, double radius, int ticks, @Nonnull Zone zone) {
+        if (!enabled()) {
+            return;
+        }
+        ItemDisplay surface = zone(fight, at, radius, ticks, zone);
+        later(ticks + 2, surface::remove);
     }
 
     /** A ground zone at {@code at}, {@code radius} blocks, lasting {@code ticks}; returns its display (the fight removes it). */
     static ItemDisplay zone(@Nonnull BossFight fight, @Nonnull Location at, double radius, int ticks, @Nonnull Zone zone) {
         float across = (float) (radius * 2);
-        ItemDisplay surface = decal(fight, at.clone().add(0, ZONE_HEIGHT, 0), "floor_zone_" + zone.name().toLowerCase(Locale.ROOT),
+        ItemDisplay surface = decal(fight, floor(at).add(0, ZONE_HEIGHT, 0), "floor_zone_" + zone.name().toLowerCase(Locale.ROOT),
             null, zone.glows, 0.01F);
         later(2, () -> grow(surface, across, UNFOLD));
         later(Math.max(3, ticks - UNFOLD), () -> grow(surface, 0.01F, UNFOLD));   // it shrinks away as it ends
         return surface;
     }
 
+    /**
+     * The top of the floor under {@code at}, facing nowhere: a marking lies flat on the surface. (Spots taken from a
+     * player carry where they look - a marking spawned there was tilted, half under the floor - and their feet can be
+     * a little in the air or in a slab.)
+     */
+    static Location floor(Location at) {
+        Location out = at.clone();
+        out.setYaw(0F);
+        out.setPitch(0F);
+        org.bukkit.block.Block block = out.getBlock();
+        for (int i = 0; i < 3 && !block.isPassable(); i++) {
+            block = block.getRelative(org.bukkit.block.BlockFace.UP);      // inside something solid: climb out
+        }
+        for (int i = 0; i < 6 && block.isPassable() && block.getRelative(org.bukkit.block.BlockFace.DOWN).isPassable(); i++) {
+            block = block.getRelative(org.bukkit.block.BlockFace.DOWN);    // in the air: drop to the floor
+        }
+        org.bukkit.block.Block below = block.getRelative(org.bukkit.block.BlockFace.DOWN);
+        double top = !block.isPassable() ? block.getBoundingBox().getMaxY()
+            : !below.isPassable() ? below.getBoundingBox().getMaxY() : out.getY();
+        out.setY(top);
+        return out;
+    }
+
+    private static void remove(ItemDisplay... displays) {
+        for (ItemDisplay display : displays) {
+            if (display != null) {
+                display.remove();
+            }
+        }
+    }
+
+    private static void animate(ItemDisplay display, Transformation to, int ticks) {
+        if (display.isValid()) {
+            display.setInterpolationDelay(0);
+            display.setInterpolationDuration(ticks);
+            display.setTransformation(to);
+        }
+    }
+
     private static ItemDisplay decal(BossFight fight, Location at, String model, @Nullable Color tint, boolean glows, float size) {
+        at = at.clone();
+        at.setYaw(0F);
+        at.setPitch(0F);
         ItemStack stack = new ItemStack(Material.PAPER);
         ItemMeta meta = stack.getItemMeta();
         meta.setItemModel(new NamespacedKey("occultech", model));

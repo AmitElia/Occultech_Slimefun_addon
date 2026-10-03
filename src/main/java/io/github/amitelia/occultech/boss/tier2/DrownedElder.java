@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier2;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -54,6 +56,8 @@ public final class DrownedElder extends BossBehavior {
     private final List<Guardian> guardians = new ArrayList<>();
     private final List<Integer> waveStarts = new ArrayList<>();
     private final java.util.Map<Integer, java.util.Set<java.util.UUID>> waveHits = new java.util.HashMap<>();
+    /** Which waves have their floor marking already rolling out (Session O4). */
+    private final java.util.Set<Integer> waveShown = new java.util.HashSet<>();
     private Location waveCenter;
     private int nextBeam = 80;
     private boolean surged;
@@ -187,6 +191,11 @@ public final class DrownedElder extends BossBehavior {
             double radius = (now - start) * WAVE_SPEED;
             if (radius > maxRadius) {
                 continue;
+            }
+            if (!waveShown.contains(w)) {
+                waveShown.add(w);
+                FloorDecals.wave(fight, waveCenter, radius, maxRadius, (int) Math.ceil((maxRadius - radius) / WAVE_SPEED),
+                    org.bukkit.Color.fromRGB(70, 170, 230));
             }
             anyActive = true;
             int points = (int) Math.max(12, radius * 5);

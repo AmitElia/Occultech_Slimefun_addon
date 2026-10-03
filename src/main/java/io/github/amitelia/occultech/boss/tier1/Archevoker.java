@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier1;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -105,10 +107,13 @@ public final class Archevoker extends BossBehavior {
             if (target != null) {
                 pending = pattern(Pattern.values()[patternIndex++ % Pattern.values().length], target.getLocation());
                 strikeAt = now + PATTERN_WARNING;
+                for (Location point : pending) {
+                    fight.telegraph(point, 0.6, PATTERN_WARNING, RUNE.getColor(), null);
+                }
                 archevoker.getWorld().playSound(archevoker.getLocation(), Sound.ENTITY_EVOKER_PREPARE_ATTACK, 2F, 0.8F);
             }
         }
-        if (strikeAt > now) {
+        if (strikeAt > now && !FloorDecals.enabled()) {
             for (Location point : pending) {
                 point.getWorld().spawnParticle(Particle.DUST, point.clone().add(0, 0.15, 0), 2, 0.15, 0, 0.15, 0, RUNE);
             }

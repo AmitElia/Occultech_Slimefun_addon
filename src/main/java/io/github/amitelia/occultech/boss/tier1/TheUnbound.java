@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier1;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -124,9 +126,10 @@ public final class TheUnbound extends BossBehavior {
                 cleaveDirection.normalize();
                 cleaveAt = now + CLEAVE_WARNING;
                 unbound.getWorld().playSound(unbound.getLocation(), Sound.ENTITY_VINDICATOR_CELEBRATE, 1.5F, 0.6F);
+                FloorDecals.wedge(fight, unbound.getLocation(), cleaveDirection, CLEAVE_RANGE, CLEAVE_WARNING, WEDGE.getColor());
             }
         }
-        if (cleaveAt > now && cleaveDirection != null) {
+        if (cleaveAt > now && cleaveDirection != null && !FloorDecals.enabled()) {
             drawWedge();
         }
         if (now == cleaveAt && cleaveDirection != null) {

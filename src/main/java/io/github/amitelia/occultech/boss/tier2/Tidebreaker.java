@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier2;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -139,7 +141,11 @@ public final class Tidebreaker extends BossBehavior {
                 }
                 chargeDirection.normalize();
                 chargeAt = now + CHARGE_WARNING;
-                warnLine();
+                if (FloorDecals.enabled()) {
+                    FloorDecals.lane(fight, mount.getLocation(), chargeDirection, 16, 3, CHARGE_WARNING, WARNING);
+                } else {
+                    warnLine();
+                }
             }
         }
     }

@@ -1,5 +1,7 @@
 package io.github.amitelia.occultech.boss.tier0;
 
+import io.github.amitelia.occultech.boss.FloorDecals;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -57,6 +59,8 @@ public final class WitchCoven extends BossBehavior {
     private static final int BOMB_INTERVAL = 80;
 
     private final List<Witch> witches = new ArrayList<>();
+    /** Harming potions in flight, with where each was last seen. */
+    private final java.util.Map<ThrownPotion, org.bukkit.Location> potions = new java.util.HashMap<>();
     private int rotation;
     private Player curseTarget;
     private int curseAt = -1;
@@ -125,6 +129,7 @@ public final class WitchCoven extends BossBehavior {
             if (target != null && target.getLocation().distance(curser.getLocation()) < 12) {
                 curseTarget = target;
                 curseAt = now + CURSE_WARNING;
+                fight.telegraph(target.getLocation(), 1.4, CURSE_WARNING, Role.CURSER.aura.getColor(), FloorDecals.Mark.CURSE);
                 target.getWorld().spawnParticle(Particle.WITCH, target.getLocation().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0);
                 target.playSound(target.getLocation(), Sound.ENTITY_EVOKER_PREPARE_ATTACK, 1F, 1.4F);
             }
@@ -133,6 +138,16 @@ public final class WitchCoven extends BossBehavior {
             curseTarget.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 0));
             curseTarget.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 0));
         }
+
+        // a splash on the floor where each harming potion burst (checked each step; a thrown potion is gone once it hits)
+        potions.entrySet().removeIf(entry -> {
+            if (entry.getKey().isValid()) {
+                entry.setValue(entry.getKey().getLocation());
+                return false;
+            }
+            FloorDecals.splash(fight, entry.getValue(), 2.5, org.bukkit.Color.fromRGB(200, 40, 90));
+            return true;
+        });
 
         Witch bomber = withRole(Role.BOMBER);
         if (bomber != null && every(BOMB_INTERVAL)) {
@@ -177,6 +192,7 @@ public final class WitchCoven extends BossBehavior {
         velocity.normalize().multiply(Math.min(1.1, 0.35 + distance * 0.06)).setY(0.35 + distance * 0.02);
         ThrownPotion thrown = bomber.launchProjectile(ThrownPotion.class, velocity);
         thrown.setItem(potion);
+        potions.put(thrown, thrown.getLocation());
         bomber.getWorld().playSound(bomber.getLocation(), Sound.ENTITY_WITCH_THROW, 1F, 1F);
     }
 }

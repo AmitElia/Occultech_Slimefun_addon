@@ -107,6 +107,7 @@ public final class BroodMother extends BossBehavior {
             if (target != null && target.getLocation().distance(mother.getLocation()) > 5) {
                 pounceTarget = target;
                 pounceAt = now + POUNCE_WARNING;
+                fight.telegraph(target.getLocation(), 2.5, POUNCE_WARNING + 10, org.bukkit.Color.fromRGB(150, 30, 30), FloorDecals.Mark.DIVE);
                 mother.getWorld().playSound(mother.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 1.5F, 0.5F);
                 mother.getWorld().spawnParticle(Particle.CRIT, mother.getLocation().add(0, 1, 0), 25, 0.6, 0.4, 0.6, 0.1);
             }

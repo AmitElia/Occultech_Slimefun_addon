@@ -116,6 +116,7 @@ public final class Tempest extends BossBehavior {
         if (every(RING_INTERVAL) && ringStart < 0) {
             ringStart = now;
             fight.broadcast("&bA squall closes in - &fget near the altar!");
+            FloorDecals.wave(fight, fight.center(), fight.radius(), RING_MIN, RING_TICKS, org.bukkit.Color.fromRGB(200, 230, 240), RING_TICKS / 4);
         }
         if (ringStart >= 0) {
             squall(now);

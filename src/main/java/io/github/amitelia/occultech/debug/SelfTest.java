@@ -561,6 +561,28 @@ final class SelfTest {
                 .map(m -> m.getItemModel().getKey()).sorted().toList();
             check("boss attacks mark the floor (a warning ring, fill and symbol; an acid zone)",
                 marks.containsAll(List.of("floor_warning_ring", "floor_warning_fill", "floor_mark_slam", "floor_zone_acid")), String.valueOf(marks));
+            // from a spot like a player's: looking down, feet in the air - the marking must still lie flat on the floor
+            org.bukkit.Location tilted = altar.getLocation().add(-4.5, 0.4, 0.5);
+            tilted.setPitch(50F);
+            tilted.setYaw(70F);
+            currentFight.telegraph(tilted, 1.5, 40, org.bukkit.Color.ORANGE, io.github.amitelia.occultech.boss.FloorDecals.Mark.FLAME);
+            io.github.amitelia.occultech.boss.FloorDecals.wedge(currentFight, altar.getLocation().add(0.5, 0, 4.5), new org.bukkit.util.Vector(1, 0, 0), 4, 30, org.bukkit.Color.RED);
+            io.github.amitelia.occultech.boss.FloorDecals.lane(currentFight, altar.getLocation().add(0.5, 0, -4.5), new org.bukkit.util.Vector(0, 0, -1), 8, 3, 30, org.bukkit.Color.BLUE);
+            io.github.amitelia.occultech.boss.FloorDecals.wave(currentFight, altar.getLocation().add(0.5, 0, 0.5), 1, 4, 30, org.bukkit.Color.AQUA);
+            io.github.amitelia.occultech.boss.FloorDecals.splash(currentFight, altar.getLocation().add(-4.5, 0, 4.5), 2, org.bukkit.Color.PURPLE);
+            List<org.bukkit.entity.ItemDisplay> flame = altar.getWorld().getNearbyEntitiesByType(org.bukkit.entity.ItemDisplay.class, tilted, 1.5).stream()
+                .filter(d -> d.getItemStack().getItemMeta() != null && d.getItemStack().getItemMeta().hasItemModel()
+                    && d.getItemStack().getItemMeta().getItemModel().getKey().equals("floor_mark_flame")).toList();
+            double floorTop = altar.getWorld().getBlockAt(tilted.getBlockX(), altar.getY() - 1, tilted.getBlockZ()).getBoundingBox().getMaxY();
+            check("a floor marking lies flat on the floor even from a tilted spot in the air", flame.size() == 1
+                && flame.get(0).getLocation().getPitch() == 0F && flame.get(0).getLocation().getYaw() == 0F
+                && Math.abs(flame.get(0).getLocation().getY() - floorTop) < 0.1,
+                flame.isEmpty() ? "no marking" : String.format("pitch %.0f yaw %.0f y %.2f (floor %.2f)", flame.get(0).getLocation().getPitch(),
+                    flame.get(0).getLocation().getYaw(), flame.get(0).getLocation().getY(), floorTop));
+            List<String> shapes = altar.getWorld().getNearbyEntitiesByType(org.bukkit.entity.ItemDisplay.class, altar.getLocation(), 9).stream()
+                .map(d -> d.getItemStack().getItemMeta()).filter(m -> m != null && m.hasItemModel()).map(m -> m.getItemModel().getKey()).toList();
+            check("wedge, lane, wave and splash markings appear", shapes.containsAll(List.of("floor_warning_wedge", "floor_warning_lane",
+                "floor_wave", "floor_splash")), String.valueOf(shapes.stream().filter(k -> k.startsWith("floor_")).distinct().toList()));
         }
         check("summoning ritual spawned the Brood Mother", currentFight != null && !currentFight.bosses().isEmpty(), "no fight");
         if (currentFight != null) {

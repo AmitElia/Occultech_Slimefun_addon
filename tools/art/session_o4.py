@@ -69,6 +69,85 @@ def warning_fill():
     return img
 
 
+def wedge(filled):
+    """A 90-degree wedge, its point at the bottom centre, opening toward the top (north): the outline (bright edge, dark
+    lines either side) or the see-through fill."""
+    img = blank()
+    ax, ay = 16.0, 31.5
+    for y in range(N):
+        for x in range(N):
+            dx, dy = x + 0.5 - ax, ay - (y + 0.5)
+            if dy <= 0:
+                continue
+            r = math.hypot(dx, dy)
+            ang = abs(math.degrees(math.atan2(dx, dy)))
+            if r > 31.5 or ang > 45:
+                continue
+            edge_d = min(31.5 - r, (45 - ang) * math.pi / 180 * r)
+            if filled:
+                img.putpixel((x, y), rgba(GREY[4], 150 if edge_d < 1.2 else 95 if int(r) % 5 == 0 else 75))
+            elif edge_d < 1.4:
+                img.putpixel((x, y), rgba(GREY[4] if (x + y) < 34 else GREY[3]))
+            elif edge_d < 2.1:
+                img.putpixel((x, y), rgba(GREY[1]))
+    return img
+
+
+def lane(filled):
+    """A charge lane running from the bottom (its start) to the top: edges, and chevrons pointing the way."""
+    img = blank()
+    for y in range(N):
+        for x in range(N):
+            if filled:
+                img.putpixel((x, y), rgba(GREY[4], 140 if x in (0, 31) else 80))
+                continue
+            if x in (0, 1, 30, 31):
+                img.putpixel((x, y), rgba(GREY[4] if x in (1, 30) else GREY[1]))
+            cy = y % 8
+            if abs(abs(x - 15.5) - (cy * 1.6 + 1)) < 1.0 and 6 <= x <= 25:
+                img.putpixel((x, y), rgba(GREY[3]))
+    return img
+
+
+def wave_ring():
+    """A travelling wave: a bright crest at the edge and a fading wake behind it (inside)."""
+    img = blank()
+    for y in range(N):
+        for x in range(N):
+            d = dist(x, y)
+            if 14.6 <= d < 16.0:
+                img.putpixel((x, y), rgba(GREY[5] if (x + y) < 32 else GREY[4]))
+            elif 13.0 <= d < 14.6:
+                img.putpixel((x, y), rgba(GREY[3], 170))
+            elif 11.0 <= d < 13.0:
+                img.putpixel((x, y), rgba(GREY[3], 90))
+    return img
+
+
+def splash():
+    """A splat where something burst: a ragged star of droplets round a bright centre."""
+    img = blank()
+    rnd = random.Random(9)
+    arms = [(k * 45 + rnd.uniform(-12, 12), rnd.uniform(9, 14)) for k in range(8)]
+    for y in range(N):
+        for x in range(N):
+            d = dist(x, y)
+            a = math.degrees(math.atan2(y + 0.5 - C, x + 0.5 - C)) % 360
+            reach = 6.5
+            for ang, length in arms:
+                diff = min(abs(a - ang % 360), 360 - abs(a - ang % 360))
+                if diff < 9:
+                    reach = max(reach, length - diff * 0.5)
+            if d < reach:
+                img.putpixel((x, y), rgba(GREY[5] if d < 3 else GREY[4] if d < reach - 1 else GREY[2]))
+    for ang, length in arms:                                   # a droplet past each arm
+        px = int(C + (length + 2.2) * math.cos(math.radians(ang)))
+        py = int(C + (length + 2.2) * math.sin(math.radians(ang)))
+        if 0 <= px < N and 0 <= py < N:
+            img.putpixel((px, py), rgba(GREY[4]))
+    return img
+
+
 SYMBOLS = {   # 16 px, drawn in light greys with a dark outline; tinted to the attack's colour
     "slam": [   # an impact burst
         "................",
@@ -229,6 +308,24 @@ SYMBOLS = {   # 16 px, drawn in light greys with a dark outline; tinted to the a
         "........####....",
         ".....######.....",
         "................",
+        "................",
+        "................",
+    ],
+    "curse": [   # a hexing eye
+        "................",
+        "................",
+        "................",
+        "....########....",
+        "..##........##..",
+        ".#....####....#.",
+        "#....##OO##....#",
+        "#....#OOOO#....#",
+        ".#....####....#.",
+        "..##........##..",
+        "....########....",
+        "................",
+        ".....#.#..#.#...",
+        "......#....#....",
         "................",
         "................",
     ],
@@ -437,7 +534,13 @@ def plane(key, textures, tint=False, light=0):
 
 def models():
     out = [plane("floor_warning_ring", warning_ring(), tint=True, light=15),
-           plane("floor_warning_fill", warning_fill(), tint=True, light=15)]
+           plane("floor_warning_fill", warning_fill(), tint=True, light=15),
+           plane("floor_warning_wedge", wedge(False), tint=True, light=15),
+           plane("floor_warning_wedge_fill", wedge(True), tint=True, light=15),
+           plane("floor_warning_lane", lane(False), tint=True, light=15),
+           plane("floor_warning_lane_fill", lane(True), tint=True, light=15),
+           plane("floor_wave", wave_ring(), tint=True, light=15),
+           plane("floor_splash", splash(), tint=True, light=15)]
     for name, rows in SYMBOLS.items():
         for row in rows:
             assert len(row) == 16, (name, row)
