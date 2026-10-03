@@ -69,14 +69,16 @@ def render(model, frame=0, yaw=30, pitch=30, s=24, size=(600, 600), bg=(34, 32, 
             name = face["texture"].lstrip("#")
             img = model.frame(name, frame).convert("RGBA")
             u0, v0, u1, v1 = face["uv"]
-            nu, nv = max(1, math.ceil(abs(u1 - u0) - 1e-6)), max(1, math.ceil(abs(v1 - v0) - 1e-6))
+            kx, ky = img.width / 16, img.height / 16 / (img.height // img.width if img.height > img.width else 1)
+            nu = max(1, math.ceil(abs(u1 - u0) * kx - 1e-6))       # one quad per texel, at the texture's resolution
+            nv = max(1, math.ceil(abs(v1 - v0) * img.width / 16 - 1e-6))
             o, du, dv = face_frame(d, e["from"], e["to"])
             light = 1.0 if (not e.get("shade", True) or e.get("light_emission")) else SHADE[d]
             for i in range(nu):
                 for j in range(nv):
                     uu = u0 + (u1 - u0) * (i + 0.5) / nu
                     vv = v0 + (v1 - v0) * (j + 0.5) / nv
-                    c = img.getpixel((min(15, int(uu * img.width / 16)), min(img.height - 1, int(vv * img.height / 16))))
+                    c = img.getpixel((min(img.width - 1, int(uu * img.width / 16)), min(img.height - 1, int(vv * img.height / 16))))
                     if c[3] < 128:
                         continue
                     pts = []

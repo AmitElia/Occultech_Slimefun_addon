@@ -1218,6 +1218,17 @@ final class SelfTest {
         long models = trophyBoard.getWorld().getNearbyEntities(trophyBoard.getLocation().add(0.5, 1.5, 0.5), 1.5, 2, 1.5,
             e -> e instanceof org.bukkit.entity.Guardian && e.getPersistentDataContainer().has(Keys.HOLOGRAM)).size();
         check("Trophy Board shows a small model of the chosen boss", models == 1, models + " models");
+        trophyBoard.getWorld().getNearbyEntities(trophyBoard.getLocation().add(0.5, 1.5, 0.5), 1.5, 2, 1.5,
+            e -> e instanceof org.bukkit.entity.Guardian && e.getPersistentDataContainer().has(Keys.HOLOGRAM)).stream().findFirst()
+            .ifPresent(statue -> {
+                // a guardian is 0.85 across; with its spikes (x1.3) it should come out 0.75 blocks
+                var scale = ((org.bukkit.entity.LivingEntity) statue).getAttribute(org.bukkit.attribute.Attribute.SCALE);
+                double size = (scale == null ? 1 : scale.getValue()) * 0.85 * 1.3;
+                check("the boss statue is the common statue size, standing on the pedestal's cushion",
+                    Math.abs(size - 0.75) < 0.03 && Math.abs(statue.getLocation().getY() - (trophyBoard.getY() + 15 / 16.0)) < 0.02,
+                    String.format("size %.2f (scale %s, box %.2f) at y %.2f", size, scale == null ? "-" : scale.getValue(),
+                        Math.max(statue.getHeight(), statue.getWidth()), statue.getLocation().getY() - trophyBoard.getY()));
+            });
         if (plugin.decorations().coloredFire()) {
             check("lit Prismatic Netherrack shows its coloured flames", plugin.decorations().partCount(prismatic) == 1,
                 plugin.decorations().partCount(prismatic) + " parts");

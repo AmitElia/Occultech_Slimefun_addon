@@ -16,8 +16,8 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | ~~I~~ | ~~Effect sprites~~ - **dropped** (the user: retexturing particles would change other plugins' and vanilla effects) | - |
 | **O1** | Block fixes: blue bottoms (smaller models -> chorus-plant states), stacking on custom blocks, Rune Obelisk (thinner base, less flat, clean edges), Soulfire Brazier (aligned textures, full rim), boss fights keep the turning sigil (no second pentagram) | **Done** |
 | **O2** | Art retouch: the tier sigils and pentagrams crisp and finished; the armor inventory icons professional and symmetric | **Done** |
-| O3 | Trophy Board as a real pedestal with bosses shown at one size; the Arcane Altar reworked with the Session B pentagram | next |
-| O4 | Floor telegraphs for boss attacks (fire, poison, hits...) like the sigil holograms | - |
+| **O3** | Trophy Board as a real pedestal with bosses shown at one size; the Arcane Altar reworked with the Session B pentagram | **Done** |
+| O4 | Floor telegraphs for boss attacks (fire, poison, hits...) like the sigil holograms | next |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
 
 ## Session A - style and toolkit (2026-10-01)
@@ -832,6 +832,20 @@ transformations), the server sends one update a second; the displays are never s
   scales broke the no-checker rule), fins, sea-glow brow, gem and soles. Hollow: black-grey steel, purple horns, cuffs
   and hem, sculk creeping on cheeks and thighs, a soul core and soul-blue soles. v1's boots read as bottles -> wide
   shafts with cuffs, toes and glowing soles. Sheet: `session-e/review-armor-o2.png`.
+
+**Session O3 - showpieces (2026-10-03).**
+- **Trophy Board -> a real pedestal:** a museum pedestal in dark polished wood with thin gold lines - a stepped base,
+  a column whose faces carry a framed panel with a small gold trophy cup, a moulded capital, a crimson velvet cushion
+  piped in gold (tufted) where the statue stands. v1 was mostly gold and read cheap; the panel's crossed blades read as
+  a checker at 8 px. It's smaller than its cube, so it moved to a chorus-plant state (15 of 16 used).
+- **Boss statues at one size:** they were scaled by height only, so wide bosses (spider, guardian, phantom) stood
+  oversized. Now by the larger of height and width, times how far a look spreads past its hitbox (phantom wings 1.9,
+  guardian spikes 1.3, breeze and blaze 1.15), to 0.75 blocks; they stand on the cushion (15 px up).
+- **Arcane Altar reworked:** its custom block no longer has the vanilla enchanting table's floating book. Now: dark
+  stone brick on a gold-banded plinth with ember arcane eyes, a top slab with O2's crisp pentagram inlaid and glowing
+  (the 64 px texture across the top), and an open spellbook floating above it - violet covers tipped into a V, pages
+  of violet runes lighting in turn, a soft glow.
+- Preview tool: `render3d` sampled every texture at 16 px (a 64 px inlay came out smeared) - fixed.
 
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the

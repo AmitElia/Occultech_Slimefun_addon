@@ -628,7 +628,7 @@ public final class DecorationService {
             clearParts(decoration);
             decoration.shown = choice;
         }
-        Location top = center.clone().add(0, 0.55, 0);
+        Location top = center.clone().add(0, TROPHY_TOP, 0);   // on the pedestal's velvet cushion
         if (decoration.parts.isEmpty()) {
             String[] parts = choice == null ? null : choice.split(";", 3);
             String text = parts == null ? "&6Trophy Board\n&7Right-click to show a boss you've defeated"
@@ -664,8 +664,7 @@ public final class DecorationService {
                         ageable.setAdult();
                     }
                     if (entity instanceof LivingEntity living && living.getAttribute(org.bukkit.attribute.Attribute.SCALE) != null) {
-                        double height = Math.max(0.3, entity.getHeight());
-                        living.getAttribute(org.bukkit.attribute.Attribute.SCALE).setBaseValue(Math.max(0.06, Math.min(1, 0.9 / height)));
+                        living.getAttribute(org.bukkit.attribute.Attribute.SCALE).setBaseValue(statueScale(entity));
                         living.setCollidable(false);
                     }
                 }));
@@ -679,6 +678,27 @@ public final class DecorationService {
                 model.setBodyYaw(yaw);
             }
         }
+    }
+
+    /** Statues stand on the Trophy Board's cushion, 15 px up the block. */
+    static final double TROPHY_TOP = 15 / 16.0 - 0.5;
+    /** Every boss statue's size: its largest dimension (or how far its look spreads) this many blocks. */
+    static final double STATUE_SIZE = 0.75;
+
+    /**
+     * The scale that makes every boss the same size on the pedestal: by its larger dimension (height or width - a
+     * spider or a guardian is wide, not tall), and for those whose look spreads past their hitbox, by how far it spreads
+     * (a phantom's wings, a guardian's spikes, a slime's size).
+     */
+    static double statueScale(Entity entity) {
+        double size = Math.max(entity.getHeight(), entity.getWidth());
+        size *= switch (entity.getType()) {
+            case PHANTOM -> 1.9;              // its wings span far beyond its flat hitbox
+            case GUARDIAN, ELDER_GUARDIAN -> 1.3;   // the spikes
+            case BREEZE, BLAZE -> 1.15;       // the swirl / the rods
+            default -> 1.0;
+        };
+        return Math.max(0.0625, Math.min(1.0, STATUE_SIZE / Math.max(0.2, size)));
     }
 
     /** The entity a boss is built on, from recipes.yml's `base` (e.g. "3x WITCH", "DROWNED on ZOMBIE_NAUTILUS"). */

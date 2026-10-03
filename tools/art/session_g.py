@@ -213,39 +213,57 @@ def chalk_glyph(variant=0):
 
 
 def arcane_altar():
-    """The Arcane Altar (vanilla: enchanting table, 12 px tall): a low block of dark stone the table's height, so the
-    table's floating book shows above it - banded in gold, its corners capped in gold, its sides set with ember-glowing
-    arcane eyes; the top a slab with an arcane circle and an infusion star that turn and glow (animated)."""
+    """The Arcane Altar (a custom block, 12 px tall): dark stone on a gold-banded plinth, its sides set with ember-
+    glowing arcane eyes; the Session B pentagram (O2's crisp redraw) inlaid in its top and glowing, and above it an open
+    spellbook floating - the vanilla enchanting table's book, which the custom block no longer has - its pages written
+    in violet runes that pulse."""
     m = Model("arcane_altar")
-    ash, gd, em, vi = RAMPS["ash"], RAMPS["gold"], RAMPS["ember"], RAMPS["violet"]
-    side = bricks(ash, 21, row_h=5, brick_w=8, tones=(2, 2, 3))
-    for x in range(16):   # rows 4..15 show (the block is 12 tall): gold bands at its top and foot
-        side.putpixel((x, 4), gd[4]); side.putpixel((x, 5), gd[2]); side.putpixel((x, 15), gd[2]); side.putpixel((x, 14), gd[3])
-    for y in range(4, 16):
-        for x in (0, 15):
-            side.putpixel((x, y), gd[3] if x == 0 else gd[2])
-    eye = [(6, 9), (7, 8), (8, 8), (9, 9), (6, 10), (7, 11), (8, 11), (9, 10)]
-    put(side, eye, gd[4])
-    put(side, [(7, 9), (8, 9), (7, 10), (8, 10)], em[4])
-    put(side, [(7, 9)], em[5])
-    frames = []
+    ash, gd, em, vi, bone = RAMPS["ash"], RAMPS["gold"], RAMPS["ember"], RAMPS["violet"], RAMPS["bone"]
+    def side(x, y):                                                                # 16 wide x 8 tall body face
+        if y == 0:
+            return gd[4]
+        if y == 7:
+            return gd[2]
+        eye = {(6, 3), (7, 2), (8, 2), (9, 3), (6, 4), (7, 5), (8, 5), (9, 4)}
+        if (x, y) in eye:
+            return gd[4]
+        if (x, y) in {(7, 3), (8, 3), (7, 4), (8, 4)}:
+            return em[5] if (x, y) == (7, 3) else em[4]
+        brick = (x + (4 if y >= 4 else 0)) % 8 == 0 or y == 4
+        return tone(ash, (0.25 if brick else 0.55) - y * 0.03 - x * 0.006)
+    t_side = m.texture("side", tex(16, 8, side))
+    t_base = m.texture("base", tex(16, 2, lambda x, y: tone(gd, (0.9 if y == 0 else 0.5) - x * 0.015)))
+    t_slab = m.texture("slab", tex(16, 2, lambda x, y: tone(ash, (0.8 if y == 0 else 0.5) - x * 0.01)))
+    t_top = m.texture("top", bevel_grad(16, 16, ash, top=0.45, bottom=0.28, side=0.06, edge=0.2))
+    t_under = m.texture("under", tex(16, 16, lambda x, y: ash[1]))
+    sigil = Image.open(os.path.join(os.path.dirname(OUT), "session-b", "sigil_pentagram.png")).convert("RGBA")
+    t_sigil = m.texture("pentagram", sigil)
+    pages = []
     for f in range(4):
-        top = slab_top(ash, 23, tone=2)
-        put(top, circle_pts(7.5, 7.5, 6.6), gd[3])
-        put(top, circle_pts(7.5, 7.5, 4.6), gd[2])
-        a0 = f * math.pi / 8
-        for k in range(8):   # a turning eight-pointed star
-            a = a0 + k * math.pi / 4
-            for r in (1.5, 2.5, 3.5):
-                put(top, [(math.floor(7.5 + r * math.cos(a)), math.floor(7.5 + r * math.sin(a)))], em[4] if r < 3 else em[3])
-        put(top, [(7, 7), (8, 7), (7, 8), (8, 8)], em[5])
-        for k in range(4):
-            a = a0 * 2 + k * math.pi / 2
-            put(top, [(math.floor(7.5 + 6.6 * math.cos(a)), math.floor(7.5 + 6.6 * math.sin(a)))], vi[4])
-        frames.append(top)
-    t_side, t_top, t_bottom = m.texture("side", side), m.texture("top", frames), m.texture("bottom", slab_top(ash, 2, tone=1))
-    m.box((0, 0, 0), (16, 12, 16), {"north": t_side, "south": t_side, "west": t_side, "east": t_side,
-                                     "up": t_top, "down": t_bottom})
+        def page(x, y, f=f):                                                       # both pages, 12 x 6
+            if x in (5, 6):
+                return bone[3]                                                     # the gutter
+            if y in (1, 3) and x not in (0, 11) and (x * 5 + y) % 4:
+                lit = (x // 3 + f) % 4 == 0
+                return vi[4] if lit else vi[2]                                     # runes, lighting in turn
+            return bone[5] if x not in (0, 11) else bone[4]
+        pages.append(tex(12, 6, page))
+    t_pages = m.texture("pages", pages)
+    t_cover = m.texture("cover", tex(16, 16, lambda x, y: vi[1] if (x + y) % 5 else vi[0]))
+    exact_box(m, (0, 0, 0), (16, 2, 16), t_base, top=t_under, bottom=t_under)            # gold-banded plinth
+    exact_box(m, (1, 2, 1), (15, 10, 15), t_side, top=t_under, bottom=t_under)           # the body
+    exact_box(m, (0, 10, 0), (16, 12, 16), t_slab, top=t_top, bottom=t_under)            # the top slab
+    m.box((0.5, 12.03, 0.5), (15.5, 12.03, 15.5), {"up": (t_sigil, [0, 0, 16, 16])}, light=15, shade=False)  # pentagram
+    # the open book, floating: two halves tipped into a shallow V over the altar's middle
+    for sign in (-1, 1):
+        x0, x1 = (4.0, 8.0) if sign < 0 else (8.0, 12.0)
+        for frm, to, faces in (((x0, 13.6, 5.0), (x1, 14.0, 11.0), {d: (t_cover, [0, 0, 4, 1]) for d in FACES_ALL}),
+                               ((x0 + (0.3 if sign < 0 else 0), 14.0, 5.4), (x1 - (0.3 if sign > 0 else 0), 14.6, 10.6),
+                                {"up": (t_pages, [0 if sign < 0 else 6, 0, 6 if sign < 0 else 12, 6]),
+                                 "north": (t_cover, [0, 0, 4, 1]), "south": (t_cover, [0, 0, 4, 1]),
+                                 "west": (t_cover, [0, 0, 1, 1]), "east": (t_cover, [0, 0, 1, 1])})):
+            e = m.box(frm, to, faces, light=6 if "up" in faces and faces["up"][0] == t_pages else 0)
+            e["rotation"] = {"origin": [8.0, 13.6, 8.0], "axis": "z", "angle": 22.5 * sign}
     return m
 
 
@@ -345,32 +363,46 @@ def brood_egg():
 
 
 def trophy_board():
-    """The Trophy Board (vanilla: chiseled tuff bricks, a cube): a display pedestal - dark polished wood panels in gilded
-    frames, a gold crest of crossed blades on each side, and a crimson velvet top edged in gold where the trophies
-    float (the board's own displays)."""
+    """The Trophy Board (a custom block, smaller than its cube): a museum pedestal for a defeated boss's statue, in dark
+    polished wood with thin gold lines - a stepped base, a column whose faces carry a framed panel with a small gold trophy
+    cup, a moulded capital, and a crimson velvet cushion on top, piped in gold, where the statue stands
+    (DecorationService). Every face drawn to its own size, lit from the top-left."""
     m = Model("trophy_board")
     wood, gd, cr = RAMPS["wood"], RAMPS["gold"], RAMPS["crimson"]
-    side = blank()
-    for y in range(16):
-        for x in range(16):
-            side.putpixel((x, y), wood[1] if (x * 3 + y) % 11 else wood[0])
-    for i in range(16):   # the gilded frame
-        for (x, y) in ((i, 0), (i, 1), (i, 14), (i, 15), (0, i), (1, i), (14, i), (15, i)):
-            side.putpixel((x, y), gd[3] if x < 2 or y < 2 else gd[2])
-    for i in range(3, 13):   # the inner panel's lit edge
-        side.putpixel((i, 3), wood[2]); side.putpixel((3, i), wood[2])
-    crest = [(5, 5), (6, 6), (7, 7), (8, 8), (9, 9), (10, 10), (10, 5), (9, 6), (6, 9), (5, 10)]
-    put(side, crest, gd[4])
-    put(side, [(7, 8), (8, 7)], gd[5])
-    put(side, [(4, 11), (11, 11), (4, 4), (11, 4)], gd[3])
-    top = blank()
-    for y in range(16):
-        for x in range(16):
-            top.putpixel((x, y), cr[2] if (x + y) % 6 else cr[1])
-    rim(top, gd[4], gd[2])
-    put(top, [(5, 4), (4, 5), (6, 4)], cr[3])   # the velvet's sheen
-    t_side, t_top = m.texture("side", side), m.texture("top", top)
-    m.cube((0, 0, 0), (16, 16, 16), t_side, top=t_top, bottom=t_side)
+    dark = [wood[0], wood[0], wood[1], wood[1], wood[2], wood[3]]                 # a darker, polished wood
+    t_base = m.texture("base", tex(14, 2, lambda x, y: gd[3] if y == 0 else tone(dark, 0.55 - x * 0.02)))
+    t_base_top = m.texture("base_top", bevel_grad(14, 14, dark, top=0.62, bottom=0.38, edge=0.2))
+    t_step = m.texture("step", tex(12, 1, lambda x, y: tone(dark, 0.7 - x * 0.02)))
+    t_step_top = m.texture("step_top", bevel_grad(12, 12, dark, top=0.66, bottom=0.45, edge=0.2))
+    blades = {(2, 2), (3, 2), (4, 2), (5, 2), (3, 3), (4, 3), (4, 4), (3, 5), (4, 5), (2, 5), (5, 5)}   # a trophy cup
+    def column(x, y):                                                              # 8 wide x 8 tall
+        if x == 0 or y == 0:
+            return tone(dark, 0.75)
+        if x == 7 or y == 7:
+            return tone(dark, 0.15)
+        if x in (1, 6) or y in (1, 6):
+            return gd[3] if (x == 1 or y == 1) else gd[2]                            # a thin gold frame
+        if (x, y) in blades:
+            return gd[5] if (x, y) in ((2, 2), (3, 2), (3, 3)) else gd[4]            # the cup, lit top-left
+        return tone(dark, 0.42 - y * 0.03)
+    t_column = m.texture("column", tex(8, 8, column))
+    t_capital = m.texture("capital", tex(10, 2, lambda x, y: gd[3] if y == 1 else tone(dark, 0.72 - x * 0.025)))
+    t_capital_top = m.texture("capital_top", bevel_grad(10, 10, dark, top=0.7, bottom=0.5, edge=0.2))
+    t_cushion = m.texture("cushion", tex(12, 2, lambda x, y: gd[3] if y == 1 else tone(cr, 0.55 - x * 0.02)))
+    def velvet(x, y):
+        if x == 0 or y == 0 or x == 11 or y == 11:
+            return gd[3] if x == 0 or y == 0 else gd[2]                              # gold piping
+        d = ((x - 5.5) ** 2 + (y - 5.5) ** 2) ** 0.5
+        if (x, y) in ((3, 3), (8, 3), (3, 8), (8, 8)):
+            return cr[1]                                                             # tufts
+        return tone(cr, 0.6 - d * 0.045 - (x + y) * 0.008)                         # a soft dome of velvet
+    t_velvet = m.texture("velvet", tex(12, 12, velvet))
+    t_under = m.texture("under", tex(16, 16, lambda x, y: dark[0]))
+    exact_box(m, (1, 0, 1), (15, 2, 15), t_base, top=t_base_top, bottom=t_under)          # the base
+    exact_box(m, (2, 2, 2), (14, 3, 14), t_step, top=t_step_top, bottom=t_under)          # a step
+    exact_box(m, (4, 3, 4), (12, 11, 12), t_column, top=t_under, bottom=t_under)          # the column
+    exact_box(m, (3, 11, 3), (13, 13, 13), t_capital, top=t_capital_top, bottom=t_under)  # its capital
+    exact_box(m, (2, 13, 2), (14, 15, 14), t_cushion, top=t_velvet, bottom=t_under)       # the velvet cushion
     return m
 
 
