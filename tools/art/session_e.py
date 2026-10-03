@@ -519,19 +519,37 @@ def trim(frame):
     return sg[[3, 4, 4, 3][frame % 4]], sg[2]
 
 
+ABYSSAL_HELM_ICON = [   # redrawn to match the worn helm (G6): open-faced, fins tilted up and out, a crest, a brow gem
+    "................",
+    ".......F........",
+    "......FFF.......",
+    "f....LFFFL....f.",
+    "FF..LHHHHHML..FF",
+    ".FFLHHMMMMMMDFF.",
+    "..FLGGGgGGGGDF..",
+    "...LMKKKKKKMD...",
+    "...LMKKKKKKMD...",
+    "...LMKKKKKKMD...",
+    "...LMMK..KMMD...",
+    "...DDD....DDD...",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+
 def abyssal_helmet(frame=0):
-    """The Abyssal Helm: a domed helm with a prismarine fin crest, a dark visor with two glowing eye slits, a sea-glow
-    trim round its rim (pulses)."""
+    """The Abyssal Helm: an open-faced helm of abyssal plate - a brow band with a sea-glow gem (pulsing), cheek guards,
+    fan fins tilted up and out from its sides and a crest along its top."""
+    from session_d import pixmap
     icon = Icon(16)
     ab, sg = RAMPS["abyss"], RAMPS["seaglow"]
-    armor_base(icon, HELM, 7.0, 4.0, 6.0, 7.0)
-    hi, lo = trim(frame)
-    put(icon, [(4, 11), (11, 11)], lo)
-    put(icon, [(7, 0), (7, 1), (6, 2), (7, 2), (8, 1), (8, 2)], ab[5])   # the crest fin
-    put(icon, [(8, 0), (8, 1)], ab[4])
-    put(icon, [(x, 8) for x in range(4, 12)], ab[0])                    # the visor
-    put(icon, [(5, 8), (6, 8), (9, 8), (10, 8)], hi)
-    put(icon, [(7, y) for y in range(4, 8)], ab[4])   # (no trim under the visor: eyes + a line read as a face)
+    cols = {"H": ab[5], "L": ab[4], "M": ab[3], "D": ab[2], "K": ab[0], "F": ab[4], "f": sg[3], "G": ab[5],
+            "g": sg[[3, 4, 5, 4][frame % 4]]}
+    pixmap(icon, ABYSSAL_HELM_ICON, 0, 0, cols)
+    mask = {(x, y) for y, row in enumerate(ABYSSAL_HELM_ICON) for x, c in enumerate(row) if c != "."}
+    icon.outline(Part({p: (0, 0, 1) for p in mask}), [ab[1], ab[0]], over=False)
     return icon
 
 

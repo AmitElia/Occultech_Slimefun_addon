@@ -1874,14 +1874,17 @@ def abyssal_anchor_held():
     return diagonal(m)
 
 
-CENSER_GRIP = (8, 10.5, 8)   # the middle of the handle
+CENSER_GRIP = (8, 6.5, 8)   # the middle of the grip
 
 
 def soulfire_censer_held(using=False):
-    """The Soulfire Censer in the hand, hanging from it: the fist closes on a gold handle with a ring above it; under
-    the fist a chain drops to the censer - a gold cap, a dark caged orb (stepped round) with soul fire burning behind cyan
-    glass (glowing, animated), a gold band round it, and a gold finial hanging below. Held upright like a torch (vanilla
-    item/generated's poses, model up = up), so the censer hangs under the hand."""
+    """The Soulfire Censer in the hand: a gold grip in the fist and a gold handle sticking straight out ahead of it; from
+    a ring at the handle's tip a chain drops, and the censer hangs from it by its own weight - a gold cap, a dark caged
+    orb with soul fire behind cyan glass (glowing, animated), a gold band, a finial hanging below.
+    Built in the hand's own frame (from vanilla's ItemInHandLayer, confirmed by an in-game screenshot): +y points out
+    ahead of the fist, -z down the arm. Arm hanging (no turn): the handle points ahead and the chain hangs down. Arm
+    raised forward (the in-use pose) and first person: down the arm is ahead, so the model turns -90 about x - the
+    handle still points ahead and the chain still hangs down."""
     m = Model("soulfire_censer_held" + ("_using" if using else ""))
     m.part = True
     gd, st, hc, ir = RAMPS["gold"], RAMPS["boundsteel"], RAMPS["hollowcy"], RAMPS["iron"]
@@ -1896,31 +1899,33 @@ def soulfire_censer_held(using=False):
             h = 4 + rnd.randrange(5)
             for k in range(h):
                 img.putpixel((x, 13 - k), hc[5] if k < 2 else hc[4] if k < 4 else hc[3])
-        for x in (5, 10):   # the cage's bars over the glass
+        for x in (5, 10):
             for y in range(16):
                 img.putpixel((x, y), st[2])
         fires.append(img)
     t_fire = m.texture("fire", fires)
-    for x in (6.6, 9.4):                                   # the ring on top of the handle
-        prism(m, 0.7, 13.0, 15.6, t_gold, cx=x)
-    prism(m, 3.5, 15.6, 16.3, t_gold)
-    prism(m, 1.6, 8.0, 13.0, t_gold)                        # the handle, in the fist
-    prism(m, 2.6, 7.4, 8.0, t_gold)
-    for i in range(4):                                      # the chain, hanging
-        y1 = 7.4 - i * 1.5
-        prism(m, 1.2 if i % 2 == 0 else 0.5, y1 - 1.6, y1, t_chain, d=0.5 if i % 2 == 0 else 1.2)
-    prism(m, 2.6, 0.4, 1.4, t_gold)                         # the cap
-    prism(m, 4.6, -0.6, 0.4, t_steel)                       # the orb, stepped round
-    prism(m, 6.0, -4.6, -0.6, (t_fire, [2, 2, 14, 14]), light=15, shade=False)
-    prism(m, 6.4, -3.0, -2.2, t_gold)                       # its band
-    prism(m, 4.6, -5.6, -4.6, t_steel)
-    prism(m, 2.0, -6.6, -5.6, t_gold)                       # the finial, hanging below
-    prism(m, 0.8, -8.2, -6.6, t_gold)
-    # arm hanging: down the arm is the model's -z, so turn the model's -y (the chain) onto it; arm raised forward (in
-    # use): down is the model's +z... which is where -y already points once the arm is up, so no turn
-    fp = {"firstperson_righthand": {"rotation": [0, -90, 0], "translation": [1.13, 4.2, 1.13], "scale": [0.68] * 3},
-          "firstperson_lefthand": {"rotation": [0, 90, 0], "translation": [1.13, 4.2, 1.13], "scale": [0.68] * 3}}
-    m.display = grip_display((0, 0, 0) if using else (90, 0, 0), CENSER_GRIP, 0.7, first_person=fp)
+    G = lambda w, h: (t_gold, [0, 0, max(1, round(w)), max(1, round(h))])  # noqa: E731
+    m.cube((6.8, 3.0, 6.8), (9.2, 4.0, 9.2), G(2, 1))                     # pommel cap
+    m.cube((7.2, 4.0, 7.2), (8.8, 9.0, 8.8), G(2, 5))                     # the grip, in the fist
+    m.cube((7.4, 9.0, 7.4), (8.6, 17.0, 8.6), G(1, 8))                    # the handle, straight out ahead
+    m.cube((7.0, 17.0, 7.0), (9.0, 18.4, 9.0), G(2, 1))                   # the ring at its tip
+    m.cube((7.6, 17.2, 6.0), (8.4, 18.2, 7.0), G(1, 1))                   # a hook under it
+    # the chain, dropping straight down (-z) from the hook
+    for i in range(4):
+        z1 = 6.0 - i * 1.5
+        w, d = (1.2, 0.5) if i % 2 == 0 else (0.5, 1.2)
+        m.cube((8 - w / 2, 17.7 - d / 2, z1 - 1.6), (8 + w / 2, 17.7 + d / 2, z1), (t_chain, [0, 0, 1, 2]))
+    # the censer, hanging by its weight: its top is +z, its bottom -z
+    m.cube((6.7, 16.4, 0.0), (9.3, 19.0, 1.0), G(3, 1))                   # cap
+    m.cube((5.7, 15.4, -0.8), (10.3, 20.0, 0.0), (t_steel, [0, 0, 5, 1]))
+    m.box((5.0, 14.7, -4.8), (11.0, 20.7, -0.8), {d: (t_fire, [2, 2, 14, 14]) for d in FACES_ALL}, shade=False, light=15)
+    m.cube((4.8, 14.5, -3.2), (11.2, 20.9, -2.4), G(6, 1))                # its band
+    m.cube((5.7, 15.4, -5.8), (10.3, 20.0, -4.8), (t_steel, [0, 0, 5, 1]))
+    m.cube((7.0, 16.7, -6.8), (9.0, 18.7, -5.8), G(2, 1))                 # finial
+    m.cube((7.6, 17.3, -8.4), (8.4, 18.1, -6.8), G(1, 2))
+    fp = {"firstperson_righthand": {"rotation": [-90, -10, 0], "translation": [1.5, 2.0, -1.0], "scale": [0.68] * 3},
+          "firstperson_lefthand": {"rotation": [-90, 10, 0], "translation": [1.5, 2.0, -1.0], "scale": [0.68] * 3}}
+    m.display = grip_display((-90, 0, 0) if using else (0, 0, 0), CENSER_GRIP, 0.7, first_person=fp)
     return m
 
 
@@ -1992,9 +1997,9 @@ def dreadlance_held():
 
 
 def frenzy_cleaver_held():
-    """The Frenzy Cleaver in the hand: a broad butcher's cleaver - a wrapped wooden haft with a pommel cap, and a heavy
-    rectangular steel blade on the haft's top, thick at its spine and honed thin toward a serrated edge of frenzy-red
-    teeth that pulse (glowing); a rivet through the blade."""
+    """The Frenzy Cleaver in the hand: a short wrapped grip with a pommel cap, and a big butcher's blade - long and broad,
+    a thick spine along its top, honed thin toward a serrated edge of frenzy-red teeth that pulse (glowing); the haft
+    runs up through it; a rivet."""
     m = Model("frenzy_cleaver_held")
     m.part = True
     ir, cr, wood, le = RAMPS["iron"], RAMPS["crimson"], RAMPS["wood"], RAMPS["leather"]
@@ -2022,17 +2027,19 @@ def frenzy_cleaver_held():
                 img.putpixel((x, y), cr[[3, 4, 5, 4, 3, 2][(f + y // 2) % 6]] if (x + y) % 2 == 0 else cr[1])
         teeth.append(img)
     t_teeth = m.texture("teeth", teeth)
-    prism(m, 2.0, -3, -1.8, t_spine)                        # pommel cap
-    prism(m, 1.6, -1.8, 5.0, (t_wrap, [0, 0, 2, 7]))        # wrapped grip
-    prism(m, 1.6, 5.0, 17.6, (t_haft, [6, 0, 8, 13]))       # haft up through the blade
-    prism(m, 2.0, 17.6, 18.6, t_spine)                      # cap
-    # the blade, to the -x side (up-left once laid on the diagonal), 8 tall, 6.5 wide
-    m.cube((1.6, 10.0, 7.5), (7.2, 18.0, 8.5), (t_steel, [0, 0, 6, 8]))          # body
-    m.cube((6.6, 9.6, 7.3), (7.4, 18.4, 8.7), (t_spine, [0, 0, 1, 9]))           # bound to the haft
-    m.cube((1.6, 17.4, 7.3), (7.2, 18.4, 8.7), (t_spine, [0, 0, 6, 1]))          # the thick spine along the top
-    m.box((0.6, 10.0, 7.7), (1.6, 17.4, 8.3), {"west": (t_teeth, [0, 0, 1, 7]), "north": (t_teeth, [0, 0, 1, 7]),
-          "south": (t_teeth, [0, 0, 1, 7]), "up": (t_teeth, [0, 0, 1, 1]), "down": (t_teeth, [0, 0, 1, 1])}, light=12)
-    m.cube((4.0, 15.0, 7.3), (5.0, 16.0, 8.7), (t_spine, [0, 0, 1, 1]))          # a rivet
+    prism(m, 2.0, -3.0, -2.0, t_spine)                      # pommel cap
+    prism(m, 1.6, -2.0, 2.6, (t_wrap, [0, 0, 2, 5]))        # a short wrapped grip
+    prism(m, 1.6, 2.6, 18.6, (t_haft, [6, 0, 8, 16]))       # the haft, up through the blade
+    prism(m, 2.0, 18.6, 19.4, t_spine)
+    # the blade, to the -x side (up-left once laid on the diagonal): 13 long, 8 broad
+    m.cube((-0.8, 5.4, 7.5), (7.2, 18.4, 8.5), (t_steel, [0, 0, 8, 13]))          # body
+    m.cube((6.6, 5.0, 7.3), (7.4, 18.8, 8.7), (t_spine, [0, 0, 1, 14]))           # bound to the haft
+    m.cube((-0.8, 17.4, 7.2), (7.2, 18.8, 8.8), (t_spine, [0, 0, 8, 1]))          # the thick spine along the top
+    m.cube((-0.8, 5.0, 7.3), (7.2, 5.6, 8.7), (t_spine, [0, 0, 8, 1]))            # the heel
+    m.box((-1.8, 5.6, 7.7), (-0.8, 17.4, 8.3), {"west": (t_teeth, [0, 0, 1, 12]), "north": (t_teeth, [0, 0, 1, 12]),
+          "south": (t_teeth, [0, 0, 1, 12]), "up": (t_teeth, [0, 0, 1, 1]), "down": (t_teeth, [0, 0, 1, 1])}, light=12)
+    for (x, y) in ((3.2, 14.6), (3.2, 8.4)):                                       # rivets
+        m.cube((x, y, 7.3), (x + 1.0, y + 1.0, 8.7), (t_spine, [0, 0, 1, 1]))
     m.display = HANDHELD_DISPLAY
     return diagonal(m)
 

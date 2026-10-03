@@ -489,104 +489,118 @@ BOW_STATES = ["standby", "pulling_0", "pulling_1", "pulling_2"]
 # vanilla armor icons. Letters: H highlight, L light plate, M mid, D dark, K seam/shadow, G gold, g dark gold,
 # B bone, b bone shade, C hollow glow (animated), R crimson.
 
+# The Hollow set, redrawn to match the worn armour (G6, locked in): a sculk soul machine - black-grey reinforced plates
+# (H L M D K), sculk infection (T bright, S, s dark), soul power in light blue (C, animated; W white-hot; c a crack),
+# purple trim (P, p) - and on the helm the purple warden tendrils.
 HOLLOW_HELM = [
-    "....B..BB..B....",
-    "...BB.BBBB.BB...",
-    "...gGGGRRGGGg...",
-    "..HLLMMMMMMDDK..",
-    "..HLMMMMMMMMDK..",
-    "..LMMMMMMMMMDK..",
-    "..LKCCCCCCCCKK..",
-    "..LMMMMGGMMMDK..",
-    "..LMMMMGGMMMDK..",
-    "..gLMMMMMMMDgK..",
-    "...gMDKKKKDMg...",
-    "...gKK....KKg...",
+    "................",
+    ".P............P.",
+    ".PP..........PP.",
+    "..Pp.LLLLLL.pP..",
+    "..pPLHHHHHHMPp..",
+    "...LHMMMMMMMDD..",
+    "...LCCCWCCCCDD..",
+    "...LMKKKKKKMDD..",
+    "...LMKKKKKKMDD..",
+    "...SMKKKKKKMsD..",
+    "...TSMKKKKMssD..",
+    "...SsMM..MMssD..",
+    "....sDD..DDs....",
+    "................",
+    "................",
+    "................",
 ]
 HOLLOW_CHEST = [
     "................",
-    "..B..........B..",
-    ".gGGGg....gGGGg.",
-    ".HLLMK....KMMDD.",
-    ".LLMMKC..CKMMDD.",
-    ".LMMKBbGGbBKMDD.",
-    ".LMMKbBGGBbKMDD.",
-    ".LMMKBbRRbBKMDD.",
-    "...MKbBGGBbKD...",
-    "...MKBbGGbBKD...",
-    "...MKKCGGCKKD...",
-    "...LMMKGGKMMD...",
-    "...gGGGGGGGGg...",
-    "....LMMCCMMD....",
-    ".....DDDDDD.....",
+    "................",
+    ".HLLL......LLMD.",
+    ".LMMDL....LMMDD.",
+    ".LMCDLLLLLLMCDD.",
+    ".pMMDLHSSSHLMDp.",
+    "..ppDLSTCTSLDp..",
+    "....LHSCWCSMD...",
+    "....LMSTCTSMD...",
+    "....LMcSSSMMD...",
+    "....LMMcMcMMD...",
+    "....LMMMMMMMD...",
+    "....pppppppp....",
+    "................",
+    "................",
+    "................",
 ]
 HOLLOW_LEGS = [
     "................",
     "................",
-    "....gGGGGGGg....",
-    "...HLMMRRMMDD...",
-    "...LLMMKKMMDD...",
-    "...LMMKCCKMMD...",
-    "...LMMMKKMMMD...",
-    "...LMMM..MMMD...",
-    "...BBBb..BBBb...",
-    "...BCBb..BCBb...",
-    "...LMMD..LMMD...",
-    "...LMMD..LMMD...",
-    "...gGGg..gGGg...",
-    "...LMMD..LMMD...",
+    "...LLLLLLLLLD...",
+    "...LMMMCMMMMD...",
+    "....LHMD.LHMD...",
+    "....LTSD.LTSD...",
+    "....LSCD.LSCD...",
+    "....LscD.LscD...",
+    "....LHPD.LHPD...",
+    "....LMCD.LMCD...",
+    "....LMMD.LMMD...",
+    "....LMMD.LMMD...",
+    "....KKKK.KKKK...",
+    "................",
+    "................",
+    "................",
 ]
 HOLLOW_BOOTS = [
     "................",
     "................",
     "................",
-    "...Cg......gC...",
-    "...GGG....GGG...",
+    "................",
+    "...LLD....LLD...",
+    "...PPp....PPp...",
     "...LMD....LMD...",
-    "...LMMD..LMMD...",
-    "...LMMD..LMMD...",
-    "...gGGg..gGGg...",
-    "..LHMMD..LHMMD..",
-    ".BLMMKD..BLMMKD.",
-    ".BBMKMD..DMKMBB.",
-    ".KKKK......KKKK.",
+    "...LSD....LSD...",
+    "..LHMD....LHMD..",
+    "..LMMDD..LMMDD..",
+    ".LMMMMD..LMMMMD.",
+    ".CCCCCC..CCCCCC.",
+    "................",
+    "................",
+    "................",
+    "................",
 ]
 
 
 def hollow_armor(rows, frame):
     icon = Icon(16)
-    st, gd, bone, hc, cr = RAMPS["boundsteel"], RAMPS["gold"], RAMPS["bone"], RAMPS["hollowcy"], RAMPS["crimson"]
+    ds = [(20, 20, 24, 255), (36, 36, 43, 255), (53, 53, 62, 255), (74, 74, 84, 255), (98, 98, 108, 255), (126, 126, 136, 255)]
+    sk, hc, vi = RAMPS["sculk"], RAMPS["hollowcy"], RAMPS["violet"]
     for row in rows:
         assert len(row) == 16, row
-    # blackened steel: every plate tone one step darker than Bound Steel's, so tier 3 is unmistakably darker
-    cols = {"H": st[4], "L": st[3], "M": st[2], "D": st[1], "K": st[0], "G": gd[4], "g": gd[2], "B": bone[4],
-            "b": bone[2], "C": hc[[3, 4, 5, 4][frame % 4]], "R": cr[4]}
+    pulse = hc[[3, 4, 5, 4][frame % 4]]
+    cols = {"H": ds[5], "L": ds[4], "M": ds[3], "D": ds[2], "K": ds[0], "T": sk[4], "S": sk[3], "s": sk[1],
+            "C": pulse, "W": (255, 255, 255, 255), "c": hc[4], "P": vi[4], "p": vi[2]}
     pixmap(icon, rows, 0, 0, cols)
     mask = {(x, y) for y, row in enumerate(rows) for x, c in enumerate(row) if c != "."}
-    icon.outline(Part({p: (0, 0, 1) for p in mask}), [RAMPS["ink"][0], RAMPS["ink"][0]], over=False)
+    icon.outline(Part({p: (0, 0, 1) for p in mask}), [ds[1], ds[0]], over=False)
     return icon
 
 
 def hollow_helmet(frame=0):
-    """The Hollow Crown: a closed great-helm of blackened steel crowned with bone spikes on a gold band set with a
-    crimson gem, a visor slit burning hollow cyan, a gold nose guard, gilded cheek guards."""
+    """The Hollow Crown: an open-faced helm of black-grey reinforced steel, a soul conduit burning across its brow,
+    sculk creeping up its cheek guards, and the warden's tendrils in purple rising from its sides."""
     return hollow_armor(HOLLOW_HELM, frame)
 
 
 def hollow_chestplate(frame=0):
-    """The Hollow Cuirass: gold-rimmed pauldrons with bone spikes, a ribcage of bone embossed on the breastplate round a
-    gold sternum with a crimson heart-gem, hollow light in the seams, a gold belt."""
+    """The Hollow Cuirass: heavy steel pauldrons with soul cores, the soul reactor in the chest infected with sculk,
+    cracks of soul light running down from it, a purple hem."""
     return hollow_armor(HOLLOW_CHEST, frame)
 
 
 def hollow_leggings(frame=0):
-    """The Hollow Greaves: a gold belt with a crimson buckle, plated thighs, bone knee cops set with hollow light, gold
-    bands round the shins."""
+    """The Hollow Greaves: a steel belt with a soul core, plated legs with sculk infection on the thighs, purple-trimmed
+    knee guards with soul cores."""
     return hollow_armor(HOLLOW_LEGS, frame)
 
 
 def hollow_boots(frame=0):
-    """The Hollow Sabatons: cuffs of gold and hollow light, plated shins, segmented toes capped in bone."""
+    """The Hollow Sabatons: heavy steel boots with purple cuffs, a touch of sculk, glowing soul soles."""
     return hollow_armor(HOLLOW_BOOTS, frame)
 
 

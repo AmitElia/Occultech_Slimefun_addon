@@ -315,11 +315,11 @@ items:
   GUARDIAN_EYE:    {tier: 2, material: OBSERVER, cat: labor, name: Guardian Eye, purpose: "Bonus drop. A sentry that fires a guardian beam at hostile mobs within 12 blocks. A Frenzy Idol within 8 blocks makes it 1.5x stronger (never stacks)", recipe: {type: BOSS_DROP, boss: ABYSSAL_WARDEN, chance: 0.15}}
   PEARL_BED:       {tier: 2, material: TUBE_CORAL_BLOCK, cat: labor, name: Pearl Bed, purpose: "Bonus drop. Slowly makes prismarine shards and crystals into a store cargo/Networks can pull from", recipe: {type: BOSS_DROP, boss: TIDEBREAKER, chance: 0.15}}
   EMBER_BRAZIER:   {tier: 2, material: MAGMA_BLOCK, cat: labor, name: Ember Brazier, purpose: "Bonus drop. Slowly makes blaze powder into a store cargo/Networks can pull from. Never lights fires", recipe: {type: BOSS_DROP, boss: BLAZE_CHOIR, chance: 0.15}}
-  BOTTLED_GALE:    {tier: 2, material: GLASS, cat: decoration, name: Bottled Gale, purpose: "Bonus drop. Decoration: a tiny tornado swirls above the jar. Right-click to change its tint", recipe: {type: BOSS_DROP, boss: TEMPEST, chance: 0.15}}
+  BOTTLED_GALE:    {tier: 2, material: FLOWER_POT, cat: decoration, name: Bottled Gale, purpose: "Bonus drop. Decoration: a tiny tornado swirls above the jar. Right-click to change its tint", recipe: {type: BOSS_DROP, boss: TEMPEST, chance: 0.15}}
 
   # tier-2 gear replacing the treads and the harness
   WIND_CHIME:
-    {tier: 2, material: BELL, cat: charm, name: Wind Chime, purpose: "Placed: players within 32 blocks get Speed II and Jump Boost II. Chimes softly now and then (a random pentatonic note every 10-25s), never constantly",
+    {tier: 2, material: IRON_CHAIN, cat: charm, name: Wind Chime, purpose: "Placed: players within 32 blocks get Speed II and Jump Boost II. Chimes softly now and then (a random pentatonic note every 10-25s), never constantly",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:BELL, in: {TEMPEST_CORE: 6, ABYSSAL_ALLOY: 4, TIDE_GLASS: 8, mc:BREEZE_ROD: 8, ABYSSAL_SIGIL: 1}}}
   ABYSSAL_ANCHOR:
     {tier: 2, material: NETHERITE_AXE, cat: weapon, name: Abyssal Anchor, durability: 1800, repair: NAUTILUS_CORE, purpose: "Heavy weapon. Right-click to hurl a spectral anchor on a chain: the first creature hit is dragged to you and slowed. Hits harder on wet targets. Durability 1800, repair: Nautilus Core",
@@ -335,13 +335,13 @@ items:
 
   # tier-2 decorations: visual effects only, never change blocks, only animate with a player within 24 blocks
   WISP_JAR:
-    {tier: 2, material: TINTED_GLASS, cat: decoration, name: Wisp Jar, purpose: "Decoration: like a firefly bush - a few soft glowing wisps drift and blink up to 10 blocks around it, mostly at night. Right-click to change their color",
+    {tier: 2, material: FLOWER_POT, cat: decoration, name: Wisp Jar, purpose: "Decoration: like a firefly bush - a few soft glowing wisps drift and blink up to 10 blocks around it, mostly at night. Right-click to change their color",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:GLASS: 4, SPIRIT_ESSENCE: 2, mc:GLOWSTONE_DUST: 2, TIDE_GLASS: 1}}}
   ABYSSAL_LANTERN:
     {tier: 2, material: LANTERN, cat: decoration, name: Abyssal Lantern, purpose: "Decoration: a column of rising bubbles and a slow ring of light, like a lamp at the bottom of the sea. Right-click to change the light color",
      recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:SEA_LANTERN: 1, TIDE_GLASS: 2, mc:PRISMARINE_SHARD: 4, ABYSSAL_ALLOY: 1, SPIRIT_ESSENCE: 1}}}
   RUNE_OBELISK:
-    {tier: 2, material: POLISHED_BLACKSTONE_BRICK_WALL, cat: decoration, name: Rune Obelisk, purpose: "Decoration: three runes orbit the stone (smooth client-side motion), with a spark now and then. Right-click to change the rune set",
+    {tier: 2, material: CHISELED_POLISHED_BLACKSTONE, cat: decoration, name: Rune Obelisk, purpose: "Decoration: three runes orbit the stone (smooth client-side motion), with a spark now and then. Right-click to change the rune set",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:POLISHED_BLACKSTONE_BRICKS: 4, sf:BLANK_RUNE: 3, BOUND_CHALK: 1, SPIRIT_ESSENCE: 1}}}
   OCCULT_ORRERY:
     {tier: 2, material: LIGHTNING_ROD, cat: decoration, name: Occult Orrery, purpose: "Decoration: a miniature sky - little worlds of sea, fire and void circle a glowing sun (smooth client-side motion). Right-click to change the worlds",
