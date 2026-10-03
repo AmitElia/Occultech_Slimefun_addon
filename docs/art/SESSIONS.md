@@ -846,6 +846,10 @@ transformations), the server sends one update a second; the displays are never s
   (the 64 px texture across the top), and an open spellbook floating above it - violet covers tipped into a V, pages
   of violet runes lighting in turn, a soft glow.
 - Preview tool: `render3d` sampled every texture at 16 px (a 64 px inlay came out smeared) - fixed.
+- Then (the user): the pentagram goes on the ground while the altar crafts, not on its top. The top is plain stone
+  again (the floating book stays); an infusion lays O2's pentagram across the pedestal ring as a glowing floor hologram
+  (`ritual_sigil_pentagram`, 5.6 blocks), turning faster as it builds (a quarter turn in 20, 12, then 8 ticks) and
+  folding away when it finishes, the altar breaks or the server stops. Without the pack the old particle pentagram stays.
 
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the

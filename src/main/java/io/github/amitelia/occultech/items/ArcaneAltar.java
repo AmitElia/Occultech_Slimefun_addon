@@ -69,6 +69,8 @@ public class ArcaneAltar extends SlimefunItem {
     private final List<ArcaneRecipe> recipes = new ArrayList<>();
     private final Map<Location, ItemDisplay[]> shown = new HashMap<>();
     private final Map<Location, BukkitRunnable> infusing = new HashMap<>();
+    /** The pentagram glowing on the ground under a running infusion (O2's crisp pentagram, a floor hologram). */
+    private final Map<Location, RitualSigil> pentagrams = new HashMap<>();
     /** What each running infusion will produce (handed out early if the altar is broken or the server stops). */
     private final Map<Location, ItemStack> pending = new HashMap<>();
     private final Plugin plugin;
@@ -139,6 +141,7 @@ public class ArcaneAltar extends SlimefunItem {
                 if (running != null) {
                     running.cancel();
                 }
+                closePentagram(at);
                 ItemStack result = pending.remove(at);
                 if (result != null) {
                     at.getWorld().dropItemNaturally(at.clone().add(0.5, 1, 0.5), result);
@@ -267,6 +270,11 @@ public class ArcaneAltar extends SlimefunItem {
         ItemDisplay[] displays = shown.getOrDefault(altar.getLocation(), new ItemDisplay[RING.length]);
         altar.getWorld().playSound(center, Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1F, 0.8F);
         altar.getWorld().playSound(center, Sound.BLOCK_BEACON_ACTIVATE, 0.7F, 1.6F);
+        // the pentagram on the ground, across the pedestal ring; without the pack, drawn in particles
+        RitualSigil pentagram = RitualSigil.show(altar, "ritual_sigil_pentagram", 5.6F);
+        if (pentagram != null) {
+            pentagrams.put(altar.getLocation(), pentagram);
+        }
         BukkitRunnable task = new BukkitRunnable() {
             private int tick;
 
@@ -274,8 +282,13 @@ public class ArcaneAltar extends SlimefunItem {
             public void run() {
                 tick += 2;
                 double progress = tick / (double) INFUSE_TICKS;
-                // the sigil under the altar turns faster as the infusion builds
-                sigil(altar, tick * (0.03 + 0.06 * progress), progress);
+                // the pentagram turns faster as the infusion builds: a quarter turn in 20 ticks, then 12, then 8
+                int step = progress < 0.34 ? 20 : progress < 0.67 ? 12 : 8;
+                if (pentagram == null) {
+                    sigil(altar, tick * (0.03 + 0.06 * progress), progress);
+                } else if (tick % step == 0) {
+                    pentagram.turn(step);
+                }
                 for (int i = 0; i < RING.length; i++) {
                     Location pedestal = altar.getLocation().add(RING[i][0] + 0.5, 1.2, RING[i][1] + 0.5);
                     ItemDisplay display = displays[i];
@@ -308,8 +321,16 @@ public class ArcaneAltar extends SlimefunItem {
         task.runTaskTimer(plugin, 2L, 2L);
     }
 
+    private void closePentagram(Location at) {
+        RitualSigil pentagram = pentagrams.remove(at);
+        if (pentagram != null) {
+            pentagram.close();
+        }
+    }
+
     private void finish(Block altar, BlockMenu menu, ItemStack result) {
         infusing.remove(altar.getLocation());
+        closePentagram(altar.getLocation());
         pending.remove(altar.getLocation());
         clearDisplays(altar.getLocation());
         Location center = altar.getLocation().add(0.5, 1.4, 0.5);
@@ -328,7 +349,7 @@ public class ArcaneAltar extends SlimefunItem {
         }
     }
 
-    /** A circle with a turning pentagram on the ground, drawn in particles. */
+    /** Without the resource pack: a circle with a turning pentagram on the ground, drawn in particles. */
     private static void sigil(Block altar, double spin, double progress) {
         Location base = altar.getLocation().add(0.5, 0.15, 0.5);
         double radius = 2.6;
@@ -411,6 +432,7 @@ public class ArcaneAltar extends SlimefunItem {
         new ArrayList<>(shown.keySet()).forEach(this::clearDisplays);
         infusing.values().forEach(BukkitRunnable::cancel);
         infusing.clear();
+        new ArrayList<>(pentagrams.keySet()).forEach(this::closePentagram);
         // the server is stopping: hand out the results now rather than lose them
         pending.forEach((at, result) -> {
             BlockMenu menu = BlockStorage.getInventory(at.getBlock());

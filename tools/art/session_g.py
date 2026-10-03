@@ -214,9 +214,9 @@ def chalk_glyph(variant=0):
 
 def arcane_altar():
     """The Arcane Altar (a custom block, 12 px tall): dark stone on a gold-banded plinth, its sides set with ember-
-    glowing arcane eyes; the Session B pentagram (O2's crisp redraw) inlaid in its top and glowing, and above it an open
-    spellbook floating - the vanilla enchanting table's book, which the custom block no longer has - its pages written
-    in violet runes that pulse."""
+    glowing arcane eyes; a plain stone top slab, and above it an open spellbook floating - the vanilla enchanting table's
+    book, which the custom block no longer has - its pages written in violet runes that pulse. (Its pentagram is on the
+    ground: the infusion lays O2's crisp pentagram across the pedestal ring - ArcaneAltar.)"""
     m = Model("arcane_altar")
     ash, gd, em, vi, bone = RAMPS["ash"], RAMPS["gold"], RAMPS["ember"], RAMPS["violet"], RAMPS["bone"]
     def side(x, y):                                                                # 16 wide x 8 tall body face
@@ -236,8 +236,6 @@ def arcane_altar():
     t_slab = m.texture("slab", tex(16, 2, lambda x, y: tone(ash, (0.8 if y == 0 else 0.5) - x * 0.01)))
     t_top = m.texture("top", bevel_grad(16, 16, ash, top=0.45, bottom=0.28, side=0.06, edge=0.2))
     t_under = m.texture("under", tex(16, 16, lambda x, y: ash[1]))
-    sigil = Image.open(os.path.join(os.path.dirname(OUT), "session-b", "sigil_pentagram.png")).convert("RGBA")
-    t_sigil = m.texture("pentagram", sigil)
     pages = []
     for f in range(4):
         def page(x, y, f=f):                                                       # both pages, 12 x 6
@@ -253,7 +251,6 @@ def arcane_altar():
     exact_box(m, (0, 0, 0), (16, 2, 16), t_base, top=t_under, bottom=t_under)            # gold-banded plinth
     exact_box(m, (1, 2, 1), (15, 10, 15), t_side, top=t_under, bottom=t_under)           # the body
     exact_box(m, (0, 10, 0), (16, 12, 16), t_slab, top=t_top, bottom=t_under)            # the top slab
-    m.box((0.5, 12.03, 0.5), (15.5, 12.03, 15.5), {"up": (t_sigil, [0, 0, 16, 16])}, light=15, shade=False)  # pentagram
     # the open book, floating: two halves tipped into a shallow V over the altar's middle
     for sign in (-1, 1):
         x0, x1 = (4.0, 8.0) if sign < 0 else (8.0, 12.0)
@@ -4256,7 +4253,8 @@ def ritual_sigil(name, key):
 SIGILS = [("Initiate sigil", lambda: ritual_sigil("initiate", "ritual_sigil_t0")),
           ("Bound sigil", lambda: ritual_sigil("bound", "ritual_sigil_t1")),
           ("Abyssal sigil", lambda: ritual_sigil("abyssal", "ritual_sigil_t2")),
-          ("Hollow sigil", lambda: ritual_sigil("hollow", "ritual_sigil_t3"))]
+          ("Hollow sigil", lambda: ritual_sigil("hollow", "ritual_sigil_t3")),
+          ("Arcane pentagram", lambda: ritual_sigil("pentagram", "ritual_sigil_pentagram"))]   # the Arcane Altar's infusion
 
 
 GROUPS = {"g1": G1, "g2": G2, "g3": G3, "g4": G4, "g5": G5, "g7": G7, "sigils": SIGILS}

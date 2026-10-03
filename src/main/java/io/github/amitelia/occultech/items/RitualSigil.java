@@ -53,13 +53,19 @@ final class RitualSigil {
      */
     @Nullable
     static RitualSigil show(@Nonnull Block altar, int tier, int size) {
+        return show(altar, "ritual_sigil_t" + tier, size);
+    }
+
+    /** Lays the sigil {@code model} ({@code occultech:<model>}) {@code size} blocks across, centred on the block. */
+    @Nullable
+    static RitualSigil show(@Nonnull Block altar, @Nonnull String model, float size) {
         var pack = io.github.amitelia.occultech.Occultech.instance().resourcePack();
         if (pack == null || !pack.hasSigils()) {
             return null;
         }
         RitualSigil sigil = new RitualSigil();
         Location at = altar.getLocation().add(0.5, FLOOR, 0.5);
-        sigil.layers.add(new Layer(spawn(at, "ritual_sigil_t" + tier), size, 1F));
+        sigil.layers.add(new Layer(spawn(at, model), size, 1F));
         for (Layer layer : sigil.layers) {
             layer.display().setTransformation(transform(0F, 0.01F));
         }
@@ -77,7 +83,8 @@ final class RitualSigil {
         turn(STEP);
     }
 
-    private void turn(int ticks) {
+    /** The next quarter turn, taking {@code ticks} (shorter: faster). */
+    void turn(int ticks) {
         turns++;
         for (Layer layer : layers) {
             animate(layer.display(), transform((float) (turns * layer.speed() * Math.PI / 2), layer.size()), ticks);

@@ -1383,6 +1383,16 @@ final class SelfTest {
         }
         String problem = plugin.registrar().arcaneAltar().tryInfuse(arcane, menu);
         check("Arcane Altar starts an infusion with the ingredients in the middle", problem == null, String.valueOf(problem));
+        check("the infusion lays the pentagram on the ground", floorSigils(arcane).contains("ritual_sigil_pentagram"),
+            String.valueOf(floorSigils(arcane)));
+    }
+
+    /** The floor sigil holograms on a block (their models). */
+    private static List<String> floorSigils(Block at) {
+        return at.getWorld().getNearbyEntitiesByType(org.bukkit.entity.ItemDisplay.class, at.getLocation().add(0.5, 0.1, 0.5), 1.5).stream()
+            .map(d -> d.getItemStack().getItemMeta())
+            .filter(meta -> meta != null && meta.hasItemModel() && meta.getItemModel().getKey().startsWith("ritual_sigil"))
+            .map(meta -> meta.getItemModel().getKey()).toList();
     }
 
     private void arcaneResult() {
@@ -1393,6 +1403,7 @@ final class SelfTest {
         boolean emptied = menu != null && java.util.Arrays.stream(io.github.amitelia.occultech.items.ArcaneAltar.INPUTS)
             .allMatch(s -> menu.getItemInSlot(s) == null || menu.getItemInSlot(s).getType().isAir());
         check("Arcane Altar used up exactly the recipe's ingredients", emptied, "inputs left over");
+        check("the pentagram is gone after the infusion", floorSigils(arcane).isEmpty(), String.valueOf(floorSigils(arcane)));
         check("Floor Sigil registered", SlimefunItem.getById(ItemKeys.slimefunId("FLOOR_SIGIL")) != null, "missing");
         check("every boss has a Hollow Halo style", io.github.amitelia.occultech.items.HaloStyle.values().length >= 19, "too few");
         plugin.rituals().holograms().clear(arcane);

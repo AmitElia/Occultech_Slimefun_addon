@@ -6,7 +6,6 @@
     "slab": "occultech:block/arcane_altar_slab",
     "top": "occultech:block/arcane_altar_top",
     "under": "occultech:block/arcane_altar_under",
-    "pentagram": "occultech:block/arcane_altar_pentagram",
     "pages": "occultech:block/arcane_altar_pages",
     "cover": "occultech:block/arcane_altar_cover",
     "particle": "occultech:block/arcane_altar_side"
@@ -210,31 +209,6 @@
         },
         "down": {
           "texture": "#under",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        0.5,
-        12.03,
-        0.5
-      ],
-      "to": [
-        15.5,
-        12.03,
-        15.5
-      ],
-      "shade": false,
-      "light_emission": 15,
-      "faces": {
-        "up": {
-          "texture": "#pentagram",
           "uv": [
             0,
             0,
