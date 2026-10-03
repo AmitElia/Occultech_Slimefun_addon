@@ -668,6 +668,11 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   (`dreadlance_blade`: a leaf of blackened steel, pulsing purple ridge, sheen, one honed soul-blue edge, outlined) -
   vanilla's 1.7x stretch makes it big and crisp like a vanilla spear head. The in-hand sprite is retired; the dark icon
   stays.
+  Then (the user): no 2D head, and no purple down the middle ("doesn't make sense") - a 3D head one block thick with
+  vanilla's spear-head shape. Now the head is `DREAD_HEAD`, vanilla's head traced from its 32 px in-hand sprite and stood
+  upright (a triangle widening to 7 px with two barbs at its back corners, half a unit per pixel - vanilla's own size),
+  built as voxels 1 unit deep (vanilla's 0.85 depth scale makes that as deep as a pixel is wide), one box per pixel run,
+  shaded like vanilla's: a bright steel ridge, a lit half, a shadowed half, no accent colour.
 
 **Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing

@@ -1937,36 +1937,61 @@ SPEAR_DISPLAY = {   # vanilla 26.2 item/spear_in_hand: how a spear is held (its 
 }
 
 
-def dreadlance_blade(frame):
-    """The Dreadlance's blade as a flat sprite (16 px, tip at the top) - drawn like a vanilla spear head, upgraded: a
-    leaf of blackened steel, a purple ridge down its middle that pulses, a sheen beside it, the left edge honed and
-    catching soul-blue light, the right edge in shadow, outlined in the steel's own black."""
-    ds = [(16, 16, 20, 255), (30, 30, 37, 255), (46, 46, 56, 255), (66, 66, 78, 255), (92, 92, 106, 255), (126, 126, 140, 255)]
-    vi, hc = RAMPS["violet"], RAMPS["hollowcy"]
-    half = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4, 4, 3.5, 3, 2.5, 2, 1.5, 1]   # the leaf's half-width, tip (top) to base
+DREAD_HEAD = [   # vanilla's spear head, upright (tip at the top), one pixel = half a unit, as in vanilla's 32 px sprite
+    "...#...",
+    "...#...",
+    "..###..",
+    "..###..",
+    ".#####.",
+    ".#####.",
+    "#######",
+    "#######",
+    "#.....#",    # the barbs at its back corners
+]
+
+
+def dreadlance_head():
+    """The head's texture, shaded like vanilla's spear head in blackened steel: a bright ridge down the middle catching
+    the light, the lit half lighter than the shadowed one, its edges darker - no accent colour."""
+    ds = [(16, 16, 20, 255), (30, 30, 37, 255), (46, 46, 56, 255), (66, 66, 78, 255), (92, 92, 106, 255), (132, 132, 146, 255)]
     img = blank()
-    for y in range(16):
-        h = half[y]
-        for x in range(16):
-            k = x - 7.5
-            if abs(k) > h:
-                continue
-            if abs(k) < 0.6:
-                col = [vi[3], vi[4], vi[5], vi[4]][frame % 4]          # the ridge
-            elif abs(k) > h - 1.0:
-                col = [hc[3], hc[4], hc[3], hc[2]][frame % 4] if k < 0 else ds[1]   # honed edges
-            elif k < 0 and abs(k) < 1.6:
-                col = ds[4]                                            # sheen beside the ridge
+    for r, row in enumerate(DREAD_HEAD):
+        cols = [c for c, ch in enumerate(row) if ch == "#"]
+        for c in cols:
+            edge = c in (min(cols), max(cols)) or r == len(DREAD_HEAD) - 2
+            if r == len(DREAD_HEAD) - 1:
+                col = ds[3] if c < 3 else ds[2]                       # barbs
+            elif c == 3:
+                col = ds[5]                                           # the ridge
+            elif c < 3:
+                col = ds[3] if edge else ds[4]                        # lit half
             else:
-                col = ds[3] if k < 0 else ds[2]
-            img.putpixel((x, y), col)
-    filled = {(x, y) for y in range(16) for x in range(16) if img.getpixel((x, y))[3]}
-    for (x, y) in list(filled):
-        for (dx, dy) in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            q = (x + dx, y + dy)
-            if 0 <= q[0] < 16 and 0 <= q[1] < 16 and q not in filled:
-                img.putpixel(q, ds[0])
+                col = ds[2] if edge else ds[3]                        # shadowed half
+            img.putpixel((c, r), col)
     return img
+
+
+def dreadlance_head_boxes(m, tex, y0, px=0.5, depth=1.0):
+    """Builds DREAD_HEAD as voxels one pixel thick: one box per run of pixels in a row, every face textured with the
+    pixels it shows (like vanilla's generated item models)."""
+    rows = len(DREAD_HEAD)
+    for r, row in enumerate(DREAD_HEAD):
+        yb = y0 + (rows - 1 - r) * px
+        c = 0
+        while c < len(row):
+            if row[c] != "#":
+                c += 1
+                continue
+            c1 = c
+            while c1 + 1 < len(row) and row[c1 + 1] == "#":
+                c1 += 1
+            x0 = 8 - len(row) * px / 2 + c * px
+            x1 = x0 + (c1 - c + 1) * px
+            run = [c, r, c1 + 1, r + 1]
+            m.box((x0, yb, 8 - depth / 2), (x1, yb + px, 8 + depth / 2),
+                  {"south": (tex, run), "north": (tex, [c1 + 1, r, c, r + 1]), "up": (tex, run), "down": (tex, run),
+                   "west": (tex, [c, r, c + 1, r + 1]), "east": (tex, [c1, r, c1 + 1, r + 1])})
+            c = c1 + 1
 
 
 def dreadlance_held():
@@ -1975,8 +2000,9 @@ def dreadlance_held():
     and 0.85x in depth, so the staff's parts are drawn twice as deep as wide to come out round).
     A detailed 3D staff in the Hollow armour's scheme - a steel butt spike with a soul gem, a ferrule, a violet-black
     wrapped grip between steel collars, a dark sculk shaft with raised steel rings inlaid with soul light, a socket with
-    glowing purple gems and swept-back lugs - and a flat 2D blade like a vanilla spear head (a plane in the sprite's
-    plane, so vanilla's stretch makes it big and crisp): blackened steel, a pulsing purple ridge, a honed soul-blue edge."""
+    glowing purple gems and swept-back lugs - and a head of blackened steel with exactly vanilla's spear-head shape
+    and size, built as voxels one pixel thick (depth 1 unit, which vanilla's 0.85x depth stretch makes as deep as a
+    pixel is wide), shaded like vanilla's: a bright ridge, a lit half and a shadowed half."""
     m = Model("dreadlance_held")
     m.part = True
     sk, vi, hc, ink = RAMPS["sculk"], RAMPS["violet"], RAMPS["hollowcy"], RAMPS["ink"]
@@ -1996,7 +2022,7 @@ def dreadlance_held():
     t_grip = m.texture("grip", grip)
     t_soul = m.texture("soul", [fill(hc, [3, 4, 5, 4][f]) for f in range(4)])
     t_gem = m.texture("gem", [fill(vi, [3, 4, 5, 4][f]) for f in range(4)])
-    t_blade = m.texture("blade", [dreadlance_blade(f) for f in range(4)])
+    t_head = m.texture("head", dreadlance_head())
     p = lambda w, y0, y1, tex, d=None, light=0, cx=8.0: prism(m, w, y0, y1, tex, cx=cx, d=d if d else w * 2, light=light)  # noqa: E731
     p(0.5, -3.0, -2.2, t_steel)                            # butt spike
     p(0.9, -2.2, -1.4, t_steel)
@@ -2016,9 +2042,8 @@ def dreadlance_held():
               light=15)                                    # a purple gem each side
         p(0.4, 11.8, 13.2, t_steel, cx=8 + sx * 1.25, d=0.7)   # lugs swept back from the socket
         p(0.3, 11.0, 12.0, t_steel, cx=8 + sx * 1.55, d=0.5)
-    # the blade: a flat sprite in the spear's plane (x-y), seen from both sides
-    m.box((5.2, 13.0, 8.0), (10.8, 20.6, 8.0), {"south": (t_blade, [0, 0, 16, 16]), "north": (t_blade, [16, 0, 0, 16])},
-          shade=False)
+    p(1.0, 13.4, 13.9, t_dark)                             # neck, between the barbs
+    dreadlance_head_boxes(m, t_head, 13.4)                  # the head: vanilla's spear head, one pixel thick
     m.display = SPEAR_DISPLAY
     return diagonal(m, angle=45)
 
