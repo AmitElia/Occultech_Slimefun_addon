@@ -721,6 +721,16 @@ Everliving Coral, Watchful Eyeblossom) stay vanilla blocks, as decided.
 - **Upright interim blocks:** the skins are upright objects, so `BlockSkinService.upright` stands a sideways-placed
   chain (Wind Chime) or lightning rod (Orrery) up (neither needs support), and a Soulfire Brazier can't be hung from a
   ceiling (placement cancelled with a message). Self-test checks both, and that the six have skins.
+- **Texture round** (the user: "crude... flat" - loved the shapes, and the jar and gale): new helpers `tone` (a ramp
+  in clean steps), `bevel_grad` (a face lit from the top-left: vertical gradient, slight left-right falloff, bevelled
+  frame) and `engraved_dial`. Obelisk: polished violet-black stone (`OBELISK_STONE`, 8 steps), bevelled plinth frames
+  round recessed panels (upper/left walls in shadow, lower/right lips lit, floor fading down), one continuous gradient up
+  the whole obelisk (each box maps its slice of one 16-tall texture), a bold stave-and-eye rune. Brazier: a rounded
+  stem shaded as a cylinder with a collar and a rivet, the bowl brightening up to its lip, soul runes that truly glow
+  (a glowing layer, small diamonds lighting in turn), overlapping shaded coal lumps over heat hottest at the heart.
+  Orrery: the foot's tops are dials - abyss stone with a soft radial gradient in bevelled gold frames, an engraved gold
+  ring and ticks - and the column is fluted (ridges lit, grooves dark, brighter toward the top).
+  Preview note: render3d's painter sort can interleave a glowing layer with the face just under it; it's fine in game.
  (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
   its model: real blocks, so they appear and vanish instantly, render at full distance, cost no entities and can't be

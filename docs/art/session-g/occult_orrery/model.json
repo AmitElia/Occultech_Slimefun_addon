@@ -2,9 +2,13 @@
   "parent": "minecraft:block/block",
   "textures": {
     "foot": "occultech:block/occult_orrery_foot",
-    "foot_top": "occultech:block/occult_orrery_foot_top",
+    "foot2": "occultech:block/occult_orrery_foot2",
+    "dial": "occultech:block/occult_orrery_dial",
+    "dial2": "occultech:block/occult_orrery_dial2",
+    "under": "occultech:block/occult_orrery_under",
     "column": "occultech:block/occult_orrery_column",
     "band": "occultech:block/occult_orrery_band",
+    "band_top": "occultech:block/occult_orrery_band_top",
     "rod": "occultech:block/occult_orrery_rod",
     "ring": "occultech:block/occult_orrery_ring",
     "gem": "occultech:block/occult_orrery_gem",
@@ -61,7 +65,7 @@
           ]
         },
         "up": {
-          "texture": "#foot_top",
+          "texture": "#dial",
           "uv": [
             0,
             0,
@@ -70,7 +74,7 @@
           ]
         },
         "down": {
-          "texture": "#foot_top",
+          "texture": "#under",
           "uv": [
             0,
             0,
@@ -94,7 +98,7 @@
       "shade": true,
       "faces": {
         "north": {
-          "texture": "#foot",
+          "texture": "#foot2",
           "uv": [
             0,
             0,
@@ -103,7 +107,7 @@
           ]
         },
         "south": {
-          "texture": "#foot",
+          "texture": "#foot2",
           "uv": [
             0,
             0,
@@ -112,7 +116,7 @@
           ]
         },
         "west": {
-          "texture": "#foot",
+          "texture": "#foot2",
           "uv": [
             0,
             0,
@@ -121,7 +125,7 @@
           ]
         },
         "east": {
-          "texture": "#foot",
+          "texture": "#foot2",
           "uv": [
             0,
             0,
@@ -130,7 +134,7 @@
           ]
         },
         "up": {
-          "texture": "#foot_top",
+          "texture": "#dial2",
           "uv": [
             0,
             0,
@@ -139,7 +143,7 @@
           ]
         },
         "down": {
-          "texture": "#foot_top",
+          "texture": "#dial2",
           "uv": [
             0,
             0,
@@ -151,12 +155,12 @@
     },
     {
       "from": [
-        3.6,
+        3.4,
         1.5,
         7.4
       ],
       "to": [
-        4.8,
+        4.6,
         2.3,
         8.6
       ],
@@ -221,12 +225,12 @@
     },
     {
       "from": [
-        11.2,
+        11.4,
         1.5,
         7.4
       ],
       "to": [
-        12.399999999999999,
+        12.6,
         2.3,
         8.6
       ],
@@ -293,12 +297,12 @@
       "from": [
         7.4,
         1.5,
-        3.6
+        3.4
       ],
       "to": [
         8.6,
         2.3,
-        4.8
+        4.6
       ],
       "shade": true,
       "light_emission": 12,
@@ -363,12 +367,12 @@
       "from": [
         7.4,
         1.5,
-        11.2
+        11.4
       ],
       "to": [
         8.6,
         2.3,
-        12.399999999999999
+        12.6
       ],
       "shade": true,
       "light_emission": 12,
@@ -479,7 +483,7 @@
           ]
         },
         "up": {
-          "texture": "#column",
+          "texture": "#band_top",
           "uv": [
             0,
             0,
@@ -488,7 +492,7 @@
           ]
         },
         "down": {
-          "texture": "#column",
+          "texture": "#band_top",
           "uv": [
             0,
             0,
@@ -548,7 +552,7 @@
           ]
         },
         "up": {
-          "texture": "#band",
+          "texture": "#band_top",
           "uv": [
             0,
             0,
@@ -557,7 +561,7 @@
           ]
         },
         "down": {
-          "texture": "#band",
+          "texture": "#band_top",
           "uv": [
             0,
             0,
@@ -617,7 +621,7 @@
           ]
         },
         "up": {
-          "texture": "#band",
+          "texture": "#band_top",
           "uv": [
             0,
             0,
@@ -626,7 +630,7 @@
           ]
         },
         "down": {
-          "texture": "#band",
+          "texture": "#band_top",
           "uv": [
             0,
             0,
@@ -686,7 +690,7 @@
           ]
         },
         "up": {
-          "texture": "#band",
+          "texture": "#band_top",
           "uv": [
             0,
             0,
@@ -695,7 +699,7 @@
           ]
         },
         "down": {
-          "texture": "#band",
+          "texture": "#band_top",
           "uv": [
             0,
             0,
@@ -824,7 +828,7 @@
           ]
         },
         "up": {
-          "texture": "#band",
+          "texture": "#band_top",
           "uv": [
             0,
             0,
@@ -833,7 +837,7 @@
           ]
         },
         "down": {
-          "texture": "#band",
+          "texture": "#band_top",
           "uv": [
             0,
             0,

@@ -3,10 +3,13 @@
   "textures": {
     "foot": "occultech:block/soulfire_brazier_foot",
     "foot_top": "occultech:block/soulfire_brazier_foot_top",
+    "under": "occultech:block/soulfire_brazier_under",
     "stem": "occultech:block/soulfire_brazier_stem",
-    "bowl": "occultech:block/soulfire_brazier_bowl",
     "bowl_low": "occultech:block/soulfire_brazier_bowl_low",
+    "bowl": "occultech:block/soulfire_brazier_bowl",
+    "runes": "occultech:block/soulfire_brazier_runes",
     "rim": "occultech:block/soulfire_brazier_rim",
+    "rim_top": "occultech:block/soulfire_brazier_rim_top",
     "coals": "occultech:block/soulfire_brazier_coals",
     "particle": "occultech:block/soulfire_brazier_foot"
   },
@@ -70,7 +73,7 @@
           ]
         },
         "down": {
-          "texture": "#foot_top",
+          "texture": "#under",
           "uv": [
             0,
             0,
@@ -208,7 +211,7 @@
           ]
         },
         "down": {
-          "texture": "#foot_top",
+          "texture": "#under",
           "uv": [
             0,
             0,
@@ -237,7 +240,7 @@
             0,
             0,
             12,
-            3.4
+            5
           ]
         },
         "south": {
@@ -246,7 +249,7 @@
             0,
             0,
             12,
-            3.4
+            5
           ]
         },
         "west": {
@@ -255,7 +258,7 @@
             0,
             0,
             12,
-            3.4
+            5
           ]
         },
         "east": {
@@ -264,16 +267,116 @@
             0,
             0,
             12,
-            3.4
+            5
           ]
         },
         "down": {
-          "texture": "#foot_top",
+          "texture": "#under",
           "uv": [
             0,
             0,
-            10,
-            10
+            12,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        8,
+        14.03
+      ],
+      "to": [
+        14,
+        11.4,
+        14.03
+      ],
+      "shade": false,
+      "light_emission": 15,
+      "faces": {
+        "south": {
+          "texture": "#runes",
+          "uv": [
+            0,
+            0,
+            12,
+            5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        8,
+        1.97
+      ],
+      "to": [
+        14,
+        11.4,
+        1.97
+      ],
+      "shade": false,
+      "light_emission": 15,
+      "faces": {
+        "north": {
+          "texture": "#runes",
+          "uv": [
+            0,
+            0,
+            12,
+            5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        14.03,
+        8,
+        2
+      ],
+      "to": [
+        14.03,
+        11.4,
+        14
+      ],
+      "shade": false,
+      "light_emission": 15,
+      "faces": {
+        "east": {
+          "texture": "#runes",
+          "uv": [
+            0,
+            0,
+            12,
+            5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        1.97,
+        8,
+        2
+      ],
+      "to": [
+        1.97,
+        11.4,
+        14
+      ],
+      "shade": false,
+      "light_emission": 15,
+      "faces": {
+        "west": {
+          "texture": "#runes",
+          "uv": [
+            0,
+            0,
+            12,
+            5
           ]
         }
       }
@@ -353,7 +456,7 @@
           ]
         },
         "up": {
-          "texture": "#rim",
+          "texture": "#rim_top",
           "uv": [
             0,
             0,
@@ -362,7 +465,7 @@
           ]
         },
         "down": {
-          "texture": "#rim",
+          "texture": "#rim_top",
           "uv": [
             0,
             0,
@@ -422,7 +525,7 @@
           ]
         },
         "up": {
-          "texture": "#rim",
+          "texture": "#rim_top",
           "uv": [
             0,
             0,
@@ -431,7 +534,7 @@
           ]
         },
         "down": {
-          "texture": "#rim",
+          "texture": "#rim_top",
           "uv": [
             0,
             0,
@@ -491,7 +594,7 @@
           ]
         },
         "up": {
-          "texture": "#rim",
+          "texture": "#rim_top",
           "uv": [
             0,
             0,
@@ -500,7 +603,7 @@
           ]
         },
         "down": {
-          "texture": "#rim",
+          "texture": "#rim_top",
           "uv": [
             0,
             0,
@@ -560,7 +663,7 @@
           ]
         },
         "up": {
-          "texture": "#rim",
+          "texture": "#rim_top",
           "uv": [
             0,
             0,
@@ -569,7 +672,7 @@
           ]
         },
         "down": {
-          "texture": "#rim",
+          "texture": "#rim_top",
           "uv": [
             0,
             0,

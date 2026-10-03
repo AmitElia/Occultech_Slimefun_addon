@@ -3925,31 +3925,81 @@ def wind_chime():
     return m
 
 
+def tone(ramp, t):
+    """The ramp's colour at t (0 = darkest, 1 = brightest), in clean steps."""
+    return ramp[max(0, min(len(ramp) - 1, round(t * (len(ramp) - 1))))]
+
+
+def bevel_grad(w, h, ramp, top=0.75, bottom=0.3, side=0.08, edge=0.25, frame=1):
+    """A face lit from the top-left: a vertical gradient (lighter at the top), a slight left-to-right falloff, and a
+    bevelled frame `frame` texels deep - its top and left edges lit, its bottom and right edges in shadow."""
+    def f(x, y):
+        t = top + (bottom - top) * (y / max(1, h - 1)) + side * (1 - 2 * x / max(1, w - 1))
+        if y < frame or x < frame:
+            t = max(t, top) + edge
+        elif y >= h - frame or x >= w - frame:
+            t = min(t, bottom) - edge
+        return tone(ramp, t)
+    return tex(w, h, f)
+
+
+def engraved_dial(n, ramp_stone, ramp_gold, ring_r):
+    """A round dial face n x n: a gold bevelled frame, stone inside shaded by a soft radial gradient (lit toward the
+    top-left), an engraved gold ring with four tick marks."""
+    c = (n - 1) / 2
+    def f(x, y):
+        if y == 0 or x == 0:
+            return ramp_gold[5]
+        if y == n - 1 or x == n - 1:
+            return ramp_gold[2]
+        if y == 1 or x == 1:
+            return ramp_gold[4]
+        if y == n - 2 or x == n - 2:
+            return ramp_gold[3]
+        dx, dy = x - c, y - c
+        d = math.hypot(dx, dy)
+        if abs(d - ring_r) < 0.5:
+            return ramp_gold[4] if dx + dy < 0 else ramp_gold[3]
+        if (abs(dx) < 0.6 or abs(dy) < 0.6) and ring_r + 0.5 < d < ring_r + 1.6:
+            return ramp_gold[3]                                          # ticks
+        lit = 0.65 - d / (n * 0.9) - (dx + dy) / (n * 3.0)
+        return tone(ramp_stone, lit)
+    return tex(n, n, f)
+
+
 def occult_orrery():
-    """The Occult Orrery (vanilla: lightning rod, kept upright): a brass orrery - an abyss-stone foot ringed in gold with
-    sea-glow gems, a fluted gold column banded twice, a slim rod up to a cup that holds the sun (the sun and its worlds
-    are DecorationService's displays, 1.2 above the block's centre), and two gold armillary rings round the sun, one
-    level and one upright, inside the worlds' orbits."""
+    """The Occult Orrery (vanilla: lightning rod, kept upright): a brass orrery - a two-step foot whose tops are dials
+    of abyss stone, softly shaded, inside bevelled gold frames with an engraved gold ring and tick marks, sea-glow gems
+    at its four sides; a fluted gold column (ridges lit, grooves in shadow, brighter toward the top) banded twice; a
+    slim rod up to a cup that holds the sun (the sun and its worlds are DecorationService's displays, 1.2 above the
+    block's centre); two gold armillary rings round the sun, one level and one upright, inside the worlds' orbits."""
     m = Model("occult_orrery")
     gd, ab, sg = RAMPS["gold"], RAMPS["abyss"], RAMPS["seaglow"]
-    t_foot = m.texture("foot", tex(10, 2, lambda x, y: gd[5] if y == 0 else gd[3]))
-    t_foot_top = m.texture("foot_top", tex(10, 10, lambda x, y: gd[4] if x in (0, 9) or y in (0, 9) else
-                                           ab[2] if (x + y) % 4 else ab[3]))
-    t_column = m.texture("column", tex(5, 13, lambda x, y: gd[5] if x == 0 else gd[2] if x in (2, 4) else gd[4]))
-    t_band = m.texture("band", tex(6, 1, lambda x, y: gd[5]))
+    t_foot = m.texture("foot", bevel_grad(10, 2, gd, top=0.7, bottom=0.35, edge=0.3))
+    t_foot2 = m.texture("foot2", bevel_grad(7, 2, gd, top=0.7, bottom=0.35, edge=0.3))
+    t_dial = m.texture("dial", engraved_dial(10, ab, gd, 2.6))
+    t_dial2 = m.texture("dial2", engraved_dial(7, ab, gd, 1.6))
+    t_under = m.texture("under", tex(10, 10, lambda x, y: gd[1]))
+    def flute(x, y):
+        ridge = x % 2 == 0
+        t = (0.95 if ridge else 0.5) - x * 0.07 + (0.12 if y < 3 else 0.06 if y < 7 else 0)
+        return tone(gd, t)
+    t_column = m.texture("column", tex(5, 13, flute))
+    t_band = m.texture("band", tex(6, 1, lambda x, y: tone(gd, 0.95 - x * 0.08)))
+    t_band_top = m.texture("band_top", bevel_grad(6, 6, gd, top=0.8, bottom=0.55, edge=0.2))
     t_rod = m.texture("rod", tex(2, 8, lambda x, y: gd[5] if x == 0 else gd[3]))
     t_ring = m.texture("ring", fill(gd, 4))
-    t_gem = m.texture("gem", [fill(sg, [3, 4, 5, 4][f]) for f in range(4)])
-    side_box(m, (3, 0, 3), (13, 1.5, 13), t_foot, top=t_foot_top, bottom=t_foot_top)   # the foot
-    side_box(m, (4.5, 1.5, 4.5), (11.5, 3, 11.5), t_foot, top=t_foot_top)
-    for (x, z) in ((3.6, 7.4), (11.2, 7.4), (7.4, 3.6), (7.4, 11.2)):                    # sea-glow gems
+    t_gem = m.texture("gem", [tex(2, 2, lambda x, y, f=f: sg[[3, 4, 5, 4][f] - (1 if x + y == 2 else 0)]) for f in range(4)])
+    side_box(m, (3, 0, 3), (13, 1.5, 13), t_foot, top=t_dial, bottom=t_under)            # the foot
+    side_box(m, (4.5, 1.5, 4.5), (11.5, 3, 11.5), t_foot2, top=t_dial2)
+    for (x, z) in ((3.4, 7.4), (11.4, 7.4), (7.4, 3.4), (7.4, 11.4)):                    # sea-glow gems
         side_box(m, (x, 1.5, z), (x + 1.2, 2.3, z + 1.2), t_gem, light=12)
-    side_box(m, (5.8, 3, 5.8), (10.2, 16, 10.2), t_column)                              # the column
+    side_box(m, (5.8, 3, 5.8), (10.2, 16, 10.2), t_column, top=t_band_top)              # the column
     for y in (6.0, 12.0):
-        side_box(m, (5.4, y, 5.4), (10.6, y + 0.8, 10.6), t_band)
-    side_box(m, (5.4, 15.4, 5.4), (10.6, 16.4, 10.6), t_band)
+        side_box(m, (5.4, y, 5.4), (10.6, y + 0.8, 10.6), t_band, top=t_band_top)
+    side_box(m, (5.4, 15.4, 5.4), (10.6, 16.4, 10.6), t_band, top=t_band_top)
     side_box(m, (7.1, 16.4, 7.1), (8.9, 24.2, 8.9), t_rod)                              # the rod
-    side_box(m, (6.2, 24.2, 6.2), (9.8, 24.9, 9.8), t_band)                             # the sun's cup
+    side_box(m, (6.2, 24.2, 6.2), (9.8, 24.9, 9.8), t_band, top=t_band_top)             # the sun's cup
     sun = (8.0, 27.2, 8.0)
     octagon_ring(m, sun, 4.6, 0.6, "xz", t_ring)                                        # level ring
     octagon_ring(m, sun, 4.0, 0.6, "xy", t_ring)                                        # upright ring
@@ -3958,96 +4008,140 @@ def occult_orrery():
 
 
 def soulfire_brazier():
-    """The Soulfire Brazier (vanilla: soul lantern, kept standing): a pedestal brazier of bound steel - a broad foot, a
-    riveted stem, a deep bowl ringed with soul runes that glow, a raised rim - full of dark coals with heat breathing
-    in the cracks between them (glowing, animated). The flames are DecorationService's particles (soul or ember)."""
+    """The Soulfire Brazier (vanilla: soul lantern, kept standing): a pedestal brazier of bound steel, shaded in clean
+    steps lit from the top-left - a bevelled foot, a rounded stem (bright down its lit side, dark down the other) with a
+    collar and rivets, a deep bowl brightening up to its lip and ringed with soul runes that truly glow (a layer just
+    over the steel), a raised rim catching the light - full of shaded coals with heat breathing in the cracks, hottest
+    at the heart (glowing, animated). The flames are DecorationService's particles (soul or ember)."""
     m = Model("soulfire_brazier")
     st, sp, ash = RAMPS["boundsteel"], RAMPS["spirit"], RAMPS["ash"]
-    t_foot = m.texture("foot", tex(10, 2, lambda x, y: st[4] if y == 0 else st[2]))
-    t_foot_top = m.texture("foot_top", tex(10, 10, lambda x, y: st[3] if x in (0, 9) or y in (0, 9) else st[2]))
-    t_stem = m.texture("stem", tex(7, 6, lambda x, y: st[4] if x == 0 else st[1] if x == 6 else
-                                   st[4] if (x, y) in ((2, 1), (4, 1), (2, 4), (4, 4)) else st[2]))
+    t_foot = m.texture("foot", bevel_grad(10, 2, st, top=0.65, bottom=0.3, edge=0.3))
+    t_foot_top = m.texture("foot_top", bevel_grad(10, 10, st, top=0.7, bottom=0.35, side=0.12, edge=0.25))
+    t_under = m.texture("under", tex(12, 12, lambda x, y: st[1]))
+    cyl = [0.72, 0.9, 0.75, 0.6, 0.48, 0.38, 0.25]                                     # a rounded stem's shading
+    def stem(x, y):
+        if y == 0:
+            return tone(st, cyl[x] + 0.2)                                           # the collar
+        if y == 5:
+            return tone(st, cyl[x] - 0.25)
+        if (x, y) in ((3, 2),):
+            return st[5]                                                            # a rivet and its shadow
+        if (x, y) in ((4, 3),):
+            return st[1]
+        return tone(st, cyl[x] - y * 0.03)
+    t_stem = m.texture("stem", tex(7, 6, stem))
+    t_bowl_low = m.texture("bowl_low", tex(10, 1, lambda x, y: tone(st, 0.35 - x * 0.02)))
+    def bowl(x, y):
+        return tone(st, [0.95, 0.62, 0.5, 0.38, 0.22][y] - x * 0.012)                # brighter up to the lip
+    t_bowl = m.texture("bowl", tex(12, 5, bowl))
     runes = []
     for f in range(4):
-        def b(x, y, f=f):
-            if y == 0:
-                return st[4]
-            if y == 3:
-                return st[1]
-            if y in (1, 2) and x % 4 in (1, 2):
-                rune = (x // 4 + f) % 3
-                return sp[[3, 4, 5][rune]] if (x + y) % 2 == 0 or rune == 2 else st[2]
-            return st[2] if x % 4 else st[3]
-        runes.append(tex(16, 4, b))
-    t_bowl = m.texture("bowl", runes)
-    t_bowl_low = m.texture("bowl_low", tex(16, 1, lambda x, y: st[2]))
-    t_rim = m.texture("rim", tex(16, 1, lambda x, y: st[5] if x % 5 else st[4]))
+        def r(x, y, f=f):                                                     # small diamonds lighting in turn
+            k, c = divmod(x, 4)
+            if c == 3 or not 1 <= y <= 3 or (y != 2 and c != 1):
+                return None
+            lit = (k - f) % 3 == 0
+            return sp[4 if lit and (c, y) == (1, 2) else 3 if lit else 2]
+        runes.append(tex(12, 5, r))
+    t_runes = m.texture("runes", runes)
+    t_rim = m.texture("rim", tex(16, 2, lambda x, y: tone(st, (0.85 if y == 0 else 0.55) - x * 0.015)))
+    t_rim_top = m.texture("rim_top", tex(16, 2, lambda x, y: tone(st, 0.85 if y == 0 else 0.7)))
     coals = []
     for f in range(4):
         rnd = random.Random(707)
-        img = tex(12, 12, lambda x, y, f=f: sp[[2, 3, 4, 3][(x + y + f) % 4]])        # heat in the cracks
-        for _ in range(18):
-            cx, cy = rnd.randrange(0, 11), rnd.randrange(0, 11)
-            put(img, [(cx, cy), (cx + 1, cy), (cx, cy + 1), (cx + 1, cy + 1)], ash[1])
-            put(img, [(cx, cy)], ash[3])
+        def heat(x, y, f=f):
+            d = math.hypot(x - 5.5, y - 5.5)
+            return tone(sp, 0.95 - d * 0.13 + [0, 0.08, 0.14, 0.06][(f + x + y) % 4] - 0.1)   # hottest at the heart
+        img = tex(11, 11, heat)
+        for _ in range(17):                                                         # overlapping coal lumps,
+            cx, cy = rnd.randrange(-1, 11), rnd.randrange(-1, 11)                   # lit top-left
+            w = rnd.choice((2, 2, 2, 3))
+            for dy in range(w):
+                for dx in range(w):
+                    t = ash[3] if dx + dy == 0 else ash[1] if dx + dy >= 2 * w - 2 else ash[2]
+                    if 0 <= cx + dx < 11 and 0 <= cy + dy < 11:
+                        img.putpixel((cx + dx, cy + dy), t)
         coals.append(img)
     t_coals = m.texture("coals", coals)
-    side_box(m, (3, 0, 3), (13, 1.5, 13), t_foot, top=t_foot_top, bottom=t_foot_top)    # the foot
+    side_box(m, (3, 0, 3), (13, 1.5, 13), t_foot, top=t_foot_top, bottom=t_under)       # the foot
     side_box(m, (4.8, 1.5, 4.8), (11.2, 7, 11.2), t_stem, top=t_foot_top)               # the stem
-    side_box(m, (3, 7, 3), (13, 8, 13), t_bowl_low, top=t_foot_top, bottom=t_foot_top)  # the bowl
-    m.box((2, 8, 2), (14, 11.4, 14), {d: (t_bowl, [0, 0, 12, 3.4]) for d in ("north", "south", "west", "east")} |
-          {"down": (t_foot_top, [0, 0, 10, 10])}, light=0)
+    side_box(m, (3, 7, 3), (13, 8, 13), t_bowl_low, top=t_foot_top, bottom=t_under)     # the bowl
+    m.box((2, 8, 2), (14, 11.4, 14), {d: (t_bowl, [0, 0, 12, 5]) for d in ("north", "south", "west", "east")} |
+          {"down": (t_under, [0, 0, 12, 12])})
+    o = 0.03
+    for d, frm, to in (("south", (2, 8, 14 + o), (14, 11.4, 14 + o)), ("north", (2, 8, 2 - o), (14, 11.4, 2 - o)),
+                       ("east", (14 + o, 8, 2), (14 + o, 11.4, 14)), ("west", (2 - o, 8, 2), (2 - o, 11.4, 14))):
+        m.box(frm, to, {d: (t_runes, [0, 0, 12, 5])}, light=15, shade=False)        # the runes glow
     m.box((2.6, 11.2, 2.6), (13.4, 11.25, 13.4), {"up": (t_coals, [0, 0, 11, 11])}, light=15, shade=False)  # the coals
     for (frm, to) in (((1.5, 11, 1.5), (14.5, 12.2, 2.6)), ((1.5, 11, 13.4), (14.5, 12.2, 14.5)),
                       ((1.5, 11, 2.6), (2.6, 12.2, 13.4)), ((13.4, 11, 2.6), (14.5, 12.2, 13.4))):  # the rim
-        side_box(m, frm, to, t_rim)
+        side_box(m, frm, to, t_rim, top=t_rim_top)
     return m
 
 
-OBELISK_RUNE = ["..#..", "#.#.#", ".###.", "..#..", ".#.#."]
+OBELISK_RUNE = ["..#..", ".###.", "##.##", ".###.", "..#..", "..#..", ".###."]   # a stave with an eye
+OBELISK_STONE = hexes("#0b0a12", "#13111d", "#1c1929", "#262236", "#322d45", "#403957", "#524a6c", "#6a6188")
 
 
 def rune_obelisk():
-    """The Rune Obelisk (vanilla: chiseled polished blackstone, a full cube): a plinth of dark dressed stone - chiseled
-    border, a sea-glow inlay round its top - and on it a tapering blackstone obelisk to a small pyramidion, a rune
-    carved down each face glowing in sea glow (pulsing), a glowing point at its tip. Three runes orbit the plinth
-    (DecorationService's displays)."""
+    """The Rune Obelisk (vanilla: chiseled polished blackstone, a full cube): polished violet-black stone shaded in clean
+    steps, lit from the top-left. A plinth with a bevelled frame on each face round a recessed panel (its upper and left
+    walls in shadow, its lower and right lips catching light, its floor fading darker downward) under a sea-glow inlay;
+    a stepped ledge; a tapering obelisk whose faces brighten toward the top (one continuous gradient up its whole
+    height), lit down their left edges, to a pyramidion with a glowing point - a sea-glow rune down each face (pulsing).
+    Three runes orbit the plinth (DecorationService's displays)."""
     m = Model("rune_obelisk")
-    ink, ash, sg = RAMPS["ink"], RAMPS["ash"], RAMPS["seaglow"]
-    stone = [ink[1], ink[2], ink[3], ash[1], ash[2]]
+    sg = RAMPS["seaglow"]
+    S = OBELISK_STONE
     def plinth(x, y):
-        if x in (0, 15) or y in (0, 15):
-            return stone[3]                                   # dressed edge
-        if y == 2:
-            return sg[3]                                      # the inlay
-        if 3 <= x <= 12 and 4 <= y <= 13:                     # a recessed panel
-            if x == 3 or y == 4:
-                return stone[0]
-            if x == 12 or y == 13:
-                return stone[2]
-            return stone[1] if (x * 5 + y * 3) % 11 else stone[0]
-        return stone[2]
+        if y == 0 or x == 0:
+            return tone(S, 0.95)                                            # the frame's lit edges
+        if y == 15 or x == 15:
+            return tone(S, 0.1)
+        if y == 1 or x == 1:
+            return tone(S, 0.75)
+        if y == 14 or x == 14:
+            return tone(S, 0.22)
+        if y == 3:
+            return sg[3] if 2 < x < 13 else tone(S, 0.5)                    # the inlay
+        if 4 <= x <= 11 and 5 <= y <= 12:                                   # the recessed panel
+            if y == 5 or x == 4:
+                return tone(S, 0.08)
+            if y == 12 or x == 11:
+                return tone(S, 0.62)
+            return tone(S, 0.5 - (y - 6) * 0.04 - (x - 5) * 0.01)
+        return tone(S, 0.62 - y * 0.02)
     t_plinth = m.texture("plinth", tex(16, 16, plinth))
-    t_plinth_top = m.texture("plinth_top", tex(16, 16, lambda x, y: stone[3] if x in (0, 15) or y in (0, 15) else
-                                                stone[0] if x in (1, 14) or y in (1, 14) else stone[2]))
-    t_shaft = m.texture("shaft", tex(8, 12, lambda x, y: stone[3] if x == 0 else stone[0] if x == 7 else stone[1]))
+    t_plinth_top = m.texture("plinth_top", bevel_grad(16, 16, S, top=0.6, bottom=0.35, side=0.06, edge=0.3, frame=2))
+    t_ledge_top = m.texture("ledge_top", bevel_grad(12, 12, S, top=0.65, bottom=0.4, edge=0.25))
+    t_ledge = m.texture("ledge", tex(16, 2, lambda x, y: tone(S, 0.9 if y == 0 else 0.45)))
+    H = 16
+    def shaft(x, y):                                                       # one gradient up the whole obelisk
+        t = 0.8 - 0.55 * (y / (H - 1)) + [0.22, 0.1, 0.02, 0, 0, -0.04, -0.1, -0.2][x]
+        return tone(S, t)
+    t_shaft = m.texture("shaft", tex(8, H, shaft))
+    t_cap = m.texture("cap", bevel_grad(8, 8, S, top=0.85, bottom=0.55, edge=0.15))
     glows = []
     for f in range(4):
         def g(x, y, f=f):
-            r, c = y - 2, x - 1
-            if 0 <= r < 5 and 0 <= c < 5 and OBELISK_RUNE[r][c] == "#":
+            r, c = y - 1, x - 1
+            if 0 <= r < len(OBELISK_RUNE) and 0 <= c < 5 and OBELISK_RUNE[r][c] == "#":
                 return sg[[3, 4, 5, 4][f]]
             return None
         glows.append(tex(7, 9, g))
     t_glow = m.texture("glow", glows)
     t_tip = m.texture("tip", [fill(sg, [4, 5, 5, 4][f]) for f in range(4)])
+    top_y, scale = 31.9, H / (31.9 - 17.0)
+    def shaft_box(a, y0, y1):
+        v0, v1 = (top_y - y1) * scale, (top_y - y0) * scale
+        faces = {d: (t_shaft, [0, v0, 8, v1]) for d in ("north", "south", "west", "east")}
+        faces["up"] = (t_cap, [0, 0, 8, 8])
+        m.box((a, y0, a), (16 - a, y1, 16 - a), faces)
     side_box(m, (0, 0, 0), (16, 16, 16), t_plinth, top=t_plinth_top, bottom=t_plinth_top)   # the plinth
-    side_box(m, (2, 16, 2), (14, 17, 14), t_shaft, top=t_plinth_top)
-    side_box(m, (4, 17, 4), (12, 19, 12), t_shaft, top=t_plinth_top)
-    for (a, y0, y1) in ((4.5, 19, 28), (5.2, 28, 29.4)):                                     # the shaft
-        side_box(m, (a, y0, a), (16 - a, y1, 16 - a), t_shaft)
-    side_box(m, (6.0, 29.4, 6.0), (10.0, 30.4, 10.0), t_shaft)                               # pyramidion
-    side_box(m, (6.9, 30.4, 6.9), (9.1, 31.2, 9.1), t_shaft)
+    m.box((2, 16, 2), (14, 17, 14), {d: (t_ledge, [0, 0, 12, 1]) for d in ("north", "south", "west", "east")} |
+          {"up": (t_ledge_top, [0, 0, 12, 12])})                                                # a ledge
+    for (a, y0, y1) in ((4, 17, 19), (4.5, 19, 28), (5.2, 28, 29.4), (6.0, 29.4, 30.4), (6.9, 30.4, 31.2)):
+        shaft_box(a, y0, y1)                                                                   # the obelisk
     side_box(m, (7.5, 31.2, 7.5), (8.5, 31.9, 8.5), t_tip, light=15)
     o = 0.03
     for d, frm, to in (("south", (4.5, 19, 11.5 + o), (11.5, 28, 11.5 + o)), ("north", (4.5, 19, 4.5 - o), (11.5, 28, 4.5 - o)),
