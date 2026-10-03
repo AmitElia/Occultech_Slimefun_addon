@@ -11,7 +11,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **D** | Tier-1 item icons (23; the 6 placed blocks move to G) | **Done** - fixed after review |
 | **E** | Tier-2 item icons (26: materials, drops, weapons, armor, decor objects) | **Done** - fixed after review |
 | **F** | Tier-3 item icons (25 + bow states + the Aegis shield texture; Hollow Sigil from A) | **Done** - reworked after review |
-| **G** | Blocks, held models, worn armor, placed decorations - split into G1-G7 (see *Session G*) | **G1-G2 done** |
+| **G** | Blocks, held models, worn armor, placed decorations - split into G1-G7 (see *Session G*) | **G1-G6 done**, G7 next |
 | H | Menu backgrounds | - |
 | I | Effect sprites (motes, embers, shards, shockwave rings, beams) | - |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
@@ -449,14 +449,14 @@ bow) is designed as that model's texture, not as an icon.
 | **G3** | Tier-2 blocks (Occult Forge, Soul Condenser, Abyssal Glyph, Abyssal Altar, Guardian Eye, Pearl Bed, Ember Brazier, Abyssal Lantern, Tidal Tile, Prismatic Netherrack) | **Done** |
 | **G4** | Tier-3 blocks (Hollow Assembler, Hollow Glyph, Hollow Altar, Servitor Nexus, Resin Tile) | **Done** |
 | **G5** | Held 3D models: Occult Codex, Wyrmbreath, Guardian's Gaze, Abyssal Anchor, Dreadlance, Soulfire Censer, Heartwood Aegis (shield model) | **Done** |
-| **G6** | Worn armor (`equippable` layers): Abyssal, Hollow | **Done** |
+| **G6** | Worn armor (`equippable` layers): Abyssal, Hollow | **Done - final, approved** (v10) |
 | G7 | Placed decorations (Moonlit Lily, Witchcap, Everliving Coral, jars, chime, orrery, brazier, obelisk, eyeblossom) | - |
-| **H** | **After the textures, before shipping: move the blocks to Nexo's note-block custom blocks** (see below) | - |
+| **N** | **After the textures, before shipping: move the blocks to Nexo's note-block custom blocks** (see below) | - |
 
 **Direction (the user, 2026-10-01): the server runs Nexo, so Occultech's blocks are built for Nexo's custom-block
 system.** Every block is authored as its final Nexo look: a block model (`occultech:block/<key>`) on a full-cube
 note-block block - the hitbox is always a full block, but the model may show less than a block (bowls, egg, lantern,
-glyphs...). The display-entity skins are the interim way to see them until Session H; while they last, a skin still
+glyphs...). The display-entity skins are the interim way to see them until Session N; while they last, a skin still
 has to enclose its interim vanilla block.
 
 **G4 blocks** (`python tools/art/session_g.py g4`) - the Hollow family: sculk black-teal, old bone, hollow cyan, a
@@ -631,8 +631,13 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   moment; the infection is a radial gradient (glowing soul heart, bright sculk, darker sculk, veins reaching out over the
   plates, a shadow under its raised edge) placed on purpose - spreading from the chest reactor with a mirrored pair of
   cracks, climbing the spine behind, a matching patch on each pauldron and thigh - over a calm, gradient underlayer.
+- **Locked in by the user as the final armour sets** ("that's great!!! lock these in"). What made them work, for any
+  later armour: vanilla coverage (netherite's mask), all 3D in the helm (open face, horns/fins as flat silhouette planes
+  as the warden does it), no back pieces (capes/elytras), clean bevelled plates and a calm underlayer, accents placed
+  on the armour's structure and mirrored, gradients that explain a material (the infection), sporadic animated bolts.
+  Still open: the Hollow icons (Session F) don't match the worn set.
 
-**Session H plan - Nexo note-block blocks**
+**Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
   its model: real blocks, so they appear and vanish instantly, render at full distance, cost no entities and can't be
   cleared by ClearLag. Animated textures keep working (they are textures in the model).

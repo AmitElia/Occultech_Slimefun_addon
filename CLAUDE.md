@@ -50,7 +50,7 @@ pack/            ResourcePackService: the resource pack built by tools/art/build
                  item_model per item, Nexo hand-off or a self-hosted web server (config resource-pack.*)
 items/BlockSkinService  block skins: an item display with Occultech's model over each placed block (Session G)
                  - interim: the server runs Nexo, and before shipping the blocks move to Nexo note-block custom
-                 blocks (full-cube hitbox, model may look smaller) - docs/art/SESSIONS.md, Session H
+                 blocks (full-cube hitbox, model may look smaller) - docs/art/SESSIONS.md, Session N
 ```
 
 **Bosses:** recipes.yml `bosses:` gives name/tier/drops/offerings; behavior is a `BossBehavior` subclass registered in
