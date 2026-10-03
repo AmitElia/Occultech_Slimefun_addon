@@ -3435,7 +3435,7 @@ def hollow_helm_worn():
     # of the flickering spark texture (so neighbours never flicker together)
     spots = ((-13.0, 23.5, 6.2, "z"), (-10.0, 26.0, 9.6, "x"), (-14.5, 18.5, 9.4, "y45"), (-7.0, 22.0, 5.6, "z"),
              (-4.5, 16.0, 10.2, "x"), (-11.5, 13.5, 6.8, "y45"), (-2.5, 24.0, 7.0, "z"), (-8.5, 18.0, 10.6, "x"),
-             (-15.0, 25.5, 8.0, "z"), (-5.5, 27.5, 8.6, "y45"))
+             (-14.0, 25.5, 8.0, "z"), (-5.5, 27.5, 8.6, "y45"))
     for side in (0, 1):
         for k, (x, y, z, orient) in enumerate(spots):
             px = x if side == 0 else 16 - x
