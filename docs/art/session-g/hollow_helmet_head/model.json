@@ -1,11 +1,10 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
+    "helm_top": "occultech:block/hollow_helmet_head_helm_top",
     "helm_side": "occultech:block/hollow_helmet_head_helm_side",
     "helm_back": "occultech:block/hollow_helmet_head_helm_back",
     "brow": "occultech:block/hollow_helmet_head_brow",
-    "sculk": "occultech:block/hollow_helmet_head_sculk",
-    "souls": "occultech:block/hollow_helmet_head_souls",
     "core": "occultech:block/hollow_helmet_head_core",
     "conduit": "occultech:block/hollow_helmet_head_conduit",
     "tendril_r": "occultech:block/hollow_helmet_head_tendril_r",
@@ -13,7 +12,7 @@
     "zap_r": "occultech:block/hollow_helmet_head_zap_r",
     "zap_l": "occultech:block/hollow_helmet_head_zap_l",
     "bolt": "occultech:block/hollow_helmet_head_bolt",
-    "particle": "occultech:block/hollow_helmet_head_helm_side"
+    "particle": "occultech:block/hollow_helmet_head_helm_top"
   },
   "elements": [
     {
@@ -66,7 +65,7 @@
           ]
         },
         "up": {
-          "texture": "#sculk",
+          "texture": "#helm_top",
           "uv": [
             0,
             0,
@@ -87,25 +86,69 @@
     },
     {
       "from": [
-        0.6,
-        16.05,
-        0.6
+        2.2,
+        16.0,
+        2.2
       ],
       "to": [
-        15.4,
-        16.05,
-        15.6
+        13.8,
+        16.8,
+        14.4
       ],
-      "shade": false,
-      "light_emission": 15,
+      "shade": true,
       "faces": {
-        "up": {
-          "texture": "#souls",
+        "north": {
+          "texture": "#helm_side",
           "uv": [
             0,
             0,
             16,
-            16
+            1
+          ]
+        },
+        "south": {
+          "texture": "#helm_side",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "west": {
+          "texture": "#helm_side",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "east": {
+          "texture": "#helm_side",
+          "uv": [
+            0,
+            0,
+            16,
+            1
+          ]
+        },
+        "up": {
+          "texture": "#helm_top",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#helm_side",
+          "uv": [
+            0,
+            0,
+            16,
+            1
           ]
         }
       }
@@ -325,54 +368,54 @@
           "texture": "#brow",
           "uv": [
             0,
-            0,
+            12,
             16,
-            4
+            16
           ]
         },
         "south": {
           "texture": "#brow",
           "uv": [
             0,
-            0,
+            12,
             16,
-            4
+            16
           ]
         },
         "west": {
           "texture": "#brow",
           "uv": [
             0,
-            0,
+            12,
             16,
-            4
+            16
           ]
         },
         "east": {
           "texture": "#brow",
           "uv": [
             0,
-            0,
+            12,
             16,
-            4
+            16
           ]
         },
         "up": {
           "texture": "#brow",
           "uv": [
             0,
-            0,
+            12,
             16,
-            4
+            16
           ]
         },
         "down": {
           "texture": "#brow",
           "uv": [
             0,
-            0,
+            12,
             16,
-            4
+            16
           ]
         }
       }
@@ -486,57 +529,57 @@
       "shade": true,
       "faces": {
         "north": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         },
         "south": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         },
         "west": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         },
         "east": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         },
         "up": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         },
         "down": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         }
       }
@@ -555,57 +598,57 @@
       "shade": true,
       "faces": {
         "north": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         },
         "south": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         },
         "west": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         },
         "east": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         },
         "up": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         },
         "down": {
-          "texture": "#brow",
+          "texture": "#helm_side",
           "uv": [
             0,
-            0,
+            8,
             2,
-            8
+            16
           ]
         }
       }
@@ -780,13 +823,13 @@
     },
     {
       "from": [
-        -12.0,
-        21.0,
+        -14.0,
+        20.0,
         8.0
       ],
       "to": [
-        28.0,
-        28.0,
+        30.0,
+        34.0,
         8.0
       ],
       "shade": false,
@@ -795,18 +838,18 @@
         "north": {
           "texture": "#bolt",
           "uv": [
-            0,
-            0,
             16,
+            0,
+            0,
             16
           ]
         },
         "south": {
           "texture": "#bolt",
           "uv": [
+            0,
+            0,
             16,
-            0,
-            0,
             16
           ]
         }

@@ -3319,58 +3319,74 @@ def hollow_armor():
 
 def hollow_helm_worn():
     """The Hollow Crown worn - the head of a sculk soul machine, open-faced (the whole face shows): a helmet of
-    black-grey reinforced steel (a domed top grown over with sculk, its soul spots glowing; ear plates and a rim band on
-    the sides; a crest down the back to a flared neck rim), a brow band with a soul conduit and core, cheek guards; and
+    black-grey reinforced steel (a domed top with a crest; ear plates and a rim band on the sides; a crest down the back
+    to a flared neck rim), sculk creeping over it from the rim and along the brow, a brow band with a soul conduit and core, cheek guards; and
     at the helmet's sides the warden's two tendrils - vanilla's own shape, recoloured purple - set exactly as on the
     warden's head (flat, reaching out and up from the sides), conducting soul lightning: it crackles over each tendril
-    and arcs between their tips (animated, glowing)."""
+    and a thick bolt arcs from tip to tip over the head (animated, glowing)."""
     m = Model("hollow_helmet_head")
     m.part = True
     vi = RAMPS["violet"]
     top_i, side_i, back_i = tex_helm(STEEL, tone=3)
-    t_side, t_back = m.texture("helm_side", side_i), m.texture("helm_back", back_i)
-    t_brow = m.texture("brow", tex_smooth(STEEL, tone=3))
-    crown = sculk(781, frames=6, spots=3)
-    t_sculk = m.texture("sculk", crown)
-    t_souls = m.texture("souls", soul_glow(crown))
+    growth = sculk(781, frames=1, spots=3)
+    rnd = random.Random(783)
+    edge = [11 + rnd.choice((-2, -1, 0, 0, 1)) for _ in range(16)]
+
+    def creep(img, rows_from_bottom=True, ragged=edge):
+        """Sculk creeping over the steel from an edge, in a ragged line, a few soul spots in it."""
+        img = img.copy()
+        for x in range(16):
+            for y in range(16):
+                if (y >= ragged[x]) if rows_from_bottom else (y <= 15 - ragged[x]):
+                    img.putpixel((x, y), growth.getpixel((x, y)))
+            y0 = ragged[x] if rows_from_bottom else 15 - ragged[x]
+            if 0 <= y0 < 16:
+                img.putpixel((x, y0), RAMPS["sculk"][0])
+        return img
+    t_top = m.texture("helm_top", top_i)
+    t_side = m.texture("helm_side", creep(side_i))
+    t_back = m.texture("helm_back", creep(back_i))
+    t_brow = m.texture("brow", creep(tex_smooth(STEEL, tone=3), ragged=[14 + rnd.choice((-1, 0, 0, 1)) for _ in range(16)]))
     t_core = m.texture("core", [fill(SOUL, [3, 4, 5, 5, 4, 3][f]) for f in range(6)])
     t_conduit = m.texture("conduit", tex_glow_lines(SOUL, [[(x, 7) for x in range(1, 15)], [(x, 8) for x in range(1, 15)]]))
     right_t, left_t = warden_tendrils(vi)
     t_tr, t_tl = m.texture("tendril_r", right_t), m.texture("tendril_l", left_t)
     t_zr, t_zl = m.texture("zap_r", tendril_lightning(right_t)), m.texture("zap_l", tendril_lightning(left_t))
     bolts = []
-    for f in range(6):
+    for f in range(6):   # a thick bolt arcing from horn tip to horn tip: a white core, soul-blue body, purple glow
         b = blank()
         rnd = random.Random(801 + f)
-        y = 8
         for x in range(16):
-            y = max(2, min(13, y + rnd.choice((-2, -1, 0, 1, 2))))
-            b.putpixel((x, y), (255, 255, 255, 255)); b.putpixel((x, y + 1), SOUL[4])
-            if rnd.random() < 0.2:
-                b.putpixel((x, max(0, y - 2)), vi[5])
+            arc = 12.5 - 10.5 * math.sin(math.pi * (x + 0.5) / 16)      # up over the head and down to the other tip
+            y = int(round(arc + rnd.choice((-1, 0, 0, 1))))
+            for dy, col in ((-2, vi[4]), (-1, SOUL[4]), (0, (255, 255, 255, 255)), (1, SOUL[4]), (2, vi[4])):
+                if 0 <= y + dy < 16 and b.getpixel((x, y + dy))[3] == 0 or dy in (-1, 0, 1) and 0 <= y + dy < 16:
+                    b.putpixel((x, y + dy), col)
+            if rnd.random() < 0.25 and 0 <= y + 3 < 16:
+                b.putpixel((x, y + 3), SOUL[3])                          # a fork flicking off
         bolts.append(b)
     t_bolt = m.texture("bolt", bolts)
     # the helmet: a sculk-grown dome, sides with ear plates and a rim, a back with a crest and neck rim
-    m.cube((0.6, 14.6, 0.6), (15.4, 16.0, 15.6), (t_side, [0, 0, 16, 2]), top=(t_sculk, [0, 0, 16, 16]))
-    m.box((0.6, 16.05, 0.6), (15.4, 16.05, 15.6), {"up": (t_souls, [0, 0, 16, 16])}, shade=False, light=15)
+    m.cube((0.6, 14.6, 0.6), (15.4, 16.0, 15.6), (t_side, [0, 0, 16, 2]), top=(t_top, [0, 0, 16, 16]))
+    m.cube((2.2, 16.0, 2.2), (13.8, 16.8, 14.4), (t_side, [0, 0, 16, 1]), top=(t_top, [2, 2, 14, 14]))
     m.box((0.6, 1.4, 14.6), (15.4, 14.6, 16.0), {"south": (t_back, [0, 2, 16, 16]), "north": (t_side, [0, 2, 16, 16]),
           "west": (t_side, [0, 2, 2, 16]), "east": (t_side, [0, 2, 2, 16]), "down": (t_side, [0, 14, 16, 16])})
     for x0 in (0.0, 14.6):
         m.cube((x0, 2.0, 0.6), (x0 + 1.4, 14.6, 14.6), (t_side, [0, 3, 16, 16]))
     # brow band with a soul conduit and core; cheek guards (the face stays open)
-    m.cube((0.2, 10.6, -0.4), (15.8, 14.6, 1.2), (t_brow, [0, 0, 16, 4]))
+    m.cube((0.2, 10.6, -0.4), (15.8, 14.6, 1.2), (t_brow, [0, 12, 16, 16]))   # its lower edge grown with sculk
     m.box((0.4, 10.6, -0.45), (15.6, 12.2, -0.45), {"north": (t_conduit, [0, 6, 16, 9])}, shade=False, light=15)
     m.box((6.8, 11.6, -1.0), (9.2, 13.8, -0.4), {d: (t_core, [0, 0, 2, 2]) for d in FACES_ALL}, light=15)
     for x0 in (0.2, 14.0):
-        m.cube((x0, 2.0, -0.2), (x0 + 1.8, 10.6, 1.2), (t_brow, [0, 0, 2, 8]))
+        m.cube((x0, 2.0, -0.2), (x0 + 1.8, 10.6, 1.2), (t_side, [0, 8, 2, 16]))   # cheek guards, sculk at their foot
     # the warden's tendrils, flat at the helmet's sides as on the warden (16 px out, from 7 below the top to 9 above):
     # each drawn on both faces with its base at the helmet; lightning crackling over it
     for (x0, x1, tex, zap, flip) in ((-16.0, 0.0, t_tr, t_zr, False), (16.0, 32.0, t_tl, t_zl, False)):
         m.box((x0, 9.0, 8.0), (x1, 25.0, 8.0), {"south": (tex, [0, 0, 16, 16]), "north": (tex, [16, 0, 0, 16])}, light=6)
         m.box((x0, 9.0, 7.9), (x1, 25.0, 7.9), {"north": (zap, [16, 0, 0, 16])}, shade=False, light=15)
         m.box((x0, 9.0, 8.1), (x1, 25.0, 8.1), {"south": (zap, [0, 0, 16, 16])}, shade=False, light=15)
-    # soul lightning arcing between the tendrils' tips
-    m.box((-12.0, 21.0, 8.0), (28.0, 28.0, 8.0), {"north": (t_bolt, [0, 0, 16, 16]), "south": (t_bolt, [16, 0, 0, 16])},
+    # soul lightning arcing from tendril tip to tendril tip, up over the head
+    m.box((-14.0, 20.0, 8.0), (30.0, 34.0, 8.0), {"north": (t_bolt, [16, 0, 0, 16]), "south": (t_bolt, [0, 0, 16, 16])},
           shade=False, light=15)
     m.display = HEAD_DISPLAY
     return m

@@ -610,6 +610,10 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   with the vanilla fire) recoloured into the violet ramp by brightness (`warden_tendrils`), set exactly as on the
   warden's head - flat planes at the helmet's sides, 16 px out, from 7 below the top to 9 above - softly glowing;
   soul lightning crackles over each (`tendril_lightning`, kept inside the shape) and arcs between their tips.
+- The user: "I love both of these a lot more!" Last change: the Hollow helm's lightning is a thick bolt (white core,
+  soul-blue body, purple glow, re-forking each frame) arcing from tendril tip to tendril tip up over the head; the
+  sculk-grown top is gone (a steel dome with its crest); instead sculk creeps over the steel from the rim on the sides
+  and back, along the brow band's lower edge and at the foot of the cheek guards.
 
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
