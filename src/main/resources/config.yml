@@ -25,6 +25,13 @@ ember-brazier:
   # Seconds between blaze powder (same rules as the Brood Egg).
   seconds-per-item: 60
 
+custom-blocks:
+  # Occultech's blocks as real custom blocks, like Nexo makes them: each block look is a note-block (or, for the flat
+  # ritual glyphs, a tripwire) state that the resource pack shows as the block's model. auto: on, unless Nexo is
+  # installed (Nexo owns those states; blocks keep their display skins until the Nexo hookup - docs/nexo-migration.md).
+  # blocks: always on. skins: the older display-entity skins.
+  # Needs block-updates.disable-noteblock-updates and disable-tripwire-updates: true in config/paper-global.yml.
+  mode: auto
 resource-pack:
   # Give Occultech items their own models (the `item_model` component, namespace "occultech"; no vanilla item is
   # retextured). Without the pack loaded, those items show as a missing model - so keep delivery on, or carry the pack

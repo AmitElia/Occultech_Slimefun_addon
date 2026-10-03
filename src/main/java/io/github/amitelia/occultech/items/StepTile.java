@@ -30,12 +30,22 @@ public class StepTile extends SlimefunItem {
                     return; // let players place blocks against tiles while sneaking
                 }
                 e.cancel();
-                int current = looks.indexOf(block.getType());
-                Material next = looks.get((current + 1) % looks.size());
-                // no physics: coral out of water must not be updated into dead coral
-                block.setBlockData(next.createBlockData(), false);
-                if (io.github.amitelia.occultech.Occultech.instance().skins() != null) {
-                    io.github.amitelia.occultech.Occultech.instance().skins().ensure(block);   // the skin follows the look
+                var skins = io.github.amitelia.occultech.Occultech.instance().skins();
+                Material next;
+                if (skins != null && skins.blocks().isCustom(getId())) {
+                    // a custom block: the look is its state
+                    CustomBlockService.Look now = skins.blocks().lookOf(block);
+                    int look = ((now == null ? 0 : now.look()) + 1) % looks.size();
+                    skins.blocks().place(block, getId(), look, null);
+                    next = lookMaterial(look);
+                } else {
+                    int current = looks.indexOf(block.getType());
+                    next = looks.get((current + 1) % looks.size());
+                    // no physics: coral out of water must not be updated into dead coral
+                    block.setBlockData(next.createBlockData(), false);
+                    if (skins != null) {
+                        skins.ensure(block);   // the skin follows the look
+                    }
                 }
                 e.getPlayer().sendActionBar(MenuUtils.color("&d" + getItemName() + "&7: " + MenuUtils.pretty(next)));
             }));
@@ -46,6 +56,16 @@ public class StepTile extends SlimefunItem {
      * The block skin variant for a look: 0 for the item's own block, then the other looks by name (the art pipeline
      * draws them in that order); -1 if the type isn't one of this tile's looks.
      */
+    /** The look's material (its name in messages): the reverse of {@link #lookVariant}. */
+    public Material lookMaterial(int variant) {
+        Material own = getItem().getType();
+        if (variant <= 0) {
+            return own;
+        }
+        List<Material> others = looks.stream().filter(m -> m != own).sorted(Comparator.comparing(Material::name)).toList();
+        return variant - 1 < others.size() ? others.get(variant - 1) : own;
+    }
+
     public int lookVariant(Material type) {
         Material own = getItem().getType();
         if (type == own) {

@@ -12,8 +12,8 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **E** | Tier-2 item icons (26: materials, drops, weapons, armor, decor objects) | **Done** - fixed after review |
 | **F** | Tier-3 item icons (25 + bow states + the Aegis shield texture; Hollow Sigil from A) | **Done** - reworked after review |
 | **G** | Blocks, held models, worn armor, placed decorations - split into G1-G7 (see *Session G*) | **Done** (G1-G7) |
-| H | Menu backgrounds | - |
-| I | Effect sprites (motes, embers, shards, shockwave rings, beams) | - |
+| H | Menu backgrounds | later (moved after N) |
+| ~~I~~ | ~~Effect sprites~~ - **dropped** (the user: retexturing particles would change other plugins' and vanilla effects) | - |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
 
 ## Session A - style and toolkit (2026-10-01)
@@ -451,7 +451,7 @@ bow) is designed as that model's texture, not as an icon.
 | **G5** | Held 3D models: Occult Codex, Wyrmbreath, Guardian's Gaze, Abyssal Anchor, Dreadlance, Soulfire Censer, Heartwood Aegis (shield model) | **Done** |
 | **G6** | Worn armor (`equippable` layers): Abyssal, Hollow | **Done - final, approved** (v10) |
 | **G7** | Placed decorations: Wisp Jar, Bottled Gale, Wind Chime, Occult Orrery, Soulfire Brazier, Rune Obelisk (the plants stay vanilla) | **Done** (in-game check pending) |
-| **N** | **After the textures, before shipping: move the blocks to Nexo's note-block custom blocks** (see below) | - |
+| **N** | **Custom blocks the Nexo way** - Nexo-style without Nexo for now (see below; hookup: docs/nexo-migration.md) | **Done** (Nexo hookup on the server) |
 
 **Direction (the user, 2026-10-01): the server runs Nexo, so Occultech's blocks are built for Nexo's custom-block
 system.** Every block is authored as its final Nexo look: a block model (`occultech:block/<key>`) on a full-cube
@@ -747,7 +747,8 @@ Everliving Coral, Watchful Eyeblossom) stay vanilla blocks, as decided.
   skin stood a block up (y+1) - inside the ceiling for a hung Wind Chime. Skins of blocks that let light through
   (chain, pot, lantern, carpet...) now stand inside their own block (y+0.5, no offset); solid cubes keep standing above.
   Old skins move on their next `ensure` (decoration tickers re-anchor theirs).
- (N for Nexo - H is the menu-backgrounds session)
+
+**Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
   its model: real blocks, so they appear and vanish instantly, render at full distance, cost no entities and can't be
   cleared by ClearLag. Animated textures keep working (they are textures in the model).
@@ -765,6 +766,27 @@ Everliving Coral, Watchful Eyeblossom) stay vanilla blocks, as decided.
 - To work out: Slimefun + Nexo on the same block (placement through Nexo, Slimefun's block data and menus, breaking
   and drops, right-click), variants (glyphs, Tidal Tile corals, the Forge's facing), Nexo's item config generated
   from build_pack, a fallback to display skins when Nexo is absent.
+
+**Session N - done Nexo-style, without Nexo (2026-10-03).** The test server has no Nexo, so (the user) the blocks are
+built *like* Nexo's and move to Nexo easily later. Decisions (the user): glyphs are **string blocks** (walk-through,
+flat - circles stay walkable); **no light** for lanterns/braziers (only their textures glow); the Nexo hookup is
+**prepared now, finished on the server**.
+- `build_pack` gives each block look a vanilla state of its own and records it in `tools/art/block_states.json`
+  (append-only: placed blocks are stored as their state). Solid blocks: `note_block[instrument=<16 classic>,
+  note=1..24, powered=true]` (384 states; vanilla note blocks never reach powered=true with Paper's noteblock updates
+  off, and a fresh powered one is note 0). Glyphs: `tripwire[disarmed=true, ...]` (64 states). 54 states in use.
+- The pack's `note_block.json` / `tripwire.json` are multipart: our states show `occultech:block/<model>`, every other
+  state keeps vanilla's model. A skin's item display drew the model half a turn from a block, so plain blocks get
+  `y: 180` and the Occult Forge a state per facing (north = as drawn) - the approved looks are kept exactly.
+- Checked in the 26.2 client: block render layers come from the textures' transparency (`ChunkSectionLayer.
+  byTransparency`), so cut-outs and glowing layers work on note blocks.
+- Plugin: `CustomBlockService` places/reads/protects the states (no tuning, no note sound, no physics, water can't
+  wash a glyph away; a plain note block that lands in one of our states is unpowered); `BlockSkinService` bridges and
+  converts old skins as their chunks load (keeping the look: a tile's coral, a glyph's variant by position, a front).
+  The Offering Bowl is raised 2.4 px on an iron stem (a full hitbox no longer forces it flat); its offering hovers at
+  0.5. Paper's `disable-noteblock-updates` / `disable-tripwire-updates` are on in both test servers.
+- With Nexo installed, `custom-blocks.mode: auto` keeps display skins and the pack handed to Nexo drops our
+  blockstates (Nexo owns those states) until the hookup in docs/nexo-migration.md.
 
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the

@@ -59,6 +59,7 @@ public final class ResourcePackService implements Listener {
     private static final String ITEMS = "occultech-pack-items.txt";
     private static final String SKINS = "occultech-pack-skins.txt";
     private static final String EQUIPMENT = "occultech-pack-equipment.txt";
+    private static final String BLOCKS = "occultech-pack-blocks.txt";
     /** A fixed id, so a client replaces the old version of our pack instead of stacking a new one. */
     private static final UUID PACK_ID = UUID.nameUUIDFromBytes("occultech:resource-pack".getBytes(StandardCharsets.UTF_8));
 
@@ -67,6 +68,7 @@ public final class ResourcePackService implements Listener {
     private final Set<String> modelled = new HashSet<>();
     private final java.util.Map<String, Integer> skins = new java.util.HashMap<>();
     private final Set<String> equipment = new HashSet<>();
+    private final java.util.List<String[]> blockLines = new java.util.ArrayList<>();
     private byte[] pack;
     private String sha1 = "";
     private boolean itemModels = true;
@@ -119,6 +121,15 @@ public final class ResourcePackService implements Listener {
         } catch (IOException | NumberFormatException e) {
             log.warning("Resource pack: could not read " + SKINS + ": " + e.getMessage());
         }
+        try (InputStream in = plugin.getResource(BLOCKS)) {
+            if (in != null) {
+                new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).lines()
+                    .map(String::trim).filter(line -> !line.isEmpty() && !line.startsWith("#"))
+                    .map(line -> line.split(" ", 4)).filter(parts -> parts.length == 4).forEach(blockLines::add);
+            }
+        } catch (IOException e) {
+            log.warning("Resource pack: could not read " + BLOCKS + ": " + e.getMessage());
+        }
         try (InputStream in = plugin.getResource(EQUIPMENT)) {
             if (in != null) {
                 new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).lines()
@@ -127,6 +138,11 @@ public final class ResourcePackService implements Listener {
         } catch (IOException e) {
             log.warning("Resource pack: could not read " + EQUIPMENT + ": " + e.getMessage());
         }
+    }
+
+    /** The custom block states ({@code ITEM look facing state} per line), or none when the pack or item models are off. */
+    public java.util.List<String[]> customBlockLines() {
+        return itemModels && pack != null ? blockLines : java.util.List.of();
     }
 
     /** Whether the pack draws this armor set worn (an equipment asset occultech:{@code set}, e.g. "abyssal"). */
@@ -181,12 +197,33 @@ public final class ResourcePackService implements Listener {
         Path target = plugin.getDataFolder().toPath().getParent().resolve("Nexo").resolve("pack").resolve("external_packs").resolve(PACK);
         try {
             Files.createDirectories(target.getParent());
-            boolean changed = !Files.exists(target) || !sha1(Files.readAllBytes(target)).equals(sha1);
-            Files.write(target, pack);
+            // Nexo writes the note-block and tripwire blockstates itself (its own custom blocks); ours would clash
+            byte[] forNexo = withoutVanillaBlockstates(pack);
+            boolean changed = !Files.exists(target) || !sha1(Files.readAllBytes(target)).equals(sha1(forNexo));
+            Files.write(target, forNexo);
             log.info("Resource pack: handed to Nexo (" + target + ")." + (changed ? " It changed - run /nexo reload pack." : ""));
         } catch (IOException e) {
             log.warning("Resource pack: could not copy the pack into Nexo's external_packs: " + e.getMessage());
         }
+    }
+
+    /** The pack minus its assets/minecraft/blockstates (our custom-block states), for packs merged by Nexo. */
+    static byte[] withoutVanillaBlockstates(byte[] zip) throws IOException {
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        try (java.util.zip.ZipInputStream in = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(zip));
+             java.util.zip.ZipOutputStream z = new java.util.zip.ZipOutputStream(out)) {
+            for (java.util.zip.ZipEntry entry; (entry = in.getNextEntry()) != null; ) {
+                if (entry.getName().startsWith("assets/minecraft/blockstates/")) {
+                    continue;
+                }
+                java.util.zip.ZipEntry copy = new java.util.zip.ZipEntry(entry.getName());
+                copy.setTime(entry.getTime());
+                z.putNextEntry(copy);
+                in.transferTo(z);
+                z.closeEntry();
+            }
+        }
+        return out.toByteArray();
     }
 
     /** The pack is hosted elsewhere (any web host); we only send players its address and our hash of it. */

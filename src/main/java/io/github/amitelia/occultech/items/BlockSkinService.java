@@ -62,6 +62,10 @@ import java.util.UUID;
  * <p>A block with a front (a horizontal {@link Directional}, like the Occult Forge's blast furnace) turns its skin so
  * the model's north face is its front. A tile that swaps its vanilla block ({@link StepTile} looks) shows the skin
  * variant for its current block.
+ *
+ * <p><b>Custom blocks (Session N).</b> When {@link CustomBlockService} is on, blocks are real custom blocks and this
+ * service only bridges: {@link #ensure} and {@link #ensureIfMissing} make the block its custom block, and a skin left in
+ * the world from before is converted - its block becomes the custom block (keeping its look) and the display goes.
  */
 public final class BlockSkinService implements Listener {
 
@@ -71,10 +75,18 @@ public final class BlockSkinService implements Listener {
     private final JavaPlugin plugin;
     private final ResourcePackService pack;
     private final Map<String, UUID> tracked = new HashMap<>();   // "world|x,y,z" -> display
+    private final CustomBlockService blocks;
 
-    public BlockSkinService(@Nonnull JavaPlugin plugin, @Nonnull ResourcePackService pack) {
+    public BlockSkinService(@Nonnull JavaPlugin plugin, @Nonnull ResourcePackService pack, @Nonnull CustomBlockService blocks) {
         this.plugin = plugin;
         this.pack = pack;
+        this.blocks = blocks;
+    }
+
+    /** The custom blocks (Session N); when they're on, skins only remain to be converted. */
+    @Nonnull
+    public CustomBlockService blocks() {
+        return blocks;
     }
 
     public void start() {
@@ -87,7 +99,7 @@ public final class BlockSkinService implements Listener {
 
     /** Whether Occultech has a skin for this Slimefun item id. */
     public boolean isSkinned(@Nullable String slimefunId) {
-        return slimefunId != null && pack.skinVariants(stripPrefix(slimefunId)) > 0;
+        return slimefunId != null && (blocks.enabled() ? blocks.isCustom(slimefunId) : pack.skinVariants(stripPrefix(slimefunId)) > 0);
     }
 
     /** Puts the skin on a placed Occultech block if it should have one and doesn't yet. Returns the display, or null. */
@@ -99,6 +111,10 @@ public final class BlockSkinService implements Listener {
     /** As {@link #ensure(Block)}, for a block known to be {@code id} (just placed: Slimefun may not have stored it yet). */
     @Nullable
     public ItemDisplay ensure(@Nonnull Block block, @Nullable String id) {
+        if (blocks.enabled()) {
+            blocks.ensure(block, id);   // a custom block: nothing to display
+            return null;
+        }
         if (!isSkinned(id)) {
             return null;
         }
@@ -157,7 +173,13 @@ public final class BlockSkinService implements Listener {
                     if (block.getType().isAir() || !world.isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)) {
                         continue;
                     }
-                    if (isSkinned(BlockStorage.checkID(block)) && !tracked.containsKey(key(block)) && ensure(block) != null) {
+                    String id = BlockStorage.checkID(block);
+                    if (blocks.enabled()) {
+                        if (blocks.isCustom(id) && !blocks.isCustomState(block)) {
+                            blocks.ensure(block, id);
+                            made++;
+                        }
+                    } else if (isSkinned(id) && !tracked.containsKey(key(block)) && ensure(block) != null) {
                         made++;
                     }
                 }
@@ -170,7 +192,7 @@ public final class BlockSkinService implements Listener {
     /** A skinned decoration on a soul lantern (the Soulfire Brazier) must stand: its skin has no hanging version. */
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onPlaceHanging(BlockPlaceEvent event) {
-        if (event.getBlockPlaced().getType() != Material.SOUL_LANTERN
+        if (blocks.enabled() || event.getBlockPlaced().getType() != Material.SOUL_LANTERN
             || !(event.getBlockPlaced().getBlockData() instanceof Lantern lantern) || !lantern.isHanging()) {
             return;
         }
@@ -185,7 +207,7 @@ public final class BlockSkinService implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         SlimefunItem item = SlimefunItem.getByItem(event.getItemInHand());
-        if (item != null && isSkinned(item.getId())) {
+        if (!blocks.enabled() && item != null && isSkinned(item.getId())) {
             upright(event.getBlockPlaced());
             ensure(event.getBlockPlaced(), item.getId());
         }
@@ -210,7 +232,7 @@ public final class BlockSkinService implements Listener {
     /** Slimefun placed one (a Block Placer, or after a player's placement): same, idempotent. */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onSlimefunPlace(SlimefunBlockPlaceEvent event) {
-        if (isSkinned(event.getSlimefunItem().getId())) {
+        if (!blocks.enabled() && isSkinned(event.getSlimefunItem().getId())) {
             ensure(event.getBlockPlaced(), event.getSlimefunItem().getId());
         }
     }
@@ -262,7 +284,8 @@ public final class BlockSkinService implements Listener {
         }
     }
 
-    private void adopt(Entity entity) {
+    /** Tracks a skin display found in the world - or, with custom blocks on, converts its block and removes it. */
+    public void adopt(Entity entity) {
         String data = entity.getPersistentDataContainer().get(SKIN, PersistentDataType.STRING);
         if (data == null || !(entity instanceof ItemDisplay)) {
             return;
@@ -270,6 +293,23 @@ public final class BlockSkinService implements Listener {
         Block block = blockOf(entity.getWorld(), data);
         if (block == null) {
             entity.remove();
+            return;
+        }
+        if (blocks.enabled()) {
+            // a skin from before custom blocks: its block becomes the custom block, keeping the look it showed
+            String id = data.substring(data.indexOf('|') + 1);
+            Runnable convert = () -> {
+                SlimefunItem item = SlimefunItem.getById(id);
+                if (id.equals(BlockStorage.checkID(block)) && item != null && (item instanceof StepTile || restoreWeathered(block, item))) {
+                    blocks.ensure(block, id);
+                }
+                entity.remove();
+            };
+            if (BlockStorage.hasBlockInfo(block)) {
+                convert.run();
+            } else {
+                Bukkit.getScheduler().runTask(plugin, convert);   // Slimefun's data for a freshly loaded chunk may lag a tick
+            }
             return;
         }
         UUID previous = tracked.put(key(block), entity.getUniqueId());
@@ -314,6 +354,10 @@ public final class BlockSkinService implements Listener {
     /** Cheap per-tick check for a block's ticker: re-skins it only if its skin is missing (a block placed before
      * skins, a skin lost to a type change). */
     public void ensureIfMissing(@Nonnull Block block, @Nonnull SlimefunItem item) {
+        if (blocks.enabled()) {
+            blocks.ensure(block, item.getId());   // also restores a block whose state was changed
+            return;
+        }
         if (!isSkinned(item.getId()) || !restoreWeathered(block, item)) {
             return;   // the rod goes back first, whether or not the skin is still there
         }
@@ -412,7 +456,7 @@ public final class BlockSkinService implements Listener {
         return block.getWorld().getName() + "|" + block.getX() + "," + block.getY() + "," + block.getZ();
     }
 
-    private static String stripPrefix(String slimefunId) {
+    static String stripPrefix(String slimefunId) {
         return slimefunId.startsWith("OCCULTECH_") ? slimefunId.substring("OCCULTECH_".length()) : slimefunId;
     }
 

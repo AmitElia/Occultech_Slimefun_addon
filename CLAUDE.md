@@ -48,9 +48,11 @@ boss/tier3/      HollowWarlord, HeartwoodHorror, DreadRiders, CorruptedColossus,
 debug/           /occultech command: selftest (in-game integration test), showcase [clear]
 pack/            ResourcePackService: the resource pack built by tools/art/build_pack.py (src/main/pack, unfiltered),
                  item_model per item, Nexo hand-off or a self-hosted web server (config resource-pack.*)
-items/BlockSkinService  block skins: an item display with Occultech's model over each placed block (Session G)
-                 - interim: the server runs Nexo, and before shipping the blocks move to Nexo note-block custom
-                 blocks (full-cube hitbox, model may look smaller) - docs/art/SESSIONS.md, Session N
+items/CustomBlockService  Occultech's blocks as real custom blocks, Nexo-style (Session N): each block look owns a
+                 note-block state (tripwire for the flat glyphs) that the pack shows as its model; states never change
+                 once given out (tools/art/block_states.json). Nexo hookup still to do: docs/nexo-migration.md
+items/BlockSkinService  the older display-entity skins (custom-blocks.mode: skins, or auto with Nexo installed); with
+                 custom blocks on it only converts old skins as their chunks load
 ```
 
 **Bosses:** recipes.yml `bosses:` gives name/tier/drops/offerings; behavior is a `BossBehavior` subclass registered in
@@ -73,6 +75,8 @@ Rules:
 ## Commands
 - `./scripts/setup-dev.ps1` - fetch Slimefun + Paper
 - `./scripts/run-server.ps1` - build, deploy to `run/plugins`, start server (debug on 5005)
+- Custom blocks need `block-updates.disable-noteblock-updates` and `disable-tripwire-updates: true` in the server's
+  `config/paper-global.yml` (like Nexo); the plugin warns if they're off. Set in `run/` and the self-test copy.
 - `./mvnw.cmd test` - unit tests. The user's system JAVA_HOME is JDK 17, so dot-source
   `scripts/java-env.ps1` first (or in bash: `JAVA_HOME="$(cygpath -w "$PWD/.jdk/jdk-25.0.4.1+1")" ./mvnw.cmd ...`).
 - Server defaults live in `scripts/server-template/server.properties` (copied into `run/` on first start).

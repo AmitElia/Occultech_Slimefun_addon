@@ -285,8 +285,99 @@ final class SelfTest {
         DebugWorld.buildCircle(altar, 0, block -> previous.putIfAbsent(block, block.getBlockData()));
     }
 
+    private org.bukkit.entity.ItemDisplay glyphSkinInTest;
+
     private void circleDetection() {
-        // block skins: the altar and the glyphs placed by the build got their skin displays
+        var blocks = plugin.skins().blocks();
+        if (blocks.enabled()) {
+            customBlocks(blocks);
+        } else {
+            skinsOnBlocks();
+        }
+        Optional<RitualService.CircleCheck> check = rituals.checkCircle(altar);
+        check("altar recognised", check.isPresent(), "id " + BlockStorage.checkID(altar));
+        check("complete circle detected", check.isPresent() && check.get().complete(), check.map(c -> c.missing().size() + " missing").orElse("-"));
+
+        Block corner = altar.getRelative(-2, 0, -2);
+        BlockStorage.clearBlockInfo(corner);
+        corner.setType(Material.AIR);
+        plugin.skins().validate();
+        if (!blocks.enabled()) {
+            check("a removed block loses its skin", glyphSkinInTest == null || !glyphSkinInTest.isValid(), "the skin is still there");
+        }
+        Optional<RitualService.CircleCheck> broken = rituals.checkCircle(altar);
+        check("missing glyph detected", broken.isPresent() && broken.get().missing().size() == 1, broken.map(c -> c.missing().size() + " missing").orElse("-"));
+        DebugWorld.placeSlimefun(corner, Circles.CHALK_GLYPH, block -> {});
+        check("altar menu exists", BlockStorage.getInventory(altar) != null, "no menu");
+
+        if (blocks.enabled()) {
+            customBlockLooks(blocks);
+        } else {
+            skinsFollowBlocks();
+        }
+    }
+
+    /** Session N: the altar and the glyphs the build placed are custom blocks (a note block, tripwire states). */
+    private void customBlocks(io.github.amitelia.occultech.items.CustomBlockService blocks) {
+        Block glyphBlock = altar.getRelative(-2, 0, -2);
+        var altarLook = blocks.lookOf(altar);
+        check("the altar is its custom block (a note-block state)", altar.getType() == Material.NOTE_BLOCK && altarLook != null
+            && altarLook.itemId().equals("INITIATE_ALTAR"), altar.getBlockData().getAsString());
+        var glyphLook = blocks.lookOf(glyphBlock);
+        check("a chalk glyph is a flat custom block (a tripwire state), one of its 4 looks", glyphBlock.getType() == Material.TRIPWIRE
+            && glyphLook != null && glyphLook.itemId().equals("CHALK_GLYPH") && glyphLook.look() < 4, glyphBlock.getBlockData().getAsString());
+        String before = altar.getBlockData().getAsString();
+        plugin.skins().ensure(altar);
+        check("ensure is idempotent", altar.getBlockData().getAsString().equals(before), altar.getBlockData().getAsString());
+        org.bukkit.event.block.NotePlayEvent note = new org.bukkit.event.block.NotePlayEvent(altar, org.bukkit.Instrument.PIANO, new org.bukkit.Note(1));
+        Bukkit.getPluginManager().callEvent(note);
+        org.bukkit.event.block.BlockPhysicsEvent physics = new org.bukkit.event.block.BlockPhysicsEvent(altar, altar.getBlockData());
+        Bukkit.getPluginManager().callEvent(physics);
+        check("a custom block plays no note and ignores neighbour updates", note.isCancelled() && physics.isCancelled(),
+            note.isCancelled() + " " + physics.isCancelled());
+    }
+
+    /** Session N: looks that follow the block - a tile's looks, a front - and old skins converted. */
+    private void customBlockLooks(io.github.amitelia.occultech.items.CustomBlockService blocks) {
+        Block tile = altar.getRelative(0, 0, 6);
+        DebugWorld.placeSlimefun(tile, ItemKeys.slimefunId("TIDAL_TILE"), block -> previous.putIfAbsent(block, block.getBlockData()));
+        boolean first = blocks.lookOf(tile) != null && blocks.lookOf(tile).look() == 0;
+        blocks.place(tile, ItemKeys.slimefunId("TIDAL_TILE"), 3, null);
+        check("a Tidal Tile shows its looks as custom blocks", first && blocks.lookOf(tile) != null && blocks.lookOf(tile).look() == 3,
+            tile.getBlockData().getAsString());
+        Block forge = altar.getRelative(2, 0, 6);
+        DebugWorld.placeSlimefun(forge, ItemKeys.slimefunId("OCCULT_FORGE"), block -> previous.putIfAbsent(block, block.getBlockData()));
+        blocks.place(forge, ItemKeys.slimefunId("OCCULT_FORGE"), 0, org.bukkit.block.BlockFace.EAST);
+        var forgeLook = blocks.lookOf(forge);
+        check("an Occult Forge's custom block faces its front", forgeLook != null && forgeLook.facing() == org.bukkit.block.BlockFace.EAST,
+            forge.getBlockData().getAsString());
+        // a block from before custom blocks, with its old skin: the skin goes, the block takes its look (brain coral)
+        Block old = altar.getRelative(4, 0, 6);
+        previous.putIfAbsent(old, old.getBlockData());
+        old.setBlockData(Material.BRAIN_CORAL_BLOCK.createBlockData(), false);
+        BlockStorage.store(old, ItemKeys.slimefunId("TIDAL_TILE"));
+        org.bukkit.entity.ItemDisplay skin = old.getWorld().spawn(old.getLocation().add(0.5, 0.5, 0.5), org.bukkit.entity.ItemDisplay.class,
+            d -> d.getPersistentDataContainer().set(io.github.amitelia.occultech.items.BlockSkinService.SKIN,
+                org.bukkit.persistence.PersistentDataType.STRING, old.getX() + "," + old.getY() + "," + old.getZ() + "|" + ItemKeys.slimefunId("TIDAL_TILE")));
+        plugin.skins().adopt(skin);
+        var oldLook = blocks.lookOf(old);
+        check("an old skinned block converts to its custom block, keeping its look", !skin.isValid() && oldLook != null
+            && oldLook.itemId().equals("TIDAL_TILE") && oldLook.look() == 1, skin.isValid() + " " + old.getBlockData().getAsString());
+        Block plain = altar.getRelative(6, 0, 6);
+        previous.putIfAbsent(plain, plain.getBlockData());
+        plain.setType(Material.NOTE_BLOCK, false);
+        check("a plain note block isn't mistaken for an Occultech block", !blocks.isCustomState(plain), plain.getBlockData().getAsString());
+        check("the six decorations are custom blocks (G7)", java.util.stream.Stream.of("WISP_JAR", "BOTTLED_GALE", "WIND_CHIME",
+            "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "RUNE_OBELISK").allMatch(id -> blocks.isCustom(ItemKeys.slimefunId(id))),
+            "a decoration isn't");
+        for (Block block : List.of(tile, forge, old, plain)) {
+            BlockStorage.clearBlockInfo(block);
+            block.setType(Material.AIR);
+        }
+    }
+
+    /** Display skins (custom-blocks mode skins): the altar and the glyphs placed by the build got their skin displays. */
+    private void skinsOnBlocks() {
         Block glyphBlock = altar.getRelative(-2, 0, -2);
         org.bukkit.entity.ItemDisplay altarSkin = plugin.skins().ensure(altar);
         check("the altar wears its skin", altarSkin != null && altarSkin.getItemStack().getItemMeta().hasItemModel()
@@ -297,20 +388,11 @@ final class SelfTest {
             && glyphSkin.getItemStack().getItemMeta().getItemModel().getKey().startsWith("chalk_glyph"),
             glyphSkin == null ? "no skin (" + BlockStorage.checkID(glyphBlock) + ")" : String.valueOf(glyphSkin.getItemStack().getItemMeta().getItemModel()));
         check("ensure is idempotent (no second skin)", plugin.skins().ensure(altar) == altarSkin, "a second display");
-        Optional<RitualService.CircleCheck> check = rituals.checkCircle(altar);
-        check("altar recognised", check.isPresent(), "id " + BlockStorage.checkID(altar));
-        check("complete circle detected", check.isPresent() && check.get().complete(), check.map(c -> c.missing().size() + " missing").orElse("-"));
+        glyphSkinInTest = glyphSkin;
+    }
 
-        Block corner = altar.getRelative(-2, 0, -2);
-        BlockStorage.clearBlockInfo(corner);
-        corner.setType(Material.AIR);
-        plugin.skins().validate();
-        check("a removed block loses its skin", glyphSkin == null || !glyphSkin.isValid(), "the skin is still there");
-        Optional<RitualService.CircleCheck> broken = rituals.checkCircle(altar);
-        check("missing glyph detected", broken.isPresent() && broken.get().missing().size() == 1, broken.map(c -> c.missing().size() + " missing").orElse("-"));
-        DebugWorld.placeSlimefun(corner, Circles.CHALK_GLYPH, block -> {});
-        check("altar menu exists", BlockStorage.getInventory(altar) != null, "no menu");
-
+    /** Display skins: skins that follow their block, upright decorations, weathering. */
+    private void skinsFollowBlocks() {
         // skins that follow their block: a Tidal Tile's coral (right-click swaps it), an Occult Forge's front
         Block tile = altar.getRelative(0, 0, 6);
         DebugWorld.placeSlimefun(tile, ItemKeys.slimefunId("TIDAL_TILE"), block -> previous.putIfAbsent(block, block.getBlockData()));
@@ -404,8 +486,13 @@ final class SelfTest {
             hatchable.setHatch(hatchable.getMaximumHatch());
             broodEgg.setBlockData(hatchable, false);
         }
-        Bukkit.getScheduler().runTaskLater(plugin, () -> check("Brood Egg never hatches (crack reset)",
-            broodEgg.getBlockData() instanceof org.bukkit.block.data.Hatchable h && h.getHatch() == 0, "still cracked"), 30L);
+        if (plugin.skins().blocks().enabled()) {   // a custom block (a note-block state): there's nothing to hatch
+            check("Brood Egg is a custom block (it can't hatch)", plugin.skins().blocks().isCustomState(broodEgg),
+                broodEgg.getBlockData().getAsString());
+        } else {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> check("Brood Egg never hatches (crack reset)",
+                broodEgg.getBlockData() instanceof org.bukkit.block.data.Hatchable h && h.getHatch() == 0, "still cracked"), 30L);
+        }
     }
 
     private void lootTables() {

@@ -32,6 +32,131 @@ HANDHELD = {"weapon"}     # held like a tool in third person
 BOW_STATES = ["standby", "pulling_0", "pulling_1", "pulling_2"]
 FIXED_DATE = (2026, 1, 1, 0, 0, 0)   # deterministic zip: same art, same bytes, same hash
 
+# ---- custom blocks (Session N): Occultech's blocks as real block states, the way Nexo does it ----
+# Each block look gets a vanilla block state of its own, set aside for it, and the pack's blockstate files show the
+# block's model for that state. Solid blocks use note-block states (Nexo's NOTEBLOCK type); the flat, walk-through
+# ritual glyphs use tripwire states (Nexo's STRINGBLOCK type). The states are recorded in BLOCK_STATES and NEVER change
+# once given out - placed blocks are stored as their state. New looks get the next free state.
+BLOCK_STATES = os.path.join(os.path.dirname(__file__), "block_states.json")
+VANILLA_TRIPWIRE = os.path.join(os.path.dirname(__file__), "vanilla_tripwire.json")   # from the 26.2 client
+STRING_BLOCKS = {"chalk_glyph", "bound_glyph", "abyssal_glyph", "hollow_glyph"}
+FACINGS = {"occult_forge": ["north", "east", "south", "west"]}   # blocks with a front: a state per facing
+FACING_Y = {"north": 0, "east": 90, "south": 180, "west": 270}
+# Note-block states set aside: powered=true (vanilla note blocks never get there once Paper's noteblock updates are
+# off, as Nexo also requires), notes 1-24 (a freshly placed powered note block is note 0), the 16 classic instruments.
+NOTE_INSTRUMENTS = ["harp", "basedrum", "snare", "hat", "bass", "flute", "bell", "guitar", "chime", "xylophone",
+                    "iron_xylophone", "cow_bell", "didgeridoo", "bit", "banjo", "pling"]
+ALL_INSTRUMENTS = NOTE_INSTRUMENTS + ["trumpet", "trumpet_exposed", "trumpet_oxidized", "trumpet_weathered", "zombie",
+                                      "skeleton", "creeper", "dragon", "wither_skeleton", "piglin", "custom_head"]
+# Tripwire states set aside: disarmed=true (vanilla string only gets there while being cut with shears), the other six
+# booleans free - 64 states.
+TRIPWIRE_SIDES = ["attached", "east", "north", "south", "west", "powered"]
+
+
+def note_state(slot):
+    return f"minecraft:note_block[instrument={NOTE_INSTRUMENTS[slot // 24]},note={slot % 24 + 1},powered=true]"
+
+
+def tripwire_state(slot):
+    v = {name: "true" if slot >> i & 1 else "false" for i, name in enumerate(TRIPWIRE_SIDES)}
+    return ("minecraft:tripwire[attached={attached},disarmed=true,east={east},north={north},powered={powered},"
+            "south={south},west={west}]").format(**v)
+
+
+def state_props(state):
+    return dict(kv.split("=") for kv in state[state.index("[") + 1:-1].split(","))
+
+
+def custom_blocks(skins):
+    """Gives every block look its state (keeping the ones already given out) and returns
+    [(item_id, look, facing, state, model_key, y)]."""
+    given = json.load(open(BLOCK_STATES, encoding="utf-8")) if os.path.exists(BLOCK_STATES) else {}
+    used = set(given.values())
+    out = []
+    for base in sorted(skins):
+        string = base in STRING_BLOCKS
+        for look in range(skins[base]):
+            for facing in FACINGS.get(base, ["-"]):
+                key = f"{base.upper()} {look} {facing}"
+                if key not in given:
+                    slot = 0
+                    make = tripwire_state if string else note_state
+                    while make(slot) in used:
+                        slot += 1
+                    if (string and slot >= 64) or (not string and slot >= 24 * len(NOTE_INSTRUMENTS)):
+                        raise SystemExit("out of custom block states")
+                    given[key] = make(slot)
+                    used.add(given[key])
+                model = base if look == 0 else f"{base}_v{look}"
+                # a skin's item display drew the model turned half a turn from a block; the blockstate keeps the
+                # approved look: plain blocks turn 180, a front faces its way (north = as drawn)
+                y = FACING_Y[facing] if facing != "-" else 180
+                out.append((base.upper(), look, facing, given[key], model, y))
+    with open(BLOCK_STATES, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(dict(sorted(given.items())), f, indent=1)
+        f.write("\n")
+    return out
+
+
+def blockstate_files(blocks):
+    """note_block.json and tripwire.json: our states show our models; every other state keeps vanilla's look."""
+    def apply(model, y):
+        a = {"model": model}
+        if y:
+            a["y"] = y
+        return a
+    ours = {b[3]: apply(f"{NS}:block/{b[4]}", b[5]) for b in blocks}
+    note = [{"when": {"powered": "false"}, "apply": {"model": "minecraft:block/note_block"}}]
+    taken = {}
+    for state, a in ours.items():
+        if state.startswith("minecraft:note_block"):
+            pr = state_props(state)
+            taken.setdefault(pr["instrument"], set()).add(int(pr["note"]))
+            note.append({"when": {"instrument": pr["instrument"], "note": pr["note"], "powered": "true"}, "apply": a})
+    for inst in ALL_INSTRUMENTS:
+        free = [str(n) for n in range(25) if n not in taken.get(inst, set())]
+        if len(free) == 25:
+            continue
+        note.append({"when": {"instrument": inst, "note": "|".join(free), "powered": "true"},
+                     "apply": {"model": "minecraft:block/note_block"}})
+    untouched = [i for i in ALL_INSTRUMENTS if i not in taken]
+    if untouched:
+        note.append({"when": {"instrument": "|".join(untouched), "powered": "true"}, "apply": {"model": "minecraft:block/note_block"}})
+    vanilla = json.load(open(VANILLA_TRIPWIRE, encoding="utf-8"))["variants"]
+    trip = []
+    for key, a in vanilla.items():
+        when = state_props("x[" + key + "]")
+        trip.append({"when": dict(when, disarmed="false"), "apply": a})
+    for slot in range(64):
+        state = tripwire_state(slot)
+        pr = state_props(state)
+        a = ours.get(state) or vanilla[",".join(f"{k}={pr[k]}" for k in ["attached", "east", "north", "south", "west"])]
+        trip.append({"when": pr, "apply": a})
+    return {"assets/minecraft/blockstates/note_block.json": {"multipart": note},
+            "assets/minecraft/blockstates/tripwire.json": {"multipart": trip}}
+
+
+def nexo_config(blocks, items):
+    """A draft Nexo item config for the same blocks (Session N: finished and tested on the Nexo server). Nexo gives
+    out its own states from custom_variation; the plugin's conversion command re-places placed blocks through Nexo."""
+    lines = ["# Occultech blocks for Nexo - DRAFT, generated by tools/art/build_pack.py; finish and test on the Nexo",
+             "# server (docs/nexo-migration.md). The models come from Occultech's pack (handed to Nexo as an external pack).", ""]
+    variation = {"NOTEBLOCK": 0, "STRINGBLOCK": 0}
+    for (item_id, look, facing, state, model, y) in blocks:
+        if facing not in ("-", "north"):
+            continue   # Nexo turns a directional block itself (directional: type: FURNACE)
+        kind = "STRINGBLOCK" if state.startswith("minecraft:tripwire") else "NOTEBLOCK"
+        variation[kind] += 1
+        nexo_id = f"occultech_{model}"
+        name = items.get(item_id, {}).get("name", item_id)
+        lines += [f"{nexo_id}:", f"  itemname: \"{name}\"", "  material: PAPER", "  Pack:",
+                  f"    model: {NS}:block/{model}", "  Mechanics:", "    custom_block:", f"      type: {kind}",
+                  f"      custom_variation: {variation[kind]}", f"      model: {NS}:block/{model}"]
+        if facing == "north":
+            lines += ["      directional:", "        type: FURNACE"]
+        lines.append("")
+    return "\n".join(lines)
+
 
 def slug(name):
     return name.lower().replace("'", "").replace(":", "").replace(" ", "_")
@@ -246,6 +371,10 @@ def main():
             files[f"assets/{NS}/textures/entity/equipment/{layer}/{name}.png"] = png_bytes(img)
         equipment.append(name)
 
+    # custom blocks (Session N): every skinned block look gets its block state and the blockstate files
+    blocks = custom_blocks(skins)
+    files.update(blockstate_files(blocks))
+
     files["pack.mcmeta"] = {"pack": {
         "description": "Occultech - occult rituals, bosses and relics",
         "min_format": PACK_FORMAT, "max_format": PACK_FORMAT, "pack_format": PACK_FORMAT}}
@@ -274,7 +403,16 @@ def main():
         f.write("# block skins: <ITEM_ID> <variants> (generated by tools/art/build_pack.py)\n")
         f.write("".join(f"{k.upper()} {n}\n" for k, n in sorted(skins.items())))
 
-    print(f"{zip_path}: {len(with_models)} items with models ({len(skins)} blocks skinned), {os.path.getsize(zip_path)} bytes")
+    with open(os.path.join(OUT, "occultech-pack-blocks.txt"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("# custom blocks: <ITEM_ID> <look> <facing or -> <block state> (generated by tools/art/build_pack.py from\n"
+                "# tools/art/block_states.json - a state never changes once given out)\n")
+        f.write("".join(f"{b[0]} {b[1]} {b[2]} {b[3]}\n" for b in blocks))
+    os.makedirs(os.path.join(ROOT, "docs", "nexo"), exist_ok=True)
+    with open(os.path.join(ROOT, "docs", "nexo", "occultech-blocks.yml"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(nexo_config(blocks, items))
+
+    print(f"{zip_path}: {len(with_models)} items with models ({len(skins)} blocks skinned, {len(blocks)} custom block states), "
+          f"{os.path.getsize(zip_path)} bytes")
     print(f"{len(without)} items without art yet (blocks and held models are Session G):")
     for line in without:
         print("  " + line)

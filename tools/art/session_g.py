@@ -141,7 +141,7 @@ def initiate_altar():
 def offering_bowl():
     """The Offering Bowl, kept low so a ring of them never hides the altar (vanilla: black carpet, 1 px): a thin
     blackstone plate covering the carpet, carved at its edge, and on it a low, wide bowl of hammered dark iron with
-    embers glowing in it (animated). About 5 px tall in all."""
+    embers glowing in it (animated), raised on a short iron stem. About 7.5 px tall in all."""
     m = Model("offering_bowl")
     ash, ir, em = RAMPS["ash"], RAMPS["iron"], RAMPS["ember"]
     plate = slab_top(ash, 9, tone=2)
@@ -170,11 +170,14 @@ def offering_bowl():
     m.box((0, 0, 0), (16, 1.2, 16), {"up": t_plate, "down": t_plate, "north": (t_edge, [0, 0, 16, 1]),
                                       "south": (t_edge, [0, 0, 16, 1]), "west": (t_edge, [0, 0, 16, 1]),
                                       "east": (t_edge, [0, 0, 16, 1])})
+    # raised on a short iron foot (Session N: as a custom block it has a full hitbox, so it no longer has to lie flat)
+    L = 2.4
     m.cube((5, 1.2, 5), (11, 2, 11), (t_bowl, [0, 0, 6, 1]))                         # the foot
-    m.box((3.5, 3.6, 3.5), (12.5, 4, 12.5), {"up": t_emb}, shade=False)              # the embers inside
+    m.cube((6.2, 2, 6.2), (9.8, 2 + L, 9.8), (t_bowl, [0, 0, 4, 3]))                  # its stem
+    m.box((3.5, 3.6 + L, 3.5), (12.5, 4 + L, 12.5), {"up": t_emb}, shade=False)      # the embers inside
     for (frm, to) in (((2, 2, 2), (14, 5, 3)), ((2, 2, 13), (14, 5, 14)), ((2, 2, 3), (3, 5, 13)), ((13, 2, 3), (14, 5, 13))):
-        m.cube(frm, to, (t_bowl, [0, 0, 12, 3]), top=(t_bowl, [0, 0, 12, 1]))
-    m.cube((3, 2, 3), (13, 3.6, 13), (t_bowl, [0, 4, 10, 6]), top=(t_bowl, [2, 2, 12, 12]))   # the bowl's floor
+        m.cube((frm[0], frm[1] + L, frm[2]), (to[0], to[1] + L, to[2]), (t_bowl, [0, 0, 12, 3]), top=(t_bowl, [0, 0, 12, 1]))
+    m.cube((3, 2 + L, 3), (13, 3.6 + L, 13), (t_bowl, [0, 4, 10, 6]), top=(t_bowl, [2, 2, 12, 12]))   # the bowl's floor
     return m
 
 

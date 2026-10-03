@@ -74,7 +74,7 @@ public final class CosmeticListener implements Listener {
         }
         Block under = e.getTo().getBlock().getRelative(BlockFace.DOWN);
         Material type = under.getType();
-        if (type != Material.AMETHYST_BLOCK && type != Material.RESIN_BRICKS && !CORAL_BLOCKS.contains(type)) {
+        if (type != Material.NOTE_BLOCK && type != Material.AMETHYST_BLOCK && type != Material.RESIN_BRICKS && !CORAL_BLOCKS.contains(type)) {
             return;
         }
         long now = System.currentTimeMillis();

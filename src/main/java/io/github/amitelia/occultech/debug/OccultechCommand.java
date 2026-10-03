@@ -118,7 +118,9 @@ public final class OccultechCommand implements TabExecutor {
             }
             int radius = args.length > 1 ? Math.min(64, Integer.parseInt(args[1])) : 24;
             int made = plugin.skins().ensureAround(player.getLocation(), radius);
-            sender.sendMessage("Skinned " + made + " Occultech block(s) within " + radius + " blocks (" + plugin.skins().count() + " skins tracked).");
+            sender.sendMessage(plugin.skins().blocks().enabled()
+                ? "Made " + made + " Occultech block(s) within " + radius + " blocks their custom blocks."
+                : "Skinned " + made + " Occultech block(s) within " + radius + " blocks (" + plugin.skins().count() + " skins tracked).");
             return true;
         }
         if (args.length == 1 && args[0].equalsIgnoreCase("pack")) {

@@ -81,7 +81,9 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
 
         bosses.start();
         resourcePack.start();
-        skins = new io.github.amitelia.occultech.items.BlockSkinService(this, resourcePack);
+        var customBlocks = new io.github.amitelia.occultech.items.CustomBlockService(this, resourcePack);
+        customBlocks.start();
+        skins = new io.github.amitelia.occultech.items.BlockSkinService(this, resourcePack, customBlocks);
         skins.start();
         getServer().getPluginManager().registerEvents(new WeaponListener(this), this);
         getServer().getPluginManager().registerEvents(new GearListener(this), this);
