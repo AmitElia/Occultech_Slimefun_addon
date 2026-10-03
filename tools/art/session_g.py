@@ -2054,13 +2054,67 @@ def dreadlance_held():
     return diagonal(m, angle=45)
 
 
+CLEAVER_STEEL = hexes("#1b1c20", "#34363c", "#555860", "#7e818a", "#aeb1b9", "#e2e4e9")   # plain forged steel, no tint
+# Blood on the blade's flat (8 wide: u 0 = the cutting edge, u 7 = against the haft; v 0 = the far end): dried (B),
+# fresh (b), a wet highlight (r) - heaviest along the edge, a few runs inward and spatter on the flat.
+CLEAVER_BLOOD = [
+    "........",
+    "........",
+    "b.......",
+    "Bb....B.",
+    "BBb.....",
+    "rBBb....",
+    "BBBBb...",
+    "BrB.Bb..",
+    "BB....B.",
+    "Bb......",
+    "BBb..b..",
+    "b..B....",
+    "........",
+]
+CLEAVER_EDGE_BLOOD = "..bBBrBBBbB."   # the honed edge, far end first
+
+
+def cleaver_flat():
+    """The blade's flat, like forged steel: a bright honed bevel along the edge and the dark grind line behind it, the
+    flat itself in a smooth gradient - lighter toward the edge, darker toward the haft - crossed by one soft diagonal
+    reflection; then the blood over it."""
+    st, cr = CLEAVER_STEEL, RAMPS["crimson"]
+    img = blank()
+    for v in range(13):
+        for u in range(8):
+            if u == 0:
+                col = st[5] if v % 5 else st[4]                      # honed bevel
+            elif u == 1:
+                col = st[4]
+            elif u == 2:
+                col = st[2]                                          # grind line
+            else:
+                t = 3 if u < 5 else 2                                # gradient across the flat
+                streak = (u + v) % 13
+                if streak in (6, 7):
+                    t += 1                                           # a soft reflection
+                elif streak == 8:
+                    t -= 0 if t == 2 else 1
+                col = st[t]
+            img.putpixel((u, v), col)
+            ch = CLEAVER_BLOOD[v][u]
+            if ch != ".":
+                img.putpixel((u, v), {"B": cr[1], "b": cr[2], "r": cr[3]}[ch])
+    for v, ch in enumerate(CLEAVER_EDGE_BLOOD):                       # the edge strip's texture, column 15
+        img.putpixel((15, v), {"B": cr[1], "b": cr[2], "r": cr[3]}.get(ch, CLEAVER_STEEL[5] if v % 3 else CLEAVER_STEEL[4]))
+    return img
+
+
 def frenzy_cleaver_held():
-    """The Frenzy Cleaver in the hand: a short wrapped grip with a pommel cap, and a big butcher's blade - long and broad,
-    a thick spine along its top, honed thin toward a serrated edge of frenzy-red teeth that pulse (glowing); the haft
-    runs up through it; a rivet."""
+    """The Frenzy Cleaver in the hand: a short wrapped grip with a pommel cap, and a big butcher's blade of plain forged
+    steel - long and broad, a thick spine along its top, a bright honed bevel and grind line along the edge, a smooth
+    gradient and a soft reflection across the flat - streaked with dried and fresh blood along the edge, running inward,
+    spattered over the flat (no glow); the haft runs up through it; rivets."""
     m = Model("frenzy_cleaver_held")
     m.part = True
-    ir, cr, wood, le = RAMPS["iron"], RAMPS["crimson"], RAMPS["wood"], RAMPS["leather"]
+    wood, le = RAMPS["wood"], RAMPS["leather"]
+    st = CLEAVER_STEEL
     haft = blank()
     for y in range(16):
         for x in range(16):
@@ -2071,33 +2125,23 @@ def frenzy_cleaver_held():
         for x in range(16):
             wrap.putpixel((x, y), le[3] if (y + x // 2) % 3 else le[1])
     t_wrap = m.texture("wrap", wrap)
-    steel = blank()
-    for y in range(16):
-        for x in range(16):
-            steel.putpixel((x, y), ir[4] if x < 2 else ir[3] if (x * 2 + y) % 9 else ir[2])
-    t_steel = m.texture("steel", steel)
-    t_spine = m.texture("spine", metal(ir, 661, tone=2))
-    teeth = []
-    for f in range(6):
-        img = blank()
-        for y in range(16):
-            for x in range(16):
-                img.putpixel((x, y), cr[[3, 4, 5, 4, 3, 2][(f + y // 2) % 6]] if (x + y) % 2 == 0 else cr[1])
-        teeth.append(img)
-    t_teeth = m.texture("teeth", teeth)
+    t_flat = m.texture("flat", cleaver_flat())
+    t_spine = m.texture("spine", metal(st, 661, tone=2))
+    t_rivet = m.texture("rivet", fill(st, 4))
     prism(m, 2.0, -3.0, -2.0, t_spine)                      # pommel cap
     prism(m, 1.6, -2.0, 2.6, (t_wrap, [0, 0, 2, 5]))        # a short wrapped grip
     prism(m, 1.6, 2.6, 18.6, (t_haft, [6, 0, 8, 16]))       # the haft, up through the blade
     prism(m, 2.0, 18.6, 19.4, t_spine)
     # the blade, to the -x side (up-left once laid on the diagonal): 13 long, 8 broad
-    m.cube((-0.8, 5.4, 7.5), (7.2, 18.4, 8.5), (t_steel, [0, 0, 8, 13]))          # body
+    m.box((-0.8, 5.4, 7.5), (7.2, 18.4, 8.5), {"south": (t_flat, [0, 0, 8, 13]), "north": (t_flat, [8, 0, 0, 13]),
+          "up": (t_spine, [0, 0, 8, 1]), "down": (t_spine, [0, 0, 8, 1])})                       # the flat, both sides
     m.cube((6.6, 5.0, 7.3), (7.4, 18.8, 8.7), (t_spine, [0, 0, 1, 14]))           # bound to the haft
     m.cube((-0.8, 17.4, 7.2), (7.2, 18.8, 8.8), (t_spine, [0, 0, 8, 1]))          # the thick spine along the top
     m.cube((-0.8, 5.0, 7.3), (7.2, 5.6, 8.7), (t_spine, [0, 0, 8, 1]))            # the heel
-    m.box((-1.8, 5.6, 7.7), (-0.8, 17.4, 8.3), {"west": (t_teeth, [0, 0, 1, 12]), "north": (t_teeth, [0, 0, 1, 12]),
-          "south": (t_teeth, [0, 0, 1, 12]), "up": (t_teeth, [0, 0, 1, 1]), "down": (t_teeth, [0, 0, 1, 1])}, light=12)
+    m.box((-1.8, 5.6, 7.7), (-0.8, 17.4, 8.3), {d: (t_flat, [15, 0, 16, 12]) for d in ("west", "north", "south")} |
+          {"up": (t_flat, [15, 0, 16, 1]), "down": (t_flat, [15, 11, 16, 12])})  # the honed edge, bloodied
     for (x, y) in ((3.2, 14.6), (3.2, 8.4)):                                       # rivets
-        m.cube((x, y, 7.3), (x + 1.0, y + 1.0, 8.7), (t_spine, [0, 0, 1, 1]))
+        m.cube((x, y, 7.3), (x + 1.0, y + 1.0, 8.7), (t_rivet, [0, 0, 1, 1]))
     m.display = HANDHELD_DISPLAY
     return diagonal(m)
 

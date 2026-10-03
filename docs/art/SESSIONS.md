@@ -676,6 +676,10 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   Then (the user): the staff shouldn't look wide, it should look round. Every staff part is now an octagonal section
   (two crossed boxes with the corners cut) and a little slimmer. Note: previews of spear models must squash depth by
   half (vanilla scales a spear 0.85 deep vs 1.7 in-plane); an unsquashed preview shows the staff twice as deep as it is.
+- **Frenzy Cleaver re-skinned** (the user: a more realistic metal look, blood on it, not the glow): the glowing red teeth
+  are gone. The blade's flat is plain forged steel (`CLEAVER_STEEL`, untinted): a bright honed bevel and dark grind
+  line along the edge, a smooth gradient across the flat and one soft diagonal reflection; blood over it
+  (`CLEAVER_BLOOD`: dried, fresh and a wet highlight - heaviest along the edge, runs inward, spatter), no light emission.
 
 **Session N plan - Nexo note-block blocks** (N for Nexo - H is the menu-backgrounds session)
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
