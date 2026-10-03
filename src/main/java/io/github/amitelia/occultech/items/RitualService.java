@@ -367,6 +367,7 @@ public final class RitualService {
         private BukkitTask task;
         private int elapsed;
         @Nullable private RitualSigil sigil;
+        @Nullable private RitualSigil fightSigil;
 
         /**
          * @param repaired for a repair ritual: the mended weapon to hand back (null for recipes)
@@ -387,7 +388,7 @@ public final class RitualService {
             task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, STEP_TICKS, STEP_TICKS);
             OptionalInt tier = Circles.tierOfAltar(String.valueOf(BlockStorage.checkID(altar)));
             if (tier.isPresent()) {   // the circle's sigil, glowing and turning on the floor
-                sigil = RitualSigil.show(altar, tier.getAsInt(), 2 * Circles.forTier(tier.getAsInt()).radius() + 1, recipe.isSummon());
+                sigil = RitualSigil.show(altar, tier.getAsInt(), 2 * Circles.forTier(tier.getAsInt()).radius() + 1);
             }
         }
 
@@ -431,6 +432,10 @@ public final class RitualService {
         }
 
         void finish(boolean withEffects) {
+            if (recipe.isSummon() && withEffects) {
+                fightSigil = sigil;   // handed to the fight instead of folding away
+                sigil = null;
+            }
             end();
             if (repaired != null) {
                 deliver(repaired.clone());
@@ -445,6 +450,9 @@ public final class RitualService {
                 BossSpec spec = specs.get(recipe.bossId());
                 ItemStack refund = recipe.center() == null || taken.isEmpty() ? null : taken.get(0).item().clone();
                 bosses.summon(recipe.bossId(), spec, altar, refund);
+                if (fightSigil != null) {   // the circle's sigil stays, turning slowly, while the boss fight lasts
+                    fightSigil.keepWhile(() -> bosses.fightAt(altar).isPresent());
+                }
                 return;
             }
 

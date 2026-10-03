@@ -3,7 +3,9 @@
 Session N made Occultech's blocks **custom blocks the way Nexo makes them**, without Nexo: each block look owns a vanilla
 block state set aside for it, and Occultech's resource pack shows the block's model for that state. Solid blocks use
 powered note-block states (Nexo's `NOTEBLOCK` type); the flat, walk-through ritual glyphs use disarmed tripwire states
-(Nexo's `STRINGBLOCK` type). This file is the plan for the day the plugin runs on the Nexo server.
+(Nexo's `STRINGBLOCK` type); models smaller than their cube use chorus-plant states with neither up nor down (Nexo's
+`CHORUSBLOCK` type - a note block would hide its neighbours' faces). This file is the plan for the day the plugin runs
+on the Nexo server.
 
 ## What exists now
 
@@ -17,7 +19,7 @@ powered note-block states (Nexo's `NOTEBLOCK` type); the flat, walk-through ritu
 | A draft Nexo item config for the same blocks | `docs/nexo/occultech-blocks.yml` (generated, untested) |
 | Mode switch | `custom-blocks.mode` in config.yml: `auto` (custom blocks unless Nexo is installed), `blocks`, `skins` |
 
-Paper must have `block-updates.disable-noteblock-updates` and `disable-tripwire-updates` set to `true` in
+Paper must have `block-updates.disable-noteblock-updates`, `disable-chorus-plant-updates` and `disable-tripwire-updates` set to `true` in
 `config/paper-global.yml` (Nexo needs the same); the plugin warns at startup if they're off.
 
 ## Why not just keep our states on the Nexo server

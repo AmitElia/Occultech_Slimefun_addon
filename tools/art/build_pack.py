@@ -39,6 +39,7 @@ FIXED_DATE = (2026, 1, 1, 0, 0, 0)   # deterministic zip: same art, same bytes, 
 # once given out - placed blocks are stored as their state. New looks get the next free state.
 BLOCK_STATES = os.path.join(os.path.dirname(__file__), "block_states.json")
 VANILLA_TRIPWIRE = os.path.join(os.path.dirname(__file__), "vanilla_tripwire.json")   # from the 26.2 client
+VANILLA_CHORUS = os.path.join(os.path.dirname(__file__), "vanilla_chorus_plant.json")
 STRING_BLOCKS = {"chalk_glyph", "bound_glyph", "abyssal_glyph", "hollow_glyph"}
 FACINGS = {"occult_forge": ["north", "east", "south", "west"]}   # blocks with a front: a state per facing
 FACING_Y = {"north": 0, "east": 90, "south": 180, "west": 270}
@@ -48,6 +49,11 @@ NOTE_INSTRUMENTS = ["harp", "basedrum", "snare", "hat", "bass", "flute", "bell",
                     "iron_xylophone", "cow_bell", "didgeridoo", "bit", "banjo", "pling"]
 ALL_INSTRUMENTS = NOTE_INSTRUMENTS + ["trumpet", "trumpet_exposed", "trumpet_oxidized", "trumpet_weathered", "zombie",
                                       "skeleton", "creeper", "dragon", "wither_skeleton", "piglin", "custom_head"]
+# Chorus-plant states set aside (Nexo's CHORUSBLOCK type) for models smaller than a full cube: a note block is a solid
+# cube to the client, which hides every touching block's face - through a smaller model you'd see the sky (the "blue
+# bottom"). A chorus plant hides nothing. The states: up=false and down=false (natural chorus trees all but never make a
+# piece with neither), the four sides free - 16 states. Needs Paper's disable-chorus-plant-updates.
+CHORUS_SIDES = ["east", "north", "south", "west"]
 # Tripwire states set aside: disarmed=true (vanilla string only gets there while being cut with shears), the other six
 # booleans free - 64 states.
 TRIPWIRE_SIDES = ["attached", "east", "north", "south", "west", "powered"]
@@ -63,28 +69,56 @@ def tripwire_state(slot):
             "south={south},west={west}]").format(**v)
 
 
+def chorus_state(slot):
+    v = {name: "true" if slot >> i & 1 else "false" for i, name in enumerate(CHORUS_SIDES)}
+    return "minecraft:chorus_plant[down=false,east={east},north={north},south={south},up=false,west={west}]".format(**v)
+
+
+def is_full(model):
+    """Whether the model fills its block's six faces (an element spanning each whole face at the block's edge)."""
+    for i in range(3):
+        others = [j for j in range(3) if j != i]
+        for val in (0, 16):
+            if not any(e["from"][i] <= val <= e["to"][i] and all(e["from"][k] <= 0 and e["to"][k] >= 16 for k in others)
+                       for e in model["elements"]):
+                return False
+    return True
+
+
+def block_kind(state):
+    return state[len("minecraft:"):state.index("[")]
+
+
 def state_props(state):
     return dict(kv.split("=") for kv in state[state.index("[") + 1:-1].split(","))
 
 
-def custom_blocks(skins):
+def custom_blocks(skins, gdir):
     """Gives every block look its state (keeping the ones already given out) and returns
-    [(item_id, look, facing, state, model_key, y)]."""
+    [(item_id, look, facing, state, model_key, y)] plus the retired states [(item_id, state, model_key, y)].
+    A look whose kind of block changed (a model that stopped filling its cube) gets a new state; its old one is
+    retired - never given out again, and still shown with the model until the plugin converts the placed blocks."""
     given = json.load(open(BLOCK_STATES, encoding="utf-8")) if os.path.exists(BLOCK_STATES) else {}
     used = set(given.values())
     out = []
+    makers = {"tripwire": (tripwire_state, 64), "note_block": (note_state, 24 * len(NOTE_INSTRUMENTS)),
+              "chorus_plant": (chorus_state, 16)}
     for base in sorted(skins):
-        string = base in STRING_BLOCKS
+        model0 = json.load(open(os.path.join(gdir, base, "model.json"), encoding="utf-8"))
+        kind = "tripwire" if base in STRING_BLOCKS else "note_block" if is_full(model0) else "chorus_plant"
         for look in range(skins[base]):
             for facing in FACINGS.get(base, ["-"]):
                 key = f"{base.upper()} {look} {facing}"
+                if key in given and block_kind(given[key]) != kind:
+                    n = sum(1 for k in given if k.startswith(f"~retired {key}"))
+                    given[f"~retired {key} {n}"] = given.pop(key)
                 if key not in given:
+                    make, limit = makers[kind]
                     slot = 0
-                    make = tripwire_state if string else note_state
                     while make(slot) in used:
                         slot += 1
-                    if (string and slot >= 64) or (not string and slot >= 24 * len(NOTE_INSTRUMENTS)):
-                        raise SystemExit("out of custom block states")
+                    if slot >= limit:
+                        raise SystemExit(f"out of {kind} states")
                     given[key] = make(slot)
                     used.add(given[key])
                 model = base if look == 0 else f"{base}_v{look}"
@@ -92,20 +126,29 @@ def custom_blocks(skins):
                 # approved look: plain blocks turn 180, a front faces its way (north = as drawn)
                 y = FACING_Y[facing] if facing != "-" else 180
                 out.append((base.upper(), look, facing, given[key], model, y))
+    retired = []
+    for k, state in given.items():
+        if k.startswith("~retired "):
+            item, look, facing = k.split(" ")[1:4]
+            if item.lower() in skins:
+                model = item.lower() if look == "0" else f"{item.lower()}_v{look}"
+                retired.append((item, state, model, FACING_Y[facing] if facing != "-" else 180))
     with open(BLOCK_STATES, "w", encoding="utf-8", newline="\n") as f:
         json.dump(dict(sorted(given.items())), f, indent=1)
         f.write("\n")
-    return out
+    return out, retired
 
 
-def blockstate_files(blocks):
-    """note_block.json and tripwire.json: our states show our models; every other state keeps vanilla's look."""
+def blockstate_files(blocks, retired):
+    """note_block.json, tripwire.json, chorus_plant.json: our states show our models; every other state keeps vanilla's
+    look."""
     def apply(model, y):
         a = {"model": model}
         if y:
             a["y"] = y
         return a
     ours = {b[3]: apply(f"{NS}:block/{b[4]}", b[5]) for b in blocks}
+    ours.update({r[1]: apply(f"{NS}:block/{r[2]}", r[3]) for r in retired})
     note = [{"when": {"powered": "false"}, "apply": {"model": "minecraft:block/note_block"}}]
     taken = {}
     for state, a in ours.items():
@@ -132,8 +175,20 @@ def blockstate_files(blocks):
         pr = state_props(state)
         a = ours.get(state) or vanilla[",".join(f"{k}={pr[k]}" for k in ["attached", "east", "north", "south", "west"])]
         trip.append({"when": pr, "apply": a})
+    # chorus_plant: vanilla's parts, each limited to states that aren't ours, then ours
+    taken_chorus = {tuple(state_props(st)[k] for k in CHORUS_SIDES) for st in ours if block_kind(st) == "chorus_plant"}
+    free = [dict(zip(CHORUS_SIDES, combo), up="false", down="false")
+            for combo in (tuple("true" if slot >> i & 1 else "false" for i in range(4)) for slot in range(16))
+            if combo not in taken_chorus]
+    not_ours = {"OR": [{"up": "true"}, {"down": "true"}] + free}
+    chorus = [{"when": {"AND": [part["when"], not_ours]}, "apply": part["apply"]}
+              for part in json.load(open(VANILLA_CHORUS, encoding="utf-8"))["multipart"]]
+    for state, a in ours.items():
+        if block_kind(state) == "chorus_plant":
+            chorus.append({"when": state_props(state), "apply": a})
     return {"assets/minecraft/blockstates/note_block.json": {"multipart": note},
-            "assets/minecraft/blockstates/tripwire.json": {"multipart": trip}}
+            "assets/minecraft/blockstates/tripwire.json": {"multipart": trip},
+            "assets/minecraft/blockstates/chorus_plant.json": {"multipart": chorus}}
 
 
 def nexo_config(blocks, items):
@@ -141,11 +196,11 @@ def nexo_config(blocks, items):
     out its own states from custom_variation; the plugin's conversion command re-places placed blocks through Nexo."""
     lines = ["# Occultech blocks for Nexo - DRAFT, generated by tools/art/build_pack.py; finish and test on the Nexo",
              "# server (docs/nexo-migration.md). The models come from Occultech's pack (handed to Nexo as an external pack).", ""]
-    variation = {"NOTEBLOCK": 0, "STRINGBLOCK": 0}
+    variation = {"NOTEBLOCK": 0, "STRINGBLOCK": 0, "CHORUSBLOCK": 0}
     for (item_id, look, facing, state, model, y) in blocks:
         if facing not in ("-", "north"):
             continue   # Nexo turns a directional block itself (directional: type: FURNACE)
-        kind = "STRINGBLOCK" if state.startswith("minecraft:tripwire") else "NOTEBLOCK"
+        kind = {"tripwire": "STRINGBLOCK", "chorus_plant": "CHORUSBLOCK"}.get(block_kind(state), "NOTEBLOCK")
         variation[kind] += 1
         nexo_id = f"occultech_{model}"
         name = items.get(item_id, {}).get("name", item_id)
@@ -372,8 +427,8 @@ def main():
         equipment.append(name)
 
     # custom blocks (Session N): every skinned block look gets its block state and the blockstate files
-    blocks = custom_blocks(skins)
-    files.update(blockstate_files(blocks))
+    blocks, retired = custom_blocks(skins, gdir)
+    files.update(blockstate_files(blocks, retired))
 
     files["pack.mcmeta"] = {"pack": {
         "description": "Occultech - occult rituals, bosses and relics",
@@ -407,6 +462,7 @@ def main():
         f.write("# custom blocks: <ITEM_ID> <look> <facing or -> <block state> (generated by tools/art/build_pack.py from\n"
                 "# tools/art/block_states.json - a state never changes once given out)\n")
         f.write("".join(f"{b[0]} {b[1]} {b[2]} {b[3]}\n" for b in blocks))
+        f.write("".join(f"{r[0]} ~ - {r[1]}\n" for r in retired))   # retired: placed blocks are converted
     os.makedirs(os.path.join(ROOT, "docs", "nexo"), exist_ok=True)
     with open(os.path.join(ROOT, "docs", "nexo", "occultech-blocks.yml"), "w", encoding="utf-8", newline="\n") as f:
         f.write(nexo_config(blocks, items))

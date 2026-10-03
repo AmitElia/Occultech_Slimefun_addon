@@ -113,6 +113,7 @@ final class SelfTest {
         then(RitualService.DURATION_TICKS + 20L, this::summonResult);
         then(0, this::killCurrentFight);
         then(30, () -> checkFightEndedCleanly("Brood Mother (ritual)"));
+        then(100, () -> check("the fight's sigil folds away when the fight is over", sigils().isEmpty(), String.valueOf(sigils())));
         for (String bossId : BOSSES) {
             then(0, () -> summonDirect(bossId));
             then(60, () -> checkFightRunning(bossId));
@@ -367,6 +368,12 @@ final class SelfTest {
         previous.putIfAbsent(plain, plain.getBlockData());
         plain.setType(Material.NOTE_BLOCK, false);
         check("a plain note block isn't mistaken for an Occultech block", !blocks.isCustomState(plain), plain.getBlockData().getAsString());
+        Block jar = altar.getRelative(7, 0, 6);
+        DebugWorld.placeSlimefun(jar, ItemKeys.slimefunId("WISP_JAR"), block -> previous.putIfAbsent(block, block.getBlockData()));
+        check("a model smaller than its cube is a chorus-plant custom block (it hides no neighbour's face)",
+            jar.getType() == Material.CHORUS_PLANT && blocks.lookOf(jar) != null, jar.getBlockData().getAsString());
+        BlockStorage.clearBlockInfo(jar);
+        jar.setType(Material.AIR);
         check("the six decorations are custom blocks (G7)", java.util.stream.Stream.of("WISP_JAR", "BOTTLED_GALE", "WIND_CHIME",
             "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "RUNE_OBELISK").allMatch(id -> blocks.isCustom(ItemKeys.slimefunId(id))),
             "a decoration isn't");
@@ -538,12 +545,13 @@ final class SelfTest {
         fill(recipe);
         snapshotSlimes();
         check("summoning ritual starts with an empty altar", rituals.begin(null, altar) == RitualService.Outcome.STARTED, "did not start");
-        check("a summoning adds the pentagram to the sigil", sigils().containsAll(List.of("ritual_sigil_t0", "ritual_sigil_summon")),
+        check("a summoning shows the circle's sigil (no second pentagram)", sigils().equals(List.of("ritual_sigil_t0")),
             String.valueOf(sigils()));
     }
 
     private void summonResult() {
         currentFight = bosses.fightAt(altar).orElse(null);
+        check("the sigil stays on the floor, turning, through the boss fight", sigils().contains("ritual_sigil_t0"), String.valueOf(sigils()));
         check("summoning ritual spawned the Brood Mother", currentFight != null && !currentFight.bosses().isEmpty(), "no fight");
         if (currentFight != null) {
             check("boss is tagged as summoned", currentFight.bosses().stream().allMatch(Keys::isSummoned), "untagged");

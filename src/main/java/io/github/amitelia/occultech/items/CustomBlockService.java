@@ -34,7 +34,9 @@ import java.util.Set;
 
 /**
  * Occultech's blocks as real custom blocks, the way Nexo makes them (Session N). Each block look owns a vanilla block
- * state set aside for it - a powered note block (Nexo's NOTEBLOCK type) for solid blocks, a disarmed tripwire (Nexo's
+ * state set aside for it - a powered note block (Nexo's NOTEBLOCK type) for blocks that fill their cube, a chorus plant
+ * with neither up nor down (Nexo's CHORUSBLOCK type) for smaller models (a note block is a solid cube to the client,
+ * which hides every touching block's face - through a smaller model you'd see the sky), a disarmed tripwire (Nexo's
  * STRINGBLOCK type) for the flat, walk-through ritual glyphs - and Occultech's resource pack shows the block's model for
  * that state. They are real blocks: they appear and vanish with the block, render at full distance, cost no entity.
  *
@@ -46,14 +48,18 @@ import java.util.Set;
  * ({@code NexoBlocks.place}), and {@code /occultech blocks convert} re-places existing blocks - see
  * docs/nexo-migration.md.
  *
- * <p>Like Nexo, it needs Paper's {@code block-updates.disable-noteblock-updates} and {@code disable-tripwire-updates}
+ * <p>Like Nexo, it needs Paper's {@code block-updates.disable-noteblock-updates}, {@code disable-chorus-plant-updates} and
+ * {@code disable-tripwire-updates}
  * (config/paper-global.yml): otherwise a neighbour or redstone could change a block's state, and so its look. It warns
  * at startup when they are off.
  */
 public final class CustomBlockService implements Listener {
 
-    /** A placed custom block's look: its recipes.yml item id, which look (glyph variants, tile looks), its front. */
-    public record Look(String itemId, int look, @Nullable BlockFace facing) {}
+    /**
+     * A placed custom block's look: its recipes.yml item id, which look (glyph variants, tile looks), its front. Not
+     * {@code current}: a retired state (the block's kind changed) - the block is converted to its current state.
+     */
+    public record Look(String itemId, int look, @Nullable BlockFace facing, boolean current) {}
 
     private final JavaPlugin plugin;
     private final ResourcePackService pack;
@@ -76,6 +82,7 @@ public final class CustomBlockService implements Listener {
     public void start() {
         for (String[] line : pack.customBlockLines()) {
             String key = line[0] + " " + line[1] + " " + line[2];
+            boolean retired = line[1].equals("~");
             BlockData data;
             try {
                 data = Bukkit.createBlockData(line[3]);
@@ -84,8 +91,12 @@ public final class CustomBlockService implements Listener {
                 continue;
             }
             BlockFace facing = line[2].equals("-") ? null : BlockFace.valueOf(line[2].toUpperCase(Locale.ROOT));
+            if (retired) {
+                byState.put(data.getAsString(), new Look(line[0], 0, null, false));
+                continue;
+            }
             states.put(key, data);
-            byState.put(data.getAsString(), new Look(line[0], Integer.parseInt(line[1]), facing));
+            byState.put(data.getAsString(), new Look(line[0], Integer.parseInt(line[1]), facing, true));
             looks.merge(line[0], Integer.parseInt(line[1]) + 1, Math::max);
             if (facing != null) {
                 directional.add(line[0]);
@@ -123,7 +134,7 @@ public final class CustomBlockService implements Listener {
     @Nullable
     public Look lookOf(@Nonnull Block block) {
         Material type = block.getType();
-        if (type != Material.NOTE_BLOCK && type != Material.TRIPWIRE) {
+        if (type != Material.NOTE_BLOCK && type != Material.TRIPWIRE && type != Material.CHORUS_PLANT) {
             return null;
         }
         return byState.get(block.getBlockData().getAsString());
@@ -160,7 +171,7 @@ public final class CustomBlockService implements Listener {
         }
         String item = BlockSkinService.stripPrefix(slimefunId);
         Look now = lookOf(block);
-        if (now != null && now.itemId().equals(item)) {
+        if (now != null && now.itemId().equals(item) && now.current()) {
             return;
         }
         int look = 0;
@@ -200,12 +211,21 @@ public final class CustomBlockService implements Listener {
         ensure(event.getBlockPlaced(), event.getSlimefunItem().getId());
     }
 
-    /** Right-clicking one of our note blocks must not tune it (that would change its state, and so its look). */
+    /**
+     * Right-clicking one of our note blocks must not tune it (that would change its state, and so its look). Sneaking with
+     * something in hand skips the block, as vanilla does - so blocks can be placed against ours. (Denying the block
+     * there too made the click do nothing: nothing could be stacked on an Occultech block.)
+     */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
+        Look look = block == null ? null : lookOf(block);
+        if (look != null && !look.current()) {   // a retired state: convert the block now that someone uses it
+            ensure(block, io.github.amitelia.occultech.content.ItemKeys.slimefunId(look.itemId()));
+        }
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK && block != null && block.getType() == Material.NOTE_BLOCK) {
-            if (isCustomState(block)) {
+            boolean placing = event.getPlayer().isSneaking() && event.getItem() != null && !event.getItem().getType().isAir();
+            if (isCustomState(block) && !placing) {
                 event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
             } else if (BlockStorage.checkID(block) == null) {
                 // a plain note block that a tune could carry into one of our states
@@ -230,7 +250,7 @@ public final class CustomBlockService implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPhysics(BlockPhysicsEvent event) {
         Material type = event.getBlock().getType();
-        if ((type == Material.NOTE_BLOCK || type == Material.TRIPWIRE) && isCustomState(event.getBlock())) {
+        if ((type == Material.NOTE_BLOCK || type == Material.TRIPWIRE || type == Material.CHORUS_PLANT) && isCustomState(event.getBlock())) {
             event.setCancelled(true);
         }
     }
@@ -256,8 +276,10 @@ public final class CustomBlockService implements Listener {
             return;
         }
         YamlConfiguration paper = YamlConfiguration.loadConfiguration(file);
-        if (!paper.getBoolean("block-updates.disable-noteblock-updates") || !paper.getBoolean("block-updates.disable-tripwire-updates")) {
-            plugin.getLogger().warning("Custom blocks: set block-updates.disable-noteblock-updates and disable-tripwire-updates to true"
+        if (!paper.getBoolean("block-updates.disable-noteblock-updates") || !paper.getBoolean("block-updates.disable-tripwire-updates")
+            || !paper.getBoolean("block-updates.disable-chorus-plant-updates")) {
+            plugin.getLogger().warning("Custom blocks: set block-updates.disable-noteblock-updates, disable-chorus-plant-updates and"
+                + " disable-tripwire-updates to true"
                 + " in config/paper-global.yml (as Nexo also needs) - otherwise redstone or a neighbour can change a block's look.");
         }
     }

@@ -14,6 +14,10 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **G** | Blocks, held models, worn armor, placed decorations - split into G1-G7 (see *Session G*) | **Done** (G1-G7) |
 | H | Menu backgrounds | later (moved after N) |
 | ~~I~~ | ~~Effect sprites~~ - **dropped** (the user: retexturing particles would change other plugins' and vanilla effects) | - |
+| **O1** | Block fixes: blue bottoms (smaller models -> chorus-plant states), stacking on custom blocks, Rune Obelisk (thinner base, less flat, clean edges), Soulfire Brazier (aligned textures, full rim), boss fights keep the turning sigil (no second pentagram) | **Done** |
+| O2 | Art retouch: the tier sigils and pentagrams crisp and finished; the armor inventory icons professional and symmetric | next |
+| O3 | Trophy Board as a real pedestal with bosses shown at one size; the Arcane Altar reworked with the Session B pentagram | - |
+| O4 | Floor telegraphs for boss attacks (fire, poison, hits...) like the sigil holograms | - |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
 
 ## Session A - style and toolkit (2026-10-01)
@@ -795,6 +799,24 @@ ritual runs (`items/RitualSigil`), the altar's tier sigil unfolds across the cir
 quarter turn a second, and folds away when the ritual ends or breaks; a summoning adds Session B's pentagram,
 1.5 blocks wider and turning back at two thirds of the speed. The client does the turning (interpolated
 transformations), the server sends one update a second; the displays are never saved. Self-test checks all three.
+
+**Session O1 - block fixes (2026-10-03)**, from the user's list:
+- **Blue at the bottom of blocks:** a note block is a solid cube to the client, so it hides the faces of every block
+  touching it; under or beside a model smaller than its cube you saw through to the sky. Models that don't fill their
+  cube (`is_full` in build_pack: an element spanning each whole face) now use chorus-plant states with neither up nor
+  down (Nexo's CHORUSBLOCK type; natural chorus trees all but never make such a piece; 16 states, 14 used) - a chorus
+  plant hides nothing. Paper's `disable-chorus-plant-updates` is on in both test servers. A look whose kind changed got
+  a new state; its old one is *retired* in block_states.json (never given out again, still drawn with the model) and the
+  plugin converts such blocks - decorations at once (their tickers), others when used or with `/occultech skins`.
+- **Nothing could be stacked on an Occultech block, even sneaking:** the no-tuning guard denied every right-click on our
+  note blocks, which made the click do nothing. Sneaking with an item now skips the block, as vanilla.
+- **Rune Obelisk:** a thinner stepped base (a 14-wide foot, a 12-wide plinth with a recessed panel under a sea-glow
+  inlay, a cap), laid stone courses up the shaft; every face drawn to its own size (`exact_box`: one texel per unit -
+  the tapering faces had squeezed 8 texels into narrower boxes, the "edge problems").
+- **Soulfire Brazier:** faces drawn to size; two runes centred on each side (they ran off-centre); the rim's top
+  texture covers its short bars (they sampled past a 2-row texture - the missing pieces); collars round the stem.
+- **Boss fights:** the summoning's second pentagram is gone; the circle's sigil stays on the floor through the fight,
+  turning a quarter turn every 4 s, and folds away when the fight is over.
 
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the
