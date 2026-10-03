@@ -618,6 +618,13 @@ the helmet; both helmets' base texture is boring horizontal lines - make it look
   purple missing model in game). build_pack now refuses any element outside -16..32. The arc is now plasma, lower,
   just above the tendril tips: a white core in a soul-blue sheath with three filaments splitting well off it,
   writhing and rejoining at the tips, a new pattern each of 8 frames, on two planes for depth.
+- Then (the user): lightning as little cracks of plasma flying round each horn instead of an arc; creeping sculk
+  infection in spots on the body with electricity running through it like cracks. Helm: ten small planes round each
+  tendril, facing every way (x, z and turned 45 degrees), each showing one quadrant of an 8-frame spark texture in which
+  each quadrant is a tiny zigzag bolt or nothing - so they flicker independently. Body (`infection`): ragged patches of
+  raised sculk (lit cell crowns, dark crevices, a dark rim where they rise off the steel, a soul spot) on the abdomen,
+  shoulder blade, a pauldron, a thigh, the back of a leg and a boot, each with a thin crack of soul light running
+  through it and on across the plates (replacing the straight conduit lines); the cores and purple trim stay.
 
 **Session H plan - Nexo note-block blocks**
 - Every Occultech block becomes a full-cube Nexo custom block (note-block mechanic, its own note-block state) showing
