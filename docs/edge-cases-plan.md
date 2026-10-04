@@ -49,7 +49,7 @@ What the code does today, what goes wrong, and the fix. Four sessions, smallest 
   - The away timer (below).
 - **Flight and BeaconPlus:** skipped. The server's BeaconPlus has no Flying effect.
 
-## Session P3: fights survive restarts and crashes (#4)
+## Session P3: fights survive restarts and crashes (#4) - DONE (self-test 340/340; a real stop and a killed JVM both resumed the fight)
 
 - **Saving:** every 5 s and on stop, the fight writes its state to the altar's block storage: boss, health of each boss, phase, elapsed time, the damage and presence counts, the catalyst.
 - **Resuming:**

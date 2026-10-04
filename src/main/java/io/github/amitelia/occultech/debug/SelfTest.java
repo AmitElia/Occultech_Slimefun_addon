@@ -128,6 +128,10 @@ final class SelfTest {
         then(40, this::awayRecovering);
         then(100, this::awayEnded);
         then(5, this::banishEnds);
+        then(5, this::saveStart);
+        then(110, this::fightSaved);
+        then(5, this::fightResumed);
+        then(5, this::ritualCrash);
 
         // ---- tier 1
         then(0, this::buildUpgradeCircle);
@@ -691,7 +695,7 @@ final class SelfTest {
         BossSpec spec = rituals.spec("GELATINOUS_SOVEREIGN").orElseThrow();
         BossFight fight = bosses.summon("GELATINOUS_SOVEREIGN", spec, altar, DebugWorld.item(CATALYST, 1));
         check("active-fight marker saved on the altar", BlockStorage.getLocationInfo(altar.getLocation(), ACTIVE_KEY) != null, "no marker");
-        bosses.abort(fight, BossFight.Result.SHUTDOWN);
+        bosses.abort(fight, BossFight.Result.UNLOADED);
         check("interrupted gate fight refunds the catalyst", CATALYST.equals(idIn(RitualAltar.CENTER_SLOT)), String.valueOf(idIn(RitualAltar.CENTER_SLOT)));
         check("marker cleared after the fight", BlockStorage.getLocationInfo(altar.getLocation(), ACTIVE_KEY) == null, "marker left");
     }
@@ -752,6 +756,72 @@ final class SelfTest {
         check("a banished fight's catalyst is lost", !refunded(), "refunded");
         List<Entity> left = nearby().stream().filter(Keys::isSummoned).toList();
         check("banishing leaves no summoned entities", left.isEmpty(), left.size() + " left");
+    }
+
+    // ------------------------------------------------------------------ Session P3: restarts and crashes
+
+    private BossFight savedFight;
+    private int savedElapsed;
+
+    private void saveStart() {
+        DebugWorld.setAltarCenter(altar, null);
+        savedFight = bosses.summon("BROOD_MOTHER", rituals.spec("BROOD_MOTHER").orElseThrow(), altar, DebugWorld.item(MARKER, 1));
+        LivingEntity boss = savedFight.bosses().get(0);
+        boss.setHealth(boss.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue() * 0.4);
+    }
+
+    private void fightSaved() {
+        String state = BlockStorage.getLocationInfo(altar.getLocation(), "occultech_fight_state");
+        check("a running fight saves itself every few seconds", state != null && state.contains("BROOD_MOTHER"), String.valueOf(state));
+        savedElapsed = savedFight.elapsed();
+        bosses.abort(savedFight, BossFight.Result.SHUTDOWN);   // a server stop
+        check("a server stop keeps the fight (no refund)", !refunded()
+            && BlockStorage.getLocationInfo(altar.getLocation(), "occultech_fight_state") != null, "refunded or state lost");
+        rituals.recoverAltar(altar);   // the altar loads again
+    }
+
+    private void fightResumed() {
+        BossFight back = bosses.fightAt(altar).orElse(null);
+        check("the fight resumes when its altar loads", back != null && back != savedFight, "no fight");
+        if (back != null) {
+            check("the resumed boss keeps its health", Math.abs(back.healthFraction() - 0.4) < 0.05, String.valueOf(back.healthFraction()));
+            check("the resumed fight keeps its clock", back.elapsed() >= savedElapsed, savedElapsed + " -> " + back.elapsed());
+            bosses.abort(back);
+            check("a fight over for good clears its saved state",
+                BlockStorage.getLocationInfo(altar.getLocation(), "occultech_fight_state") == null, "state left");
+        }
+        check("resuming never refunds the catalyst", !refunded(), "refunded");
+    }
+
+    private void ritualCrash() {
+        RitualRecipe recipe = rituals.recipes().stream().filter(r -> CATALYST.equals(r.outputId())).findFirst().orElseThrow();
+        fill(recipe);
+        int offered = bowlTotal();
+        check("a ritual for the crash test starts", rituals.begin(null, altar) == RitualService.Outcome.STARTED && bowlsEmpty(), "did not start");
+        rituals.crashSessionsForTest();   // the server dies mid-ritual
+        rituals.recoverAltar(altar);      // ...and the altar loads again
+        check("a crash mid-ritual gives every offering back", bowlTotal() == offered, offered + " offered, " + bowlTotal() + " back");
+        check("a crash mid-ritual gives the center item back", recipe.center() == null || idIn(RitualAltar.CENTER_SLOT) != null
+            || altarHolds(recipe.center()), "center item lost");
+        rituals.recoverAltar(altar);      // a second load returns nothing more
+        check("crash returns happen only once", bowlTotal() == offered, bowlTotal() + " after a second load");
+    }
+
+    private boolean altarHolds(String key) {
+        BlockMenu menu = BlockStorage.getInventory(altar);
+        ItemStack item = menu == null ? null : menu.getItemInSlot(RitualAltar.CENTER_SLOT);
+        return item != null && !item.getType().isAir();
+    }
+
+    private int bowlTotal() {
+        int total = 0;
+        RitualService.CircleCheck check = rituals.checkCircle(altar).orElseThrow();
+        for (int[] offset : check.pattern().positionsOf(Circles.OFFERING_BOWL, check.rotation())) {
+            BlockMenu menu = BlockStorage.getInventory(altar.getRelative(offset[0], 0, offset[1]));
+            ItemStack item = menu == null ? null : menu.getItemInSlot(OfferingBowl.SLOT);
+            total += item == null || item.getType().isAir() ? 0 : item.getAmount();
+        }
+        return total;
     }
 
     private void crashRecovery() {

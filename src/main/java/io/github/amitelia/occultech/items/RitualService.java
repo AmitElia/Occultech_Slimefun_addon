@@ -27,6 +27,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import io.github.amitelia.occultech.boss.BossService;
+import io.github.amitelia.occultech.boss.BossFight;
 import io.github.amitelia.occultech.boss.BossSpec;
 import io.github.amitelia.occultech.ritual.CirclePattern;
 import io.github.amitelia.occultech.ritual.Circles;
@@ -123,10 +124,91 @@ public final class RitualService {
         return locked.contains(location.getBlock().getLocation());
     }
 
-    /** Called when an altar's menu is created (e.g. chunk load): returns the catalyst of a fight lost to a crash. */
+    /**
+     * Called when an altar's menu is created (e.g. chunk load). A fight saved by a restart or crash resumes where it left
+     * off (Session P3); if its state can't be read, the catalyst is returned instead. Offerings of a ritual a crash cut
+     * short go back where they came from.
+     */
     public void recoverAltar(@Nonnull Block altar) {
-        if (bosses.fightAt(altar).isEmpty()) {
+        if (!sessions.containsKey(altar.getLocation())) {
+            returnCrashedOfferings(altar);
+        }
+        if (bosses.fightAt(altar).isPresent()) {
+            return;
+        }
+        io.github.amitelia.occultech.boss.FightState state = io.github.amitelia.occultech.boss.FightState.parse(hooks.stateOf(altar));
+        BossSpec spec = state == null ? null : specs.get(state.bossId());
+        BossFight fight = spec == null ? null : bosses.resume(state, spec, altar, hooks.catalystOf(altar));
+        if (fight == null) {
             hooks.recover(altar);
+            return;
+        }
+        OptionalInt tier = Circles.tierOfAltar(String.valueOf(BlockStorage.checkID(altar)));
+        if (tier.isPresent()) {   // the circle's sigil turns again under the returning fight
+            RitualSigil sigil = RitualSigil.show(altar, tier.getAsInt(), 2 * Circles.forTier(tier.getAsInt()).radius() + 1);
+            sigil.keepWhile(() -> bosses.fightAt(altar).isPresent());
+        }
+    }
+
+    /** Altar block data: what a running ritual took ("x,y,z,slot,left,item;..."), so a crash can't swallow the offerings. */
+    private static final String TAKEN_KEY = "occultech_ritual_taken";
+
+    private static void saveTaken(Block altar, List<Taken> taken) {
+        StringBuilder out = new StringBuilder();
+        for (Taken t : taken) {
+            if (t.menu() == null) {
+                continue;
+            }
+            Location at = t.menu().getLocation();
+            ItemStack left = t.menu().getItemInSlot(t.slot());
+            out.append(out.isEmpty() ? "" : ";").append(at.getBlockX()).append(',').append(at.getBlockY()).append(',').append(at.getBlockZ())
+                .append(',').append(t.slot()).append(',').append(MenuUtils.isEmpty(left) ? 0 : left.getAmount()).append(',')
+                .append(java.util.Base64.getEncoder().encodeToString(t.item().serializeAsBytes()));
+        }
+        BlockStorage.addBlockInfo(altar, TAKEN_KEY, out.toString());
+    }
+
+    /**
+     * Puts back what a ritual took when a crash stopped it mid-way. Never twice: an offering is only returned if its slot
+     * holds no more than was left after the ritual took it (if the take itself was lost with the crash, the items are
+     * still there).
+     */
+    private void returnCrashedOfferings(Block altar) {
+        String saved = BlockStorage.getLocationInfo(altar.getLocation(), TAKEN_KEY);
+        if (saved == null || saved.isEmpty()) {
+            return;
+        }
+        BlockStorage.addBlockInfo(altar, TAKEN_KEY, null);
+        for (String entry : saved.split(";")) {
+            try {
+                String[] f = entry.split(",", 6);
+                Block block = altar.getWorld().getBlockAt(Integer.parseInt(f[0]), Integer.parseInt(f[1]), Integer.parseInt(f[2]));
+                int slot = Integer.parseInt(f[3]);
+                int left = Integer.parseInt(f[4]);
+                ItemStack item = ItemStack.deserializeBytes(java.util.Base64.getDecoder().decode(f[5]));
+                BlockMenu menu = BlockStorage.getInventory(block);
+                ItemStack now = menu == null ? null : menu.getItemInSlot(slot);
+                if (!MenuUtils.isEmpty(now) && now.isSimilar(item) && now.getAmount() > left) {
+                    continue;   // the take never reached the disk: the offering is still in its bowl
+                }
+                if (menu != null && MenuUtils.isEmpty(now)) {
+                    menu.replaceExistingItem(slot, item);
+                } else {
+                    ItemStack rest = menu == null ? item : menu.pushItem(item, slot);
+                    if (rest != null) {
+                        altar.getWorld().dropItemNaturally(altar.getLocation().add(0.5, 1.2, 0.5), rest);
+                    }
+                }
+            } catch (RuntimeException e) {
+                plugin.getLogger().warning("Could not return a ritual offering at " + altar.getLocation() + ": " + e);
+            }
+        }
+    }
+
+    /** Self-test only: stops every ritual as a crash would (nothing given back, nothing finished). */
+    public void crashSessionsForTest() {
+        for (Session session : new ArrayList<>(sessions.values())) {
+            session.crash();
         }
     }
 
@@ -229,6 +311,7 @@ public final class RitualService {
     }
 
     private void startSession(Session session) {
+        saveTaken(session.altar, session.taken);
         sessions.put(session.altar.getLocation(), session);
         locked.add(session.altar.getLocation());
         locked.addAll(session.bowls);
@@ -546,7 +629,8 @@ public final class RitualService {
             tell(player(), "&cThe circle was broken. The offerings are lost.");
         }
 
-        private void end() {
+        /** As a crash would leave it: stopped, its record of what it took still on the altar. */
+        void crash() {
             if (task != null) {
                 task.cancel();
             }
@@ -558,6 +642,13 @@ public final class RitualService {
             bosses.release(altar.getLocation());
             locked.remove(altar.getLocation());
             bowls.forEach(locked::remove);
+        }
+
+        private void end() {
+            if (BlockStorage.hasBlockInfo(altar)) {
+                BlockStorage.addBlockInfo(altar, TAKEN_KEY, null);
+            }
+            crash();
         }
 
         private Location center() {

@@ -242,6 +242,27 @@ public final class BossService implements Listener {
         return fight;
     }
 
+    /**
+     * Brings back a fight saved by a restart or crash (Session P3): a fresh spawn for the same group size, then the saved
+     * clock, health and fighters. Null if the boss no longer exists.
+     */
+    @Nullable
+    public BossFight resume(@Nonnull FightState state, @Nonnull BossSpec spec, @Nonnull Block altar, @Nullable ItemStack refund) {
+        BossBlueprint blueprint = blueprints.get(state.bossId());
+        if (blueprint == null) {
+            return null;
+        }
+        BossFight fight = new BossFight(this, spec, blueprint, altar, refund);
+        fight.setSummoner(state.summoner());
+        fight.setPlayersAtStart(state.playersAtStart());
+        fights.put(fight.id(), fight);
+        hooks.markActive(altar, refund);
+        fight.start();
+        fight.restore(state);
+        fight.broadcast("&5The circle stirs - &c" + spec.name() + " &5returns to finish what was started.");
+        return fight;
+    }
+
     @Nonnull
     public Collection<BossFight> fights() {
         return Collections.unmodifiableCollection(fights.values());

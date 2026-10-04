@@ -136,7 +136,10 @@ public final class BossFight {
     private final ItemStack refund;
     private final BossBehavior behavior;
     private final BossBar bar;
-    private final int playersAtStart;
+    private int playersAtStart;
+    /** Every main boss in spawn order, dead ones too: saved health lines up with a fresh spawn on resume. */
+    private final List<LivingEntity> spawnedBosses = new ArrayList<>();
+    private int saveCounter;
 
     private final List<LivingEntity> bosses = new ArrayList<>();
     private final List<Entity> extras = new ArrayList<>();
@@ -187,6 +190,7 @@ public final class BossFight {
             scaleHealth(e);
         });
         bosses.add(entity);
+        spawnedBosses.add(entity);
         return entity;
     }
 
@@ -322,6 +326,43 @@ public final class BossFight {
         if (!ended && (presence.containsKey(player.getUniqueId()) || inArena(player))) {
             excused.add(player.getUniqueId());
         }
+    }
+
+    /** This fight as it stands, to resume it after a restart or crash. */
+    @Nonnull
+    public FightState state() {
+        List<Double> health = new ArrayList<>();
+        for (LivingEntity boss : spawnedBosses) {
+            AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
+            health.add(boss.isDead() || !bosses.contains(boss) || max == null ? 0 : boss.getHealth() / max.getValue());
+        }
+        return new FightState(spec.id(), elapsed, health, playersAtStart, summoner, new HashMap<>(damage), new HashMap<>(presence));
+    }
+
+    void setPlayersAtStart(int players) {
+        this.playersAtStart = Math.max(1, players);
+    }
+
+    /**
+     * Picks up where {@code state} left off, right after the fresh spawn: the clock, each boss's health (bosses that were
+     * dead die again), and who fought. Everyone who fought counts as away through no fault of their own: the boss waits.
+     */
+    void restore(FightState state) {
+        elapsed = state.elapsed();
+        damage.putAll(state.damage());
+        presence.putAll(state.presence());
+        excused.addAll(state.presence().keySet());
+        for (int i = 0; i < spawnedBosses.size() && i < state.health().size(); i++) {
+            LivingEntity boss = spawnedBosses.get(i);
+            AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
+            double fraction = state.health().get(i);
+            if (max != null && fraction <= 0) {
+                boss.setHealth(0);
+            } else if (max != null) {
+                boss.setHealth(Math.max(1, Math.min(max.getValue(), fraction * max.getValue())));
+            }
+        }
+        service.hooks().saveState(altar, state().format());
     }
 
     /** Ticks left on the away timer, or -1 while someone is in the arena. */
@@ -493,6 +534,9 @@ public final class BossFight {
         if (ended) {
             return;
         }
+        if (++saveCounter % 20 == 0) {   // every 5 s: a crash loses at most that much of the fight
+            service.hooks().saveState(altar, state().format());
+        }
 
         for (LivingEntity boss : bosses) {
             if (!boss.isValid() && !boss.isDead()) {
@@ -646,7 +690,12 @@ public final class BossFight {
             case ABANDONED -> broadcast("&7The circle falls quiet. " + spec.name() + " fades away, and the catalyst with it.");
             case BANISHED -> center.getWorld().playSound(center, Sound.BLOCK_BEACON_DEACTIVATE, 1F, 0.6F);
             case TIMEOUT -> broadcast("&7" + spec.name() + " grows bored of you and fades away.");
-            case UNLOADED, SHUTDOWN, ERROR -> {
+            case SHUTDOWN -> {
+                // the fight is kept: saved here, it resumes when the altar loads again (Session P3)
+                service.hooks().saveState(altar, state().format());
+                broadcast("&7The circle holds its breath - " + spec.name() + " will return when the world wakes.");
+            }
+            case UNLOADED, ERROR -> {
                 broadcast("&7The ritual was interrupted. The catalyst returns to the altar.");
                 if (refund != null) {
                     service.hooks().refund(altar, refund.clone());
@@ -666,7 +715,9 @@ public final class BossFight {
         objects.clear();
         bar.removeAll();
         service.releaseChunks(arenaChunks());
-        service.hooks().clearActive(altar);
+        if (how != Result.SHUTDOWN) {
+            service.hooks().clearActive(altar);
+        }
         service.onFightEnded(this);
     }
 

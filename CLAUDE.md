@@ -61,8 +61,12 @@ items/BlockSkinService  the older display-entity skins (custom-blocks.mode: skin
 bowls, the catalyst on the altar for gate bosses, an empty altar for mini-bosses. Only hits from players inside the arena count. With
 nobody alive in the arena a fight pauses for `bosses.away-seconds` (the boss recovers if everyone walked off, waits after a
 death or disconnect) and then ends; the Codex (sneak + right-click its altar) or Banishing Salt end it early. Both lose the
-catalyst. The self-test turns the away rules off (`setAwayRules`) while its unattended fights run. A crash mid-fight is recovered via the
-`occultech_active_fight` block-storage marker on the altar (catalyst refunded on next load).
+catalyst. The self-test turns the away rules off (`setAwayRules`) while its unattended fights run. A fight saves its `FightState` (boss, clock, health per
+main boss, fighters) on the altar every 5 s and on shutdown (`occultech_fight_state`); when the altar loads again the fight
+resumes (fresh adds and objects, saved health). Only if that state is missing or unreadable does the old
+`occultech_active_fight` marker refund the catalyst. A running ritual records what it took (`occultech_ritual_taken`), so a
+crash mid-ritual gives the offerings back - never twice. `occultech fights [end N]` lists or ends fights, `occultech begin
+x y z` starts the ritual at an altar.
 
 **Items come from data:** `docs/recipes.yml` is packaged into the jar and registered at startup by `ContentRegistrar`
 (only tiers <= `ContentRegistrar.IMPLEMENTED_TIER`). Adding a plain item = edit recipes.yml (give it a `material`).

@@ -21,5 +21,9 @@ public interface FightHooks {
     /** Persist "a fight is running here" so a crash can refund the catalyst on the next start. */
     void markActive(Block altar, @Nullable ItemStack refund);
 
+    /** Clears the marker and any saved state: the fight is over for good. */
     void clearActive(Block altar);
+
+    /** Persist the fight's {@link FightState} (Session P3), so a restart or crash resumes it instead of refunding. */
+    void saveState(Block altar, String state);
 }

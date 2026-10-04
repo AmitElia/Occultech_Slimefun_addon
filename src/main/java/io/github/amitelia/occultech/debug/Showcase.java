@@ -145,6 +145,7 @@ final class Showcase {
             ticketed.forEach(chunk -> chunk.removePluginChunkTicket(plugin));
             say("&a[Occultech] Showcase built: a hallway south of spawn (tiers 0-" + ContentRegistrar.IMPLEMENTED_TIER
                 + ", then servitors). Natural mob spawning is off. &7Clear with /occultech showcase clear");
+            summonAltars.forEach((tier, altar) -> say("&7Summoning altar, tier " + tier + ": " + altar.getX() + " " + altar.getY() + " " + altar.getZ()));
         }, 10L);
     }
 

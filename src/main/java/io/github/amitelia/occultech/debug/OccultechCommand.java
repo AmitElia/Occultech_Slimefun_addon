@@ -53,6 +53,17 @@ public final class OccultechCommand implements TabExecutor {
             }
             return true;
         }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("fights")) {
+            fights(sender, args);
+            return true;
+        }
+        if (args.length == 4 && args[0].equalsIgnoreCase("begin")) {
+            Block altar = blockAt(sender, args);
+            if (altar != null) {
+                sender.sendMessage("Ritual at " + altar.getX() + " " + altar.getY() + " " + altar.getZ() + ": " + plugin.rituals().begin(null, altar));
+            }
+            return true;
+        }
         if (args.length == 5 && args[0].equalsIgnoreCase("restock")) {
             Block altar = blockAt(sender, args);
             if (altar != null) {
@@ -168,6 +179,30 @@ public final class OccultechCommand implements TabExecutor {
         }
     }
 
+    /** {@code fights}: every running boss fight; {@code fights end N}: ends fight N (no loot, the catalyst is lost). */
+    private void fights(CommandSender sender, String[] args) {
+        List<io.github.amitelia.occultech.boss.BossFight> fights = List.copyOf(plugin.rituals().bosses().fights());
+        if (args.length == 3 && args[1].equalsIgnoreCase("end")) {
+            try {
+                io.github.amitelia.occultech.boss.BossFight fight = fights.get(Integer.parseInt(args[2]) - 1);
+                plugin.rituals().bosses().abort(fight);
+                sender.sendMessage("Ended " + fight.spec().name() + ".");
+            } catch (RuntimeException e) {
+                sender.sendMessage("No fight " + args[2] + " (see /occultech fights).");
+            }
+            return;
+        }
+        sender.sendMessage(fights.size() + " boss fight(s) running.");
+        for (int i = 0; i < fights.size(); i++) {
+            io.github.amitelia.occultech.boss.BossFight fight = fights.get(i);
+            Block altar = fight.altar();
+            int away = fight.awayTicksLeft();
+            sender.sendMessage("  " + (i + 1) + ". " + fight.spec().name() + " at " + altar.getWorld().getName() + " " + altar.getX() + " "
+                + altar.getY() + " " + altar.getZ() + ": " + Math.round(fight.healthFraction() * 100) + "% health, " + fight.elapsed() / 20
+                + "s in, " + fight.players().size() + " in the arena" + (away >= 0 ? ", everyone away (" + away / 20 + "s left)" : ""));
+        }
+    }
+
     private static void inspect(CommandSender sender, Block block) {
         sender.sendMessage("Block " + block.getType() + " at " + block.getX() + " " + block.getY() + " " + block.getZ()
             + ": Slimefun id " + BlockStorage.checkID(block));
@@ -188,10 +223,13 @@ public final class OccultechCommand implements TabExecutor {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            return List.of("selftest", "showcase", "restock", "inspect", "unlockhalos", "iteminfo", "setslot");
+            return List.of("selftest", "showcase", "restock", "inspect", "unlockhalos", "iteminfo", "setslot", "fights", "begin");
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("showcase")) {
             return List.of("clear");
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("fights")) {
+            return List.of("end");
         }
         return List.of();
     }

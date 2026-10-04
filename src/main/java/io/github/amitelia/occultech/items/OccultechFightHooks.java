@@ -25,6 +25,8 @@ public final class OccultechFightHooks implements FightHooks {
 
     static final String ACTIVE_KEY = "occultech_active_fight";
     static final String NO_REFUND = "none";
+    /** The fight's {@link io.github.amitelia.occultech.boss.FightState}, saved every few seconds and on shutdown. */
+    static final String STATE_KEY = "occultech_fight_state";
 
     @Override
     public void giveLoot(Player player, String itemId, int amount) {
@@ -62,7 +64,29 @@ public final class OccultechFightHooks implements FightHooks {
     public void clearActive(Block altar) {
         if (BlockStorage.hasBlockInfo(altar)) {
             BlockStorage.addBlockInfo(altar, ACTIVE_KEY, null);
+            BlockStorage.addBlockInfo(altar, STATE_KEY, null);
         }
+    }
+
+    @Override
+    public void saveState(Block altar, String state) {
+        if (BlockStorage.hasBlockInfo(altar)) {
+            BlockStorage.addBlockInfo(altar, STATE_KEY, state);
+        }
+    }
+
+    /** The saved state of a fight that was running here, or null. */
+    @Nullable
+    String stateOf(Block altar) {
+        return BlockStorage.getLocationInfo(altar.getLocation(), STATE_KEY);
+    }
+
+    /** The catalyst of a fight that was running here (null for none, or no marker). */
+    @Nullable
+    ItemStack catalystOf(Block altar) {
+        String marker = BlockStorage.getLocationInfo(altar.getLocation(), ACTIVE_KEY);
+        SlimefunItem catalyst = marker == null || NO_REFUND.equals(marker) ? null : SlimefunItem.getById(marker);
+        return catalyst == null ? null : catalyst.getItem().clone();
     }
 
     /** After a crash: return the catalyst of a fight that no longer exists. */
