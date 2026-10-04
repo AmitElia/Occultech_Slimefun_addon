@@ -20,6 +20,9 @@ public final class Keys {
     /** Owner (player UUID string) of a necromancy minion. Minions are not SUMMONED: they fight for players. */
     public static final NamespacedKey MINION_OWNER = new NamespacedKey("occultech", "minion_owner");
 
+    /** The shrine (world,x,y,z) a Servitor spirit belongs to: finds strays left behind in chunks that stopped ticking. */
+    public static final NamespacedKey SPIRIT_OF = new NamespacedKey("occultech", "spirit_of");
+
     /** Marks hologram displays above bowls, altars and other blocks (never saved with the world). */
     public static final NamespacedKey HOLOGRAM = new NamespacedKey("occultech", "hologram");
 

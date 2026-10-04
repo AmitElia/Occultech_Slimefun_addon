@@ -163,7 +163,7 @@ items:
 
   # tier-0 cosmetics
   TROPHY_BOARD:
-    {tier: 0, material: CHISELED_TUFF_BRICKS, cat: decoration, name: Trophy Board, purpose: "Decoration: a small turning model of one boss you have defeated, with your win count. Right-click to pick another",
+    {tier: 0, material: CHISELED_TUFF_BRICKS, cat: decoration, name: Trophy Board, purpose: "Decoration: a small turning model of one boss you have defeated, with your win count. Sneak + right-click to pick another",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 1, in: {mc:POLISHED_BLACKSTONE: 4, mc:GOLD_INGOT: 2, mc:GLASS: 2, CHALK_GLYPH: 1}}}
   CHIMING_TILE:
     {tier: 0, material: AMETHYST_BLOCK, cat: decoration, name: Chiming Amethyst Tile, purpose: "Decoration: chimes softly and sparkles when walked on (quiet while sneaking)",
@@ -246,13 +246,13 @@ items:
 
   # tier-1 cosmetics
   MOONLIT_LILY:
-    {tier: 1, material: LILY_OF_THE_VALLEY, cat: decoration, name: Moonlit Lily, purpose: "Decoration: tiny stars and a little moon circle the flower, brighter at night. Right-click to change the stars' color",
+    {tier: 1, material: LILY_OF_THE_VALLEY, cat: decoration, name: Moonlit Lily, purpose: "Decoration: tiny stars and a little moon circle the flower, brighter at night. Sneak + right-click to change the stars' color",
      recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:LILY_OF_THE_VALLEY: 2, DUSK_MEMBRANE: 1, mc:GLOWSTONE_DUST: 4, SPIRIT_ESSENCE: 1}}}
   FLOOR_SIGIL:
-    {tier: 1, material: CHISELED_TUFF, cat: decoration, name: Floor Sigil, purpose: "Decoration: a slowly turning sigil drawn on the floor around it - circle, five-pointed star and runes. Right-click: color, 5x5 or 3x3",
+    {tier: 1, material: CHISELED_TUFF, cat: decoration, name: Floor Sigil, purpose: "Decoration: a slowly turning sigil drawn on the floor around it - circle, five-pointed star and runes. Sneak + right-click: color, 5x5 or 3x3",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {RITUAL_CHALK: 4, BOUND_CHALK: 2, SPIRIT_ESSENCE: 1, mc:AMETHYST_SHARD: 2}}}
   WITCHCAP:
-    {tier: 1, material: CRIMSON_FUNGUS, cat: decoration, name: Witchcap, purpose: "Decoration: a fungus that bubbles like a witch's brew, red and green. Right-click to change the brew",
+    {tier: 1, material: CRIMSON_FUNGUS, cat: decoration, name: Witchcap, purpose: "Decoration: a fungus that bubbles like a witch's brew, red and green. Sneak + right-click to change the brew",
      recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:CRIMSON_FUNGUS: 2, COVEN_BREW_BASE: 1, mc:GLASS_BOTTLE: 2, SPIRIT_ESSENCE: 1}}}
 
   # =====================================================================
@@ -315,7 +315,7 @@ items:
   GUARDIAN_EYE:    {tier: 2, material: OBSERVER, cat: labor, name: Guardian Eye, purpose: "Bonus drop. A sentry that fires a guardian beam at hostile mobs within 12 blocks. A Frenzy Idol within 8 blocks makes it 1.5x stronger (never stacks)", recipe: {type: BOSS_DROP, boss: ABYSSAL_WARDEN, chance: 0.15}}
   PEARL_BED:       {tier: 2, material: TUBE_CORAL_BLOCK, cat: labor, name: Pearl Bed, purpose: "Bonus drop. Slowly makes prismarine shards and crystals into a store cargo/Networks can pull from", recipe: {type: BOSS_DROP, boss: TIDEBREAKER, chance: 0.15}}
   EMBER_BRAZIER:   {tier: 2, material: MAGMA_BLOCK, cat: labor, name: Ember Brazier, purpose: "Bonus drop. Slowly makes blaze powder into a store cargo/Networks can pull from. Never lights fires", recipe: {type: BOSS_DROP, boss: BLAZE_CHOIR, chance: 0.15}}
-  BOTTLED_GALE:    {tier: 2, material: FLOWER_POT, cat: decoration, name: Bottled Gale, purpose: "Bonus drop. Decoration: a tiny tornado swirls above the jar. Right-click to change its tint", recipe: {type: BOSS_DROP, boss: TEMPEST, chance: 0.15}}
+  BOTTLED_GALE:    {tier: 2, material: FLOWER_POT, cat: decoration, name: Bottled Gale, purpose: "Bonus drop. Decoration: a tiny tornado swirls above the jar. Sneak + right-click to change its tint", recipe: {type: BOSS_DROP, boss: TEMPEST, chance: 0.15}}
 
   # tier-2 gear replacing the treads and the harness
   WIND_CHIME:
@@ -335,26 +335,26 @@ items:
 
   # tier-2 decorations: visual effects only, never change blocks, only animate with a player within 24 blocks
   WISP_JAR:
-    {tier: 2, material: FLOWER_POT, cat: decoration, name: Wisp Jar, purpose: "Decoration: like a firefly bush - a few soft glowing wisps drift and blink up to 10 blocks around it, mostly at night. Right-click to change their color",
+    {tier: 2, material: FLOWER_POT, cat: decoration, name: Wisp Jar, purpose: "Decoration: like a firefly bush - a few soft glowing wisps drift and blink up to 10 blocks around it, mostly at night. Sneak + right-click to change their color",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:GLASS: 4, SPIRIT_ESSENCE: 2, mc:GLOWSTONE_DUST: 2, TIDE_GLASS: 1}}}
   ABYSSAL_LANTERN:
-    {tier: 2, material: LANTERN, cat: decoration, name: Abyssal Lantern, purpose: "Decoration: a column of rising bubbles and a slow ring of light, like a lamp at the bottom of the sea. Right-click to change the light color",
+    {tier: 2, material: LANTERN, cat: decoration, name: Abyssal Lantern, purpose: "Decoration: a column of rising bubbles and a slow ring of light, like a lamp at the bottom of the sea. Sneak + right-click to change the light color",
      recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:SEA_LANTERN: 1, TIDE_GLASS: 2, mc:PRISMARINE_SHARD: 4, ABYSSAL_ALLOY: 1, SPIRIT_ESSENCE: 1}}}
   RUNE_OBELISK:
-    {tier: 2, material: CHISELED_POLISHED_BLACKSTONE, cat: decoration, name: Rune Obelisk, purpose: "Decoration: three runes orbit the stone (smooth client-side motion), with a spark now and then. Right-click to change the rune set",
+    {tier: 2, material: CHISELED_POLISHED_BLACKSTONE, cat: decoration, name: Rune Obelisk, purpose: "Decoration: three runes orbit the stone (smooth client-side motion), with a spark now and then. Sneak + right-click to change the rune set",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:POLISHED_BLACKSTONE_BRICKS: 4, sf:BLANK_RUNE: 3, BOUND_CHALK: 1, SPIRIT_ESSENCE: 1}}}
   OCCULT_ORRERY:
-    {tier: 2, material: LIGHTNING_ROD, cat: decoration, name: Occult Orrery, purpose: "Decoration: a miniature sky - little worlds of sea, fire and void circle a glowing sun (smooth client-side motion). Right-click to change the worlds",
+    {tier: 2, material: LIGHTNING_ROD, cat: decoration, name: Occult Orrery, purpose: "Decoration: a miniature sky - little worlds of sea, fire and void circle a glowing sun (smooth client-side motion). Sneak + right-click to change the worlds",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:COPPER_BLOCK: 1, mc:ENDER_PEARL: 1, mc:MAGMA_CREAM: 1, mc:HEART_OF_THE_SEA: 1, ABYSSAL_ALLOY: 2, RESONANT_CRYSTAL: 2, CHOIR_EMBER: 1}}}
   SOULFIRE_BRAZIER:
-    {tier: 2, material: SOUL_LANTERN, cat: decoration, name: Soulfire Brazier, purpose: "Decoration: a crackling bowl of flame particles with drifting embers. Gives light, never burns anything. Right-click: soul (blue) or ember (orange) flames",
+    {tier: 2, material: SOUL_LANTERN, cat: decoration, name: Soulfire Brazier, purpose: "Decoration: a crackling bowl of flame particles with drifting embers. Gives light, never burns anything. Sneak + right-click: soul (blue) or ember (orange) flames",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:IRON_BARS: 3, mc:SOUL_SOIL: 2, CHOIR_EMBER: 1, SOUL_ASH: 2, SPIRIT_ESSENCE: 1}}}
 
   EVERLIVING_CORAL:
-    {tier: 2, material: TUBE_CORAL, cat: decoration, name: Everliving Coral, purpose: "Decoration: coral that never dries out, with a thin stream of bubbles. Right-click to change the coral (tube, brain, bubble, fire, horn)",
+    {tier: 2, material: TUBE_CORAL, cat: decoration, name: Everliving Coral, purpose: "Decoration: coral that never dries out, with a thin stream of bubbles. Sneak + right-click to change the coral (tube, brain, bubble, fire, horn)",
      recipe: {type: MAGIC_WORKBENCH, out: 2, in: {mc:TUBE_CORAL: 2, TIDE_GLASS: 1, mc:PRISMARINE_CRYSTALS: 2, SPIRIT_ESSENCE: 1}}}
   TIDAL_TILE:
-    {tier: 2, material: TUBE_CORAL_BLOCK, cat: decoration, name: Tidal Coral Tile, purpose: "Decoration: a coral block that never dries out and splashes when walked on (quiet while sneaking). Right-click to change the coral",
+    {tier: 2, material: TUBE_CORAL_BLOCK, cat: decoration, name: Tidal Coral Tile, purpose: "Decoration: a coral block that never dries out and splashes when walked on (quiet while sneaking). Sneak + right-click to change the coral",
      recipe: {type: MAGIC_WORKBENCH, out: 4, in: {mc:TUBE_CORAL_BLOCK: 4, TIDE_GLASS: 1, mc:PRISMARINE_SHARD: 4}}}
   PRISMATIC_NETHERRACK:
     {tier: 2, material: NETHERRACK, cat: decoration, name: Prismatic Netherrack, purpose: "Decoration: set it alight and its fire shimmers through every color of the rainbow. Burns forever like netherrack",

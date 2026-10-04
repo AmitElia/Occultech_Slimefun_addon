@@ -26,8 +26,8 @@ public class StepTile extends SlimefunItem {
 
         if (looks.size() > 1) {
             addItemHandler((BlockUseHandler) e -> e.getClickedBlock().ifPresent(block -> {
-                if (e.getPlayer().isSneaking()) {
-                    return; // let players place blocks against tiles while sneaking
+                if (!e.getPlayer().isSneaking()) {
+                    return; // a plain right-click places blocks against the tile; sneak + right-click changes its look
                 }
                 e.cancel();
                 var skins = io.github.amitelia.occultech.Occultech.instance().skins();

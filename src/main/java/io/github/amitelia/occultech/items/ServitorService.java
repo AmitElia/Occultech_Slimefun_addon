@@ -127,6 +127,7 @@ public final class ServitorService implements Listener {
         BlockMenu nexus;
         String status = "&7Idle";
         double patrol;
+        int strayCheck;
     }
 
     private final Map<Location, Shrine> shrines = new HashMap<>();
@@ -719,12 +720,33 @@ public final class ServitorService implements Listener {
         moveSpirit(shrine, shrineBlock.getLocation());
     }
 
+    /**
+     * Keeps exactly one spirit per shrine. A spirit that drifted into a chunk which stopped ticking (its player went far
+     * away) reports itself invalid without being gone, and used to be replaced while it stayed behind: the Ward's patrol
+     * left a half circle of frozen orbs that showed again when the player came back. Now the old one is removed first,
+     * and strays of this shrine are swept every few seconds.
+     */
     private void ensureSpirit(Block block, Shrine shrine) {
+        String owner = spiritKey(block);
+        if (++shrine.strayCheck >= 8) {
+            shrine.strayCheck = 0;
+            double reach = (shrine.contract == null ? 0 : shrine.contract.radius(shrine.tethered)) + 4;
+            for (org.bukkit.entity.Entity stray : block.getWorld().getNearbyEntities(block.getLocation().add(0.5, 1, 0.5), reach, reach, reach,
+                e -> e instanceof ItemDisplay && owner.equals(e.getPersistentDataContainer().get(Keys.SPIRIT_OF, PersistentDataType.STRING)))) {
+                if (stray != shrine.spirit) {
+                    stray.remove();
+                }
+            }
+        }
         if (shrine.spirit != null && shrine.spirit.isValid()) {
             return;
         }
+        if (shrine.spirit != null) {
+            shrine.spirit.remove();
+        }
         shrine.spirit = block.getWorld().spawn(block.getLocation().add(0.5, 1.6, 0.5), ItemDisplay.class, d -> {
             d.setPersistent(false);
+            d.getPersistentDataContainer().set(Keys.SPIRIT_OF, PersistentDataType.STRING, owner);
             d.setItemStack(new ItemStack(Material.HEART_OF_THE_SEA));
             d.setBillboard(Display.Billboard.CENTER);
             d.setTeleportDuration(20);
@@ -747,8 +769,13 @@ public final class ServitorService implements Listener {
         }
     }
 
+    private static String spiritKey(Block block) {
+        return block.getWorld().getName() + "," + block.getX() + "," + block.getY() + "," + block.getZ();
+    }
+
+    /** Spirits only go where entities tick: in a chunk that stopped ticking a spirit is stranded (see ensureSpirit). */
     private static void moveSpirit(Shrine shrine, Location to) {
-        if (shrine.spirit != null && shrine.spirit.isValid()) {
+        if (shrine.spirit != null && shrine.spirit.isValid() && entitiesTick(to)) {
             shrine.spirit.teleport(to.clone().add(0.5, 1.6, 0.5));
         }
     }
@@ -767,6 +794,23 @@ public final class ServitorService implements Listener {
         nexuses.entrySet().removeIf(entry -> now - entry.getValue() > SEEN_TIMEOUT_MS * 3 || !entry.getKey().isChunkLoaded()
             || BlockStorage.checkID(entry.getKey()) == null);
         relink();
+    }
+
+    static boolean entitiesTick(Location at) {
+        int cx = at.getBlockX() >> 4;
+        int cz = at.getBlockZ() >> 4;
+        return at.getWorld().isChunkLoaded(cx, cz) && at.getWorld().getChunkAt(cx, cz).getLoadLevel() == org.bukkit.Chunk.LoadLevel.ENTITY_TICKING;
+    }
+
+    /** A spirit loaded back with its chunk is a stray: the shrine always spawns its own (they are never saved). */
+    @EventHandler
+    public void onEntitiesLoad(org.bukkit.event.world.EntitiesLoadEvent event) {
+        for (org.bukkit.entity.Entity entity : event.getEntities()) {
+            if (entity.getPersistentDataContainer().has(Keys.SPIRIT_OF, PersistentDataType.STRING)
+                && shrines.values().stream().noneMatch(s -> s.spirit == entity)) {
+                entity.remove();
+            }
+        }
     }
 
     /** Removes every spirit display (plugin disable). */

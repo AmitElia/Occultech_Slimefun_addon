@@ -146,6 +146,7 @@ final class SelfTest {
         then(70, this::gathered);
         then(0, this::startWard);
         then(30, this::warded);
+        then(100, this::strayOrbsSwept);
         then(0, this::scryingMirror);
 
         // ---- more shrine contracts and edge cases
@@ -545,12 +546,19 @@ final class SelfTest {
         fill(recipe);
         snapshotSlimes();
         check("summoning ritual starts with an empty altar", rituals.begin(null, altar) == RitualService.Outcome.STARTED, "did not start");
+        check("a channeling summon holds its area (no second fight nearby)", !bosses.canSummon(altar.getLocation().add(60, 0, 0), 10)
+            && bosses.canSummon(altar.getLocation().add(400, 0, 0), 10), "area not held");
         check("a summoning shows the circle's sigil (no second pentagram)", sigils().equals(List.of("ritual_sigil_t0")),
             String.valueOf(sigils()));
     }
 
     private void summonResult() {
         currentFight = bosses.fightAt(altar).orElse(null);
+        if (currentFight != null) {
+            check("fight entities are safe from ClearLaggEnhanced", currentFight.bosses().stream().allMatch(b -> b.getScoreboardTags()
+                .contains(io.github.amitelia.occultech.core.ClearLagGuard.PROTECTED)), "no CLE_PROTECTED tag");
+            check("only one fight in an area", !bosses.canSummon(altar.getLocation().add(60, 0, 0), 10), "a second fight could start 60 blocks away");
+        }
         check("the sigil stays on the floor, turning, through the boss fight", sigils().contains("ritual_sigil_t0"), String.valueOf(sigils()));
         if (currentFight != null && io.github.amitelia.occultech.boss.FloorDecals.enabled()) {   // Session O4 floor markings
             org.bukkit.Location spot = altar.getLocation().add(4.5, 0, 0.5);
@@ -857,10 +865,25 @@ final class SelfTest {
         setContract("WARD_CONTRACT");
     }
 
+    private org.bukkit.entity.ItemDisplay strayOrb;
+
     private void warded() {
+        // a spirit stranded in a chunk that stopped ticking (Session P1): the shrine must sweep it, not keep it
+        strayOrb = shrine.getWorld().spawn(shrine.getLocation().add(3.5, 1.6, 0.5), org.bukkit.entity.ItemDisplay.class, d -> {
+            d.setPersistent(false);
+            d.getPersistentDataContainer().set(Keys.SPIRIT_OF, org.bukkit.persistence.PersistentDataType.STRING,
+                shrine.getWorld().getName() + "," + shrine.getX() + "," + shrine.getY() + "," + shrine.getZ());
+        });
         check("Ward contract protects its area", plugin.servitors().isWarded(shrine.getLocation().add(5, 0, 5)), "not warded");
         check("Ward contract covers 24 blocks out", plugin.servitors().isWarded(shrine.getLocation().add(20, 0, 0)), "not warded at 20");
         check("Ward contract doesn't reach far", !plugin.servitors().isWarded(shrine.getLocation().add(40, 0, 0)), "warded too far");
+    }
+
+    private void strayOrbsSwept() {
+        check("a stray Servitor orb is swept away", !strayOrb.isValid(), "still there");
+        long orbs = shrine.getWorld().getNearbyEntities(shrine.getLocation().add(0.5, 1, 0.5), 30, 30, 30,
+            e -> e.getPersistentDataContainer().has(Keys.SPIRIT_OF)).size();
+        check("the Ward shrine has exactly one orb", orbs == 1, orbs + " orbs");
     }
 
     private void scryingMirror() {

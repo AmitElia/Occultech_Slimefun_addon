@@ -111,15 +111,46 @@ public final class BossService implements Listener {
         return blueprints.containsKey(bossId);
     }
 
-    /** False if another fight's arena would overlap an arena of this radius at this altar. */
+    /** Summons still channeling: altar block -> arena radius. They hold their area like a running fight. */
+    private final Map<Location, Double> reserved = new HashMap<>();
+    private double minFightDistance = 96;
+
+    /** Fights (running or channeling) must be at least this far apart, besides their arenas not overlapping. */
+    public void setMinFightDistance(double blocks) {
+        this.minFightDistance = Math.max(0, blocks);
+    }
+
+    /**
+     * False if another fight - running, or a summon still channeling - is too close: arenas may not overlap, and fights
+     * keep {@code bosses.min-fight-distance} apart. The altar's own reservation doesn't count.
+     */
     public boolean canSummon(@Nonnull Location altar, double radius) {
+        Location here = altar.getBlock().getLocation();
+        Location center = here.clone().add(0.5, 1, 0.5);
         for (BossFight fight : fights.values()) {
-            Location other = fight.center();
-            if (other.getWorld() == altar.getWorld() && other.distance(altar.clone().add(0.5, 1, 0.5)) < fight.radius() + radius) {
+            if (tooClose(fight.center(), fight.radius(), center, radius)) {
+                return false;
+            }
+        }
+        for (Map.Entry<Location, Double> other : reserved.entrySet()) {
+            if (!other.getKey().equals(here) && tooClose(other.getKey().clone().add(0.5, 1, 0.5), other.getValue(), center, radius)) {
                 return false;
             }
         }
         return true;
+    }
+
+    private boolean tooClose(Location a, double radiusA, Location b, double radiusB) {
+        return a.getWorld() == b.getWorld() && a.distance(b) < Math.max(radiusA + radiusB, minFightDistance);
+    }
+
+    /** A summon starts channeling here: nothing else may start nearby until it ends ({@link #release}). */
+    public void reserve(@Nonnull Location altar, double radius) {
+        reserved.put(altar.getBlock().getLocation(), radius);
+    }
+
+    public void release(@Nonnull Location altar) {
+        reserved.remove(altar.getBlock().getLocation());
     }
 
     @Nonnull

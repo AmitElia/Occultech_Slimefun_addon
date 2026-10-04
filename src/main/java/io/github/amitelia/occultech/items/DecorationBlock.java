@@ -16,7 +16,7 @@ import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
 import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 
 /**
- * A decoration block. Its visuals are drawn by {@link DecorationService}; right-click cycles its palette.
+ * A decoration block. Its visuals are drawn by {@link DecorationService}; sneak + right-click cycles its palette.
  */
 public class DecorationBlock extends SlimefunItem {
 
@@ -41,6 +41,9 @@ public class DecorationBlock extends SlimefunItem {
             org.bukkit.Material held = e.getItem() == null ? org.bukkit.Material.AIR : e.getItem().getType();
             if (held == org.bukkit.Material.FLINT_AND_STEEL || held == org.bukkit.Material.FIRE_CHARGE) {
                 return; // lighting it (Prismatic Netherrack), not changing its look
+            }
+            if (!e.getPlayer().isSneaking()) {
+                return; // a plain right-click places blocks against it; sneak + right-click changes its look
             }
             e.cancel();
             e.getClickedBlock().ifPresent(block -> {

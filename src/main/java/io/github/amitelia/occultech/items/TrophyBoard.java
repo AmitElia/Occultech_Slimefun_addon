@@ -26,7 +26,7 @@ import me.mrCookieSlime.Slimefun.api.BlockStorage;
 
 /**
  * Trophy Board: shows a small, slowly turning model of one boss you have defeated, with how many times you won.
- * Right-click cycles through the bosses the clicking player has beaten (creative players may pick any boss).
+ * Sneak + right-click cycles through the bosses the clicking player has beaten (creative players may pick any boss).
  * Drawn by {@link DecorationService}; the choice is stored in the block ({@value #TROPHY_KEY}: "BOSS;wins;player").
  */
 public class TrophyBoard extends SlimefunItem {
@@ -50,6 +50,9 @@ public class TrophyBoard extends SlimefunItem {
         });
 
         addItemHandler((BlockUseHandler) e -> {
+            if (!e.getPlayer().isSneaking()) {
+                return; // a plain right-click places blocks against it; sneak + right-click picks the boss
+            }
             e.cancel();
             Player player = e.getPlayer();
             e.getClickedBlock().ifPresent(block -> {

@@ -35,7 +35,8 @@ items/           SlimefunItem subclasses + runtime: RitualAltar, OfferingBowl, R
                  tier 3: HollowGearListener (armor, Dreadlance, Stormstring Bow, Aegis), TalismanService + Talisman,
                  GallusEgg (steered mount), ServitorNexus (linked shrines; routing lives in ServitorService)
 ritual/          CirclePattern, Circles (layout per tier), RitualMatcher/RitualRecipe - pure Java, unit tested
-core/            Bukkit-only shared bits (PDC Keys: SUMMONED, FIGHT, SHOWCASE, DAMAGE for fight projectiles)
+core/            Bukkit-only shared bits (PDC Keys: SUMMONED, FIGHT, SHOWCASE, DAMAGE for fight projectiles); ClearLagGuard tags every
+                 entity carrying occultech PDC data CLE_PROTECTED (ClearLaggEnhanced spares those)
 boss/            engine, Bukkit only: BossService (fights + all anti-abuse event rules), BossFight (one fight:
                  arena leash, anti-pillar, hazards, breakable objects, boss bar, contribution, loot), BossBehavior
                  (per-boss logic), FightHooks (Slimefun side implemented by items/OccultechFightHooks)

@@ -488,28 +488,28 @@ final class Showcase {
         demoBlock(world.getBlockAt(ox + 5, y, startZ + 21), "WIND_CHIME", "&bWind Chime\n&7Speed II and Jump Boost II within 32 blocks.\n&7Chimes softly now and then.");
 
         // decoration gallery across the end of the hall
-        title(new Location(world, ox + 0.5, floorY + 5, startZ + 41.5), "&d&lDECORATIONS\n&7Right-click one to change its look");
+        title(new Location(world, ox + 0.5, floorY + 5, startZ + 41.5), "&d&lDECORATIONS\n&7Sneak + right-click one to change its look");
         String[] decorations = { "WISP_JAR", "ABYSSAL_LANTERN", "RUNE_OBELISK", "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "BOTTLED_GALE" };
         for (int i = 0; i < decorations.length; i++) {
             String id = decorations[i];
-            demoBlock(world.getBlockAt(ox - 10 + i * 4, y, startZ + 45), id, "&d" + ContentRegistrar.title(id) + " &8(tier 2)\n&7Right-click: next palette");
+            demoBlock(world.getBlockAt(ox - 10 + i * 4, y, startZ + 45), id, "&d" + ContentRegistrar.title(id) + " &8(tier 2)\n&7Sneak + right-click: next palette");
         }
 
         // cosmetics from every tier: flowers need soil, the netherrack is lit, tiles are laid in the floor to walk on
         setBlock(world.getBlockAt(ox - 10, y - 1, startZ + 50), Material.GRASS_BLOCK);
-        demoBlock(world.getBlockAt(ox - 10, y, startZ + 50), "MOONLIT_LILY", "&fMoonlit Lily &8(tier 1)\n&7Right-click: star color");
+        demoBlock(world.getBlockAt(ox - 10, y, startZ + 50), "MOONLIT_LILY", "&fMoonlit Lily &8(tier 1)\n&7Sneak + right-click: star color");
         setBlock(world.getBlockAt(ox - 5, y - 1, startZ + 50), Material.GRASS_BLOCK);
-        demoBlock(world.getBlockAt(ox - 5, y, startZ + 50), "WITCHCAP", "&cWitchcap &8(tier 1)\n&7Right-click: brew colors");
+        demoBlock(world.getBlockAt(ox - 5, y, startZ + 50), "WITCHCAP", "&cWitchcap &8(tier 1)\n&7Sneak + right-click: brew colors");
         setBlock(world.getBlockAt(ox - 15, y - 1, startZ + 50), Material.GRASS_BLOCK);
         demoBlock(world.getBlockAt(ox - 15, y, startZ + 50), "WATCHFUL_EYEBLOSSOM", "&6Watchful Eyeblossom &8(tier 3)\n&7Walk close: it opens and watches you");
         for (int dx = -3; dx <= 3; dx++) {
             DebugWorld.placeSlimefun(world.getBlockAt(ox + dx, y - 1, startZ + 56), ItemKeys.slimefunId("RESIN_TILE"), this::record);
         }
         label(new Location(world, ox + 0.5, y + 1.6, startZ + 56.5), "&6Resin Tile &8(tier 3)\n&7Walk on it");
-        demoBlock(world.getBlockAt(ox + 12, y - 1, startZ + 57), "FLOOR_SIGIL", "&5Floor Sigil &8(tier 1)\n&7Right-click it: color, 5x5 or 3x3");
-        demoBlock(world.getBlockAt(ox + 5, y, startZ + 50), "EVERLIVING_CORAL", "&bEverliving Coral &8(tier 2)\n&7Never dries. Right-click: coral type");
+        demoBlock(world.getBlockAt(ox + 12, y - 1, startZ + 57), "FLOOR_SIGIL", "&5Floor Sigil &8(tier 1)\n&7Sneak + right-click it: color, 5x5 or 3x3");
+        demoBlock(world.getBlockAt(ox + 5, y, startZ + 50), "EVERLIVING_CORAL", "&bEverliving Coral &8(tier 2)\n&7Never dries. Sneak + right-click: coral type");
         Block netherrack = world.getBlockAt(ox + 10, y, startZ + 50);
-        demoBlock(netherrack, "PRISMATIC_NETHERRACK", "&dPrismatic Netherrack &8(tier 2)\n&7Light it: rainbow fire. Right-click: palette");
+        demoBlock(netherrack, "PRISMATIC_NETHERRACK", "&dPrismatic Netherrack &8(tier 2)\n&7Light it: rainbow fire. Sneak + right-click: palette");
         setBlock(netherrack.getRelative(0, 1, 0), Material.FIRE);
         for (int dx = -6; dx <= 6; dx++) {
             if (dx != 0) {
@@ -518,10 +518,10 @@ final class Showcase {
         }
         label(new Location(world, ox - 3.5, y + 1.6, startZ + 54.5), "&dChiming Amethyst Tile &8(tier 0)\n&7Walk on it (sneak to stay quiet)");
         Block trophy = world.getBlockAt(ox, y, startZ + 50);
-        demoBlock(trophy, "TROPHY_BOARD", "&6Trophy Board &8(tier 0)\n&7Right-click: show a boss you've defeated");
+        demoBlock(trophy, "TROPHY_BOARD", "&6Trophy Board &8(tier 0)\n&7Sneak + right-click: show a boss you've defeated");
         // the showcase board starts on the Brood Mother so it isn't empty
         BlockStorage.addBlockInfo(trophy, "occultech_trophy", "BROOD_MOTHER;0;the showcase");
-        label(new Location(world, ox + 4.5, y + 1.6, startZ + 54.5), "&bTidal Coral Tile &8(tier 2)\n&7Walk on it. Right-click: coral");
+        label(new Location(world, ox + 4.5, y + 1.6, startZ + 54.5), "&bTidal Coral Tile &8(tier 2)\n&7Walk on it. Sneak + right-click: coral");
 
         // east column: brewer, shepherd, beekeeper
         Block brewer = world.getBlockAt(ox + 14, y, startZ + 8);

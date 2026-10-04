@@ -192,9 +192,10 @@ public final class RitualService {
         if (recipe.isSummon()) {
             BossSpec spec = specs.get(recipe.bossId());
             if (spec == null || !bosses.canSummon(altar.getLocation(), spec.arenaRadius())) {
-                tell(player, "&cAnother summoning is too close. Arenas may not overlap.");
+                tell(player, "&cAnother summoning is too close. Only one boss may answer in an area.");
                 return Outcome.ARENA_OCCUPIED;
             }
+            bosses.reserve(altar.getLocation(), spec.arenaRadius());   // held from now: two summons can't channel side by side
         }
 
         // Take everything before anything else happens, so the inputs can never be taken back out.
@@ -554,6 +555,7 @@ public final class RitualService {
                 sigil = null;
             }
             sessions.remove(altar.getLocation());
+            bosses.release(altar.getLocation());
             locked.remove(altar.getLocation());
             bowls.forEach(locked::remove);
         }
