@@ -49,6 +49,8 @@ public final class HeartwoodHorror extends BossBehavior {
 
     private Creaking horror;
     private final List<BossFight.FightObject> hearts = new ArrayList<>();
+    /** Roots and sap round it while its hearts make it invulnerable. */
+    @javax.annotation.Nullable private io.github.amitelia.occultech.boss.AirEffects.Aura roots;
     private int vulnerableUntil = -1;
     private int heartsLeft;
     private int snareAt = -1;
@@ -98,6 +100,12 @@ public final class HeartwoodHorror extends BossBehavior {
         }
 
         hearts.removeIf(heart -> !heart.isAlive());
+        if (!hearts.isEmpty() && roots == null) {
+            roots = io.github.amitelia.occultech.boss.AirEffects.Aura.create(fight, horror, "aura_roots", 0.02, 2.4);
+        } else if (hearts.isEmpty() && roots != null) {
+            roots.end();
+            roots = null;
+        }
         boolean vulnerable = now < vulnerableUntil;
         if (hearts.isEmpty() && !vulnerable && vulnerableUntil >= 0 && now >= vulnerableUntil) {
             // the window closed: the hearts regrow

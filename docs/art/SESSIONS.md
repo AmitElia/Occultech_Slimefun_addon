@@ -907,6 +907,17 @@ tinted, glowing, gone after 10 ticks. Art: `session_o5.py bursts`, sheet `sessio
   phylacteries) and an add killed (guards, shards, thralls, vexes...).
 - **Splash** (a blob bursting into droplets): where the Witch Coven's potions burst, with the floor splash.
 
+**Session O5 phase 3 - boss auras (2026-10-03).** Flat glowing rings that stay with a boss and show its state; their
+textures loop seamlessly (the pattern repeats k times round the ring and turns 1/k of a turn over 8 frames). They
+follow their host each boss step with an interpolated teleport - not as passengers: a boss carrying a passenger can't
+be teleported, and the arena's anti-pillar rule, the Horror's lunge and the Matriarch's landing all teleport bosses.
+`AirEffects.Aura` (the fight keeps them following); art `session_o5.py auras`, sheet `session-g/review-o5-auras.png`.
+- **Blaze Choir** - a ring of fire on the shielded singer; it passes with the shield.
+- **Hollow Warlord** - a soul halo over its head while two or more guards shield it.
+- **Heartwood Horror** - a coil of roots with amber sap round its feet while its hearts make it invulnerable.
+- **Volley** - an amethyst ward ring round it while a ward crystal stands; each ward also feeds it a stream of violet
+  light (the old particle line), snapping when the crystal breaks.
+
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the
 vanilla block; the display stands on top of the block so it is lit by the air above, its model shifted down into the

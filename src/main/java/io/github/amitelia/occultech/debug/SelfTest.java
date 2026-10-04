@@ -629,6 +629,19 @@ final class SelfTest {
             "multiplier " + currentFight.healthMultiplier());
         check(ContentRegistrar.title(bossId) + " runs 3s without errors", !currentFight.isOver(),
             "ended early: " + currentFight.result());
+        String aura = switch (bossId) {   // Session O5 phase 3: the aura showing its state
+            case "BLAZE_CHOIR" -> "aura_flame";
+            case "HOLLOW_WARLORD" -> "aura_soul_halo";
+            case "HEARTWOOD_HORROR" -> "aura_roots";
+            default -> null;
+        };
+        if (aura != null && io.github.amitelia.occultech.boss.AirEffects.enabled()) {
+            org.bukkit.Location near = currentFight.bosses().isEmpty() ? altar.getLocation() : currentFight.bosses().get(0).getLocation();
+            List<String> shown = near.getWorld().getNearbyEntitiesByType(org.bukkit.entity.ItemDisplay.class, near, 12).stream()
+                .map(d -> d.getItemStack().getItemMeta() == null || !d.getItemStack().getItemMeta().hasItemModel() ? "?" + d.getItemStack().getType()
+                    : d.getItemStack().getItemMeta().getItemModel().getKey()).toList();
+            check(ContentRegistrar.title(bossId) + " wears its aura (" + aura + ")", shown.contains(aura), String.valueOf(shown));
+        }
     }
 
     private void killCurrentFight() {

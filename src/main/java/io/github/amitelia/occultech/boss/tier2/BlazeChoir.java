@@ -50,6 +50,7 @@ public final class BlazeChoir extends BossBehavior {
     private final List<Blaze> singers = new ArrayList<>();
     private final List<Location> chorus = new ArrayList<>();
     private Blaze shielded;
+    @javax.annotation.Nullable private io.github.amitelia.occultech.boss.AirEffects.Aura shieldRing;
     private int chorusAt = -1;
     private double spin;
 
@@ -172,6 +173,10 @@ public final class BlazeChoir extends BossBehavior {
         }
         shielded = singers.get(Math.max(0, next));
         shielded.setGlowing(true);
+        if (shieldRing != null) {
+            shieldRing.end();
+        }
+        shieldRing = io.github.amitelia.occultech.boss.AirEffects.Aura.create(fight, shielded, "aura_flame", 0.45, 2.6);
         shielded.getWorld().playSound(shielded.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1F, 1.6F);
     }
 

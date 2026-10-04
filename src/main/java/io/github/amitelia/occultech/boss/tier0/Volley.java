@@ -41,6 +41,9 @@ public final class Volley extends BossBehavior {
     private static final Particle.DustOptions WARD_BEAM = new Particle.DustOptions(Color.fromRGB(170, 110, 255), 1F);
 
     private final List<BossFight.FightObject> wards = new ArrayList<>();
+    /** The ring round Volley while a ward stands, and each ward's stream of light to it (Session O5). */
+    @javax.annotation.Nullable private io.github.amitelia.occultech.boss.AirEffects.Aura wardRing;
+    private final java.util.Map<BossFight.FightObject, io.github.amitelia.occultech.boss.AirEffects.Streak> links = new java.util.HashMap<>();
     private Skeleton archer;
     private int volleyAt = -1;
     private int arrowsLeft;
@@ -79,6 +82,31 @@ public final class Volley extends BossBehavior {
     public void tick() {
         int now = fight.elapsed();
         wards.removeIf(ward -> !ward.isAlive());
+        if (hasWards() && wardRing == null && archer.isValid()) {
+            wardRing = io.github.amitelia.occultech.boss.AirEffects.Aura.create(fight, archer, "aura_ward", 0.02, 2.6);
+        } else if (!hasWards() && wardRing != null) {
+            wardRing.end();
+            wardRing = null;
+        }
+        if (io.github.amitelia.occultech.boss.AirEffects.enabled()) {
+            links.entrySet().removeIf(entry -> {
+                boolean keep = entry.getKey().isAlive() && archer.isValid() && entry.getValue().valid();
+                if (!keep) {
+                    entry.getValue().snap();
+                }
+                return !keep;
+            });
+            for (BossFight.FightObject ward : wards) {
+                Location from = ward.location().clone().add(0, 0.5, 0);
+                Location to = archer.getLocation().add(0, 1.2, 0);
+                io.github.amitelia.occultech.boss.AirEffects.Streak link = links.get(ward);
+                if (link == null) {
+                    links.put(ward, io.github.amitelia.occultech.boss.AirEffects.Streak.create(fight, "air_beam", from, to, org.bukkit.Color.fromRGB(190, 140, 255), 0.16F));
+                } else {
+                    link.aim(from, to, 0.16F, io.github.amitelia.occultech.boss.BossService.STEP);
+                }
+            }
+        }
 
         if (every(WARD_INTERVAL) && wards.isEmpty()) {
             for (int i = 0; i < 2; i++) {
@@ -90,7 +118,7 @@ public final class Volley extends BossBehavior {
             }
             fight.broadcast("&7Volley raises ward crystals. &fBreak them to pierce its guard!");
         }
-        if (hasWards() && archer.isValid()) {
+        if (hasWards() && archer.isValid() && !io.github.amitelia.occultech.boss.AirEffects.enabled()) {
             for (BossFight.FightObject ward : wards) {
                 beam(ward.location().clone().add(0, 0.5, 0), archer.getLocation().add(0, 1.2, 0));
             }

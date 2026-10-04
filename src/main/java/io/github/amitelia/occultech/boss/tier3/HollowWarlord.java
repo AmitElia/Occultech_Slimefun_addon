@@ -38,6 +38,8 @@ public final class HollowWarlord extends BossBehavior {
 
     /** The soul chains to the guards shielding it, drawn in the air (Session O5). */
     private final java.util.Map<WitherSkeleton, io.github.amitelia.occultech.boss.AirEffects.Streak> chains = new java.util.HashMap<>();
+    /** The soul halo over it while its guards shield it. */
+    @javax.annotation.Nullable private io.github.amitelia.occultech.boss.AirEffects.Aura halo;
 
     private static final double HEALTH = 400;
     private static final double ARMOR = 0.18;
@@ -105,6 +107,12 @@ public final class HollowWarlord extends BossBehavior {
             callWarband();
         }
         boolean bound = liveGuards() >= 2;
+        if (bound && halo == null) {
+            halo = io.github.amitelia.occultech.boss.AirEffects.Aura.create(fight, warlord, "aura_soul_halo", 1.04, 1.5);
+        } else if (!bound && halo != null) {
+            halo.end();
+            halo = null;
+        }
         if (io.github.amitelia.occultech.boss.AirEffects.enabled()) {
             // soul chains to each living guard while they shield it (Session O5); a chain snaps when its guard dies
             chains.entrySet().removeIf(entry -> {

@@ -74,6 +74,14 @@ public final class BossFight {
     /** A zone on the ground that affects players standing in it, drawn with a colored lingering cloud. */
     private record Hazard(Location center, double radius, int until, Consumer<Player> effect, Entity visual) {}
 
+    /** Auras following their bosses (Session O5, phase 3). */
+    private final List<AirEffects.Aura> auras = new ArrayList<>();
+
+    /** Keeps {@code aura} on its host each step until it ends. */
+    void trackAura(AirEffects.Aura aura) {
+        auras.add(aura);
+    }
+
     /** A hittable object (egg sac, ward crystal): an item display with an interaction hitbox. */
     public final class FightObject {
 
@@ -480,6 +488,7 @@ public final class BossFight {
 
         try {
             behavior.tick();
+            auras.removeIf(aura -> !aura.follow());
         } catch (RuntimeException e) {
             service.plugin().getLogger().severe("Boss " + spec.id() + " behavior failed: " + e);
             end(Result.ERROR);

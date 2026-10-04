@@ -173,6 +173,89 @@ public final class AirEffects {
         later((long) BURST_FRAMES * BURST_FRAME_TICKS, display::remove);
     }
 
+    /**
+     * A ring that stays with a boss and shows its state (Session O5, phase 3): a flat glowing ring of {@code model}
+     * ({@code aura_flame}, {@code aura_soul_halo}, {@code aura_roots}, {@code aura_ward}) round the host at
+     * {@code heightFraction} of its height (0 = at its feet, 1 = over its head), {@code across} times its width. Its
+     * texture loops seamlessly (it seems to turn forever). It follows its host each boss step, gliding there - not as a
+     * passenger, since a boss carrying a passenger can't be teleported and several bosses are. End it with
+     * {@link #end()}; it also goes when its host does, or with the fight.
+     */
+    public static final class Aura {
+        private final ItemDisplay display;
+        private final org.bukkit.entity.LivingEntity host;
+        private final double heightFraction;
+        private boolean ended;
+
+        private Aura(ItemDisplay display, org.bukkit.entity.LivingEntity host, double heightFraction) {
+            this.display = display;
+            this.host = host;
+            this.heightFraction = heightFraction;
+        }
+
+        /** A new aura on {@code host}, or null without the pack. */
+        @javax.annotation.Nullable
+        public static Aura create(@Nonnull BossFight fight, @Nonnull org.bukkit.entity.LivingEntity host, @Nonnull String model,
+            double heightFraction, double across) {
+            if (!enabled()) {
+                return null;
+            }
+            ItemStack stack = new ItemStack(Material.PAPER);
+            ItemMeta meta = stack.getItemMeta();
+            meta.setItemModel(new NamespacedKey("occultech", model));
+            stack.setItemMeta(meta);
+            float size = (float) (host.getWidth() * across);
+            ItemDisplay display = fight.spawnExtra(ItemDisplay.class, spot(host, heightFraction), d -> {
+                d.setItemStack(stack);
+                d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+                d.setBrightness(new Display.Brightness(15, 15));
+                d.setShadowRadius(0F);
+                d.setViewRange(2F);
+                d.setTeleportDuration(BossService.STEP);
+                d.setTransformation(scaledFlat(0.01F));
+            });
+            Aura aura = new Aura(display, host, heightFraction);
+            later(2, () -> animate(display, scaledFlat(size), 6));       // it blooms open round the boss
+            fight.trackAura(aura);
+            return aura;
+        }
+
+        /** Glides to its host (each boss step). False once it's over (ended, its host gone): the fight drops it. */
+        boolean follow() {
+            if (ended || !display.isValid()) {
+                return false;
+            }
+            if (!host.isValid() || host.isDead()) {
+                end();
+                return false;
+            }
+            display.teleport(spot(host, heightFraction));
+            return true;
+        }
+
+        /** It folds away (the state it showed is over: the shield passed, the wards broke). */
+        public void end() {
+            if (ended) {
+                return;
+            }
+            ended = true;
+            animate(display, scaledFlat(0.01F), 5);
+            later(7, display::remove);
+        }
+
+        public boolean on(org.bukkit.entity.LivingEntity entity) {
+            return !ended && host.equals(entity);
+        }
+
+        private static Location spot(org.bukkit.entity.LivingEntity host, double heightFraction) {
+            return flat(host.getLocation().add(0, host.getHeight() * heightFraction, 0));
+        }
+
+        private static Transformation scaledFlat(float size) {
+            return new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(size, 1F, size), new Quaternionf());
+        }
+    }
+
     private static Transformation vertical(float width, float length, float centre) {
         return new Transformation(new Vector3f(0F, centre, 0F), new Quaternionf(), new Vector3f(width, length, width), new Quaternionf());
     }

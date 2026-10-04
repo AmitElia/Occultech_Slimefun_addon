@@ -142,7 +142,7 @@ def save(m):
     open(os.path.join(g.OUT, m.key, "tint.txt"), "w").write("dye\n")
 
 
-if __name__ == "__main__" and (len(sys.argv) < 2 or sys.argv[1] != "bursts"):
+if __name__ == "__main__" and (len(sys.argv) < 2 or sys.argv[1] not in ("bursts", "auras")):
     ms = models()
     for m in ms:
         save(m)
@@ -337,5 +337,114 @@ if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "bursts":
         row, col = divmod(i, BURST_FRAMES)
         sheet.alpha_composite(m.textures["sprite"].resize((96, 96), Image.NEAREST), (10 + col * 100, 10 + row * 100))
     path = os.path.join(g.OUT, "review-o5-bursts.png")
+    sheet.save(path)
+    print(path, len(ms), "models")
+
+
+# ================================================================== phase 3: boss auras (looping rings)
+# Each ring's pattern repeats k times round the circle and turns 1/k of a turn over its frames, so the loop is seamless
+# from any frame (the global clock doesn't matter). Fully coloured, glowing, flat (the plugin lays it round the boss).
+
+AN = 32
+AC = 16.0
+AURA_FRAMES = 8
+
+
+def aura(draw, k):
+    frames = []
+    for f in range(AURA_FRAMES):
+        img = Image.new("RGBA", (AN, AN), (0, 0, 0, 0))
+        offset = 360.0 / k * f / AURA_FRAMES
+        for y in range(AN):
+            for x in range(AN):
+                dx, dy = x + 0.5 - AC, y + 0.5 - AC
+                r = math.hypot(dx, dy)
+                a = (math.degrees(math.atan2(dy, dx)) - offset) % (360.0 / k) / (360.0 / k)   # 0..1 along one repeat
+                c = draw(r, a)
+                if c is not None:
+                    img.putpixel((x, y), c)
+        frames.append(img)
+    return frames
+
+
+def flame_ring(r, a):
+    """A ring of fire: a glowing band, flame tongues licking outward from it."""
+    em = [(120, 30, 10), (200, 60, 15), (245, 120, 30), (255, 190, 70), (255, 240, 170), (255, 255, 240)]
+    tongue = 11.0 + 4.0 * max(0.0, 1 - abs(a - 0.5) * 3.2)      # how far this angle's flame reaches
+    if 9.0 <= r < 11.0:
+        return rgba(em[4] if r < 10 else em[3])
+    if 11.0 <= r < tongue:
+        t = (r - 11.0) / max(0.01, tongue - 11.0)
+        return rgba(em[3] if t < 0.4 else em[2] if t < 0.75 else em[1])
+    if 8.0 <= r < 9.0:
+        return rgba(em[2], 200)
+    return None
+
+
+def soul_halo(r, a):
+    """A halo of soul light: a bright thin ring with small soul flames standing on it, turning."""
+    sb = [(30, 60, 110), (60, 120, 190), (100, 190, 240), (160, 230, 255), (220, 248, 255), (255, 255, 255)]
+    if 12.0 <= r < 13.4:
+        return rgba(sb[4] if r < 12.7 else sb[3])
+    if 11.2 <= r < 12.0 or 13.4 <= r < 14.0:
+        return rgba(sb[2], 190)
+    flame = abs(a - 0.5) < 0.12 and 13.4 <= r < 15.6
+    if flame:
+        return rgba(sb[5] if r < 14.4 else sb[3])
+    return None
+
+
+def root_ring(r, a):
+    """A tangle of roots with glowing sap: dark bark coiling round, sap beads of amber light along it."""
+    bark = [(40, 26, 18), (66, 44, 28), (96, 66, 40), (126, 92, 58)]
+    sap = [(170, 110, 20), (230, 160, 40), (255, 210, 90)]
+    wave = 12.0 + 1.6 * math.sin(a * math.tau)                    # a root weaving in and out
+    if abs(r - wave) < 1.1:
+        return rgba(bark[3] if r < wave else bark[1])
+    if abs(r - (12.0 - 1.6 * math.sin(a * math.tau))) < 0.9:
+        return rgba(bark[2])
+    if abs(a - 0.25) < 0.06 and abs(r - (wave + 1.6)) < 1.0:     # a sap bead
+        return rgba(sap[2] if r < wave + 1.6 else sap[1])
+    if 11.0 <= r < 13.0:
+        return rgba(bark[0], 150)
+    return None
+
+
+def ward_ring(r, a):
+    """A ward: a ring of violet light with small amethyst crystals standing round it."""
+    am = [(60, 30, 100), (110, 60, 170), (160, 110, 220), (210, 170, 250), (245, 230, 255)]
+    if 11.4 <= r < 12.4:
+        return rgba(am[3])
+    crystal = abs(a - 0.5)
+    if crystal < 0.09 and 12.4 <= r < 15.5 - crystal * 20:
+        return rgba(am[4] if a < 0.5 else am[2])
+    if 10.6 <= r < 11.4:
+        return rgba(am[1], 170)
+    return None
+
+
+AURAS = {"aura_flame": (flame_ring, 8), "aura_soul_halo": (soul_halo, 6), "aura_roots": (root_ring, 5), "aura_ward": (ward_ring, 6)}
+
+
+def aura_models():
+    out = []
+    for key, (draw, k) in AURAS.items():
+        m = g.Model(key)
+        m.part = True
+        t = m.texture("ring", aura(draw, k))
+        m.box((0, 8, 0), (16, 8, 16), {"up": (t, [0, 0, 16, 16]), "down": (t, [0, 16, 16, 0])}, shade=False, light=15)
+        out.append(m)
+    return out
+
+
+if __name__ == "__main__" and len(sys.argv) > 1 and sys.argv[1] == "auras":
+    ms = aura_models()
+    for m in ms:
+        g.save(m)
+    sheet = Image.new("RGBA", (AURA_FRAMES * 70 + 10, len(ms) * 70 + 10), (34, 32, 40, 255))
+    for i, m in enumerate(ms):
+        for f, img in enumerate(m.textures["ring"]):
+            sheet.alpha_composite(img.resize((64, 64), Image.NEAREST), (10 + f * 70, 10 + i * 70))
+    path = os.path.join(g.OUT, "review-o5-auras.png")
     sheet.save(path)
     print(path, len(ms), "models")
