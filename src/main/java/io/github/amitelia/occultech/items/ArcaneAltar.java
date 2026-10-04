@@ -56,6 +56,8 @@ public class ArcaneAltar extends SlimefunItem {
 
     public static final int[] INPUTS = { 10, 11, 12, 19, 20, 21, 28, 29, 30 };
     public static final int OUTPUT = 24;
+    /** Block data: the ingredients a running infusion took ({@link CrashLedger}). */
+    private static final String LEDGER_KEY = "occultech_infusion_taken";
     private static final int BUTTON = 22;
     private static final int INFO = 4;
     private static final int INFUSE_TICKS = 60;
@@ -111,6 +113,8 @@ public class ArcaneAltar extends SlimefunItem {
                     infuse(p, block, menu);
                     return false;
                 });
+                // an infusion a crash cut short: its ingredients go back into the altar
+                Bukkit.getScheduler().runTask(plugin, () -> recoverCrashed(block));
             }
         };
 
@@ -237,18 +241,23 @@ public class ArcaneAltar extends SlimefunItem {
         if (!MenuUtils.isEmpty(out) && (!out.isSimilar(recipe.output()) || out.getAmount() + recipe.output().getAmount() > out.getMaxStackSize())) {
             return "Take the last result out first.";
         }
-        // take the ingredients now, so nothing can be pulled out mid-infusion
+        // take the ingredients now, so nothing can be pulled out mid-infusion; the ledger gives them back after a crash
+        List<CrashLedger.Entry> taken = new ArrayList<>();
         recipe.needs().forEach((key, amount) -> {
             int left = amount;
             for (int slot : INPUTS) {
                 ItemStack item = menu.getItemInSlot(slot);
                 if (left > 0 && !MenuUtils.isEmpty(item) && key.equals(MenuUtils.keyOf(item))) {
                     int take = Math.min(left, item.getAmount());
+                    ItemStack took = item.clone();
+                    took.setAmount(take);
                     menu.consumeItem(slot, take);
+                    taken.add(CrashLedger.taken(menu, slot, took));
                     left -= take;
                 }
             }
         });
+        CrashLedger.save(altar, LEDGER_KEY, taken);
         animate(altar, menu, recipe.output());
         return null;
     }
@@ -329,6 +338,7 @@ public class ArcaneAltar extends SlimefunItem {
     }
 
     private void finish(Block altar, BlockMenu menu, ItemStack result) {
+        CrashLedger.clear(altar, LEDGER_KEY);
         infusing.remove(altar.getLocation());
         closePentagram(altar.getLocation());
         pending.remove(altar.getLocation());
@@ -427,6 +437,25 @@ public class ArcaneAltar extends SlimefunItem {
         }
     }
 
+    /** Gives back the ingredients of an infusion a crash cut short (never twice; see {@link CrashLedger}). */
+    public void recoverCrashed(Block altar) {
+        if (!infusing.containsKey(altar.getLocation())) {
+            CrashLedger.restore(altar, LEDGER_KEY, plugin.getLogger());
+        }
+    }
+
+    /** Self-test only: stops an infusion as a crash would (no result, the ledger left in place). */
+    public void crashForTest(Block altar) {
+        Location at = altar.getLocation();
+        BukkitRunnable running = infusing.remove(at);
+        if (running != null) {
+            running.cancel();
+        }
+        pending.remove(at);
+        closePentagram(at);
+        clearDisplays(at);
+    }
+
     /** Plugin disable: no displays left behind. */
     public void shutdown() {
         new ArrayList<>(shown.keySet()).forEach(this::clearDisplays);
@@ -435,6 +464,7 @@ public class ArcaneAltar extends SlimefunItem {
         new ArrayList<>(pentagrams.keySet()).forEach(this::closePentagram);
         // the server is stopping: hand out the results now rather than lose them
         pending.forEach((at, result) -> {
+            CrashLedger.clear(at.getBlock(), LEDGER_KEY);
             BlockMenu menu = BlockStorage.getInventory(at.getBlock());
             if (menu != null && MenuUtils.isEmpty(menu.getItemInSlot(OUTPUT))) {
                 menu.replaceExistingItem(OUTPUT, result);

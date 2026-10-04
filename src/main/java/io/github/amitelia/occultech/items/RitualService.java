@@ -120,6 +120,16 @@ public final class RitualService {
         return bosses;
     }
 
+    /** Altars whose circle is in use: a ritual running, or a boss fight walking it. */
+    @Nonnull
+    public List<Location> activeAltars() {
+        List<Location> out = new ArrayList<>(sessions.keySet());
+        for (BossFight fight : bosses.fights()) {
+            out.add(fight.altar().getLocation());
+        }
+        return out;
+    }
+
     public boolean isLocked(@Nonnull Location location) {
         return locked.contains(location.getBlock().getLocation());
     }
@@ -154,55 +164,18 @@ public final class RitualService {
     private static final String TAKEN_KEY = "occultech_ritual_taken";
 
     private static void saveTaken(Block altar, List<Taken> taken) {
-        StringBuilder out = new StringBuilder();
+        List<CrashLedger.Entry> entries = new ArrayList<>();
         for (Taken t : taken) {
-            if (t.menu() == null) {
-                continue;
+            if (t.menu() != null) {
+                entries.add(CrashLedger.taken(t.menu(), t.slot(), t.item()));
             }
-            Location at = t.menu().getLocation();
-            ItemStack left = t.menu().getItemInSlot(t.slot());
-            out.append(out.isEmpty() ? "" : ";").append(at.getBlockX()).append(',').append(at.getBlockY()).append(',').append(at.getBlockZ())
-                .append(',').append(t.slot()).append(',').append(MenuUtils.isEmpty(left) ? 0 : left.getAmount()).append(',')
-                .append(java.util.Base64.getEncoder().encodeToString(t.item().serializeAsBytes()));
         }
-        BlockStorage.addBlockInfo(altar, TAKEN_KEY, out.toString());
+        CrashLedger.save(altar, TAKEN_KEY, entries);
     }
 
-    /**
-     * Puts back what a ritual took when a crash stopped it mid-way. Never twice: an offering is only returned if its slot
-     * holds no more than was left after the ritual took it (if the take itself was lost with the crash, the items are
-     * still there).
-     */
+    /** Puts back what a ritual took when a crash stopped it mid-way (never twice: see {@link CrashLedger}). */
     private void returnCrashedOfferings(Block altar) {
-        String saved = BlockStorage.getLocationInfo(altar.getLocation(), TAKEN_KEY);
-        if (saved == null || saved.isEmpty()) {
-            return;
-        }
-        BlockStorage.addBlockInfo(altar, TAKEN_KEY, null);
-        for (String entry : saved.split(";")) {
-            try {
-                String[] f = entry.split(",", 6);
-                Block block = altar.getWorld().getBlockAt(Integer.parseInt(f[0]), Integer.parseInt(f[1]), Integer.parseInt(f[2]));
-                int slot = Integer.parseInt(f[3]);
-                int left = Integer.parseInt(f[4]);
-                ItemStack item = ItemStack.deserializeBytes(java.util.Base64.getDecoder().decode(f[5]));
-                BlockMenu menu = BlockStorage.getInventory(block);
-                ItemStack now = menu == null ? null : menu.getItemInSlot(slot);
-                if (!MenuUtils.isEmpty(now) && now.isSimilar(item) && now.getAmount() > left) {
-                    continue;   // the take never reached the disk: the offering is still in its bowl
-                }
-                if (menu != null && MenuUtils.isEmpty(now)) {
-                    menu.replaceExistingItem(slot, item);
-                } else {
-                    ItemStack rest = menu == null ? item : menu.pushItem(item, slot);
-                    if (rest != null) {
-                        altar.getWorld().dropItemNaturally(altar.getLocation().add(0.5, 1.2, 0.5), rest);
-                    }
-                }
-            } catch (RuntimeException e) {
-                plugin.getLogger().warning("Could not return a ritual offering at " + altar.getLocation() + ": " + e);
-            }
-        }
+        CrashLedger.restore(altar, TAKEN_KEY, plugin.getLogger());
     }
 
     /** Self-test only: stops every ritual as a crash would (nothing given back, nothing finished). */
@@ -645,9 +618,7 @@ public final class RitualService {
         }
 
         private void end() {
-            if (BlockStorage.hasBlockInfo(altar)) {
-                BlockStorage.addBlockInfo(altar, TAKEN_KEY, null);
-            }
+            CrashLedger.clear(altar, TAKEN_KEY);
             crash();
         }
 

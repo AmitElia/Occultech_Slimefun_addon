@@ -875,47 +875,49 @@ public final class BossFight {
         viewers.forEach(bar::addPlayer);
     }
 
+    /**
+     * Rewards everyone who earned a share. A fighter who isn't online at the moment of victory (disconnected, crashed)
+     * gets theirs when they next join (Session P4).
+     */
     private void distributeLoot() {
         double total = damage.values().stream().mapToDouble(Double::doubleValue).sum();
         for (Map.Entry<UUID, Double> entry : damage.entrySet()) {
             Player player = Bukkit.getPlayer(entry.getKey());
-            if (player == null || tainted.contains(entry.getKey())) {
+            if (tainted.contains(entry.getKey())) {
                 continue;
             }
             double share = total <= 0 ? 0 : entry.getValue() / total;
             double present = elapsed <= 0 ? 0 : presence.getOrDefault(entry.getKey(), 0) / (double) elapsed;
             if (share >= MIN_DAMAGE_SHARE && present >= MIN_PRESENCE_SHARE) {
-                int amount = spec.drops() + (ThreadLocalRandom.current().nextDouble() < BONUS_DROP_CHANCE ? 1 : 0);
-                service.hooks().giveLoot(player, spec.dropId(), amount);
-                spec.bonusDrops().forEach((id, chance) -> {
-                    if (ThreadLocalRandom.current().nextDouble() < chance) {
-                        service.hooks().giveLoot(player, id, 1);
-                    }
-                });
-                giveMobDrops(player);
-                Keys.recordWin(player, spec.id());
-            } else {
+                service.reward(entry.getKey(), spec.name(), rewards());
+            } else if (player != null) {
                 player.sendMessage(ChatColor.GRAY + "You didn't contribute enough to " + spec.name() + " to earn a reward.");
             }
         }
     }
 
-    /** The boss's curated vanilla drops and XP, handed to one contributor (never dropped for others to grab). */
-    private void giveMobDrops(Player player) {
+    /** One share, rolled now: "sf:ID:n", "mc:MATERIAL:n", "xp:n", "win:BOSS" (see {@link BossService#reward}). */
+    private List<String> rewards() {
         ThreadLocalRandom random = ThreadLocalRandom.current();
+        List<String> out = new ArrayList<>();
+        out.add("sf:" + spec.dropId() + ":" + (spec.drops() + (random.nextDouble() < BONUS_DROP_CHANCE ? 1 : 0)));
+        spec.bonusDrops().forEach((id, chance) -> {
+            if (random.nextDouble() < chance) {
+                out.add("sf:" + id + ":1");
+            }
+        });
         for (Map.Entry<String, int[]> drop : spec.mobDrops().entrySet()) {
             Material material = Material.matchMaterial(drop.getKey());
             int amount = random.nextInt(drop.getValue()[0], drop.getValue()[1] + 1);
-            if (material == null || amount <= 0) {
-                continue;
-            }
-            for (ItemStack rest : player.getInventory().addItem(new ItemStack(material, amount)).values()) {
-                player.getWorld().dropItem(player.getLocation(), rest).setOwner(player.getUniqueId());
+            if (material != null && amount > 0) {
+                out.add("mc:" + material.name() + ":" + amount);
             }
         }
         if (spec.xp() > 0) {
-            player.giveExp(spec.xp());
+            out.add("xp:" + spec.xp());
         }
+        out.add("win:" + spec.id());
+        return out;
     }
 
     private void heal(LivingEntity entity, double fraction) {

@@ -122,6 +122,7 @@ final class SelfTest {
             then(0, this::killCurrentFight);
             then(30, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
         }
+        then(0, this::lootKeptForAbsent);
         then(0, this::refundOnInterruption);
         then(5, this::crashRecovery);
         then(5, this::awayStart);
@@ -228,6 +229,7 @@ final class SelfTest {
         then(0, this::buildArcaneAltar);
         then(10, this::startArcaneInfusion);
         then(90, this::arcaneResult);
+        then(0, this::arcaneCrash);
         then(0, this::placeNexus);
         then(80, this::nexusLinked);
         then(70, this::nexusGathered);
@@ -279,10 +281,48 @@ final class SelfTest {
         check("all " + expected + " items up to tier " + ContentRegistrar.IMPLEMENTED_TIER + " registered", registered == expected, registered + " registered");
         check("no content problems", registrar.problems().isEmpty(), String.join("; ", registrar.problems()));
         check("researches registered", registrar.researchCount() == catalog.researches().size(), registrar.researchCount() + " registered");
+        recipeClashes();
         resourcePack();
         long summons = rituals.recipes().stream().filter(RitualRecipe::isSummon).count();
         int expectedSummons = BOSSES.size() + TIER1_BOSSES.size() + TIER2_BOSSES.size() + TIER3_BOSSES.size() + 1;
         check(expectedSummons + " summoning rituals registered", summons == expectedSummons, summons + " summons");
+    }
+
+    /**
+     * Two recipes with the same grid on the same machine (ours, or another addon's) mean one of them can never be
+     * crafted (Session P4). Grids are compared shape and all: item id (or material) and amount per slot.
+     */
+    private void recipeClashes() {
+        Map<String, String> grids = new java.util.HashMap<>();
+        List<String> clashes = new java.util.ArrayList<>();
+        int ours = 0;
+        for (SlimefunItem item : io.github.thebusybiscuit.slimefun4.implementation.Slimefun.getRegistry().getEnabledSlimefunItems()) {
+            if (item.getRecipeType() == null || item.getRecipe() == null
+                || item.getRecipeType() == io.github.amitelia.occultech.setup.OccultechRecipeTypes.BOSS_DROP) {
+                continue;   // a drop's grid only shows the boss: several drops of one boss share it, nothing is crafted
+            }
+            StringBuilder grid = new StringBuilder(item.getRecipeType().getKey().toString()).append('|');
+            boolean any = false;
+            for (ItemStack in : item.getRecipe()) {
+                if (in == null || in.getType().isAir()) {
+                    grid.append("-,");
+                    continue;
+                }
+                SlimefunItem sf = SlimefunItem.getByItem(in);
+                grid.append(sf != null ? sf.getId() : in.getType().name()).append('x').append(in.getAmount()).append(',');
+                any = true;
+            }
+            if (!any) {
+                continue;
+            }
+            boolean mine = item.getId().startsWith(ItemKeys.slimefunId(""));
+            ours += mine ? 1 : 0;
+            String other = grids.putIfAbsent(grid.toString(), item.getId());
+            if (other != null && (mine || other.startsWith(ItemKeys.slimefunId("")))) {
+                clashes.add(other + " = " + item.getId());
+            }
+        }
+        check("no two recipes share a grid (" + ours + " Occultech recipes checked)", clashes.isEmpty(), String.join("; ", clashes));
     }
 
     private void buildCircle() {
@@ -564,6 +604,13 @@ final class SelfTest {
     private void summonResult() {
         currentFight = bosses.fightAt(altar).orElse(null);
         if (currentFight != null) {
+            var guard = new io.github.amitelia.occultech.items.CircleGuard(rituals);
+            RitualService.CircleCheck circle = rituals.checkCircle(altar).orElseThrow();
+            int[] bowl = circle.pattern().positionsOf(Circles.OFFERING_BOWL, circle.rotation()).get(0);
+            check("a circle in use is bound (altar, bowls, the ground under them)", guard.isBound(altar)
+                && guard.isBound(altar.getRelative(bowl[0], 0, bowl[1])) && guard.isBound(altar.getRelative(bowl[0], -1, bowl[1])),
+                "not bound");
+            check("blocks outside the circle stay free", !guard.isBound(altar.getRelative(circle.pattern().radius() + 2, 0, 0)), "bound");
             check("fight entities are safe from ClearLaggEnhanced", currentFight.bosses().stream().allMatch(b -> b.getScoreboardTags()
                 .contains(io.github.amitelia.occultech.core.ClearLagGuard.PROTECTED)), "no CLE_PROTECTED tag");
             check("only one fight in an area", !bosses.canSummon(altar.getLocation().add(60, 0, 0), 10), "a second fight could start 60 blocks away");
@@ -688,6 +735,15 @@ final class SelfTest {
         check(name + " leaves no split slimes", slimes == 0, slimes + " new slimes");
         nearby().stream().filter(e -> e instanceof Item).forEach(Entity::remove);
         currentFight = null;
+    }
+
+    private void lootKeptForAbsent() {
+        check("a circle is free once its fight ends", !new io.github.amitelia.occultech.items.CircleGuard(rituals).isBound(altar), "still bound");
+        java.util.UUID absent = java.util.UUID.randomUUID();
+        bosses.reward(absent, "Test Boss", List.of("sf:" + ItemKeys.slimefunId("GRAVE_SALT") + ":2", "xp:5", "win:BROOD_MOTHER"));
+        List<String> kept = bosses.pendingFor(absent);
+        check("an absent fighter's reward is kept for their return", kept.contains("xp:5") && kept.size() == 4, String.valueOf(kept));
+        bosses.discardPending(absent);
     }
 
     private void refundOnInterruption() {
@@ -1634,6 +1690,34 @@ final class SelfTest {
         check("Floor Sigil registered", SlimefunItem.getById(ItemKeys.slimefunId("FLOOR_SIGIL")) != null, "missing");
         check("every boss has a Hollow Halo style", io.github.amitelia.occultech.items.HaloStyle.values().length >= 19, "too few");
         plugin.rituals().holograms().clear(arcane);
+    }
+
+    private void arcaneCrash() {
+        BlockMenu menu = arcane == null ? null : BlockStorage.getInventory(arcane);
+        if (menu == null || arcaneRecipe == null) {
+            return;
+        }
+        var altarItem = plugin.registrar().arcaneAltar();
+        menu.replaceExistingItem(io.github.amitelia.occultech.items.ArcaneAltar.OUTPUT, null);
+        int slot = 0;
+        int put = 0;
+        for (Map.Entry<String, Integer> need : arcaneRecipe.needs().entrySet()) {
+            menu.replaceExistingItem(io.github.amitelia.occultech.items.ArcaneAltar.INPUTS[slot++], DebugWorld.item(need.getKey(), need.getValue()));
+            put += need.getValue();
+        }
+        check("a second infusion starts", altarItem.tryInfuse(arcane, menu) == null, "did not start");
+        altarItem.crashForTest(arcane);    // the server dies mid-infusion
+        altarItem.recoverCrashed(arcane);  // ...and the altar loads again
+        altarItem.recoverCrashed(arcane);  // a second load gives nothing more
+        int back = 0;
+        for (int s : io.github.amitelia.occultech.items.ArcaneAltar.INPUTS) {
+            ItemStack item = menu.getItemInSlot(s);
+            back += item == null || item.getType().isAir() ? 0 : item.getAmount();
+        }
+        check("a crash mid-infusion gives the ingredients back, once", back == put, put + " put in, " + back + " back");
+        for (int s : io.github.amitelia.occultech.items.ArcaneAltar.INPUTS) {
+            menu.replaceExistingItem(s, null);
+        }
     }
 
     private void placeNexus() {

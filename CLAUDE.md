@@ -66,7 +66,9 @@ main boss, fighters) on the altar every 5 s and on shutdown (`occultech_fight_st
 resumes (fresh adds and objects, saved health). Only if that state is missing or unreadable does the old
 `occultech_active_fight` marker refund the catalyst. A running ritual records what it took (`occultech_ritual_taken`), so a
 crash mid-ritual gives the offerings back - never twice. `occultech fights [end N]` lists or ends fights, `occultech begin
-x y z` starts the ritual at an altar.
+x y z` starts the ritual at an altar. Arcane Altar infusions keep the same kind of ledger (`CrashLedger`). While
+a ritual or fight uses a circle, `CircleGuard` makes its blocks unbreakable. Rewards earned by a fighter who is offline at
+the victory wait in `pending-rewards.yml` until they join.
 
 **Items come from data:** `docs/recipes.yml` is packaged into the jar and registered at startup by `ContentRegistrar`
 (only tiers <= `ContentRegistrar.IMPLEMENTED_TIER`). Adding a plain item = edit recipes.yml (give it a `material`).

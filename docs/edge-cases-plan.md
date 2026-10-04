@@ -60,7 +60,7 @@ What the code does today, what goes wrong, and the fix. Four sessions, smallest 
 - **Summons still channeling** are saved the same way. On load they complete, or return their offerings.
 - **Losses:** a crash loses at most the last 5 s. You can't gain anything by forcing a restart: health is restored, timers continue.
 
-## Session P4: dupe audit and other edge cases (#9, #10)
+## Session P4: dupe audit and other edge cases (#9, #10) - DONE (self-test 347/347)
 
 **Locking:**
 - Altars, bowls and circle marks can't be broken during a ritual or fight (and they're immune to explosions and pistons).
@@ -87,3 +87,17 @@ What the code does today, what goes wrong, and the fix. Four sessions, smallest 
 - Chunk tickets released on every end path.
 
 **Crash rollback (not an addon bug):** player data and Slimefun's block database save at different moments, so a hard crash can roll one back and not the other. Server owners guard this with frequent saves. I'll note it in the docs.
+
+### P4 outcome
+
+| Area | Result |
+|---|---|
+| Circle lock | `CircleGuard`: while a ritual runs or a boss walks a circle, every Occultech block on the altar's level inside the circle, and the block under each, is safe from breaking (before Slimefun sees it, so nothing drops), explosions, Slimefun explosive tools, pistons, fire and flowing liquids. |
+| Crash mid-ritual or mid-infusion | `CrashLedger` records what was taken and gives it back once when the block loads again. Rituals and Arcane Altar infusions both use it. |
+| Rewards for absent fighters | A fighter who earned a share but isn't online at the victory gets it on their next join (`plugins/Occultech/pending-rewards.yml`). It's removed from the file before it's handed out, so it's never given twice. |
+| Recipes | The self-test checks that no two crafting recipes (ours, or another addon's) share a grid on the same machine, so none is shadowed. It found none. |
+| Audited, no change needed | <ul><li>Machine recipes: standard Slimefun `AContainer`.</li><li>Servitor item moves: take then give, same tick.</li><li>Altar, bowl and Arcane Altar menus: inputs are taken at the start, and locked slots refuse clicks.</li><li>Shutdown mid-infusion hands out the result.</li><li>Chunk tickets are released on every end path.</li><li>Boss bars re-attach after a relog.</li><li>The presence share keeps loot from players who only teleport in at the end.</li></ul> |
+
+**Known limits:**
+- **Reloading only Occultech** (`/reload`, PlugMan) saves running fights, but they resume only once their altar's chunk loads again. Slimefun doesn't rebuild menus that are already loaded. A full restart is the supported path.
+- **Crash rollback:** Minecraft saves player data and Slimefun saves its block database at different moments. A hard crash can roll back one and not the other: a player's inventory from before they filled a bowl, next to a bowl that was saved full. That's server-wide and not specific to Occultech. Frequent autosaves keep the window small.

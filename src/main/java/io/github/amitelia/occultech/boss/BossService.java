@@ -603,6 +603,90 @@ public final class BossService implements Listener {
 
     private final Map<UUID, Long> lastHint = new HashMap<>();
 
+    // ------------------------------------------------------------------ rewards (Session P4: never lost to a disconnect)
+
+    private org.bukkit.configuration.file.YamlConfiguration pending;
+
+    private java.io.File pendingFile() {
+        return new java.io.File(plugin.getDataFolder(), "pending-rewards.yml");
+    }
+
+    private org.bukkit.configuration.file.YamlConfiguration pending() {
+        if (pending == null) {
+            pending = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(pendingFile());
+        }
+        return pending;
+    }
+
+    /** Gives a share now, or keeps it (on disk) for when the player next joins. */
+    public void reward(UUID playerId, String bossName, List<String> rewards) {
+        Player player = Bukkit.getPlayer(playerId);
+        if (player != null) {
+            rewards.forEach(r -> deliver(player, r));
+            return;
+        }
+        List<String> kept = new ArrayList<>(pending().getStringList(playerId.toString()));
+        kept.add("from:" + bossName);
+        kept.addAll(rewards);
+        pending().set(playerId.toString(), kept);
+        savePending();
+    }
+
+    /** Rewards waiting for {@code player} (self-test). */
+    public List<String> pendingFor(UUID player) {
+        return pending().getStringList(player.toString());
+    }
+
+    /** Drops what is kept for {@code player} (self-test cleanup). */
+    public void discardPending(UUID player) {
+        pending().set(player.toString(), null);
+        savePending();
+    }
+
+    private void savePending() {
+        try {
+            pending().save(pendingFile());
+        } catch (java.io.IOException e) {
+            plugin.getLogger().severe("Could not save pending boss rewards: " + e);
+        }
+    }
+
+    private void deliver(Player player, String reward) {
+        String[] f = reward.split(":");
+        try {
+            switch (f[0]) {
+                case "sf" -> hooks.giveLoot(player, f[1], Integer.parseInt(f[2]));
+                case "mc" -> {
+                    org.bukkit.Material material = org.bukkit.Material.matchMaterial(f[1]);
+                    if (material != null) {
+                        for (ItemStack rest : player.getInventory().addItem(new ItemStack(material, Integer.parseInt(f[2]))).values()) {
+                            player.getWorld().dropItem(player.getLocation(), rest).setOwner(player.getUniqueId());
+                        }
+                    }
+                }
+                case "xp" -> player.giveExp(Integer.parseInt(f[1]));
+                case "win" -> Keys.recordWin(player, f[1]);
+                case "from" -> player.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                    "&dWhile you were away, your share of the victory over &c" + f[1] + " &dwas kept for you:"));
+                default -> plugin.getLogger().warning("Unknown boss reward " + reward);
+            }
+        } catch (RuntimeException e) {
+            plugin.getLogger().warning("Could not give boss reward " + reward + " to " + player.getName() + ": " + e);
+        }
+    }
+
+    @EventHandler
+    public void onJoin(org.bukkit.event.player.PlayerJoinEvent e) {
+        Player player = e.getPlayer();
+        List<String> kept = pending().getStringList(player.getUniqueId().toString());
+        if (kept.isEmpty()) {
+            return;
+        }
+        pending().set(player.getUniqueId().toString(), null);   // taken off the books first: never given twice
+        savePending();
+        Bukkit.getScheduler().runTaskLater(plugin, () -> kept.forEach(r -> deliver(player, r)), 40L);
+    }
+
     private void outsideHint(Player player) {
         long now = System.currentTimeMillis();
         if (now - lastHint.getOrDefault(player.getUniqueId(), 0L) > 3000) {
