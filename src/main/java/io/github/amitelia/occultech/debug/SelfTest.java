@@ -98,6 +98,7 @@ final class SelfTest {
 
     void run() {
         say("&5[Occultech] Self-test starting...");
+        bosses.setAwayRules(false);   // its fights run with nobody watching; the away timer is tested on its own
         then(0, this::registration);
         then(0, this::buildCircle);
         then(5, this::circleDetection);
@@ -123,6 +124,10 @@ final class SelfTest {
         }
         then(0, this::refundOnInterruption);
         then(5, this::crashRecovery);
+        then(5, this::awayStart);
+        then(40, this::awayRecovering);
+        then(100, this::awayEnded);
+        then(5, this::banishEnds);
 
         // ---- tier 1
         then(0, this::buildUpgradeCircle);
@@ -689,6 +694,64 @@ final class SelfTest {
         bosses.abort(fight, BossFight.Result.SHUTDOWN);
         check("interrupted gate fight refunds the catalyst", CATALYST.equals(idIn(RitualAltar.CENTER_SLOT)), String.valueOf(idIn(RitualAltar.CENTER_SLOT)));
         check("marker cleared after the fight", BlockStorage.getLocationInfo(altar.getLocation(), ACTIVE_KEY) == null, "marker left");
+    }
+
+    // ------------------------------------------------------------------ Session P2: leaving and giving up
+
+    /** The stand-in catalyst of the P2 fights: no other test uses it, so any refund of it would show. */
+    private static final String MARKER = ItemKeys.slimefunId("BANISHING_SALT");
+    private BossFight awayFight;
+    private double awayHealth;
+    private int awayElapsed;
+
+    private void awayStart() {
+        check("Banishing Salt is registered", SlimefunItem.getById(ItemKeys.slimefunId("BANISHING_SALT")) != null, "missing");
+        DebugWorld.setAltarCenter(altar, null);
+        bosses.setAwayRules(true);
+        bosses.setAwaySeconds(6);
+        awayFight = bosses.summon("BROOD_MOTHER", rituals.spec("BROOD_MOTHER").orElseThrow(), altar, DebugWorld.item(MARKER, 1));
+        LivingEntity boss = awayFight.bosses().get(0);
+        boss.setHealth(boss.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue() / 2);
+        awayHealth = boss.getHealth();
+        awayElapsed = awayFight.elapsed();
+    }
+
+    private void awayRecovering() {
+        LivingEntity boss = awayFight.bosses().isEmpty() ? null : awayFight.bosses().get(0);
+        check("with everyone gone the fight pauses (its clock stops)", awayFight.elapsed() == awayElapsed && awayFight.awayTicksLeft() >= 0,
+            awayElapsed + " -> " + awayFight.elapsed() + ", left " + awayFight.awayTicksLeft());
+        check("a boss everyone walked away from recovers", boss != null && boss.getHealth() > awayHealth,
+            awayHealth + " -> " + (boss == null ? "gone" : boss.getHealth()));
+    }
+
+    private void awayEnded() {
+        check("the away timer ends the fight (abandoned)", awayFight.isOver() && awayFight.result() == BossFight.Result.ABANDONED,
+            String.valueOf(awayFight.result()));
+        check("an abandoned fight's catalyst is lost", !refunded(), "refunded");
+        if (!awayFight.isOver()) {
+            bosses.abort(awayFight);   // don't let a failed check leak its boss into the rest of the test
+        }
+        bosses.setAwaySeconds(180);
+        bosses.setAwayRules(false);
+    }
+
+    /** Whether the marker catalyst came back: in the altar, or dropped by it. */
+    private boolean refunded() {
+        boolean dropped = altar.getWorld().getNearbyEntities(altar.getLocation().add(0.5, 1, 0.5), 3, 3, 3, e -> e instanceof Item item
+            && SlimefunItem.getByItem(item.getItemStack()) != null && MARKER.equals(SlimefunItem.getByItem(item.getItemStack()).getId())).size() > 0;
+        return dropped || MARKER.equals(idIn(RitualAltar.CENTER_SLOT));
+    }
+
+    private void banishEnds() {
+        DebugWorld.setAltarCenter(altar, null);
+        BossFight fight = bosses.summon("BROOD_MOTHER", rituals.spec("BROOD_MOTHER").orElseThrow(), altar, DebugWorld.item(MARKER, 1));
+        check("Banishing Salt finds the fight nearby", bosses.nearestFight(altar.getLocation().add(40, 0, 0), 48) == fight
+            && bosses.nearestFight(altar.getLocation().add(200, 0, 0), 48) == null, "not found / found too far");
+        fight.banish(null);
+        check("banishing ends the fight", fight.isOver() && fight.result() == BossFight.Result.BANISHED, String.valueOf(fight.result()));
+        check("a banished fight's catalyst is lost", !refunded(), "refunded");
+        List<Entity> left = nearby().stream().filter(Keys::isSummoned).toList();
+        check("banishing leaves no summoned entities", left.isEmpty(), left.size() + " left");
     }
 
     private void crashRecovery() {
@@ -1629,6 +1692,8 @@ final class SelfTest {
         if (chunk4 != null) {
             chunk4.removePluginChunkTicket(plugin);
         }
+        bosses.setAwayRules(true);
+        bosses.setAwaySeconds(plugin.getConfig().getInt("bosses.away-seconds", 180));
         say((failed == 0 ? "&a" : "&c") + "[Occultech] Self-test finished: " + passed + " passed, " + failed + " failed.");
     }
 

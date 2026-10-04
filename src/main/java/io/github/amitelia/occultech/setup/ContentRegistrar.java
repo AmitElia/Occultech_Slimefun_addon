@@ -41,6 +41,7 @@ import io.github.amitelia.occultech.items.FrenzyIdol;
 import io.github.amitelia.occultech.items.ProducerBlock;
 import io.github.amitelia.occultech.items.ScryingMirror;
 import io.github.amitelia.occultech.items.ServitorShrine;
+import io.github.amitelia.occultech.items.BanishingSalt;
 import io.github.amitelia.occultech.items.OccultCodex;
 import io.github.amitelia.occultech.items.OccultItem;
 import io.github.amitelia.occultech.items.OfferingBowl;
@@ -378,6 +379,7 @@ public final class ContentRegistrar {
             case "GRAVE_LANTERN" -> new BoneScepter(group, stack, type, grid, output, plugin.minions(), MinionService.Kind.WITHER_KNIGHT, 3, 25_000);
             case "OFFERING_BOWL" -> new OfferingBowl(group, stack, type, grid, output, rituals);
             case "OCCULT_CODEX" -> new OccultCodex(group, stack, type, grid, output, rituals, plugin);
+            case "BANISHING_SALT" -> new BanishingSalt(group, stack, type, grid, output, rituals);
             case "BROOD_EGG" -> new BroodEgg(group, stack, type, grid, output, rituals, plugin.getConfig().getInt("brood-egg.seconds-per-string", 20));
             // placeable circle pieces are plain Slimefun blocks
             // circle pieces must be placeable (the default item class is not)

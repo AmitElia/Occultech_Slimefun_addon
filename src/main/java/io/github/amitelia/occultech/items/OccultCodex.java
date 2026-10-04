@@ -39,6 +39,12 @@ public class OccultCodex extends SlimefunItem implements NotPlaceable {
             e.cancel();
             Player player = e.getPlayer();
             Optional<Block> clicked = e.getClickedBlock();
+            // sneak + right-click the altar of a running fight: banish it (asks first; the catalyst is lost)
+            Optional<io.github.amitelia.occultech.boss.BossFight> fight = clicked.flatMap(rituals.bosses()::fightAt);
+            if (player.isSneaking() && fight.isPresent()) {
+                rituals.bosses().requestBanish(player, fight.get());
+                return;
+            }
             Optional<RitualService.CircleCheck> check = clicked.flatMap(rituals::checkCircle);
             if (check.isPresent()) {
                 highlight(plugin, player, clicked.get(), check.get());

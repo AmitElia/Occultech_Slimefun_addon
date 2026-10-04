@@ -22,6 +22,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.AbstractArrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Tameable;
@@ -114,6 +115,68 @@ public final class BossService implements Listener {
     /** Summons still channeling: altar block -> arena radius. They hold their area like a running fight. */
     private final Map<Location, Double> reserved = new HashMap<>();
     private double minFightDistance = 96;
+    private int awayTicks = 180 * 20;
+    private boolean awayRules = true;
+    /** Banish requests waiting for their confirming second use: player -> (fight, when). */
+    private final Map<UUID, Map.Entry<UUID, Long>> banishRequests = new HashMap<>();
+
+    /** How long a fight waits with nobody alive in its arena before it ends (config {@code bosses.away-seconds}). */
+    public void setAwaySeconds(int seconds) {
+        this.awayTicks = Math.max(5, seconds) * 20;
+    }
+
+    int awayTicks() {
+        return awayTicks;
+    }
+
+    /** The self-test runs fights with nobody watching: it turns the away timer off while it does. */
+    public void setAwayRules(boolean on) {
+        this.awayRules = on;
+    }
+
+    boolean awayRules() {
+        return awayRules;
+    }
+
+    /** The running fight whose altar is nearest {@code at}, within {@code range} blocks of its arena's edge. */
+    @Nullable
+    public BossFight nearestFight(@Nonnull Location at, double range) {
+        BossFight best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (BossFight fight : fights.values()) {
+            if (fight.center().getWorld() != at.getWorld()) {
+                continue;
+            }
+            double distance = fight.center().distance(at);
+            if (distance <= fight.radius() + range && distance < bestDistance) {
+                best = fight;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    /**
+     * Ends {@code fight} early for {@code player} (the Codex on its altar, or Banishing Salt). The first use only asks:
+     * the same use again within 5 seconds banishes. True once banished.
+     */
+    public boolean requestBanish(@Nonnull Player player, @Nonnull BossFight fight) {
+        if (!fight.mayBanish(player)) {
+            player.sendMessage(ChatColor.GRAY + "Only its summoner or those who fought it can banish " + fight.spec().name() + ".");
+            return false;
+        }
+        long now = System.currentTimeMillis();
+        Map.Entry<UUID, Long> asked = banishRequests.get(player.getUniqueId());
+        if (asked == null || !asked.getKey().equals(fight.id()) || now - asked.getValue() > 5000) {
+            banishRequests.put(player.getUniqueId(), Map.entry(fight.id(), now));
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&7Banish &c" + fight.spec().name()
+                + "&7? The catalyst will be lost. &fDo it again within 5 seconds &7to banish."));
+            return false;
+        }
+        banishRequests.remove(player.getUniqueId());
+        fight.banish(player);
+        return true;
+    }
 
     /** Fights (running or channeling) must be at least this far apart, besides their arenas not overlapping. */
     public void setMinFightDistance(double blocks) {
@@ -160,11 +223,19 @@ public final class BossService implements Listener {
 
     @Nonnull
     public BossFight summon(@Nonnull String bossId, @Nonnull BossSpec spec, @Nonnull Block altar, @Nullable ItemStack refund) {
+        return summon(bossId, spec, altar, refund, null);
+    }
+
+    /** Summons a boss; {@code summoner} may banish it later even before hitting it. */
+    @Nonnull
+    public BossFight summon(@Nonnull String bossId, @Nonnull BossSpec spec, @Nonnull Block altar, @Nullable ItemStack refund,
+        @Nullable UUID summoner) {
         BossBlueprint blueprint = blueprints.get(bossId);
         if (blueprint == null) {
             throw new IllegalArgumentException("No behavior registered for boss " + bossId);
         }
         BossFight fight = new BossFight(this, spec, blueprint, altar, refund);
+        fight.setSummoner(summoner);
         fights.put(fight.id(), fight);
         hooks.markActive(altar, refund);
         fight.start();
@@ -312,6 +383,13 @@ public final class BossService implements Listener {
             e.setCancelled(true);
             return;
         }
+        BossFight arena = fightOf(victim);
+        if (arena != null && !arena.inArena(player)) {
+            // fought from outside the circle (a bow from the treeline, a pet sent in): it doesn't count
+            e.setCancelled(true);
+            outsideHint(player);
+            return;
+        }
         String owner = victim.getPersistentDataContainer().get(Keys.OWNED_BY, PersistentDataType.STRING);
         if (owner != null && !owner.equals(player.getUniqueId().toString())) {
             // someone else's reflection: everyone breaks their own
@@ -389,7 +467,11 @@ public final class BossService implements Listener {
         BossFight.FightObject object = fight.objectFor(e.getAttacked());
         if (object != null) {
             e.setCancelled(true);
-            object.hit();
+            if (fight.inArena(e.getPlayer())) {
+                object.hit();
+            } else {
+                outsideHint(e.getPlayer());
+            }
         }
     }
 
@@ -496,6 +578,34 @@ public final class BossService implements Listener {
         if (fight != null) {
             fight.onEntityDeath(e.getEntity(), e.getEntity().getKiller());
         }
+    }
+
+    private final Map<UUID, Long> lastHint = new HashMap<>();
+
+    private void outsideHint(Player player) {
+        long now = System.currentTimeMillis();
+        if (now - lastHint.getOrDefault(player.getUniqueId(), 0L) > 3000) {
+            lastHint.put(player.getUniqueId(), now);
+            player.sendActionBar(net.kyori.adventure.text.Component.text("Only blows struck inside the circle reach it.",
+                net.kyori.adventure.text.format.NamedTextColor.GRAY));
+        }
+    }
+
+    /** A player who dies in a fight, or disconnects from one, is excused: the boss waits for them instead of recovering. */
+    @EventHandler
+    public void onPlayerDeath(org.bukkit.event.entity.PlayerDeathEvent e) {
+        for (BossFight fight : fights.values()) {
+            fight.excuse(e.getEntity());
+        }
+    }
+
+    @EventHandler
+    public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
+        for (BossFight fight : fights.values()) {
+            fight.excuse(e.getPlayer());
+        }
+        banishRequests.remove(e.getPlayer().getUniqueId());
+        lastHint.remove(e.getPlayer().getUniqueId());
     }
 
     @EventHandler

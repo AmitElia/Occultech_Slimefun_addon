@@ -58,7 +58,10 @@ items/BlockSkinService  the older display-entity skins (custom-blocks.mode: skin
 
 **Bosses:** recipes.yml `bosses:` gives name/tier/drops/offerings; behavior is a `BossBehavior` subclass registered in
 `TierNBosses` (id must match). `ContentRegistrar.registerSummons` turns each into a summoning ritual: offerings in the
-bowls, the catalyst on the altar for gate bosses, an empty altar for mini-bosses. A crash mid-fight is recovered via the
+bowls, the catalyst on the altar for gate bosses, an empty altar for mini-bosses. Only hits from players inside the arena count. With
+nobody alive in the arena a fight pauses for `bosses.away-seconds` (the boss recovers if everyone walked off, waits after a
+death or disconnect) and then ends; the Codex (sneak + right-click its altar) or Banishing Salt end it early. Both lose the
+catalyst. The self-test turns the away rules off (`setAwayRules`) while its unattended fights run. A crash mid-fight is recovered via the
 `occultech_active_fight` block-storage marker on the altar (catalyst refunded on next load).
 
 **Items come from data:** `docs/recipes.yml` is packaged into the jar and registered at startup by `ContentRegistrar`

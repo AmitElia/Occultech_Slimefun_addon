@@ -74,7 +74,7 @@ bosses:
 
 # Slimefun researches. `id` is added to research base id 262000 and must NEVER change once released.
 researches:
-  CHALK_AND_CIRCLES: {id: 0, name: "Chalk and Circles", cost: 8,  items: [RITUAL_CHALK, GRAVE_SALT, TALLOW_CANDLE, SOUL_ASH, OCCULT_INK, CHALK_GLYPH, OCCULT_CODEX]}
+  CHALK_AND_CIRCLES: {id: 0, name: "Chalk and Circles", cost: 8,  items: [RITUAL_CHALK, GRAVE_SALT, TALLOW_CANDLE, SOUL_ASH, OCCULT_INK, CHALK_GLYPH, OCCULT_CODEX, BANISHING_SALT]}
   WARDED_RITES:      {id: 1, name: "Warded Rites",      cost: 12, items: [WARDED_SILVER, INITIATES_SIGIL, OFFERING_BOWL, INITIATE_ALTAR]}
   TROPHY_CRAFT:      {id: 2, name: "Trophy Craft",      cost: 15, items: [BINDING_THREAD, QUILLSHOT_BOW, WARDING_CHARM, SOVEREIGN_CATALYST]}
   BOUND_ARTS:        {id: 3, name: "Bound Arts",        cost: 20, items: [BOUND_STEEL, SPIRIT_ESSENCE, BOUND_CHALK, BOUND_GLYPH, RESONANT_CRYSTAL, BOUND_SIGIL, BOUND_ALTAR]}
@@ -139,8 +139,11 @@ items:
     {tier: 0, material: LODESTONE, cat: infrastructure, name: Initiate's Altar, purpose: "Center of the 5x5 circle; checks the pattern and runs rituals",
      recipe: {type: ARCANE_ALTAR, out: 1, in: {INITIATES_SIGIL: 2, SOUL_ASH: 2, WARDED_SILVER: 2, sf:ESSENCE_OF_AFTERLIFE: 1, sf:MAGIC_LUMP_3: 2}}}
   OCCULT_CODEX:
-    {tier: 0, material: BOOK, cat: utility, name: Occult Codex, purpose: "Shows circle patterns; right-click an altar to highlight missing glyphs with particles",
+    {tier: 0, material: BOOK, cat: utility, name: Occult Codex, purpose: "Shows circle patterns; right-click an altar to highlight missing glyphs with particles; sneak + right-click the altar of a running fight to banish it (the catalyst is lost)",
      recipe: {type: ENHANCED_CRAFTING_TABLE, out: 1, in: {mc:BOOK: 1, OCCULT_INK: 2, RITUAL_CHALK: 1}}}
+  BANISHING_SALT:
+    {tier: 0, material: SUGAR, cat: utility, name: Banishing Salt, purpose: "Ends the nearest boss fight within 48 blocks of its arena, for when the circle is too dangerous to reach (use twice to confirm). Only its summoner or those who fought it may. The catalyst is lost",
+     recipe: {type: ENHANCED_CRAFTING_TABLE, out: 4, in: {GRAVE_SALT: 2, RITUAL_CHALK: 1}}}
   # tier-0 boss drops
   BROOD_SILK:      {tier: 0, material: COBWEB, cat: boss_drop, name: Brood Silk, purpose: "Binding Thread (charms, contracts, harnesses)", recipe: {type: BOSS_DROP, boss: BROOD_MOTHER}}
   FLETCHERS_QUILL: {tier: 0, material: FEATHER, cat: boss_drop, name: Fletcher's Quill, purpose: "Ranged weapons", recipe: {type: BOSS_DROP, boss: VOLLEY}}

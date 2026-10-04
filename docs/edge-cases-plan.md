@@ -33,7 +33,7 @@ What the code does today, what goes wrong, and the fix. Four sessions, smallest 
   - Every entity Occultech spawns gets the `CLE_PROTECTED` tag, set before its spawn event fires. That covers bosses, adds, hitboxes, displays, minions and holograms.
   - Nothing to configure on the server.
 
-## Session P2: who can fight, and leaving the fight (#2, #6, #7, flight, BeaconPlus)
+## Session P2: who can fight, and leaving the fight (#2, #6, #7) - DONE (self-test 329/329)
 
 - **#7 Outside the arena:**
   - Damage to anything in the fight counts only if the player stands inside the arena. That includes arrows, tridents, pets and minions.
@@ -47,10 +47,7 @@ What the code does today, what goes wrong, and the fix. Four sessions, smallest 
   - Sneak + right-click the altar with the Occult Codex.
   - A *Banishing* item, tier 0 and very cheap. It ends the nearest fight from a distance, for when walking up to the altar is too dangerous.
   - The away timer (below).
-- **Flight and immortality in an arena:**
-  - Survival players in an arena lose the ability to fly every boss step. That covers /fly, BeaconPlus Flying and elytra boosts.
-  - A player who should have died but didn't (BeaconPlus Immortality: damage that leaves them alive at 0) gets no loot share.
-  - Potion effects that other plugins put on our bosses are refused. Only our own and players' splash potions apply.
+- **Flight and BeaconPlus:** skipped. The server's BeaconPlus has no Flying effect.
 
 ## Session P3: fights survive restarts and crashes (#4)
 

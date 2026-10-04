@@ -450,7 +450,7 @@ public final class RitualService {
             if (recipe.isSummon()) {
                 BossSpec spec = specs.get(recipe.bossId());
                 ItemStack refund = recipe.center() == null || taken.isEmpty() ? null : taken.get(0).item().clone();
-                bosses.summon(recipe.bossId(), spec, altar, refund);
+                bosses.summon(recipe.bossId(), spec, altar, refund, playerId);
                 if (fightSigil != null) {   // the circle's sigil stays, turning slowly, while the boss fight lasts
                     fightSigil.keepWhile(() -> bosses.fightAt(altar).isPresent());
                 }

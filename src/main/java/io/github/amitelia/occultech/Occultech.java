@@ -64,6 +64,7 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         bosses.setHealthScaling(getConfig().getDouble("bosses.health-multiplier", 1.0),
             getConfig().getDouble("bosses.health-per-extra-player", 0.25));
         bosses.setMinFightDistance(getConfig().getDouble("bosses.min-fight-distance", 96));
+        bosses.setAwaySeconds(getConfig().getInt("bosses.away-seconds", 180));
         Tier0Bosses.all().forEach(bosses::register);
         Tier1Bosses.all().forEach(bosses::register);
         Tier2Bosses.all().forEach(bosses::register);

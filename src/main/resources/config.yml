@@ -10,6 +10,9 @@ bosses:
   health-per-extra-player: 0.25
   # Boss fights (running, or a summon still channeling) must be at least this many blocks apart; arenas never overlap
   min-fight-distance: 96
+  # Seconds a fight waits with nobody alive in its arena before it ends (the catalyst is lost). While everyone has
+  # walked off, the boss recovers; after a death or disconnect it waits as it is
+  away-seconds: 180
 
 brood-egg:
   # Seconds between strings. Only counts while the chunk is loaded; no catch-up for offline time.

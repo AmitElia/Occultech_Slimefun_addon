@@ -62,9 +62,10 @@ public final class BossFight {
      */
     private static final double HELD_WEAPON_BONUS = 2.5;
 
-    public enum Result { VICTORY, ABANDONED, TIMEOUT, UNLOADED, SHUTDOWN, ERROR }
+    public enum Result { VICTORY, ABANDONED, BANISHED, TIMEOUT, UNLOADED, SHUTDOWN, ERROR }
 
-    private static final int ABANDON_TICKS = 30 * 20;
+    /** Share of a boss's max health it regains per second while everyone has walked out of the arena. */
+    private static final double AWAY_REGEN_PER_SECOND = 0.02;
     private static final int PILLAR_TICKS = 10 * 20;
     private static final int MAX_ADDS = 10;
     private static final double MIN_DAMAGE_SHARE = 0.05;
@@ -148,7 +149,11 @@ public final class BossFight {
     private int elapsed;
     private int lastBossHit;
     private int lastBossDamaged = -1000;
-    private int emptyTicks;
+    /** Ticks without a living player in the arena (Session P2: the away timer). */
+    private int awayTicks;
+    /** Players who died in the fight or disconnected from it and haven't come back yet: while one is out, the boss waits. */
+    private final Set<UUID> excused = new HashSet<>();
+    @Nullable private UUID summoner;
     private boolean ended;
     private Result result;
 
@@ -285,6 +290,43 @@ public final class BossFight {
             double angle = Math.PI * 2 * i / 24;
             at.getWorld().spawnParticle(Particle.DUST, at.clone().add(Math.cos(angle) * radius, 0.15, Math.sin(angle) * radius), 1, 0, 0, 0, 0, dust);
         }
+    }
+
+    /**
+     * Whether {@code player} stands in the arena (Session P2): only hits from in here count, so nobody fights from outside.
+     * A little slack past the edge, where the leash pushes bosses back.
+     */
+    public boolean inArena(Player player) {
+        double reach = spec.arenaRadius() + 1.5;
+        return player.getWorld() == center.getWorld() && player.getGameMode() != GameMode.SPECTATOR
+            && player.getLocation().distanceSquared(center) <= reach * reach;
+    }
+
+    /** Who may end this fight early: whoever summoned it, anyone who has hurt the boss, or an operator. */
+    public boolean mayBanish(Player player) {
+        return player.isOp() || player.getUniqueId().equals(summoner) || damage.containsKey(player.getUniqueId());
+    }
+
+    /** Ends the fight now, without loot or refund (the summoners gave up). */
+    public void banish(@Nullable Player by) {
+        broadcast("&7" + (by == null ? "Someone" : by.getName()) + " banishes &c" + spec.name() + "&7. The catalyst is lost.");
+        end(Result.BANISHED);
+    }
+
+    void setSummoner(@Nullable UUID summoner) {
+        this.summoner = summoner;
+    }
+
+    /** A player died in the fight or disconnected from it: until they're back, the boss waits instead of recovering. */
+    void excuse(Player player) {
+        if (!ended && (presence.containsKey(player.getUniqueId()) || inArena(player))) {
+            excused.add(player.getUniqueId());
+        }
+    }
+
+    /** Ticks left on the away timer, or -1 while someone is in the arena. */
+    public int awayTicksLeft() {
+        return awayTicks == 0 ? -1 : Math.max(0, service.awayTicks() - awayTicks);
     }
 
     /** Players inside the arena (alive, not spectating). */
@@ -451,7 +493,6 @@ public final class BossFight {
         if (ended) {
             return;
         }
-        elapsed += BossService.STEP;
 
         for (LivingEntity boss : bosses) {
             if (!boss.isValid() && !boss.isDead()) {
@@ -468,12 +509,18 @@ public final class BossFight {
         List<Player> inArena = players();
         for (Player player : inArena) {
             presence.merge(player.getUniqueId(), BossService.STEP, Integer::sum);
+            excused.remove(player.getUniqueId());
         }
-        emptyTicks = inArena.isEmpty() ? emptyTicks + BossService.STEP : 0;
-        if (emptyTicks >= ABANDON_TICKS) {
-            end(Result.ABANDONED);
+        if (inArena.isEmpty() && service.awayRules()) {
+            away();
             return;
         }
+        if (awayTicks > 0) {
+            awayTicks = 0;
+            bar.setTitle(ChatColor.translateAlternateColorCodes('&', "&c" + spec.name()));
+            broadcast("&5" + spec.name() + " &7turns back to the circle.");
+        }
+        elapsed += BossService.STEP;
         if (elapsed >= spec.timeLimitSeconds() * 20) {
             end(Result.TIMEOUT);
             return;
@@ -492,6 +539,49 @@ public final class BossFight {
         } catch (RuntimeException e) {
             service.plugin().getLogger().severe("Boss " + spec.id() + " behavior failed: " + e);
             end(Result.ERROR);
+        }
+    }
+
+    /**
+     * Nobody alive in the arena: the fight pauses (no attacks, no scripted moves, the clock stops) for the away time, then
+     * ends with the catalyst lost. If everyone walked off, the boss recovers meanwhile - stepping out to heal doesn't pay;
+     * if someone died or disconnected, it waits as it is, so they can come back to the same fight.
+     */
+    private void away() {
+        boolean waiting = !excused.isEmpty();
+        int left = service.awayTicks() - awayTicks;
+        if (awayTicks == 0 || left == 60 * 20 || left == 30 * 20) {
+            String time = left / 1200 + ":" + String.format("%02d", left / 20 % 60);
+            tellParticipants(waiting
+                ? "&5" + spec.name() + " &7waits in the circle. Come back within &f" + time + "&7, or it fades with the catalyst."
+                : "&7You left the circle: &c" + spec.name() + " &7recovers, and fades in &f" + time + " &7unless someone returns.");
+        }
+        awayTicks += BossService.STEP;
+        if (awayTicks >= service.awayTicks()) {
+            end(Result.ABANDONED);
+            return;
+        }
+        if (!waiting) {
+            for (LivingEntity boss : bosses) {
+                heal(boss, AWAY_REGEN_PER_SECOND * BossService.STEP / 20.0);
+            }
+        }
+        int seconds = (service.awayTicks() - awayTicks) / 20;
+        bar.setTitle(ChatColor.translateAlternateColorCodes('&', "&c" + spec.name() + (waiting ? " &7- waiting " : " &7- recovering, fades in ")
+            + seconds / 60 + ":" + String.format("%02d", seconds % 60)));
+        leash();
+        leashAdds();
+        extras.removeIf(e -> !e.isValid());
+        updateBar();
+    }
+
+    private void tellParticipants(String message) {
+        String text = ChatColor.translateAlternateColorCodes('&', message);
+        for (UUID id : presence.keySet()) {
+            Player player = Bukkit.getPlayer(id);
+            if (player != null) {
+                player.sendMessage(text);
+            }
         }
     }
 
@@ -528,7 +618,7 @@ public final class BossFight {
 
     /** Every tick: the behavior's scripted movement. */
     void move() {
-        if (ended || bosses.isEmpty()) {
+        if (ended || bosses.isEmpty() || awayTicks > 0) {
             return;
         }
         try {
@@ -553,7 +643,8 @@ public final class BossFight {
                 center.getWorld().playSound(center, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1F, 1F);
                 distributeLoot();
             }
-            case ABANDONED -> broadcast("&7The circle falls quiet. " + spec.name() + " fades away.");
+            case ABANDONED -> broadcast("&7The circle falls quiet. " + spec.name() + " fades away, and the catalyst with it.");
+            case BANISHED -> center.getWorld().playSound(center, Sound.BLOCK_BEACON_DEACTIVATE, 1F, 0.6F);
             case TIMEOUT -> broadcast("&7" + spec.name() + " grows bored of you and fades away.");
             case UNLOADED, SHUTDOWN, ERROR -> {
                 broadcast("&7The ritual was interrupted. The catalyst returns to the altar.");

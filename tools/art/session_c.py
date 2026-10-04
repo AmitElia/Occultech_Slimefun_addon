@@ -508,7 +508,39 @@ def quillshot_bow(state=0):
 
 C3 = [("Occult Codex", occult_codex, 4), ("Warding Charm", warding_charm, 4)]
 BOW_STATES = ["standby", "pulling_0", "pulling_1", "pulling_2"]
-GROUPS = {"c1": C1, "c2": C2, "c3": C3}
+# ================================================================== C4: Banishing Salt (Session P2)
+
+def banishing_salt(frame=0):
+    """A little leather pouch, its mouth tied with twine and spilling white salt; a pale warding rune glints in the salt
+    and motes of it drift up and fade (4 frames)."""
+    icon = Icon(16)
+    lea, tw, salt, sp = RAMPS["leather"], RAMPS["twine"], RAMPS["chalk"], RAMPS["spirit"]
+    pouch = icon.sphere(7.6, 10.4, 4.9, squash=0.92) | icon.polygon([(5.0, 6.6), (10.2, 6.6), (11.4, 8.8), (3.8, 8.8)], bevel=0.8)
+    icon.paint(pouch, lea, bias=0.05)
+    # the gathered neck and its twine tie
+    neck = icon.box(5.6, 4.6, 9.6, 6.8, bevel=0.6)
+    icon.paint(neck, lea, bias=0.15)
+    put(icon, [(x, 6) for x in range(5, 10)], tw[3])
+    put(icon, [(10, 7), (11, 8), (11, 9)], tw[2])
+    # salt heaped in the open mouth, spilling over the lip to the right
+    heap = cut(icon.sphere(7.6, 4.6, 2.6, squash=0.7), lambda x, y: y <= 4)
+    icon.paint(heap, salt, bias=0.2, outline_ramp=[salt[1], salt[2]], outline_over=False)
+    put(icon, [(10, 4), (11, 5)], salt[4])
+    put(icon, [(12, 7)], salt[3])
+    # a ward rune stitched on the pouch, pulsing pale
+    rune = [(7, 9), (7, 10), (7, 11), (7, 12), (6, 10), (8, 10), (6, 12), (8, 12)]
+    pulse = [5, 4, 3, 4][frame % 4]
+    put(icon, rune, sp[pulse])
+    # motes rising from the salt and fading
+    for i, (x, y) in enumerate([(6, 2), (9, 1), (8, 3)]):
+        rise = (frame + i) % 4
+        put(icon, [(x + (rise % 2), y - rise // 2)], sp[5], 230 - rise * 55)
+    return icon
+
+
+C4 = [("Banishing Salt", banishing_salt, 4)]
+
+GROUPS = {"c1": C1, "c2": C2, "c3": C3, "c4": C4}
 
 
 def slug(name):
