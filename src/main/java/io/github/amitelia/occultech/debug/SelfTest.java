@@ -111,7 +111,7 @@ final class SelfTest {
         then(0, this::lootTables);
         then(0, this::summonRitual);
         then(RitualService.DURATION_TICKS + 20L, this::summonResult);
-        then(0, this::killCurrentFight);
+        then(12, this::killCurrentFight);   // a fight's effects go with it: let the hit burst check see its frames first
         then(30, () -> checkFightEndedCleanly("Brood Mother (ritual)"));
         then(100, () -> check("the fight's sigil folds away when the fight is over", sigils().isEmpty(), String.valueOf(sigils())));
         for (String bossId : BOSSES) {
@@ -588,6 +588,23 @@ final class SelfTest {
             List<String> air = altar.getWorld().getNearbyEntitiesByType(org.bukkit.entity.ItemDisplay.class, altar.getLocation(), 12).stream()
                 .map(d -> d.getItemStack().getItemMeta()).filter(m -> m != null && m.hasItemModel()).map(m -> m.getItemModel().getKey())
                 .filter(k -> k.startsWith("air_")).toList();
+            // a hit burst plays from its first frame: the server steps the frame, then it goes (Session O5, phase 2)
+            org.bukkit.Location burstAt = altar.getLocation().add(3.5, 2, -3.5);
+            io.github.amitelia.occultech.boss.AirEffects.burst(currentFight, burstAt, io.github.amitelia.occultech.boss.AirEffects.Burst.IMPACT,
+                org.bukkit.Color.ORANGE, 2F);
+            java.util.function.Supplier<List<org.bukkit.entity.ItemDisplay>> bursts = () -> altar.getWorld()
+                .getNearbyEntitiesByType(org.bukkit.entity.ItemDisplay.class, burstAt, 1).stream()
+                .filter(d -> d.getItemStack().getItemMeta() != null && d.getItemStack().getItemMeta().hasItemModel()
+                    && d.getItemStack().getItemMeta().getItemModel().getKey().equals("air_burst_impact")).toList();
+            float first = bursts.get().isEmpty() ? -1 : bursts.get().get(0).getItemStack()
+                .getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA).floats().get(0);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                float later = bursts.get().isEmpty() ? -1 : bursts.get().get(0).getItemStack()
+                    .getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA).floats().get(0);
+                check("a hit burst starts at its first frame and steps through them", first == 0F && later == 2F, first + " then " + later);
+            }, 5L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> check("a hit burst is gone after its last frame", bursts.get().isEmpty(),
+                bursts.get().size() + " left"), 14L);
             check("effects in the air appear (a beam, a plasma bolt)", air.contains("air_beam") && air.stream().anyMatch(k -> k.startsWith("air_bolt_")),
                 String.valueOf(air));
             check("wedge, lane, wave and splash markings appear", shapes.containsAll(List.of("floor_warning_wedge", "floor_warning_lane",

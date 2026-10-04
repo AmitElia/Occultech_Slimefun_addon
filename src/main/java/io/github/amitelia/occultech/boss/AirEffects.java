@@ -130,6 +130,49 @@ public final class AirEffects {
         later(16, display::remove);
     }
 
+    /** A hit burst's look (Session O5, phase 2). */
+    public enum Burst { SLASH, IMPACT, CRACKLE, SOUL, SPLASH }
+
+    private static final int BURST_FRAMES = 5;
+    private static final int BURST_FRAME_TICKS = 2;
+
+    /**
+     * A hit burst at {@code at}: a sprite facing the viewer, {@code size} blocks across, tinted, that plays once from its
+     * first frame - the server steps its frame (the item's custom-model-data number picks the frame model), since an
+     * animated texture would start wherever the game's global clock was. Gone after its last frame.
+     */
+    public static void burst(@Nonnull BossFight fight, @Nonnull Location at, @Nonnull Burst burst, @Nonnull Color tint, float size) {
+        if (!enabled()) {
+            return;
+        }
+        ItemStack stack = new ItemStack(Material.PAPER);
+        ItemMeta meta = stack.getItemMeta();
+        meta.setItemModel(new NamespacedKey("occultech", "air_burst_" + burst.name().toLowerCase(java.util.Locale.ROOT)));
+        stack.setItemMeta(meta);
+        stack.setData(DataComponentTypes.DYED_COLOR, DyedItemColor.dyedItemColor(FloorDecals.visible(tint)));
+        stack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, io.papermc.paper.datacomponent.item.CustomModelData.customModelData().addFloat(0F).build());
+        ItemDisplay display = fight.spawnExtra(ItemDisplay.class, flat(at), d -> {
+            d.setItemStack(stack);
+            d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+            d.setBillboard(Display.Billboard.CENTER);
+            d.setBrightness(new Display.Brightness(15, 15));
+            d.setShadowRadius(0F);
+            d.setViewRange(2F);
+            d.setTransformation(new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(size, size, size), new Quaternionf()));
+        });
+        for (int frame = 1; frame < BURST_FRAMES; frame++) {
+            float n = frame;
+            later((long) frame * BURST_FRAME_TICKS, () -> {
+                if (display.isValid()) {
+                    ItemStack next = display.getItemStack();
+                    next.setData(DataComponentTypes.CUSTOM_MODEL_DATA, io.papermc.paper.datacomponent.item.CustomModelData.customModelData().addFloat(n).build());
+                    display.setItemStack(next);
+                }
+            });
+        }
+        later((long) BURST_FRAMES * BURST_FRAME_TICKS, display::remove);
+    }
+
     private static Transformation vertical(float width, float length, float centre) {
         return new Transformation(new Vector3f(0F, centre, 0F), new Quaternionf(), new Vector3f(width, length, width), new Quaternionf());
     }

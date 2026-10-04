@@ -146,6 +146,7 @@ public final class AbyssalWarden extends BossBehavior {
         Location at = warden.getLocation();
         at.getWorld().playSound(at, Sound.ENCHANT_THORNS_HIT, 2F, 0.6F);
         at.getWorld().spawnParticle(Particle.CRIT, at.clone().add(0, 1, 0), 60, 2.5, 1, 2.5, 0.4);
+        io.github.amitelia.occultech.boss.AirEffects.burst(fight, ground(at).add(0, 1, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.IMPACT, SPIKES, 5F);
         for (Player player : fight.players()) {
             if (player.getLocation().distanceSquared(ground(at)) <= 25) {
                 player.damage(SPIKE_DAMAGE, warden);

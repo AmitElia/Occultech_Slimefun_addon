@@ -197,6 +197,7 @@ public final class BlazeChoir extends BossBehavior {
     private void erupt() {
         for (Location at : chorus) {
             at.getWorld().spawnParticle(Particle.FLAME, at.clone().add(0, 0.5, 0), 60, 1.2, 1, 1.2, 0.05);
+            io.github.amitelia.occultech.boss.AirEffects.burst(fight, at.clone().add(0, 1, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.IMPACT, FLAME, 3F);
             at.getWorld().spawnParticle(Particle.LAVA, at, 8, 1, 0.2, 1, 0);
             at.getWorld().playSound(at, Sound.ITEM_FIRECHARGE_USE, 1.5F, 0.7F);
             LivingEntity source = singers.isEmpty() ? null : singers.get(0);

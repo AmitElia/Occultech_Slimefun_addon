@@ -151,6 +151,7 @@ public final class HollowWarlord extends BossBehavior {
     private void sweep() {
         Location at = warlord.getLocation();
         warlord.swingMainHand();
+        io.github.amitelia.occultech.boss.AirEffects.burst(fight, at.clone().add(0, 1.3, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.SLASH, SOUL, (float) (SWEEP_RADIUS * 2));
         at.getWorld().playSound(at, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 2F, 0.6F);
         for (int i = 0; i < 24; i++) {
             double angle = Math.PI * 2 * i / 24;

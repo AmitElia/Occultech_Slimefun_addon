@@ -890,6 +890,22 @@ animated texture can start mid-animation): these textures are seamless loops scr
 - **Plasma bolts** - three jagged shapes at random: one drops from the sky in 3 ticks, flashes, thins away; at the
   Outrider's snipe hit and on its arrow rain, alongside the vanilla lightning flash and thunder.
 - Without the pack, fights keep their particle lines.
+- Fix (the user: "the pylon beams don't seem to have any effects; still the purple dust"): the pylon beams fired from
+  the Colossus's eyes (the shared beam had no other firing point) and the pylons' repair links were still drawn in
+  dust. `Abyss.Beam` takes a firing point (a pylon's tip; it fizzles if the pylon breaks), and each standing pylon feeds
+  the Colossus a thin stream of corrupt energy that snaps when it breaks.
+
+**Session O5 phase 2 - hit bursts (2026-10-03).** A burst plays once from its first frame: its five 32 px frames are
+separate models, and the server steps the item's custom-model-data number every 2 ticks (`build_pack`: part folders
+`<name>_f0.._f4` become one item `<name>` that range-dispatches on custom_model_data); facing the viewer (billboard),
+tinted, glowing, gone after 10 ticks. Art: `session_o5.py bursts`, sheet `session-g/review-o5-bursts.png`.
+- **Slash** (a crescent drawn on, flaring, breaking into sparks): The Unbound's cleave, the Warlord's sweep.
+- **Impact** (a point, a star of rays, a ring racing out, sparks): the Sovereign's landing, the Colossus's slam, the
+  Night Matriarch's dive, the Tempest's wind burst, the Abyssal Warden's spikes, the Blaze Choir's eruptions.
+- **Crackle** (plasma forks round a point): on whoever any beam hits (Warden, Elder, pylons, snipe, echoes).
+- **Soul** (an orb, a blooming ring, wisps rising): a fight object broken (egg sacs, wards, pylons, hearts,
+  phylacteries) and an add killed (guards, shards, thralls, vexes...).
+- **Splash** (a blob bursting into droplets): where the Witch Coven's potions burst, with the floor splash.
 
 **The technique (G1).** Nothing vanilla is retextured. A placed Occultech block keeps its vanilla block (Slimefun's);
 `items/BlockSkinService` puts an item display over it showing our model (`occultech:<id>`, 1.004x so it hides the

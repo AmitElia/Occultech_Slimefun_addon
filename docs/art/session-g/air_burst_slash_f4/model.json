@@ -1,0 +1,45 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "sprite": "occultech:block/air_burst_slash_f4_sprite",
+    "particle": "occultech:block/air_burst_slash_f4_sprite"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        8
+      ],
+      "to": [
+        16,
+        16,
+        8
+      ],
+      "shade": false,
+      "light_emission": 15,
+      "faces": {
+        "north": {
+          "texture": "#sprite",
+          "uv": [
+            16,
+            0,
+            0,
+            16
+          ],
+          "tintindex": 0
+        },
+        "south": {
+          "texture": "#sprite",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "tintindex": 0
+        }
+      }
+    }
+  ]
+}

@@ -351,6 +351,25 @@ def main():
             with_models.append(key.upper())
             without[:] = [w for w in without if f" {key.upper()} " not in w]
 
+    # frame-stepped sprites (Session O5 hit bursts): part folders <name>_f0, _f1, ... become one item <name> whose
+    # definition picks the frame by the item's custom-model-data number (the plugin steps it), so a burst always plays
+    # from its first frame (an animated texture would start wherever the game's global clock was)
+    frame_sets = {}
+    for key in sorted(os.listdir(gdir)) if os.path.isdir(gdir) else []:
+        if "_f" in key and key.rsplit("_f", 1)[1].isdigit() and os.path.exists(os.path.join(gdir, key, "model.json")):
+            base, n = key.rsplit("_f", 1)
+            frame_sets.setdefault(base, []).append(int(n))
+    for base, frames in frame_sets.items():
+        def leaf(n):
+            leaf_model = {"type": "minecraft:model", "model": f"{NS}:block/{base}_f{n}"}
+            if os.path.exists(os.path.join(gdir, f"{base}_f{n}", "tint.txt")):
+                leaf_model["tints"] = [{"type": "minecraft:dye", "default": -1}]
+            return leaf_model
+        frames.sort()
+        files[f"assets/{NS}/items/{base}.json"] = {"model": {
+            "type": "minecraft:range_dispatch", "property": "minecraft:custom_model_data", "index": 0,
+            "entries": [{"threshold": float(n), "model": leaf(n)} for n in frames], "fallback": leaf(frames[0])}}
+
     # in-hand sprites (a spear drawn like vanilla's): <slug>_in_hand_N.png in the item's art session, shown in the hand
     # with vanilla's own spear_in_hand model; the inventory keeps the icon
     for item_id, item in items.items():

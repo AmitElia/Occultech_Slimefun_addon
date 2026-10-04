@@ -170,6 +170,7 @@ public final class NightMatriarch extends BossBehavior {
         diveEnd = -1;
         Location at = diveTarget.clone();
         at.setY(groundY(at));
+        io.github.amitelia.occultech.boss.AirEffects.burst(fight, at.clone().add(0, 0.8, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.IMPACT, SHADOW, 3.5F);
         matriarch.teleport(at.clone().add(0, 0.3, 0));
         matriarch.setVelocity(new Vector());
         matriarch.setGlowing(true);

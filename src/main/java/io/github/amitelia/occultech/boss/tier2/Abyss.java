@@ -167,8 +167,19 @@ public final class Abyss {
         @Nullable private io.github.amitelia.occultech.boss.AirEffects.Streak fx;
         private final int startedAt;
         private boolean warned;
+        @Nullable private final java.util.function.Supplier<Location> origin;
 
         public Beam(LivingEntity source, Player target, int now, int chargeTicks, double damage, Color color) {
+            this(source, null, target, now, chargeTicks, damage, color);
+        }
+
+        /**
+         * A beam fired from {@code origin} (e.g. a pylon's tip) for {@code source}; it fizzles if {@code origin} gives null
+         * (the pylon broke). Null origin: from the source's eyes.
+         */
+        public Beam(LivingEntity source, @Nullable java.util.function.Supplier<Location> origin, Player target, int now, int chargeTicks,
+            double damage, Color color) {
+            this.origin = origin;
             this.source = source;
             this.target = target;
             this.fireAt = now + chargeTicks;
@@ -194,7 +205,14 @@ public final class Abyss {
                 }
                 return List.of();
             }
-            Location eye = source.getEyeLocation();
+            Location eye = origin == null ? source.getEyeLocation() : origin.get();
+            if (eye == null) {
+                done = true;
+                if (fx != null) {
+                    fx.snap();
+                }
+                return List.of();
+            }
             if (now <= fireAt - LOCK_BEFORE || aim == null) {
                 aim = target.getLocation().add(0, 1, 0).toVector().subtract(eye.toVector());
             }
@@ -228,6 +246,7 @@ public final class Abyss {
             List<Player> hit = alongBeam(fight.players(), eye, aim, eye.distance(end), WIDTH);
             for (Player player : hit) {
                 magic(player, damage, source);
+                io.github.amitelia.occultech.boss.AirEffects.burst(fight, player.getLocation().add(0, 1.1, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.CRACKLE, color, 1.8F);
             }
             return hit;
         }

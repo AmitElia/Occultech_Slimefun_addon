@@ -105,6 +105,7 @@ public final class BossFight {
             }
             display.getWorld().spawnParticle(Particle.BLOCK, display.getLocation(), 20, 0.3, 0.3, 0.3, Material.COBWEB.createBlockData());
             display.getWorld().playSound(display.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_BREAK, 1F, 0.8F);
+            AirEffects.burst(BossFight.this, display.getLocation().clone().add(0, 0.6, 0), AirEffects.Burst.SOUL, Color.fromRGB(180, 140, 255), 2.4F);
             remove();
             onBreak.run();
         }
@@ -431,6 +432,9 @@ public final class BossFight {
         boolean boss = bosses.remove(entity);
         extras.remove(entity);
         if (!boss && !ended) {
+            if (entity instanceof LivingEntity) {
+                AirEffects.burst(this, entity.getLocation().add(0, entity.getHeight() / 2, 0), AirEffects.Burst.SOUL, Color.fromRGB(110, 220, 255), 2F);
+            }
             behavior.onAddDeath(entity, killer);
         }
     }

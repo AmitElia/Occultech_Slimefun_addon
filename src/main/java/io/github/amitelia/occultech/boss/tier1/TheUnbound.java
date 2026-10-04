@@ -164,6 +164,8 @@ public final class TheUnbound extends BossBehavior {
         Location origin = unbound.getLocation();
         origin.getWorld().playSound(origin, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 2F, 0.6F);
         origin.getWorld().spawnParticle(Particle.SWEEP_ATTACK, origin.clone().add(cleaveDirection.clone().multiply(2)).add(0, 1, 0), 6, 1, 0.3, 1, 0);
+        io.github.amitelia.occultech.boss.AirEffects.burst(fight, origin.clone().add(cleaveDirection.clone().multiply(2.2)).add(0, 1.2, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.SLASH,
+            WEDGE.getColor(), 4.5F);
         List<LivingEntity> victims = new ArrayList<>(fight.players());
         victims.addAll(thralls);
         for (LivingEntity victim : victims) {

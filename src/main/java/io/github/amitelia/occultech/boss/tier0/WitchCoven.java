@@ -146,6 +146,7 @@ public final class WitchCoven extends BossBehavior {
                 return false;
             }
             FloorDecals.splash(fight, entry.getValue(), 2.5, org.bukkit.Color.fromRGB(200, 40, 90));
+            io.github.amitelia.occultech.boss.AirEffects.burst(fight, entry.getValue().clone().add(0, 0.4, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.SPLASH, org.bukkit.Color.fromRGB(220, 60, 120), 2.2F);
             return true;
         });
 

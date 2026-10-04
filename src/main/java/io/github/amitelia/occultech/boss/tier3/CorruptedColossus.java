@@ -47,6 +47,8 @@ public final class CorruptedColossus extends BossBehavior {
 
     private IronGolem colossus;
     private final List<BossFight.FightObject> pylons = new ArrayList<>();
+    /** Each pylon's stream of energy to the Colossus (Session O5). */
+    private final java.util.Map<BossFight.FightObject, io.github.amitelia.occultech.boss.AirEffects.Streak> links = new java.util.HashMap<>();
     private final List<Abyss.Beam> beams = new ArrayList<>();
     private int slamAt = -1;
     private Location slamCenter;
@@ -103,15 +105,38 @@ public final class CorruptedColossus extends BossBehavior {
         }
         if (!pylons.isEmpty() && every(100)) {
             fight.healBoss(colossus, 0.01 * pylons.size());
+            if (!io.github.amitelia.occultech.boss.AirEffects.enabled()) {
+                for (BossFight.FightObject pylon : pylons) {
+                    Abyss.line(pylon.location().clone().add(0, 1.5, 0), colossus.getLocation().add(0, 2, 0), new Particle.DustOptions(CORRUPT, 0.8F), 0.6);
+                }
+            }
+        }
+        if (io.github.amitelia.occultech.boss.AirEffects.enabled()) {
+            // each standing pylon feeds the Colossus a stream of corrupt energy; it snaps when the pylon breaks
+            links.entrySet().removeIf(entry -> {
+                boolean keep = entry.getKey().isAlive() && entry.getValue().valid();
+                if (!keep) {
+                    entry.getValue().snap();
+                }
+                return !keep;
+            });
             for (BossFight.FightObject pylon : pylons) {
-                Abyss.line(pylon.location().clone().add(0, 1.5, 0), colossus.getLocation().add(0, 2, 0), new Particle.DustOptions(CORRUPT, 0.8F), 0.6);
+                Location from = pylon.location().clone().add(0, 1.5, 0);
+                Location to = colossus.getLocation().add(0, 2, 0);
+                io.github.amitelia.occultech.boss.AirEffects.Streak link = links.get(pylon);
+                if (link == null) {
+                    links.put(pylon, io.github.amitelia.occultech.boss.AirEffects.Streak.create(fight, "air_beam", from, to, CORRUPT, 0.18F));
+                } else {
+                    link.aim(from, to, 0.18F, io.github.amitelia.occultech.boss.BossService.STEP);
+                }
             }
         }
         if (!pylons.isEmpty() && every(120)) {
             for (BossFight.FightObject pylon : pylons) {
                 Player target = fight.randomPlayer();
                 if (target != null) {
-                    beams.add(new Abyss.Beam(colossus, target, now, 30, PYLON_BEAM, CORRUPT));
+                    beams.add(new Abyss.Beam(colossus, () -> pylon.isAlive() ? pylon.location().clone().add(0, 1.8, 0) : null,
+                        target, now, 30, PYLON_BEAM, CORRUPT));
                 }
             }
         }
@@ -137,6 +162,7 @@ public final class CorruptedColossus extends BossBehavior {
         slamCenter.getWorld().spawnParticle(Particle.BLOCK, slamCenter.clone().add(0, 0.3, 0), 120, SLAM_RADIUS / 2, 0.2, SLAM_RADIUS / 2,
             Material.IRON_BLOCK.createBlockData());
         slamCenter.getWorld().spawnParticle(Particle.EXPLOSION, slamCenter.clone().add(0, 0.5, 0), 3, 1.5, 0.2, 1.5);
+        io.github.amitelia.occultech.boss.AirEffects.burst(fight, slamCenter.clone().add(0, 0.8, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.IMPACT, CORRUPT, 5F);
         for (Player player : fight.players()) {
             Location at = player.getLocation();
             boolean grounded = at.getY() - Abyss.groundY(at) < 0.6;

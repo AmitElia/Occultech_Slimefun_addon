@@ -139,6 +139,7 @@ public final class Tempest extends BossBehavior {
     private void burst() {
         Location at = tempest.getLocation();
         at.getWorld().spawnParticle(Particle.GUST_EMITTER_SMALL, at.clone().add(0, 1, 0), 1);
+        io.github.amitelia.occultech.boss.AirEffects.burst(fight, at.clone().add(0, 1, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.IMPACT, WIND, 5F);
         at.getWorld().playSound(at, Sound.ENTITY_BREEZE_WIND_BURST, 2F, 0.7F);
         for (Player player : fight.players()) {
             if (player.getLocation().distanceSquared(at) <= 4.5 * 4.5) {
