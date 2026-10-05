@@ -186,7 +186,7 @@ public final class HollowGearListener implements Listener {
             }
             // visual lightning only: never fire, never charged creepers or turned pigs/villagers
             hit.getWorld().strikeLightningEffect(hit.getLocation());
-            HeldWeapons.hurt(hit, STORM_DAMAGE, shooter);
+            HeldWeapons.strike(hit, STORM_DAMAGE, shooter);
             int arcs = 0;
             for (Entity near : hit.getNearbyEntities(6, 4, 6)) {
                 if (arcs >= 2) {
@@ -196,7 +196,7 @@ public final class HollowGearListener implements Listener {
                     arcs++;
                     drawArc(hit, next);
                     next.getWorld().strikeLightningEffect(next.getLocation());
-                    HeldWeapons.hurt(next, ARC_DAMAGE, shooter);
+                    HeldWeapons.strike(next, ARC_DAMAGE, shooter);
                 }
             }
         });

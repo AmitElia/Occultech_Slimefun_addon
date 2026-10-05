@@ -140,6 +140,34 @@ are added.
   - **Decided:** Protection X and also extra armor toughness on each piece, so a full set takes less from big hits
     (still a little under Infinity).
 
+### B2 part 1 outcome (no playtest needed) - DONE (self-test 351/351)
+
+- **Attack damage:** all tier 0-2 attacks are now inside their bands. That's checked by the self-test, and
+  `docs/balance-report.md` has the table.
+  - **Tier 1 roughly doubled** (raw damage): Night Matriarch bite 9→20, dive 7→26; Unbound axe 11→20, cleave 9→26;
+    Magus arrows 4→16; Archevoker fangs 6→12, vexes 4→9; tier-1 adds 2-3→9.
+  - **Tier 0:** spiderlings 2→4, the Sovereign's shockwave 6→11, Volley's arrows ~3→6 (now fixed, not speed-based).
+  - **Tier 2:** the Drowned Elder's beam 24→16, the Tempest's squall ring 6→4.
+  - **Tier 3:** only the Colossus's Smash, 55→42. The 7 tier-3 attacks below their band stay as they are until the
+    playtests, since tier 3 felt too hard.
+- **Vanilla attacks now use their declared damage:** evoker fangs and vexes, illusioner arrows, witch potions and
+  boss arrows (`fight.labelSpawns`, `fight.label`).
+- **Group scaling:** the chosen curve, `bosses.group-scaling` / `group-exponent` / `group-cap` (×1.45 / 1.76 /
+  2.03 / 2.27, capped at 5). It's unit-tested, and groups always kill faster than a solo player.
+- **Held weapons** hit every 0.5 s (before: every 0.2 s).
+  - The Censer goes from ~56 to ~25 boss damage per second.
+  - Wyrmbreath stays at ~18/s but reaches 8 blocks over 35° (from 6 over 25°), and shows a flame burst and a sound on
+    each target.
+  - They no longer stack on a hit from the last half second. The Stormstring Bow's lightning still does, on its own
+    arrow.
+- **Armor:**
+  - **Abyssal:** Protection IV and Unbreaking III on every piece; Thorns V stays on the chestplate.
+  - **Hollow:** Protection X, Unbreaking X, and Thorns X on the Cuirass, plus +2 armor toughness per piece (5 per
+    piece, 20 for the set).
+  - The new `toughness` field in recipes.yml provides this. Items crafted before keep their old enchantments.
+- **Left for part 2, after the playtests:** tier-3 health and armor from fight lengths and uptime, and the 7 low
+  tier-3 attacks.
+
 ## Session B3: optimization
 
 - **Timing:** each system's time per tick is measured: fights, servitors, decorations, held weapons, custom blocks,

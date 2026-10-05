@@ -122,11 +122,37 @@ public final class BossFight {
         }
     }
 
-    /** Marks a creature's melee, or a projectile, as {@code mechanic} (and gives a creature that attack damage). */
+    /**
+     * Marks a creature's melee, or a projectile (fangs, a thrown potion), as {@code mechanic}: a creature gets that attack
+     * damage, anything else deals exactly the mechanic's damage when it hits a player.
+     */
     public void label(Entity entity, Mechanic mechanic) {
         entity.getPersistentDataContainer().set(MECHANIC, PersistentDataType.STRING, mechanic.name());
-        if (entity instanceof LivingEntity living && mechanic.kind() != Mechanic.Kind.PROJECTILE) {
+        if (entity instanceof LivingEntity living) {
             setAttribute(living, Attribute.ATTACK_DAMAGE, mechanic.damage());
+        } else {
+            entity.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, mechanic.damage());
+        }
+    }
+
+    /**
+     * What {@code owner}'s own vanilla attacks of {@code type} deal - an illusioner's arrows, an evoker's vexes and fangs:
+     * each one is labelled {@code mechanic} as it appears (see {@link BossService}).
+     */
+    public void labelSpawns(LivingEntity owner, org.bukkit.entity.EntityType type, Mechanic mechanic) {
+        owner.getPersistentDataContainer().set(spawnsKey(type), PersistentDataType.STRING, mechanic.name() + "|" + mechanic.damage());
+    }
+
+    static org.bukkit.NamespacedKey spawnsKey(org.bukkit.entity.EntityType type) {
+        return new org.bukkit.NamespacedKey("occultech", "spawns_" + type.name().toLowerCase());
+    }
+
+    /** Labels {@code spawned} from its owner's {@link #labelSpawns}, if it has one for that kind. */
+    void labelFromOwner(Entity owner, Entity spawned) {
+        String line = owner == null ? null : owner.getPersistentDataContainer().get(spawnsKey(spawned.getType()), PersistentDataType.STRING);
+        if (line != null) {
+            int bar = line.lastIndexOf('|');
+            label(spawned, new Mechanic(spec.id(), line.substring(0, bar), Double.parseDouble(line.substring(bar + 1)), Mechanic.Kind.PROJECTILE, false, false));
         }
     }
 
@@ -484,7 +510,7 @@ public final class BossFight {
 
     /** Health multiplier: the configured base, plus a configured share per extra player present when summoned. */
     public double healthMultiplier() {
-        return service.healthMultiplier() * (1 + service.healthPerExtraPlayer() * (playersAtStart - 1));
+        return service.healthMultiplier() * service.groupScaling().factor(playersAtStart);
     }
 
     public int playersAtStart() {

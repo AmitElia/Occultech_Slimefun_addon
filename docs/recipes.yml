@@ -302,16 +302,16 @@ items:
     {tier: 2, material: SOUL_LANTERN, durability: 128, repair: CHOIR_EMBER, cat: weapon, name: Grave Lantern, purpose: "Necromancy: raises 3 wither-skeleton knights for 30s. Durability 128 summons, repair: Choir Ember",
      recipe: {type: RITUAL, circle: 2, out: 1, center: BONE_SCEPTER, in: {EVOKERS_SIGIL: 2, CHOIR_EMBER: 4, ABYSSAL_ALLOY: 8, mc:SOUL_LANTERN: 1, mc:WITHER_SKELETON_SKULL: 1, ABYSSAL_SIGIL: 1}}}
   ABYSSAL_HELMET:
-    {tier: 2, material: NETHERITE_HELMET, cat: armor, name: Abyssal Helm, purpose: "Netherite-level defense. Water Breathing while worn. Set (4/4): -20% damage from summoned creatures",
+    {tier: 2, material: NETHERITE_HELMET, enchants: {PROTECTION: 4, UNBREAKING: 3}, cat: armor, name: Abyssal Helm, purpose: "Max netherite: Protection IV, Unbreaking III. Water Breathing while worn. Set (4/4): -20% damage from summoned creatures",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:NETHERITE_HELMET, in: {ELDER_SCALE: 2, ABYSSAL_ALLOY: 10, TIDE_GLASS: 8, ABYSSAL_SIGIL: 2, sf:REINFORCED_PLATE: 2}}}
   ABYSSAL_CHESTPLATE:
-    {tier: 2, material: NETHERITE_CHESTPLATE, enchants: {THORNS: 5}, cat: armor, name: Abyssal Chestplate, purpose: "Netherite-level defense with Thorns V",
+    {tier: 2, material: NETHERITE_CHESTPLATE, enchants: {PROTECTION: 4, UNBREAKING: 3, THORNS: 5}, cat: armor, name: Abyssal Chestplate, purpose: "Max netherite: Protection IV, Unbreaking III, Thorns V",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:NETHERITE_CHESTPLATE, in: {ELDER_SCALE: 3, ABYSSAL_ALLOY: 16, TIDE_GLASS: 8, ABYSSAL_SIGIL: 2, sf:REINFORCED_PLATE: 3}}}
   ABYSSAL_LEGGINGS:
-    {tier: 2, material: NETHERITE_LEGGINGS, cat: armor, name: Abyssal Greaves, purpose: "Netherite-level defense. Conduit Power while in water",
+    {tier: 2, material: NETHERITE_LEGGINGS, enchants: {PROTECTION: 4, UNBREAKING: 3}, cat: armor, name: Abyssal Greaves, purpose: "Max netherite: Protection IV, Unbreaking III. Conduit Power while in water",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:NETHERITE_LEGGINGS, in: {ELDER_SCALE: 3, ABYSSAL_ALLOY: 14, TIDE_GLASS: 8, ABYSSAL_SIGIL: 2, sf:REINFORCED_PLATE: 3}}}
   ABYSSAL_BOOTS:
-    {tier: 2, material: NETHERITE_BOOTS, cat: armor, name: Abyssal Boots, purpose: "Netherite-level defense. Dolphin's Grace while worn",
+    {tier: 2, material: NETHERITE_BOOTS, enchants: {PROTECTION: 4, UNBREAKING: 3}, cat: armor, name: Abyssal Boots, purpose: "Max netherite: Protection IV, Unbreaking III. Dolphin's Grace while worn",
      recipe: {type: RITUAL, circle: 2, out: 1, center: mc:NETHERITE_BOOTS, in: {ELDER_SCALE: 2, ABYSSAL_ALLOY: 10, TIDE_GLASS: 8, ABYSSAL_SIGIL: 2, sf:REINFORCED_PLATE: 2}}}
 
   # tier-2 bonus drops (15% per contributor per win)
@@ -401,16 +401,16 @@ items:
      recipe: {type: RITUAL, circle: 3, out: 1, center: mc:NETHER_STAR, in: {WARLORDS_BRAND: 1, HEARTWOOD_RESIN: 1, LANCERS_PENNANT: 1, CORRUPTED_CIRCUIT: 1, MIRROR_VISAGE: 1, mc:FEATHER: 16, HOLLOW_ESSENCE: 16}}}
   # tier-3 rewards (Hollow Assembler 6x6 = up to 36 items)
   HOLLOW_HELMET:
-    {tier: 3, material: NETHERITE_HELMET, enchants: {PROTECTION: 5, UNBREAKING: 5}, durability: 1200, repair: WARLORDS_BRAND, cat: armor, name: Hollow Crown, purpose: "Netherite, Protection V (Infinity: XX), not unbreakable or soulbound. Immune to Darkness and Blindness. Set (4/4): wither immunity, -25% damage from summoned creatures, faint soul wisps",
+    {tier: 3, material: NETHERITE_HELMET, enchants: {PROTECTION: 10, UNBREAKING: 10}, toughness: 2, durability: 1200, repair: WARLORDS_BRAND, cat: armor, name: Hollow Crown, purpose: "Netherite, Protection X, Unbreaking X, +2 armor toughness (Infinity: Protection XX), not unbreakable or soulbound. Immune to Darkness and Blindness. Set (4/4): wither immunity, -25% damage from summoned creatures, faint soul wisps",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {ABYSSAL_HELMET: 1, HOLLOW_INGOT: 16, WARLORDS_BRAND: 4, HEARTWOOD_RESIN: 2, HOLLOW_CRYSTAL: 4, HOLLOW_SIGIL: 2}}}
   HOLLOW_CHESTPLATE:
-    {tier: 3, material: NETHERITE_CHESTPLATE, enchants: {PROTECTION: 5, UNBREAKING: 5, THORNS: 5}, durability: 1500, repair: WARLORDS_BRAND, cat: armor, name: Hollow Cuirass, purpose: "Netherite, Protection V (Infinity: XX), not unbreakable or soulbound. Thorns V. Immune to Wither",
+    {tier: 3, material: NETHERITE_CHESTPLATE, enchants: {PROTECTION: 10, UNBREAKING: 10, THORNS: 10}, toughness: 2, durability: 1500, repair: WARLORDS_BRAND, cat: armor, name: Hollow Cuirass, purpose: "Netherite, Protection X, Unbreaking X, +2 armor toughness (Infinity: Protection XX), not unbreakable or soulbound. Thorns X. Immune to Wither",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {ABYSSAL_CHESTPLATE: 1, HOLLOW_INGOT: 22, WARLORDS_BRAND: 5, HEARTWOOD_RESIN: 2, HOLLOW_CRYSTAL: 4, HOLLOW_SIGIL: 2}}}
   HOLLOW_LEGGINGS:
-    {tier: 3, material: NETHERITE_LEGGINGS, enchants: {PROTECTION: 5, UNBREAKING: 5}, durability: 1400, repair: WARLORDS_BRAND, cat: armor, name: Hollow Greaves, purpose: "Netherite, Protection V (Infinity: XX), not unbreakable or soulbound. Immune to Slowness",
+    {tier: 3, material: NETHERITE_LEGGINGS, enchants: {PROTECTION: 10, UNBREAKING: 10}, toughness: 2, durability: 1400, repair: WARLORDS_BRAND, cat: armor, name: Hollow Greaves, purpose: "Netherite, Protection X, Unbreaking X, +2 armor toughness (Infinity: Protection XX), not unbreakable or soulbound. Immune to Slowness",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {ABYSSAL_LEGGINGS: 1, HOLLOW_INGOT: 20, WARLORDS_BRAND: 5, HEARTWOOD_RESIN: 2, HOLLOW_CRYSTAL: 4, HOLLOW_SIGIL: 2}}}
   HOLLOW_BOOTS:
-    {tier: 3, material: NETHERITE_BOOTS, enchants: {PROTECTION: 5, UNBREAKING: 5, FEATHER_FALLING: 4}, durability: 1200, repair: WARLORDS_BRAND, cat: armor, name: Hollow Sabatons, purpose: "Netherite, Protection V (Infinity: XX), not unbreakable or soulbound. No fall damage",
+    {tier: 3, material: NETHERITE_BOOTS, enchants: {PROTECTION: 10, UNBREAKING: 10, FEATHER_FALLING: 4}, toughness: 2, durability: 1200, repair: WARLORDS_BRAND, cat: armor, name: Hollow Sabatons, purpose: "Netherite, Protection X, Unbreaking X, +2 armor toughness (Infinity: Protection XX), not unbreakable or soulbound. No fall damage",
      recipe: {type: HOLLOW_ASSEMBLER, out: 1, in: {ABYSSAL_BOOTS: 1, HOLLOW_INGOT: 16, WARLORDS_BRAND: 4, HEARTWOOD_RESIN: 2, HOLLOW_CRYSTAL: 4, HOLLOW_SIGIL: 2}}}
   DREADLANCE:
     {tier: 3, material: NETHERITE_SPEAR, durability: 2000, repair: LANCERS_PENNANT, cat: weapon, name: Dreadlance, purpose: "Spear: charged lunge through enemies. Every hit heals you for 15% of the damage dealt (capped per second)",

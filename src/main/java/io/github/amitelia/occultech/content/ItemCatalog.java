@@ -33,7 +33,7 @@ public final class ItemCatalog {
      * @param repair Occultech id of the item that repairs this one in a repair ritual, or null
      */
     public record ItemDef(String id, int tier, String category, String name, String purpose, @Nullable String material, int durability, RecipeDef recipe,
-        @Nullable String head, @Nullable String repair, Map<String, Integer> enchants, List<RecipeDef> altRecipes) {
+        @Nullable String head, @Nullable String repair, Map<String, Integer> enchants, List<RecipeDef> altRecipes, double toughness) {
 
         public boolean isBossDrop() {
             return "BOSS_DROP".equals(recipe.type());
@@ -76,7 +76,8 @@ public final class ItemCatalog {
             Map<String, Object> i = map(v);
             items.put(id, new ItemDef(id, integer(i.get("tier"), 0), str(i.get("cat")), str(i.get("name")), str(i.get("purpose")),
                 (String) i.get("material"), integer(i.get("durability"), 0), recipe(map(i.get("recipe"))), (String) i.get("head"),
-                (String) i.get("repair"), amounts(i.get("enchants")), altRecipes(i.get("alt_recipes"))));
+                (String) i.get("repair"), amounts(i.get("enchants")), altRecipes(i.get("alt_recipes")),
+                i.get("toughness") instanceof Number n ? n.doubleValue() : 0));
         });
 
         Map<String, ResearchDef> researches = new LinkedHashMap<>();

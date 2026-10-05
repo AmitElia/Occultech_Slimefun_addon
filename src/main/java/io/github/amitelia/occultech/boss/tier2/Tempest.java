@@ -42,7 +42,7 @@ public final class Tempest extends BossBehavior {
     private static final double RING_MIN = 5;
     private static final io.github.amitelia.occultech.boss.Mechanic CHARGE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TEMPEST", "Wind charge", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic BURST_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TEMPEST", "Burst", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic RING_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.piercing("TEMPEST", "Squall ring", 6, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic RING_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.piercing("TEMPEST", "Squall ring", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, true);
 
     private Breeze tempest;
     private int ringStart = -1;

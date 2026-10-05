@@ -36,7 +36,7 @@ import net.kyori.adventure.key.Key;
  * Hold-to-use weapons. The items carry a "consumable" component with a silent, practically endless use, so holding
  * right-click keeps them in use; every 2 ticks this service checks who is using one and runs its effect.
  * <ul>
- * <li><b>Wyrmbreath</b>: a cone of vanilla fire particles; creatures in the cone (6 blocks, 25 degrees, line of sight)
+ * <li><b>Wyrmbreath</b>: a cone of vanilla fire particles; creatures in the cone (8 blocks, 35 degrees, line of sight)
  * burn and take damage. Heat builds while firing; at 100 it overheats and locks for 3s. Never ignites blocks.</li>
  * <li><b>Guardian's Gaze</b>: locks a beam onto the creature you aim at (40 blocks); damage ramps up the longer it's
  * held, and the lock breaks without line of sight.</li>
@@ -51,8 +51,16 @@ public final class HeldWeapons implements Listener {
     public static final String CENSER = ItemKeys.slimefunId("SOULFIRE_CENSER");
     private static final Set<String> HELD = Set.of(WYRMBREATH, GAZE, CENSER);
 
-    private static final double FIRE_RANGE = 6;
-    private static final double FIRE_ANGLE = 25;
+    private static final double FIRE_RANGE = 8;
+    private static final double FIRE_ANGLE = 35;
+    /**
+     * Damage per hit, one hit every 0.5s (Session B2). Against bosses held weapons get x2.5, so on a boss: Wyrmbreath
+     * 22.5 a hit (about 18/s over its heat cycle, a netherite sword's worth), the Censer 25 a hit (about 25/s, well under
+     * an Infinity sword - it hits from range and everything in its cone).
+     */
+    private static final double WYRMBREATH_HIT = 9;
+    private static final double CENSER_HIT = 10;
+    private static final int FIRE_HIT_TICKS = 10;
     private static final double BEAM_RANGE = 40;
     /** How far off the crosshair (degrees) the Gaze still finds a target. */
     private static final double BEAM_AIM_ASSIST = 6;
@@ -186,7 +194,7 @@ public final class HeldWeapons implements Listener {
         if (tick % 8 == 0) {
             player.getWorld().playSound(eye, Sound.ENTITY_BLAZE_SHOOT, 0.5F, 0.6F);
         }
-        if (tick % 4 != 0) {
+        if (tick % FIRE_HIT_TICKS != 0) {
             return;
         }
         for (Entity entity : player.getNearbyEntities(range, range, range)) {
@@ -195,7 +203,12 @@ public final class HeldWeapons implements Listener {
             }
             Vector to = target.getLocation().add(0, target.getHeight() / 2, 0).toVector().subtract(eye.toVector());
             if (to.length() <= range && Math.toDegrees(to.angle(look)) <= angle && hasLineOfSight(eye, target)) {
-                hurt(target, censer ? 9 : 4, player);
+                if (hurt(target, censer ? CENSER_HIT : WYRMBREATH_HIT, player)) {
+                    // bosses never burn, so show the hit: a burst of the weapon's flame on the target
+                    Location hit = target.getLocation().add(0, target.getHeight() / 2, 0);
+                    target.getWorld().spawnParticle(flame, hit, 14, target.getWidth() / 3, target.getHeight() / 4, target.getWidth() / 3, 0.04);
+                    target.getWorld().playSound(hit, Sound.ENTITY_BLAZE_HURT, 0.5F, censer ? 0.6F : 1.1F);
+                }
                 target.setFireTicks(Math.max(target.getFireTicks(), 80));
             }
         }
@@ -291,7 +304,20 @@ public final class HeldWeapons implements Listener {
      * Damage from a held weapon. These hit several times a second, faster than a creature's invulnerability frames
      * (which would otherwise swallow almost every tick of damage), so the frames are cleared first.
      */
-    static void hurt(LivingEntity target, double amount, Player player) {
+    /**
+     * One held-weapon hit. It doesn't stack on another hit: a target struck in the last half second (a sword, another
+     * player's weapon) is skipped. Its own previous hit, 0.5s ago, is just over. False if skipped.
+     */
+    static boolean hurt(LivingEntity target, double amount, Player player) {
+        if (target.getNoDamageTicks() > target.getMaximumNoDamageTicks() / 2 + 1) {
+            return false;
+        }
+        strike(target, amount, player);
+        return true;
+    }
+
+    /** A hit that lands even right after another one (the Stormstring Bow's lightning, on the arrow's own hit). */
+    static void strike(LivingEntity target, double amount, Player player) {
         target.setNoDamageTicks(0);
         Keys.HELD_WEAPON_HIT.set(true);
         try {

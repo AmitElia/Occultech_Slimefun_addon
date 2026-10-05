@@ -36,9 +36,9 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class TheUnbound extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic SWING = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Axe swing", 11, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic CLEAVE = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Cleave", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic THRALL = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Thrall", 3, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SWING = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Axe swing", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic CLEAVE = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Cleave", 26, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic THRALL = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Thrall", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final Particle.DustOptions WEDGE = new Particle.DustOptions(Color.fromRGB(220, 30, 30), 1.3F);
     private static final int CLEAVE_INTERVAL = 120;

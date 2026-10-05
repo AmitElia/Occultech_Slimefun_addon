@@ -33,8 +33,8 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class Archevoker extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic FANGS = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Fangs", 6, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic VEX = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Vex", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic FANGS = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Fangs", 12, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic VEX = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Vex", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final Particle.DustOptions RUNE = new Particle.DustOptions(Color.fromRGB(160, 60, 220), 1.4F);
     private static final int PATTERN_INTERVAL = 160;
@@ -61,6 +61,8 @@ public final class Archevoker extends BossBehavior {
             e.setCustomName(ChatColor.DARK_PURPLE + "Archevoker");
             e.setCustomNameVisible(true);
             BossFight.setAttribute(e, Attribute.MAX_HEALTH, 700);
+            fight.labelSpawns(e, org.bukkit.entity.EntityType.VEX, VEX);
+            fight.labelSpawns(e, org.bukkit.entity.EntityType.EVOKER_FANGS, FANGS);
             BossFight.setAttribute(e, Attribute.SCALE, 1.6);
             BossFight.setAttribute(e, Attribute.KNOCKBACK_RESISTANCE, 0.6);
             BossFight.setAttribute(e, Attribute.FOLLOW_RANGE, 32);

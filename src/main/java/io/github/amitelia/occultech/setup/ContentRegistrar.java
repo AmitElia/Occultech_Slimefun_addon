@@ -237,6 +237,15 @@ public final class ContentRegistrar {
             if (def.durability() > 0 && meta instanceof Damageable damageable) {
                 damageable.setMaxDamage(def.durability());
             }
+            Material base = def.material() == null ? null : Material.matchMaterial(def.material());
+            if (def.toughness() > 0 && base != null) {
+                // armor toughness on top of the material's own armor (setting modifiers replaces the defaults, so copy them)
+                org.bukkit.inventory.EquipmentSlot slot = base.getEquipmentSlot();
+                meta.setAttributeModifiers(base.getDefaultAttributeModifiers(slot));
+                meta.addAttributeModifier(org.bukkit.attribute.Attribute.ARMOR_TOUGHNESS, new org.bukkit.attribute.AttributeModifier(
+                    Occultech.key("toughness_" + def.id().toLowerCase()), def.toughness(),
+                    org.bukkit.attribute.AttributeModifier.Operation.ADD_NUMBER, slot.getGroup()));
+            }
             def.enchants().forEach((name, level) -> {
                 org.bukkit.enchantments.Enchantment enchantment = org.bukkit.Registry.ENCHANTMENT.get(org.bukkit.NamespacedKey.minecraft(name.toLowerCase()));
                 if (enchantment != null) {

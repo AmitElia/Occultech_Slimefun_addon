@@ -6,8 +6,11 @@ options:
 bosses:
   # Multiplies every boss's health (1.0 = as designed, 0.8 = 20% less)
   health-multiplier: 1.0
-  # Extra boss health for each additional player in the arena when it is summoned (0.25 = +25% per player)
-  health-per-extra-player: 0.25
+  # Boss health for a group in the arena at the summon: x(1 + group-scaling * (players - 1)^group-exponent), counting at
+  # most group-cap players. Defaults: x1.45 / 1.76 / 2.03 / 2.27 for 2-5 players, so a group always kills faster than solo
+  group-scaling: 0.45
+  group-exponent: 0.75
+  group-cap: 5
   # Boss fights (running, or a summon still channeling) must be at least this many blocks apart; arenas never overlap
   min-fight-distance: 96
   # Seconds a fight waits with nobody alive in its arena before it ends (the catalyst is lost). While everyone has

@@ -26,8 +26,8 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class NightMatriarch extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic DIVE = io.github.amitelia.occultech.boss.Mechanic.of("NIGHT_MATRIARCH", "Dive", 7, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic SWARM = io.github.amitelia.occultech.boss.Mechanic.of("NIGHT_MATRIARCH", "Phantom bite", 2, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic DIVE = io.github.amitelia.occultech.boss.Mechanic.of("NIGHT_MATRIARCH", "Dive", 26, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic SWARM = io.github.amitelia.occultech.boss.Mechanic.of("NIGHT_MATRIARCH", "Phantom bite", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final Color SHADOW = Color.fromRGB(35, 20, 60);
     private static final int DIVE_INTERVAL_DAY = 160;
@@ -36,7 +36,7 @@ public final class NightMatriarch extends BossBehavior {
     private static final int DIVE_MAX_TICKS = 40;
     private static final int STUN_TICKS = 40;
     private static final int SWARM_INTERVAL = 400;
-    private static final io.github.amitelia.occultech.boss.Mechanic BITE = io.github.amitelia.occultech.boss.Mechanic.of("NIGHT_MATRIARCH", "Bite", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic BITE = io.github.amitelia.occultech.boss.Mechanic.of("NIGHT_MATRIARCH", "Bite", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
 
     private Phantom matriarch;
     private Location diveTarget;

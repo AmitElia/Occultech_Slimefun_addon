@@ -287,6 +287,21 @@ final class SelfTest {
         List<String> silent = bosses.blueprints().stream().map(io.github.amitelia.occultech.boss.BossBlueprint::id)
             .filter(id -> grades.stream().noneMatch(g -> g.mechanic().bossId().equals(id))).toList();
         check("every boss declares its attacks (" + grades.size() + " attacks)", silent.isEmpty(), "none for " + silent);
+        // Session B2: tiers 0-2 hit inside their bands against benchmark gear (tier 3 waits for playtests)
+        List<String> off = grades.stream().filter(g -> g.tier() <= 2 && !g.ok())
+            .map(g -> g.mechanic().bossId() + " " + g.mechanic().name() + String.format(" %.0f%%", g.share() * 100)).toList();
+        check("tier 0-2 boss attacks land in their bands", off.isEmpty(), String.join("; ", off));
+        // Session B2 armor: Abyssal = max netherite, Hollow = Protection X with extra toughness
+        ItemStack abyssal = SlimefunItem.getById(ItemKeys.slimefunId("ABYSSAL_HELMET")).getItem();
+        check("Abyssal armor has Protection IV", abyssal.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 4,
+            String.valueOf(abyssal.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION)));
+        ItemStack hollow = SlimefunItem.getById(ItemKeys.slimefunId("HOLLOW_CHESTPLATE")).getItem();
+        var modifiers = hollow.getItemMeta().getAttributeModifiers();
+        double toughness = modifiers == null ? 0 : modifiers.get(org.bukkit.attribute.Attribute.ARMOR_TOUGHNESS).stream().mapToDouble(m -> m.getAmount()).sum();
+        double armor = modifiers == null ? 0 : modifiers.get(org.bukkit.attribute.Attribute.ARMOR).stream().mapToDouble(m -> m.getAmount()).sum();
+        check("Hollow armor has Protection X, netherite armor and extra toughness",
+            hollow.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 10 && armor == 8 && toughness == 5,
+            "protection " + hollow.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) + ", armor " + armor + ", toughness " + toughness);
         resourcePack();
         long summons = rituals.recipes().stream().filter(RitualRecipe::isSummon).count();
         int expectedSummons = BOSSES.size() + TIER1_BOSSES.size() + TIER2_BOSSES.size() + TIER3_BOSSES.size() + 1;
@@ -1545,7 +1560,7 @@ final class SelfTest {
                 cuirass != null && cuirass.assetId() != null && cuirass.assetId().asString().equals("occultech:hollow"),
                 cuirass == null ? "no equippable" : String.valueOf(cuirass.assetId()));
         }
-        check("Hollow Crown has Protection V", crown.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 5,
+        check("Hollow Crown has Protection X", crown.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 10,
             "protection " + crown.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION));
         SlimefunItem assembler = SlimefunItem.getById(ItemKeys.slimefunId("HOLLOW_ASSEMBLER"));
         int recipes = assembler instanceof io.github.amitelia.occultech.items.OccultMachine m ? m.getMachineRecipes().size() : -1;

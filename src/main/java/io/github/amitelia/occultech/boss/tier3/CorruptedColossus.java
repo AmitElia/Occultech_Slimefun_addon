@@ -37,7 +37,7 @@ public final class CorruptedColossus extends BossBehavior {
 
     private static final double HEALTH = 400;
     private static final double ARMOR = 0.1;
-    private static final io.github.amitelia.occultech.boss.Mechanic SMASH = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Smash", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SMASH = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Smash", 42, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic SLAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Slam", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final double SLAM_RADIUS = 7;
     private static final io.github.amitelia.occultech.boss.Mechanic PYLON_BEAM = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Pylon beam", 18, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);

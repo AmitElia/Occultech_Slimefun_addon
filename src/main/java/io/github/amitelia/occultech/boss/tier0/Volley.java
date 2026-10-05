@@ -34,7 +34,7 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class Volley extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic ARROW = io.github.amitelia.occultech.boss.Mechanic.of("VOLLEY", "Arrow", 3, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic ARROW = io.github.amitelia.occultech.boss.Mechanic.of("VOLLEY", "Arrow", 6, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
 
     private static final int VOLLEY_INTERVAL = 120;
     private static final int VOLLEY_WARNING = 20;

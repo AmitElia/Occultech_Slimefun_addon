@@ -36,7 +36,7 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class MirroredMagus extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic ARROW = io.github.amitelia.occultech.boss.Mechanic.of("MIRRORED_MAGUS", "Arrow", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic ARROW = io.github.amitelia.occultech.boss.Mechanic.of("MIRRORED_MAGUS", "Arrow", 16, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
 
     private static final int DECOY_INTERVAL = 300;
     private static final int DECOY_COUNT = 3;
@@ -54,6 +54,7 @@ public final class MirroredMagus extends BossBehavior {
             dress(m);
             m.getEquipment().setItemInMainHand(new ItemStack(Material.BOW));
             BossFight.setAttribute(m, Attribute.MAX_HEALTH, 220);
+            fight.labelSpawns(m, org.bukkit.entity.EntityType.ARROW, ARROW);
             BossFight.setAttribute(m, Attribute.KNOCKBACK_RESISTANCE, 0.3);
             BossFight.setAttribute(m, Attribute.FOLLOW_RANGE, 32);
         });
@@ -77,6 +78,7 @@ public final class MirroredMagus extends BossBehavior {
                 Illusioner decoy = fight.spawnAdd(Illusioner.class, fight.randomPoint(3, fight.radius() - 3), d -> {
                     dress(d);
                     BossFight.setAttribute(d, Attribute.MAX_HEALTH, 1);
+                    fight.labelSpawns(d, org.bukkit.entity.EntityType.ARROW, ARROW);
                     d.setHealth(1);
                 });
                 if (decoy != null) {

@@ -61,8 +61,9 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
 
         OccultechFightHooks hooks = new OccultechFightHooks();
         bosses = new BossService(this, hooks);
-        bosses.setHealthScaling(getConfig().getDouble("bosses.health-multiplier", 1.0),
-            getConfig().getDouble("bosses.health-per-extra-player", 0.25));
+        bosses.setHealthScaling(getConfig().getDouble("bosses.health-multiplier", 1.0), new io.github.amitelia.occultech.boss.GroupScaling(
+            getConfig().getDouble("bosses.group-scaling", 0.45), getConfig().getDouble("bosses.group-exponent", 0.75),
+            getConfig().getInt("bosses.group-cap", 5)));
         bosses.setMinFightDistance(getConfig().getDouble("bosses.min-fight-distance", 96));
         bosses.setAwaySeconds(getConfig().getInt("bosses.away-seconds", 180));
         Tier0Bosses.all().forEach(bosses::register);

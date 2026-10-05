@@ -76,7 +76,7 @@ public final class BossService implements Listener {
     private BukkitTask task;
     private BukkitTask moveTask;
     private double healthMultiplier = 1.0;
-    private double healthPerExtraPlayer = 0.25;
+    private GroupScaling groupScaling = GroupScaling.DEFAULT;
 
     public BossService(Plugin plugin, FightHooks hooks) {
         this.plugin = plugin;
@@ -91,17 +91,17 @@ public final class BossService implements Listener {
     }
 
     /** Boss health tuning (from config.yml). */
-    public void setHealthScaling(double multiplier, double perExtraPlayer) {
+    public void setHealthScaling(double multiplier, GroupScaling group) {
         this.healthMultiplier = Math.max(0.05, multiplier);
-        this.healthPerExtraPlayer = Math.max(0, perExtraPlayer);
+        this.groupScaling = group;
     }
 
     double healthMultiplier() {
         return healthMultiplier;
     }
 
-    double healthPerExtraPlayer() {
-        return healthPerExtraPlayer;
+    GroupScaling groupScaling() {
+        return groupScaling;
     }
 
     public void register(@Nonnull BossBlueprint blueprint) {
@@ -433,9 +433,10 @@ public final class BossService implements Listener {
     /** Fight projectiles can carry their own damage (vanilla tridents and fireballs are too weak for later tiers). */
     @EventHandler(ignoreCancelled = true)
     public void onProjectileHit(EntityDamageByEntityEvent e) {
-        if (e.getEntity() instanceof Player && e.getDamager() instanceof Projectile projectile) {
-            Double damage = projectile.getPersistentDataContainer().get(Keys.DAMAGE, PersistentDataType.DOUBLE);
-            if (damage != null && Keys.isSummoned(projectile)) {
+        // projectiles, fangs and thrown potions of a fight deal exactly their mechanic's damage
+        if (e.getEntity() instanceof Player && !(e.getDamager() instanceof org.bukkit.entity.LivingEntity)) {
+            Double damage = e.getDamager().getPersistentDataContainer().get(Keys.DAMAGE, PersistentDataType.DOUBLE);
+            if (damage != null && Keys.isSummoned(e.getDamager())) {
                 e.setDamage(damage);
             }
         }
@@ -482,6 +483,8 @@ public final class BossService implements Listener {
         BossFight fight = fightOf(owner);
         if (fight != null && !Keys.isSummoned(e.getEntity()) && !fight.adopt(e.getEntity())) {
             e.setCancelled(true);
+        } else if (fight != null && !e.getEntity().getPersistentDataContainer().has(BossFight.MECHANIC)) {
+            fight.labelFromOwner(owner, e.getEntity());
         }
     }
 
@@ -587,6 +590,9 @@ public final class BossService implements Listener {
             BossFight owner = fightOf(shooter);
             if (owner != null) {
                 owner.adopt(e.getEntity());
+                if (!e.getEntity().getPersistentDataContainer().has(BossFight.MECHANIC)) {
+                    owner.labelFromOwner(shooter, e.getEntity());   // e.g. an illusioner's vanilla arrows
+                }
             }
         }
     }

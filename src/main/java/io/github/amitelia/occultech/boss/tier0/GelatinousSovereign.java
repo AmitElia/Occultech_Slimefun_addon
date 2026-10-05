@@ -31,7 +31,7 @@ import io.github.amitelia.occultech.boss.BossFight;
 public final class GelatinousSovereign extends BossBehavior {
 
     private static final io.github.amitelia.occultech.boss.Mechanic CRUSH = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Crush", 7, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic SHOCKWAVE = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Shockwave", 6, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic SHOCKWAVE = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Shockwave", 11, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final io.github.amitelia.occultech.boss.Mechanic ACID_BURN = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Acid", 2, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic SHARD = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Shard", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 

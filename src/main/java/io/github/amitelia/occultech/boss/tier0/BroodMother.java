@@ -33,7 +33,7 @@ import io.github.amitelia.occultech.boss.BossFight;
 public final class BroodMother extends BossBehavior {
 
     private static final io.github.amitelia.occultech.boss.Mechanic BITE = io.github.amitelia.occultech.boss.Mechanic.of("BROOD_MOTHER", "Bite", 7, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic SPIDERLING = io.github.amitelia.occultech.boss.Mechanic.of("BROOD_MOTHER", "Spiderling bite", 2, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SPIDERLING = io.github.amitelia.occultech.boss.Mechanic.of("BROOD_MOTHER", "Spiderling bite", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final Color WEB = Color.fromRGB(235, 235, 235);
     private static final int SAC_INTERVAL = 240;
