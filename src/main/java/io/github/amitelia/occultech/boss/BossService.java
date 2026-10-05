@@ -108,6 +108,12 @@ public final class BossService implements Listener {
         blueprints.put(blueprint.id(), blueprint);
     }
 
+    /** Every registered boss (the balance report loads their mechanics). */
+    @Nonnull
+    public Collection<BossBlueprint> blueprints() {
+        return Collections.unmodifiableCollection(blueprints.values());
+    }
+
     public boolean has(@Nonnull String bossId) {
         return blueprints.containsKey(bossId);
     }

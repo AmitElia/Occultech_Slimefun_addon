@@ -66,7 +66,7 @@ spread over more targets, so each player takes less.
 A group is always faster than solo, a large group stops making the boss tankier, and the curve flattens as players
 are added.
 
-## Session B1: measure (the boss's damage includes every mechanic) - decided to go first
+## Session B1: measure (the boss's damage includes every mechanic) - DONE (self-test 348/348)
 
 1. **Every mechanic is declared.** Each boss lists its attacks: name, raw damage, kind (melee, projectile, ground,
    beam, magic), and whether it's telegraphed. Hits go through one call, `fight.hit(player, mechanic)`, so every point
@@ -96,6 +96,22 @@ are added.
    It compares all of that with the targets.
 6. **Playtest protocol:** each tier-3 boss solo and in a group of 3, with the benchmark kit. The logs are the test that
    the numbers get judged against.
+
+### B1 outcome and how to playtest
+
+- **Attack grades:** `/occultech balance` grades all 59 declared attacks and writes `plugins/Occultech/balance-report.md`.
+  A copy is in `docs/balance-report.md`. 22 attacks are outside their band at Normal difficulty:
+  - **Tiers 0-1 are far too soft** against their benchmark armor: Protection IV diamond leaves the tier-1 bosses
+    hitting for 1-6% of health.
+  - **Tier 2:** the Drowned Elder's beam is a bit high (43%) and the Tempest's squall ring slightly high (11%).
+  - **Tier 3:** close to the bands. The Colossus's Smash is high (28%), and a few small hits are low.
+- **Playtest steps (per boss):**
+  1. `/occultech kit <tier>` gives the benchmark gear. Tier 3 gives the real Infinity items.
+  2. Fight it: solo once, then in a group of 3. Use the showcase circles and `/occultech restock`.
+  3. Run `python tools/balance.py` (it reads `run/plugins/Occultech/combat-log/`). It writes `docs/balance-playtests.md`:
+     - fight length against the target, and how much of the fight the boss could be damaged;
+     - the boss's damage per second on each player, every attack included;
+     - deaths, and which attacks did the damage.
 
 ## Session B2: tune
 

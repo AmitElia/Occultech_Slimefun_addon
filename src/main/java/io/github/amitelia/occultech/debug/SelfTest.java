@@ -282,6 +282,11 @@ final class SelfTest {
         check("no content problems", registrar.problems().isEmpty(), String.join("; ", registrar.problems()));
         check("researches registered", registrar.researchCount() == catalog.researches().size(), registrar.researchCount() + " registered");
         recipeClashes();
+        // Session B1: every boss declares its attacks, so the combat log and the balance report cover all its damage
+        List<Balance.Grade> grades = Balance.grades(plugin, 1);
+        List<String> silent = bosses.blueprints().stream().map(io.github.amitelia.occultech.boss.BossBlueprint::id)
+            .filter(id -> grades.stream().noneMatch(g -> g.mechanic().bossId().equals(id))).toList();
+        check("every boss declares its attacks (" + grades.size() + " attacks)", silent.isEmpty(), "none for " + silent);
         resourcePack();
         long summons = rituals.recipes().stream().filter(RitualRecipe::isSummon).count();
         int expectedSummons = BOSSES.size() + TIER1_BOSSES.size() + TIER2_BOSSES.size() + TIER3_BOSSES.size() + 1;

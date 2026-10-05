@@ -69,6 +69,10 @@ crash mid-ritual gives the offerings back - never twice. `occultech fights [end 
 x y z` starts the ritual at an altar. Arcane Altar infusions keep the same kind of ledger (`CrashLedger`). While
 a ritual or fight uses a circle, `CircleGuard` makes its blocks unbreakable. Rewards earned by a fighter who is offline at
 the victory wait in `pending-rewards.yml` until they join.
+Balancing (Session B1): every boss attack is a `Mechanic` (name, raw damage, kind, telegraphed) dealt through
+`BossFight.hit`, or put on a creature or projectile with `fight.label`. Never call `player.damage` in a behavior. Each fight
+with players writes a combat log (`combat-log/*.yml`, read by `tools/balance.py`). `/occultech balance` grades every
+attack with `ArmorModel` (the 26.2 armor rules, tier benchmark kits); `/occultech kit <tier>` gives a benchmark kit.
 
 **Items come from data:** `docs/recipes.yml` is packaged into the jar and registered at startup by `ContentRegistrar`
 (only tiers <= `ContentRegistrar.IMPLEMENTED_TIER`). Adding a plain item = edit recipes.yml (give it a `material`).

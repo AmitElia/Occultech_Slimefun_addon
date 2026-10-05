@@ -53,6 +53,24 @@ public final class OccultechCommand implements TabExecutor {
             }
             return true;
         }
+        if (args.length == 1 && args[0].equalsIgnoreCase("balance")) {
+            List<String> lines = new java.util.ArrayList<>();
+            Balance.report(plugin, lines);
+            lines.forEach(sender::sendMessage);
+            return true;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("kit")) {
+            if (!(sender instanceof org.bukkit.entity.Player player)) {
+                sender.sendMessage("Only a player can take a kit.");
+            } else {
+                try {
+                    Balance.kit(player, Math.max(0, Math.min(3, Integer.parseInt(args[1]))));
+                } catch (NumberFormatException e) {
+                    sender.sendMessage("Usage: /occultech kit <0-3>");
+                }
+            }
+            return true;
+        }
         if (args.length >= 1 && args[0].equalsIgnoreCase("fights")) {
             fights(sender, args);
             return true;
@@ -235,7 +253,7 @@ public final class OccultechCommand implements TabExecutor {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            return List.of("selftest", "showcase", "restock", "inspect", "unlockhalos", "iteminfo", "setslot", "fights", "begin");
+            return List.of("selftest", "showcase", "restock", "inspect", "unlockhalos", "iteminfo", "setslot", "fights", "begin", "kit", "balance");
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("showcase")) {
             return List.of("clear");
