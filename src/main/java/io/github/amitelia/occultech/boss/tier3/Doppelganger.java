@@ -50,12 +50,12 @@ import io.papermc.paper.datacomponent.item.ResolvableProfile;
  */
 public final class Doppelganger extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic REFLECT = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Reflected damage", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic REFLECT = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Reflected damage", 22, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, false);
     private static final io.github.amitelia.occultech.boss.Mechanic REFLECTION = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Reflection's blow", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
 
     private static final double HEALTH = 360;
     private static final double ARMOR = 0.1;
-    private static final io.github.amitelia.occultech.boss.Mechanic MELEE_HIT = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Mirrored blow", 45, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic MELEE_HIT = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Mirrored blow", 39, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic ARROW_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Mirrored arrow", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic FIRE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Mirrored fire", 10, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, false);
     private static final io.github.amitelia.occultech.boss.Mechanic ECHO_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Echo", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
@@ -115,7 +115,7 @@ public final class Doppelganger extends BossBehavior {
     @Override
     public void onDamagedBy(LivingEntity boss, Player player, double damage) {
         if (boss == body && fight.elapsed() < reflectingUntil) {
-            fight.hit(player, REFLECT, Math.min(40, lastIncoming * REFLECT_SHARE), body);
+            fight.hit(player, REFLECT, Math.min(REFLECT.damage(), lastIncoming * REFLECT_SHARE), body);
             player.getWorld().playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 1F, 1.6F);
         }
     }

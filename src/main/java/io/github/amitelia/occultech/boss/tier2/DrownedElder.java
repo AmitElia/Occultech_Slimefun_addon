@@ -46,7 +46,7 @@ public final class DrownedElder extends BossBehavior {
     private static final int ADD_BEAM_INTERVAL = 80;
     private static final io.github.amitelia.occultech.boss.Mechanic BEAM_HIT = io.github.amitelia.occultech.boss.Mechanic.of("DROWNED_ELDER", "Beam", 16, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
     private static final io.github.amitelia.occultech.boss.Mechanic ADD_BEAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DROWNED_ELDER", "Guardian beam", 10, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic WAVE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DROWNED_ELDER", "Tidal wave", 36, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic WAVE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DROWNED_ELDER", "Tidal wave", 33.5, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final double WAVE_SPEED = 0.6;
     private static final int WAVES = 3;
     private static final int WAVE_GAP = 40;

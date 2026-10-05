@@ -39,9 +39,9 @@ public final class AbyssalWarden extends BossBehavior {
     private static final int BEAM_INTERVAL = 120;
     private static final int BEAM_INTERVAL_ENRAGED = 80;
     private static final int SPIKE_INTERVAL = 240;
-    private static final io.github.amitelia.occultech.boss.Mechanic BEAM_HIT = io.github.amitelia.occultech.boss.Mechanic.of("ABYSSAL_WARDEN", "Beam", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic BEAM_HIT = io.github.amitelia.occultech.boss.Mechanic.of("ABYSSAL_WARDEN", "Beam", 15.5, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
     private static final io.github.amitelia.occultech.boss.Mechanic SPIKE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("ABYSSAL_WARDEN", "Spikes", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic LASH_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("ABYSSAL_WARDEN", "Lash", 26, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic LASH_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("ABYSSAL_WARDEN", "Lash", 23, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final double LASH_RANGE = 3.5;
 
     private Guardian warden;

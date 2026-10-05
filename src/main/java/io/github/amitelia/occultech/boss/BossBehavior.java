@@ -40,6 +40,14 @@ public abstract class BossBehavior {
     }
 
     /** Whether the engine may teleport the boss next to a player who can't be reached. Off for ranged bosses. */
+    /**
+     * The least time (ticks) between two vanilla melee hits from one of this fight's creatures; 0 = vanilla pace (about
+     * one a second). A boss that swings too fast for most players gets a longer one.
+     */
+    public int meleeCooldownTicks() {
+        return 0;
+    }
+
     public boolean usesAntiPillar() {
         return true;
     }

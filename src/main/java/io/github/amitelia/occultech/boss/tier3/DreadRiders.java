@@ -53,8 +53,8 @@ public final class DreadRiders extends BossBehavior {
     private static final io.github.amitelia.occultech.boss.Mechanic SNIPE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Storm snipe", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
     private static final io.github.amitelia.occultech.boss.Mechanic ARROW_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Arrow", 26, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic RAIN_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Arrow rain", 35, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic MELEE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Vanguard blade", 50, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic RAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Charge", 60, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic MELEE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Vanguard blade", 39, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic RAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Charge", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final io.github.amitelia.occultech.boss.Mechanic SPEAR_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Thrown spear", 40, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
     private static final double ORBIT = 14;
     private static final double ORBIT_ENRAGED = 8;

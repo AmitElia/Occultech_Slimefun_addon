@@ -63,7 +63,7 @@ public final class Gallus extends BossBehavior {
     private static final double ARMOR = 0.05;
     private static final double SCALE = 6;
     private static final double RIDER_HEALTH = 120;
-    private static final io.github.amitelia.occultech.boss.Mechanic JAB = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Lance jab", 45, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic JAB = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Lance jab", 39, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic SLAM = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Leap slam", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final io.github.amitelia.occultech.boss.Mechanic EGG_HIT = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Egg", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic RIDER_MELEE = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Rider's blade", 35, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);

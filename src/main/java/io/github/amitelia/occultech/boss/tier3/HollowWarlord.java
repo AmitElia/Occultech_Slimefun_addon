@@ -46,7 +46,7 @@ public final class HollowWarlord extends BossBehavior {
     private static final double HEALTH = 400;
     private static final double ARMOR = 0.18;
     private static final double GUARDED = 0.6;
-    private static final io.github.amitelia.occultech.boss.Mechanic BLADE = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Blade", 45, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic BLADE = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Blade", 39, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic SWEEP_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Soul sweep", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final double SWEEP_RADIUS = 4.5;
     private static final int SWEEP_INTERVAL = 120;

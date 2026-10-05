@@ -35,7 +35,7 @@ public final class HeartwoodHorror extends BossBehavior {
 
     private static final double HEALTH = 320;
     private static final double ARMOR = 0.125;
-    private static final io.github.amitelia.occultech.boss.Mechanic SWIPE = io.github.amitelia.occultech.boss.Mechanic.of("HEARTWOOD_HORROR", "Swipe", 50, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SWIPE = io.github.amitelia.occultech.boss.Mechanic.of("HEARTWOOD_HORROR", "Swipe", 39, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final int HEARTS = 4;
     private static final int HEART_HITS = 12;
     /** Staring at it this long (ticks) makes it snap and lunge at the starer. */

@@ -156,6 +156,23 @@ public final class BossFight {
         }
     }
 
+    private final Map<UUID, Integer> lastMelee = new HashMap<>();
+
+    /** False if {@code attacker}'s vanilla melee hit comes before its behavior's cooldown is over (the hit is cancelled). */
+    boolean meleeReady(Entity attacker) {
+        int cooldown = behavior.meleeCooldownTicks();
+        if (cooldown <= 0) {
+            return true;
+        }
+        int now = Bukkit.getCurrentTick();
+        Integer last = lastMelee.get(attacker.getUniqueId());
+        if (last != null && now - last < cooldown) {
+            return false;
+        }
+        lastMelee.put(attacker.getUniqueId(), now);
+        return true;
+    }
+
     /** Auras following their bosses (Session O5, phase 3). */
     private final List<AirEffects.Aura> auras = new ArrayList<>();
 

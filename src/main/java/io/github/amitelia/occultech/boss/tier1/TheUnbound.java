@@ -36,16 +36,18 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class TheUnbound extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic SWING = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Axe swing", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic CLEAVE = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Cleave", 26, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic SWING = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Axe swing", 16, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic CLEAVE = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Cleave", 22, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final io.github.amitelia.occultech.boss.Mechanic THRALL = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Thrall", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final Particle.DustOptions WEDGE = new Particle.DustOptions(Color.fromRGB(220, 30, 30), 1.3F);
-    private static final int CLEAVE_INTERVAL = 120;
+    private static final int CLEAVE_INTERVAL = 160;
     private static final int CLEAVE_WARNING = 25;
     private static final int THRALL_INTERVAL = 400;
     private static final int SATED_TICKS = 60;
-    private static final double BASE_SPEED = 0.33;
+    private static final double BASE_SPEED = 0.30;
+    /** At most one axe swing every 1.5s: vanilla's pace (one a second) was too fast for most players. */
+    private static final int SWING_COOLDOWN = 30;
     private static final double CLEAVE_RANGE = 4.5;
 
     private final List<Husk> thralls = new ArrayList<>();
@@ -56,6 +58,11 @@ public final class TheUnbound extends BossBehavior {
 
     public TheUnbound(BossFight fight) {
         super(fight);
+    }
+
+    @Override
+    public int meleeCooldownTicks() {
+        return SWING_COOLDOWN;
     }
 
     @Override
@@ -96,7 +103,7 @@ public final class TheUnbound extends BossBehavior {
         }
 
         // enrage: up to 30% faster at low health
-        BossFight.setAttribute(unbound, Attribute.MOVEMENT_SPEED, BASE_SPEED * (1 + 0.3 * (1 - fight.healthFraction())));
+        BossFight.setAttribute(unbound, Attribute.MOVEMENT_SPEED, BASE_SPEED * (1 + 0.2 * (1 - fight.healthFraction())));
 
         if (every(THRALL_INTERVAL)) {
             for (int i = 0; i < 2; i++) {

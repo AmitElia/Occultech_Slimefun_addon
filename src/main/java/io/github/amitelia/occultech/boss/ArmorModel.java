@@ -18,7 +18,7 @@ public final class ArmorModel {
     public static final Kit TIER_2 = new Kit("netherite, Protection IV", 20, 12, 16, 0, 20);
     public static final Kit TIER_3 = new Kit("Infinity (netherite, Protection XX, Resistance I)", 20, 12, 80, 1, 20);
 
-    /** Share of health a hit should take, by kind (the scope rule: a normal hit costs 15-25%). */
+    /** Share of health a hit should take, by kind: difficult but manageable for every player, not only the best (Session B2). */
     public record Band(double min, double max) {
         public boolean contains(double share) {
             return share >= min && share <= max;
@@ -59,9 +59,9 @@ public final class ArmorModel {
     @Nonnull
     public static Band band(@Nonnull Mechanic mechanic) {
         return switch (mechanic.kind()) {
-            case ADD -> new Band(0.03, 0.12);
-            case ZONE -> new Band(0.02, 0.10);
-            default -> mechanic.telegraphed() ? new Band(0.15, 0.40) : new Band(0.10, 0.25);
+            case ADD -> new Band(0.03, 0.10);
+            case ZONE -> new Band(0.02, 0.08);
+            default -> mechanic.telegraphed() ? new Band(0.12, 0.30) : new Band(0.08, 0.18);
         };
     }
 }

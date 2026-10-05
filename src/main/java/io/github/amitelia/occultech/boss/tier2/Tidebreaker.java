@@ -42,8 +42,8 @@ public final class Tidebreaker extends BossBehavior {
     private static final int CHARGE_TICKS = 25;
     private static final int WINDED_TICKS = 40;
     private static final int VOLLEY_INTERVAL = 200;
-    private static final io.github.amitelia.occultech.boss.Mechanic RAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TIDEBREAKER", "Ram", 38, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic MELEE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TIDEBREAKER", "Trident thrust", 28, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic RAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TIDEBREAKER", "Ram", 33.5, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic MELEE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TIDEBREAKER", "Trident thrust", 23, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic TRIDENT_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TIDEBREAKER", "Trident volley", 24, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
 
     private Drowned rider;

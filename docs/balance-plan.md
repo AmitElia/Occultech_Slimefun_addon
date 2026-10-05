@@ -168,6 +168,33 @@ are added.
 - **Left for part 2, after the playtests:** tier-3 health and armor from fight lengths and uptime, and the 7 low
   tier-3 attacks.
 
+### B2 review round 1 (user playtest, 2026-10-04)
+
+**Feedback:**
+- Brood Mother: a little too easy.
+- Volley, Witch Coven and the Sovereign: balanced.
+- The Unbound: far too much damage in tier-1 gear, and attacks too fast.
+- In general: difficult but manageable for every player, not only the best.
+
+**Changes:**
+- **Gentler bands for every tier:**
+  - normal hits 8-18%;
+  - telegraphed 12-30%;
+  - adds 3-10%;
+  - zones 2-8%.
+- **Tier 1 at mid-band:**
+  - The Unbound: axe 20→16 (10%), cleave 26→22 (17%). It also swings at most every 1.5 s (a new per-boss melee
+    cooldown, `BossBehavior.meleeCooldownTicks`), moves a little slower, speeds up less as it weakens, and cleaves
+    every 8 s instead of every 6 s.
+  - Night Matriarch: bite 17.5, dive 23.
+  - Archevoker: fangs 10.
+- **Brood Mother:** bite 7→8 (13→15%).
+- **Tier 2 brought under the new caps:** Warden beam 15.5, lash 23; Elder wave 33.5; Tidebreaker ram 33.5, thrust 23.
+- **Tier 3 (only lowered):**
+  - every big melee 39 (Colossus, Doppelganger, Vanguard, Gallus jab, Horror, Warlord);
+  - Dread Riders charge 55;
+  - Doppelganger's reflection capped at 22.
+
 ## Session B3: optimization
 
 - **Timing:** each system's time per tick is measured: fights, servitors, decorations, held weapons, custom blocks,

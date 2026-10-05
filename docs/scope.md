@@ -30,7 +30,8 @@ Full item and recipe list: [recipes.yml](recipes.yml) (source) → [items.md](it
 \* needs MC 1.21.11+ mobs, so it can only be tested after the 26.2 port. Still in the pool for later: Stormcaller, Warband Captain, Dune Caravan.
 
 **Gear benchmarks:** each tier's bosses are tuned so a solo player in that tier's benchmark gear wins, with fights of 1-3
-minutes (mini-bosses) or 4-8 minutes (gate bosses), and each boss hit costing roughly 15-25% of the player's HP. Tier 3 needs the real
+minutes (mini-bosses) or 4-8 minutes (gate bosses), and each boss hit costing roughly 8-18% of the player's HP (12-30% for a big telegraphed attack) - difficult but
+manageable for every player, not only the best (Session B2; graded by `/occultech balance`). Tier 3 needs the real
 InfinityExpansion2 gear stats measured on a test server before tuning.
 
 **Gate rule:** the gate boss's catalyst uses one drop from each of the tier's mini-bosses. The gate drop unlocks the next tier's altar,

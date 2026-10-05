@@ -442,6 +442,18 @@ public final class BossService implements Listener {
         }
     }
 
+    /** A boss with a melee cooldown can't land vanilla hits faster than it (scripted hits are unaffected). */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onMeleePace(EntityDamageByEntityEvent e) {
+        if (!(e.getEntity() instanceof Player) || e.getCause() != DamageCause.ENTITY_ATTACK || BossFight.CURRENT.get() != null) {
+            return;
+        }
+        BossFight fight = fightOf(e.getDamager());
+        if (fight != null && !fight.meleeReady(e.getDamager())) {
+            e.setCancelled(true);
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerHurt(EntityDamageByEntityEvent e) {
         if (!(e.getEntity() instanceof Player)) {

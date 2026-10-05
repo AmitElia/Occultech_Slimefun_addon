@@ -33,7 +33,7 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class Archevoker extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic FANGS = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Fangs", 12, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic FANGS = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Fangs", 10, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
     private static final io.github.amitelia.occultech.boss.Mechanic VEX = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Vex", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final Particle.DustOptions RUNE = new Particle.DustOptions(Color.fromRGB(160, 60, 220), 1.4F);
