@@ -40,9 +40,9 @@ public final class Tempest extends BossBehavior {
     private static final int RING_INTERVAL = 400;
     private static final int RING_TICKS = 160;
     private static final double RING_MIN = 5;
-    private static final double CHARGE_DAMAGE = 20;
-    private static final double BURST_DAMAGE = 30;
-    private static final double RING_DAMAGE = 6;
+    private static final io.github.amitelia.occultech.boss.Mechanic CHARGE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TEMPEST", "Wind charge", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic BURST_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TEMPEST", "Burst", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic RING_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.piercing("TEMPEST", "Squall ring", 6, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, true);
 
     private Breeze tempest;
     private int ringStart = -1;
@@ -131,7 +131,8 @@ public final class Tempest extends BossBehavior {
         Vector aim = target.getEyeLocation().toVector().subtract(tempest.getEyeLocation().toVector()).normalize();
         for (int i = -1; i <= 1; i++) {
             BreezeWindCharge charge = tempest.launchProjectile(BreezeWindCharge.class, aim.clone().rotateAroundY(Math.toRadians(15 * i)).multiply(0.8));
-            charge.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, CHARGE_DAMAGE);
+            charge.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, CHARGE_DAMAGE.damage());
+            fight.label(charge, CHARGE_DAMAGE);
         }
         tempest.getWorld().playSound(tempest.getLocation(), Sound.ENTITY_BREEZE_SHOOT, 1.5F, 0.8F);
     }
@@ -143,7 +144,7 @@ public final class Tempest extends BossBehavior {
         at.getWorld().playSound(at, Sound.ENTITY_BREEZE_WIND_BURST, 2F, 0.7F);
         for (Player player : fight.players()) {
             if (player.getLocation().distanceSquared(at) <= 4.5 * 4.5) {
-                player.damage(BURST_DAMAGE, tempest);
+                fight.hit(player, BURST_DAMAGE, tempest);
                 player.setVelocity(player.getVelocity().setY(0.9));
             }
         }
@@ -170,7 +171,7 @@ public final class Tempest extends BossBehavior {
                 Vector flat = player.getLocation().toVector().subtract(center.toVector()).setY(0);
                 if (flat.length() > radius + 0.5) {
                     // the squall cuts through armor: standing outside must hurt even in netherite
-                    Abyss.magic(player, RING_DAMAGE, tempest);
+                    fight.hit(player, RING_DAMAGE, tempest);
                 }
             }
         }

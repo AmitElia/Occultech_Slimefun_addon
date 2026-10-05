@@ -50,12 +50,12 @@ public final class DreadRiders extends BossBehavior {
     private static final double VANGUARD_HEALTH = 260;
     private static final double OUTRIDER_ARMOR = 0.1;
     private static final double VANGUARD_ARMOR = 0.05;
-    private static final double SNIPE_DAMAGE = 30;
-    private static final double ARROW_DAMAGE = 26;
-    private static final double RAIN_DAMAGE = 35;
-    private static final double MELEE_DAMAGE = 50;
-    private static final double RAM_DAMAGE = 60;
-    private static final double SPEAR_DAMAGE = 40;
+    private static final io.github.amitelia.occultech.boss.Mechanic SNIPE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Storm snipe", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic ARROW_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Arrow", 26, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic RAIN_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Arrow rain", 35, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic MELEE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Vanguard blade", 50, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic RAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Charge", 60, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic SPEAR_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Thrown spear", 40, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
     private static final double ORBIT = 14;
     private static final double ORBIT_ENRAGED = 8;
     private static final int CHARGE_WARNING = 20;
@@ -218,7 +218,8 @@ public final class DreadRiders extends BossBehavior {
             Vector aim = outriderTarget.getEyeLocation().toVector().subtract(outrider.getEyeLocation().toVector()).normalize();
             for (int i = -1; i <= 1; i++) {
                 Arrow arrow = outrider.launchProjectile(Arrow.class, aim.clone().rotateAroundY(Math.toRadians(8 * i)).multiply(2.4));
-                arrow.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, ARROW_DAMAGE);
+                arrow.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, ARROW_DAMAGE.damage());
+            fight.label(arrow, ARROW_DAMAGE);
             }
             outrider.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, outrider.getEyeLocation(), 10, 0.3, 0.3, 0.3, 0.1);
             outrider.getWorld().playSound(outrider.getLocation(), Sound.ENTITY_SKELETON_SHOOT, 1.5F, 0.7F);
@@ -240,7 +241,7 @@ public final class DreadRiders extends BossBehavior {
             rainSpot.getWorld().spawnParticle(Particle.CRIT, rainSpot.clone().add(0, 2, 0), 80, 2, 2, 2, 0.4);
             for (Player player : fight.players()) {
                 if (player.getLocation().distanceSquared(rainSpot) <= 3.5 * 3.5) {
-                    player.damage(RAIN_DAMAGE, outrider);
+                    fight.hit(player, RAIN_DAMAGE, outrider);
                 }
             }
         }
@@ -265,7 +266,7 @@ public final class DreadRiders extends BossBehavior {
         if (vanguardTarget != null && now >= nextMelee && vanguardTarget.getLocation().distanceSquared(vanguard.getLocation()) <= 3.5 * 3.5) {
             nextMelee = now + 20;
             vanguard.swingMainHand();
-            vanguardTarget.damage(MELEE_DAMAGE, vanguard);
+            fight.hit(vanguardTarget, MELEE_DAMAGE, vanguard);
         }
         // intercept: anyone closing in on the Outrider gets charged
         Player intercept = null;
@@ -288,7 +289,8 @@ public final class DreadRiders extends BossBehavior {
         if (outriderDown && every(80) && vanguardTarget != null) {
             Vector aim = vanguardTarget.getEyeLocation().toVector().subtract(vanguard.getEyeLocation().toVector()).normalize();
             Trident spear = vanguard.launchProjectile(Trident.class, aim.multiply(2));
-            spear.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, SPEAR_DAMAGE);
+            spear.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, SPEAR_DAMAGE.damage());
+            fight.label(spear, SPEAR_DAMAGE);
             vanguard.swingMainHand();
         }
     }
@@ -332,7 +334,7 @@ public final class DreadRiders extends BossBehavior {
         for (Player player : fight.players()) {
             if (!rammed.contains(player.getUniqueId()) && player.getLocation().distanceSquared(at) <= 5) {
                 rammed.add(player.getUniqueId());
-                player.damage(RAM_DAMAGE, vanguard);
+                fight.hit(player, RAM_DAMAGE, vanguard);
                 player.setVelocity(chargeDirection.clone().multiply(1.2).setY(0.5));
             }
         }

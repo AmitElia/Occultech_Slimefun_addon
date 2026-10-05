@@ -13,10 +13,10 @@ public final class Tier0Bosses {
 
     public static List<BossBlueprint> all() {
         return List.of(
-            new BossBlueprint("BROOD_MOTHER", BroodMother::new),
-            new BossBlueprint("VOLLEY", Volley::new),
-            new BossBlueprint("WITCH_COVEN", WitchCoven::new),
-            new BossBlueprint("GELATINOUS_SOVEREIGN", GelatinousSovereign::new)
+            new BossBlueprint("BROOD_MOTHER", BroodMother.class, BroodMother::new),
+            new BossBlueprint("VOLLEY", Volley.class, Volley::new),
+            new BossBlueprint("WITCH_COVEN", WitchCoven.class, WitchCoven::new),
+            new BossBlueprint("GELATINOUS_SOVEREIGN", GelatinousSovereign.class, GelatinousSovereign::new)
         );
     }
 }

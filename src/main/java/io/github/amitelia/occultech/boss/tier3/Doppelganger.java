@@ -50,12 +50,15 @@ import io.papermc.paper.datacomponent.item.ResolvableProfile;
  */
 public final class Doppelganger extends BossBehavior {
 
+    private static final io.github.amitelia.occultech.boss.Mechanic REFLECT = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Reflected damage", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic REFLECTION = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Reflection's blow", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+
     private static final double HEALTH = 360;
     private static final double ARMOR = 0.1;
-    private static final double MELEE = 45;
-    private static final double ARROW_DAMAGE = 30;
-    private static final double FIRE_DAMAGE = 10;
-    private static final double ECHO_DAMAGE = 30;
+    private static final io.github.amitelia.occultech.boss.Mechanic MELEE_HIT = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Mirrored blow", 45, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic ARROW_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Mirrored arrow", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic FIRE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Mirrored fire", 10, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic ECHO_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Echo", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
     private static final double REFLECT_SHARE = 0.3;
     private static final double REFLECTION_HEALTH = 60;
     private static final int ECHO_SAMPLES = 20;
@@ -112,7 +115,7 @@ public final class Doppelganger extends BossBehavior {
     @Override
     public void onDamagedBy(LivingEntity boss, Player player, double damage) {
         if (boss == body && fight.elapsed() < reflectingUntil) {
-            Abyss.magic(player, Math.min(40, lastIncoming * REFLECT_SHARE), body);
+            fight.hit(player, REFLECT, Math.min(40, lastIncoming * REFLECT_SHARE), body);
             player.getWorld().playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 1F, 1.6F);
         }
     }
@@ -213,14 +216,15 @@ public final class Doppelganger extends BossBehavior {
                 if (now >= nextMelee && target.getLocation().distanceSquared(body.getLocation()) <= 9) {
                     nextMelee = now + 20;
                     body.swingMainHand();
-                    target.damage(MELEE, body);
+                    fight.hit(target, MELEE_HIT, body);
                 }
             }
             case RANGED -> {
                 if (every(30)) {
                     Vector aim = target.getEyeLocation().toVector().subtract(body.getEyeLocation().toVector()).normalize().multiply(2.4);
                     Arrow arrow = body.launchProjectile(Arrow.class, aim);
-                    arrow.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, ARROW_DAMAGE);
+                    arrow.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, ARROW_DAMAGE.damage());
+            fight.label(arrow, ARROW_DAMAGE);
                     body.swingMainHand();
                 }
             }
@@ -235,7 +239,7 @@ public final class Doppelganger extends BossBehavior {
                     for (Player player : fight.players()) {
                         Vector to = player.getEyeLocation().toVector().subtract(eye.toVector());
                         if (to.length() <= 6.5 && Math.toDegrees(to.angle(look)) <= 30) {
-                            Abyss.magic(player, FIRE_DAMAGE, body);
+                            fight.hit(player, FIRE_DAMAGE, body);
                             player.setFireTicks(Math.max(player.getFireTicks(), 60));
                         }
                     }
@@ -255,7 +259,7 @@ public final class Doppelganger extends BossBehavior {
         for (Player player : fight.players()) {
             if (!echoHit.contains(player.getUniqueId()) && player.getLocation().distanceSquared(at) <= 1.7) {
                 echoHit.add(player.getUniqueId());
-                Abyss.magic(player, ECHO_DAMAGE, body);
+                fight.hit(player, ECHO_DAMAGE, body);
             }
         }
     }
@@ -288,7 +292,7 @@ public final class Doppelganger extends BossBehavior {
         reflections.forEach((reflection, owner) -> {
             if (alive(owner) && reflection.isValid() && owner.getLocation().distanceSquared(reflection.getLocation()) <= 9) {
                 reflection.swingMainHand();
-                owner.damage(30, reflection);
+                fight.hit(owner, REFLECTION, reflection);
             }
         });
         if (shattered && liveReflections() == 0 && body.isGlowing() && fight.elapsed() >= reflectingUntil) {

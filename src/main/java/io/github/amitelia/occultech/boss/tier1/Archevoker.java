@@ -33,6 +33,9 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class Archevoker extends BossBehavior {
 
+    private static final io.github.amitelia.occultech.boss.Mechanic FANGS = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Fangs", 6, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic VEX = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Vex", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+
     private static final Particle.DustOptions RUNE = new Particle.DustOptions(Color.fromRGB(160, 60, 220), 1.4F);
     private static final int PATTERN_INTERVAL = 160;
     private static final int PATTERN_INTERVAL_ENRAGED = 110;
@@ -121,7 +124,10 @@ public final class Archevoker extends BossBehavior {
         if (now == strikeAt) {
             strikeAt = -1;
             for (Location point : pending) {
-                point.getWorld().spawn(point, EvokerFangs.class, fangs -> fangs.setOwner(archevoker));
+                point.getWorld().spawn(point, EvokerFangs.class, fangs -> {
+                    fangs.setOwner(archevoker);
+                    fight.label(fangs, FANGS);
+                });
             }
             archevoker.getWorld().playSound(archevoker.getLocation(), Sound.ENTITY_EVOKER_CAST_SPELL, 2F, 1F);
         }

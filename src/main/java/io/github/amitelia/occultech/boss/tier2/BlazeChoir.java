@@ -42,8 +42,8 @@ public final class BlazeChoir extends BossBehavior {
     private static final int SHIELD_INTERVAL = 120;
     private static final int CHORUS_INTERVAL = 300;
     private static final int CHORUS_WARNING = 30;
-    private static final double FIREBALL_DAMAGE = 20;
-    private static final double CHORUS_DAMAGE = 32;
+    private static final io.github.amitelia.occultech.boss.Mechanic FIREBALL_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("BLAZE_CHOIR", "Fireball", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic CHORUS_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("BLAZE_CHOIR", "Chorus eruption", 32, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final Color FLAME = Color.fromRGB(255, 120, 30);
     private static final String[] NAMES = { "Soprano", "Alto", "Bass" };
 
@@ -195,7 +195,8 @@ public final class BlazeChoir extends BossBehavior {
         Vector aim = target.getEyeLocation().toVector().subtract(blaze.getEyeLocation().toVector()).normalize();
         SmallFireball fireball = blaze.launchProjectile(SmallFireball.class, aim.multiply(0.9));
         fireball.setIsIncendiary(false);
-        fireball.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, FIREBALL_DAMAGE);
+        fireball.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, FIREBALL_DAMAGE.damage());
+            fight.label(fireball, FIREBALL_DAMAGE);
         blaze.getWorld().playSound(blaze.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1F, 1.2F);
     }
 
@@ -208,7 +209,7 @@ public final class BlazeChoir extends BossBehavior {
             LivingEntity source = singers.isEmpty() ? null : singers.get(0);
             for (Player player : fight.players()) {
                 if (player.getLocation().distanceSquared(at) <= 6.25) {
-                    player.damage(CHORUS_DAMAGE, source);
+                    fight.hit(player, CHORUS_DAMAGE, source);
                     player.setFireTicks(Math.max(player.getFireTicks(), 60));
                 }
             }

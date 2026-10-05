@@ -26,6 +26,9 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class NightMatriarch extends BossBehavior {
 
+    private static final io.github.amitelia.occultech.boss.Mechanic DIVE = io.github.amitelia.occultech.boss.Mechanic.of("NIGHT_MATRIARCH", "Dive", 7, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic SWARM = io.github.amitelia.occultech.boss.Mechanic.of("NIGHT_MATRIARCH", "Phantom bite", 2, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+
     private static final Color SHADOW = Color.fromRGB(35, 20, 60);
     private static final int DIVE_INTERVAL_DAY = 160;
     private static final int DIVE_INTERVAL_NIGHT = 120;
@@ -33,7 +36,7 @@ public final class NightMatriarch extends BossBehavior {
     private static final int DIVE_MAX_TICKS = 40;
     private static final int STUN_TICKS = 40;
     private static final int SWARM_INTERVAL = 400;
-    private static final double DAMAGE = 9;
+    private static final io.github.amitelia.occultech.boss.Mechanic BITE = io.github.amitelia.occultech.boss.Mechanic.of("NIGHT_MATRIARCH", "Bite", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
 
     private Phantom matriarch;
     private Location diveTarget;
@@ -54,7 +57,7 @@ public final class NightMatriarch extends BossBehavior {
             p.setCustomNameVisible(true);
             p.setShouldBurnInDay(false);
             BossFight.setAttribute(p, Attribute.MAX_HEALTH, 260);
-            BossFight.setAttribute(p, Attribute.ATTACK_DAMAGE, DAMAGE);
+            fight.label(p, BITE);
             BossFight.setAttribute(p, Attribute.SCALE, 4);
             BossFight.setAttribute(p, Attribute.FOLLOW_RANGE, 40);
         });
@@ -90,7 +93,7 @@ public final class NightMatriarch extends BossBehavior {
         boolean isNight = time >= 13000 && time <= 23000;
         if (isNight != night) {
             night = isNight;
-            BossFight.setAttribute(matriarch, Attribute.ATTACK_DAMAGE, DAMAGE * (night ? 1.2 : 1));
+            BossFight.setAttribute(matriarch, Attribute.ATTACK_DAMAGE, BITE.damage() * (night ? 1.2 : 1));
             if (night) {
                 fight.broadcast("&5Night falls - the Matriarch grows stronger!");
             }
@@ -114,6 +117,7 @@ public final class NightMatriarch extends BossBehavior {
                     p.setShouldBurnInDay(false);
                     BossFight.setAttribute(p, Attribute.MAX_HEALTH, 12);
                     p.setHealth(12);
+                    fight.label(p, SWARM);
                 });
             }
         }
@@ -179,7 +183,7 @@ public final class NightMatriarch extends BossBehavior {
         at.getWorld().spawnParticle(Particle.SONIC_BOOM, at.clone().add(0, 0.5, 0), 1);
         for (Player player : fight.players()) {
             if (player.getLocation().distanceSquared(at) <= 9) {
-                player.damage(night ? 8.4 : 7, matriarch);
+                fight.hit(player, DIVE, DIVE.damage() * (night ? 1.2 : 1), matriarch);
             }
         }
         fight.broadcast("&7The Matriarch is grounded - &fattack!");

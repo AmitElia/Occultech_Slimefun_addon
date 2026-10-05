@@ -13,10 +13,10 @@ public final class Tier1Bosses {
 
     public static List<BossBlueprint> all() {
         return List.of(
-            new BossBlueprint("THE_UNBOUND", TheUnbound::new),
-            new BossBlueprint("NIGHT_MATRIARCH", NightMatriarch::new),
-            new BossBlueprint("MIRRORED_MAGUS", MirroredMagus::new),
-            new BossBlueprint("ARCHEVOKER", Archevoker::new)
+            new BossBlueprint("THE_UNBOUND", TheUnbound.class, TheUnbound::new),
+            new BossBlueprint("NIGHT_MATRIARCH", NightMatriarch.class, NightMatriarch::new),
+            new BossBlueprint("MIRRORED_MAGUS", MirroredMagus.class, MirroredMagus::new),
+            new BossBlueprint("ARCHEVOKER", Archevoker.class, Archevoker::new)
         );
     }
 }

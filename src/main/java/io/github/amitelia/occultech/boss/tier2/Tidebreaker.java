@@ -42,9 +42,9 @@ public final class Tidebreaker extends BossBehavior {
     private static final int CHARGE_TICKS = 25;
     private static final int WINDED_TICKS = 40;
     private static final int VOLLEY_INTERVAL = 200;
-    private static final double RAM_DAMAGE = 38;
-    private static final double MELEE_DAMAGE = 28;
-    private static final double TRIDENT_DAMAGE = 24;
+    private static final io.github.amitelia.occultech.boss.Mechanic RAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TIDEBREAKER", "Ram", 38, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic MELEE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TIDEBREAKER", "Trident thrust", 28, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic TRIDENT_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("TIDEBREAKER", "Trident volley", 24, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
 
     private Drowned rider;
     private ZombieNautilus mount;
@@ -126,7 +126,7 @@ public final class Tidebreaker extends BossBehavior {
         if (now >= nextMelee && target.getLocation().distanceSquared(rider.getLocation()) <= 16) {
             nextMelee = now + 20;
             rider.swingMainHand();
-            target.damage(MELEE_DAMAGE, rider);
+            fight.hit(target, MELEE_DAMAGE, rider);
         }
         if (every(VOLLEY_INTERVAL)) {
             volley(target);
@@ -186,7 +186,7 @@ public final class Tidebreaker extends BossBehavior {
         for (Player player : fight.players()) {
             if (!rammed.contains(player.getUniqueId()) && player.getLocation().distanceSquared(at) <= 4.5) {
                 rammed.add(player.getUniqueId());
-                player.damage(RAM_DAMAGE, rider);
+                fight.hit(player, RAM_DAMAGE, rider);
                 player.setVelocity(chargeDirection.clone().multiply(1.1).setY(0.5));
             }
         }
@@ -209,7 +209,8 @@ public final class Tidebreaker extends BossBehavior {
         for (int i = -1; i <= 1; i++) {
             Vector direction = aim.clone().rotateAroundY(Math.toRadians(12 * i)).multiply(1.8).add(new Vector(0, 0.12, 0));
             Trident trident = rider.launchProjectile(Trident.class, direction);
-            trident.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, TRIDENT_DAMAGE);
+            trident.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, TRIDENT_DAMAGE.damage());
+            fight.label(trident, TRIDENT_DAMAGE);
         }
         eye.getWorld().playSound(eye, Sound.ITEM_TRIDENT_THROW, 1.5F, 0.8F);
     }

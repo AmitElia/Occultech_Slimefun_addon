@@ -700,7 +700,53 @@ public final class BossService implements Listener {
     @EventHandler
     public void onPlayerDeath(org.bukkit.event.entity.PlayerDeathEvent e) {
         for (BossFight fight : fights.values()) {
+            if (fight.inArena(e.getEntity())) {
+                fight.log().died(e.getEntity().getUniqueId(), e.getEntity().getName());
+            }
             fight.excuse(e.getEntity());
+        }
+    }
+
+    /**
+     * The combat log (Session B1): every point of damage a fight does to a player, by mechanic. Scripted hits name their
+     * mechanic ({@link BossFight#hit}); melee and projectiles carry it on the entity ({@link BossFight#label}); poison,
+     * wither and the like count as effects of the fight the player stands in.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerDamaged(EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof Player player)) {
+            return;
+        }
+        BossFight.Hit hit = BossFight.CURRENT.get();
+        BossFight fight = hit == null ? null : hit.fight();
+        String label = hit == null ? null : hit.label();
+        if (fight == null && e instanceof EntityDamageByEntityEvent byEntity) {
+            Entity direct = byEntity.getDamager();
+            Entity source = direct instanceof Projectile projectile && projectile.getShooter() instanceof Entity shooter ? shooter : direct;
+            fight = fightOf(source);
+            if (fight == null) {
+                return;
+            }
+            label = direct.getPersistentDataContainer().get(BossFight.MECHANIC, PersistentDataType.STRING);
+            if (label == null) {
+                label = source.getPersistentDataContainer().get(BossFight.MECHANIC, PersistentDataType.STRING);
+            }
+            if (label == null || direct instanceof Projectile && label.equals(source.getPersistentDataContainer().get(BossFight.MECHANIC, PersistentDataType.STRING))) {
+                String kind = direct instanceof Projectile ? "Projectile: " + direct.getType().name().toLowerCase() : "Melee";
+                label = kind + " (" + source.getType().name().toLowerCase() + ")";
+            }
+        }
+        if (fight == null) {
+            for (BossFight candidate : fights.values()) {
+                if (candidate.inArena(player)) {
+                    fight = candidate;
+                    label = "Effect: " + e.getCause().name().toLowerCase();
+                    break;
+                }
+            }
+        }
+        if (fight != null) {
+            fight.log().taken(player.getUniqueId(), player.getName(), label, e.getDamage(), e.getFinalDamage());
         }
     }
 

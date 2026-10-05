@@ -37,10 +37,10 @@ public final class CorruptedColossus extends BossBehavior {
 
     private static final double HEALTH = 400;
     private static final double ARMOR = 0.1;
-    private static final double MELEE = 55;
-    private static final double SLAM_DAMAGE = 55;
+    private static final io.github.amitelia.occultech.boss.Mechanic SMASH = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Smash", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SLAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Slam", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final double SLAM_RADIUS = 7;
-    private static final double PYLON_BEAM = 18;
+    private static final io.github.amitelia.occultech.boss.Mechanic PYLON_BEAM = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Pylon beam", 18, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
     private static final int PYLONS = 3;
     private static final int PYLON_INTERVAL = 600;
     private static final Color CORRUPT = Color.fromRGB(150, 40, 200);
@@ -65,7 +65,7 @@ public final class CorruptedColossus extends BossBehavior {
             g.setCustomNameVisible(true);
             g.setPlayerCreated(false);
             BossFight.setAttribute(g, Attribute.MAX_HEALTH, HEALTH);
-            BossFight.setAttribute(g, Attribute.ATTACK_DAMAGE, MELEE);
+            fight.label(g, SMASH);
             BossFight.setAttribute(g, Attribute.SCALE, 1.8);
             BossFight.setAttribute(g, Attribute.FOLLOW_RANGE, 48);
         });
@@ -167,7 +167,7 @@ public final class CorruptedColossus extends BossBehavior {
             Location at = player.getLocation();
             boolean grounded = at.getY() - Abyss.groundY(at) < 0.6;
             if (grounded && at.distanceSquared(slamCenter) <= SLAM_RADIUS * SLAM_RADIUS) {
-                player.damage(SLAM_DAMAGE, colossus);
+                fight.hit(player, SLAM_DAMAGE, colossus);
                 player.setVelocity(new Vector(0, 0.9, 0));
             }
         }

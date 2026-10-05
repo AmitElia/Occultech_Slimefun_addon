@@ -44,9 +44,9 @@ public final class DrownedElder extends BossBehavior {
     private static final int BEAM_INTERVAL_SURGED = 110;
     private static final int GUARDIAN_INTERVAL = 400;
     private static final int ADD_BEAM_INTERVAL = 80;
-    private static final double BEAM_DAMAGE = 24;
-    private static final double ADD_BEAM_DAMAGE = 10;
-    private static final double WAVE_DAMAGE = 36;
+    private static final io.github.amitelia.occultech.boss.Mechanic BEAM_HIT = io.github.amitelia.occultech.boss.Mechanic.of("DROWNED_ELDER", "Beam", 24, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic ADD_BEAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DROWNED_ELDER", "Guardian beam", 10, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic WAVE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DROWNED_ELDER", "Tidal wave", 36, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final double WAVE_SPEED = 0.6;
     private static final int WAVES = 3;
     private static final int WAVE_GAP = 40;
@@ -124,7 +124,7 @@ public final class DrownedElder extends BossBehavior {
             List<Player> players = new ArrayList<>(fight.players());
             Collections.shuffle(players);
             for (int i = 0; i < Math.min(3, players.size()); i++) {
-                beams.add(new Abyss.Beam(elder, players.get(i), now, 40, BEAM_DAMAGE, BEAM));
+                beams.add(new Abyss.Beam(elder, players.get(i), now, 40, BEAM_HIT, BEAM));
             }
         }
         beams.forEach(beam -> beam.step(fight, now));
@@ -216,7 +216,7 @@ public final class DrownedElder extends BossBehavior {
                 boolean grounded = player.getLocation().getY() - Abyss.groundY(player.getLocation()) < 0.6;
                 if (!hit.contains(player.getUniqueId()) && Math.abs(distance - radius) <= 1.5 && grounded) {
                     hit.add(player.getUniqueId());
-                    player.damage(WAVE_DAMAGE, elder);
+                    fight.hit(player, WAVE_DAMAGE, elder);
                     Vector push = player.getLocation().toVector().subtract(waveCenter.toVector()).setY(0);
                     if (push.lengthSquared() > 0.01) {
                         player.setVelocity(push.normalize().multiply(0.6).setY(0.3));

@@ -36,6 +36,10 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class TheUnbound extends BossBehavior {
 
+    private static final io.github.amitelia.occultech.boss.Mechanic SWING = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Axe swing", 11, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic CLEAVE = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Cleave", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic THRALL = io.github.amitelia.occultech.boss.Mechanic.of("THE_UNBOUND", "Thrall", 3, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+
     private static final Particle.DustOptions WEDGE = new Particle.DustOptions(Color.fromRGB(220, 30, 30), 1.3F);
     private static final int CLEAVE_INTERVAL = 120;
     private static final int CLEAVE_WARNING = 25;
@@ -62,7 +66,7 @@ public final class TheUnbound extends BossBehavior {
             v.setCustomNameVisible(true);
             v.getEquipment().setItemInMainHand(new ItemStack(Material.IRON_AXE));
             BossFight.setAttribute(v, Attribute.MAX_HEALTH, 320);
-            BossFight.setAttribute(v, Attribute.ATTACK_DAMAGE, 11);
+            fight.label(v, SWING);
             BossFight.setAttribute(v, Attribute.SCALE, 1.3);
             BossFight.setAttribute(v, Attribute.MOVEMENT_SPEED, BASE_SPEED);
             BossFight.setAttribute(v, Attribute.KNOCKBACK_RESISTANCE, 0.5);
@@ -100,6 +104,7 @@ public final class TheUnbound extends BossBehavior {
                     h.setCustomName(ChatColor.GRAY + "Unbound Thrall");
                     BossFight.setAttribute(h, Attribute.MAX_HEALTH, 30);
                     h.setHealth(30);
+                    fight.label(h, THRALL);
                 });
                 if (thrall != null) {
                     thralls.add(thrall);
@@ -171,7 +176,11 @@ public final class TheUnbound extends BossBehavior {
         for (LivingEntity victim : victims) {
             Vector to = victim.getLocation().toVector().subtract(origin.toVector()).setY(0);
             if (to.length() <= CLEAVE_RANGE && to.lengthSquared() > 0.01 && Math.toDegrees(to.angle(cleaveDirection)) <= 45) {
-                victim.damage(victim instanceof Player ? 9 : 40, unbound);
+                if (victim instanceof Player) {
+                    fight.hit(victim, CLEAVE, unbound);
+                } else {
+                    victim.damage(40, unbound);   // its own thralls get cut down too
+                }
                 victim.setVelocity(to.normalize().multiply(0.8).setY(0.35));
             }
         }

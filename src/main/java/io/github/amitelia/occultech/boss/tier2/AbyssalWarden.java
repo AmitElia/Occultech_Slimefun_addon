@@ -39,9 +39,9 @@ public final class AbyssalWarden extends BossBehavior {
     private static final int BEAM_INTERVAL = 120;
     private static final int BEAM_INTERVAL_ENRAGED = 80;
     private static final int SPIKE_INTERVAL = 240;
-    private static final double BEAM_DAMAGE = 20;
-    private static final double SPIKE_DAMAGE = 30;
-    private static final double LASH_DAMAGE = 26;
+    private static final io.github.amitelia.occultech.boss.Mechanic BEAM_HIT = io.github.amitelia.occultech.boss.Mechanic.of("ABYSSAL_WARDEN", "Beam", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic SPIKE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("ABYSSAL_WARDEN", "Spikes", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic LASH_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("ABYSSAL_WARDEN", "Lash", 26, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final double LASH_RANGE = 3.5;
 
     private Guardian warden;
@@ -109,7 +109,7 @@ public final class AbyssalWarden extends BossBehavior {
             List<Player> players = new ArrayList<>(fight.players());
             java.util.Collections.shuffle(players);
             for (int i = 0; i < Math.min(enraged ? 2 : 1, players.size()); i++) {
-                beams.add(new Abyss.Beam(warden, players.get(i), now, 40, BEAM_DAMAGE, BEAM));
+                beams.add(new Abyss.Beam(warden, players.get(i), now, 40, BEAM_HIT, BEAM));
             }
         }
         beams.forEach(beam -> beam.step(fight, now));
@@ -118,7 +118,7 @@ public final class AbyssalWarden extends BossBehavior {
         if (now >= nextLash) {
             for (Player player : fight.players()) {
                 if (player.getLocation().add(0, 1, 0).distanceSquared(warden.getLocation().add(0, 1, 0)) <= LASH_RANGE * LASH_RANGE) {
-                    player.damage(LASH_DAMAGE, warden);
+                    fight.hit(player, LASH_DAMAGE, warden);
                     warden.getWorld().playSound(warden.getLocation(), Sound.ENTITY_GUARDIAN_HURT, 1F, 0.5F);
                     nextLash = now + 20;
                 }
@@ -149,7 +149,7 @@ public final class AbyssalWarden extends BossBehavior {
         io.github.amitelia.occultech.boss.AirEffects.burst(fight, ground(at).add(0, 1, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.IMPACT, SPIKES, 5F);
         for (Player player : fight.players()) {
             if (player.getLocation().distanceSquared(ground(at)) <= 25) {
-                player.damage(SPIKE_DAMAGE, warden);
+                fight.hit(player, SPIKE_DAMAGE, warden);
                 Vector push = player.getLocation().toVector().subtract(at.toVector()).setY(0);
                 if (push.lengthSquared() > 0.01) {
                     player.setVelocity(push.normalize().multiply(0.9).setY(0.35));

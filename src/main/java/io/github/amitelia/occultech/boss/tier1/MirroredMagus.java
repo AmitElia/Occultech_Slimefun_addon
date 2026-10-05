@@ -36,6 +36,8 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class MirroredMagus extends BossBehavior {
 
+    private static final io.github.amitelia.occultech.boss.Mechanic ARROW = io.github.amitelia.occultech.boss.Mechanic.of("MIRRORED_MAGUS", "Arrow", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+
     private static final int DECOY_INTERVAL = 300;
     private static final int DECOY_COUNT = 3;
 

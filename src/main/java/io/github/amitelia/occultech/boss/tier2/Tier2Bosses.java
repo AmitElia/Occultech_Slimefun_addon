@@ -13,11 +13,11 @@ public final class Tier2Bosses {
 
     public static List<BossBlueprint> all() {
         return List.of(
-            new BossBlueprint("ABYSSAL_WARDEN", AbyssalWarden::new),
-            new BossBlueprint("TIDEBREAKER", Tidebreaker::new),
-            new BossBlueprint("BLAZE_CHOIR", BlazeChoir::new),
-            new BossBlueprint("TEMPEST", Tempest::new),
-            new BossBlueprint("DROWNED_ELDER", DrownedElder::new)
+            new BossBlueprint("ABYSSAL_WARDEN", AbyssalWarden.class, AbyssalWarden::new),
+            new BossBlueprint("TIDEBREAKER", Tidebreaker.class, Tidebreaker::new),
+            new BossBlueprint("BLAZE_CHOIR", BlazeChoir.class, BlazeChoir::new),
+            new BossBlueprint("TEMPEST", Tempest.class, Tempest::new),
+            new BossBlueprint("DROWNED_ELDER", DrownedElder.class, DrownedElder::new)
         );
     }
 }

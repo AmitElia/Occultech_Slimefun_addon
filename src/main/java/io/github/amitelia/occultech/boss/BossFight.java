@@ -73,7 +73,62 @@ public final class BossFight {
     private static final double BONUS_DROP_CHANCE = 0.25;
 
     /** A zone on the ground that affects players standing in it, drawn with a colored lingering cloud. */
-    private record Hazard(Location center, double radius, int until, Consumer<Player> effect, Entity visual) {}
+    private record Hazard(Location center, double radius, int until, Consumer<Player> effect, Entity visual, String label) {}
+
+    // ------------------------------------------------------------------ Session B1: every hit attributed
+
+    /** The fight and mechanic of the damage being dealt right now (read by the combat log's damage listener). */
+    record Hit(BossFight fight, String label) {}
+
+    static final ThreadLocal<Hit> CURRENT = new ThreadLocal<>();
+    /** Entity data: the mechanic a creature's melee or a projectile deals (for the combat log). */
+    static final org.bukkit.NamespacedKey MECHANIC = new org.bukkit.NamespacedKey("occultech", "mechanic");
+
+    private CombatLog log;
+
+    CombatLog log() {
+        if (log == null) {
+            log = new CombatLog(spec.id(), spec.tier());
+        }
+        return log;
+    }
+
+    /** Lines for {@code /occultech fights stats}. */
+    @Nonnull
+    public List<String> stats() {
+        return log().summary(elapsed);
+    }
+
+    /**
+     * Deals {@code mechanic} to {@code victim} from {@code source}: every scripted hit goes through here, so the combat
+     * log knows what hurt whom. Magic ignores armor (Protection still counts), like the vanilla guardian laser.
+     */
+    public void hit(LivingEntity victim, Mechanic mechanic, LivingEntity source) {
+        hit(victim, mechanic, mechanic.damage(), source);
+    }
+
+    /** As {@link #hit(LivingEntity, Mechanic, LivingEntity)} with an amount worked out on the spot (a reflected share). */
+    public void hit(LivingEntity victim, Mechanic mechanic, double amount, LivingEntity source) {
+        CURRENT.set(new Hit(this, mechanic.name()));
+        try {
+            if (mechanic.ignoresArmor()) {
+                victim.damage(amount, org.bukkit.damage.DamageSource.builder(org.bukkit.damage.DamageType.INDIRECT_MAGIC)
+                    .withCausingEntity(source).withDirectEntity(source).build());
+            } else {
+                victim.damage(amount, source);
+            }
+        } finally {
+            CURRENT.remove();
+        }
+    }
+
+    /** Marks a creature's melee, or a projectile, as {@code mechanic} (and gives a creature that attack damage). */
+    public void label(Entity entity, Mechanic mechanic) {
+        entity.getPersistentDataContainer().set(MECHANIC, PersistentDataType.STRING, mechanic.name());
+        if (entity instanceof LivingEntity living && mechanic.kind() != Mechanic.Kind.PROJECTILE) {
+            setAttribute(living, Attribute.ATTACK_DAMAGE, mechanic.damage());
+        }
+    }
 
     /** Auras following their bosses (Session O5, phase 3). */
     private final List<AirEffects.Aura> auras = new ArrayList<>();
@@ -254,7 +309,7 @@ public final class BossFight {
         Consumer<Player> effect) {
         if (zone != null && FloorDecals.enabled()) {
             Entity surface = FloorDecals.zone(this, at, radius, durationTicks, zone);
-            hazards.add(new Hazard(at.clone(), radius, elapsed + durationTicks, effect, surface));
+            hazards.add(new Hazard(at.clone(), radius, elapsed + durationTicks, effect, surface, "Zone: " + zone.name().toLowerCase()));
             return;
         }
         AreaEffectCloud cloud = spawnExtra(AreaEffectCloud.class, at, c -> {
@@ -264,7 +319,7 @@ public final class BossFight {
             c.setWaitTime(0);
             c.setParticle(Particle.ENTITY_EFFECT, color);
         });
-        hazards.add(new Hazard(at.clone(), radius, elapsed + durationTicks, effect, cloud));
+        hazards.add(new Hazard(at.clone(), radius, elapsed + durationTicks, effect, cloud, zone == null ? "Hazard" : "Zone: " + zone.name().toLowerCase()));
     }
 
     /** A short-lived colored circle warning where something will hit. */
@@ -512,7 +567,25 @@ public final class BossFight {
         }
         damage.merge(player.getUniqueId(), Math.min(modified, boss.getHealth()), Double::sum);
         lastBossDamaged = elapsed;
+        log().dealt(player.getUniqueId(), player.getName(), weaponOf(player), raw, modified, elapsed);
         return modified;
+    }
+
+    private static String weaponOf(Player player) {
+        if (Keys.HELD_WEAPON_HIT.get()) {
+            ItemStack using = player.getActiveItem();
+            ItemStack held = using.getType().isAir() ? player.getInventory().getItemInMainHand() : using;
+            return "held: " + itemName(held);
+        }
+        return itemName(player.getInventory().getItemInMainHand());
+    }
+
+    private static String itemName(ItemStack item) {
+        if (item == null || item.getType().isAir()) {
+            return "fist";
+        }
+        return item.hasItemMeta() && item.getItemMeta().hasDisplayName()
+            ? org.bukkit.ChatColor.stripColor(item.getItemMeta().getDisplayName()) : item.getType().name().toLowerCase();
     }
 
     void onPlayerHitByFight() {
@@ -715,6 +788,9 @@ public final class BossFight {
         objects.clear();
         bar.removeAll();
         service.releaseChunks(arenaChunks());
+        if (log != null) {
+            log.write(new java.io.File(service.plugin().getDataFolder(), "combat-log"), how.name(), elapsed, playersAtStart, healthMultiplier());
+        }
         if (how != Result.SHUTDOWN) {
             service.hooks().clearActive(altar);
         }
@@ -858,7 +934,12 @@ public final class BossFight {
                 double dx = at.getX() - hazard.center().getX();
                 double dz = at.getZ() - hazard.center().getZ();
                 if (dx * dx + dz * dz <= hazard.radius() * hazard.radius() && Math.abs(at.getY() - hazard.center().getY()) < 2) {
-                    hazard.effect().accept(player);
+                    CURRENT.set(new Hit(this, hazard.label()));
+                    try {
+                        hazard.effect().accept(player);
+                    } finally {
+                        CURRENT.remove();
+                    }
                 }
             }
         }

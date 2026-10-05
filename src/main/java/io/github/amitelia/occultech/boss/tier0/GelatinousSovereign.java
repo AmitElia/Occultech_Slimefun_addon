@@ -30,6 +30,11 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class GelatinousSovereign extends BossBehavior {
 
+    private static final io.github.amitelia.occultech.boss.Mechanic CRUSH = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Crush", 7, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SHOCKWAVE = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Shockwave", 6, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic ACID_BURN = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Acid", 2, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SHARD = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Shard", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+
     private static final Color LIME = Color.fromRGB(120, 230, 60);
     private static final Color ACID = Color.fromRGB(160, 255, 40);
     private static final int SLAM_INTERVAL = 160;
@@ -59,7 +64,7 @@ public final class GelatinousSovereign extends BossBehavior {
             s.setCustomName(ChatColor.GREEN + "Gelatinous Sovereign");
             s.setCustomNameVisible(true);
             BossFight.setAttribute(s, Attribute.MAX_HEALTH, BASE_HEALTH);
-            BossFight.setAttribute(s, Attribute.ATTACK_DAMAGE, 7);
+            fight.label(s, CRUSH);
             BossFight.setAttribute(s, Attribute.KNOCKBACK_RESISTANCE, 0.8);
             BossFight.setAttribute(s, Attribute.FOLLOW_RANGE, 32);
             s.setHealth(BASE_HEALTH);
@@ -88,7 +93,7 @@ public final class GelatinousSovereign extends BossBehavior {
 
         if (enraged && every(PUDDLE_INTERVAL)) {
             Location at = sovereign.getLocation();
-            fight.addHazard(at, 2.5, 200, ACID, FloorDecals.Zone.ACID, player -> player.damage(2, sovereign));
+            fight.addHazard(at, 2.5, 200, ACID, FloorDecals.Zone.ACID, player -> fight.hit(player, ACID_BURN, sovereign));
             at.getWorld().playSound(at, Sound.BLOCK_SLIME_BLOCK_FALL, 1F, 0.6F);
         }
     }
@@ -123,7 +128,7 @@ public final class GelatinousSovereign extends BossBehavior {
         io.github.amitelia.occultech.boss.AirEffects.burst(fight, at.clone().add(0, 0.8, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.IMPACT, LIME, 4F);
         for (Player player : fight.players()) {
             if (player.getLocation().distanceSquared(at) <= 16 && player.isOnGround()) {
-                player.damage(6, sovereign);
+                fight.hit(player, SHOCKWAVE, sovereign);
                 Vector push = player.getLocation().toVector().subtract(at.toVector()).setY(0);
                 if (push.lengthSquared() > 0.01) {
                     player.setVelocity(push.normalize().multiply(0.9).setY(0.4));
@@ -142,6 +147,7 @@ public final class GelatinousSovereign extends BossBehavior {
                 s.setCustomName(ChatColor.GREEN + "Sovereign Shard");
                 BossFight.setAttribute(s, Attribute.MAX_HEALTH, 40);
                 s.setHealth(40);
+                fight.label(s, SHARD);
             });
             if (shard != null) {
                 shards.add(shard);
@@ -180,7 +186,7 @@ public final class GelatinousSovereign extends BossBehavior {
         // setSize resets size-based attributes, so re-apply ours afterwards and keep the health fraction
         sovereign.setSize(4);
         BossFight.setAttribute(sovereign, Attribute.MAX_HEALTH, max);
-        BossFight.setAttribute(sovereign, Attribute.ATTACK_DAMAGE, 7);
+        fight.label(sovereign, CRUSH);
         BossFight.setAttribute(sovereign, Attribute.KNOCKBACK_RESISTANCE, 0.8);
         BossFight.setAttribute(sovereign, Attribute.MOVEMENT_SPEED, 0.5);
         sovereign.setHealth(Math.max(1, max * fraction));

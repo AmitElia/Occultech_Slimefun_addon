@@ -136,15 +136,6 @@ public final class Abyss {
     }
 
     /**
-     * Magic damage from a fight creature: ignores armor like the vanilla guardian laser (Protection still counts).
-     * Used for beams, whose raw numbers would otherwise vanish into max-enchanted netherite.
-     */
-    public static void magic(Player player, double amount, LivingEntity source) {
-        player.damage(amount, org.bukkit.damage.DamageSource.builder(org.bukkit.damage.DamageType.INDIRECT_MAGIC)
-            .withCausingEntity(source).withDirectEntity(source).build());
-    }
-
-    /**
      * A beam that tracks a player while it charges and turns white for its last 0.75s. Its aim follows the player until
      * the step before it fires (0.25s), so standing still or walking gets you hit and a sideways sprint dodges it.
      * Draw it every step with {@link #step}; it fires once.
@@ -159,7 +150,7 @@ public final class Abyss {
         private final LivingEntity source;
         private final Player target;
         private final int fireAt;
-        private final double damage;
+        private final io.github.amitelia.occultech.boss.Mechanic mechanic;
         private final Color color;
         private Vector aim;
         private boolean done;
@@ -169,8 +160,8 @@ public final class Abyss {
         private boolean warned;
         @Nullable private final java.util.function.Supplier<Location> origin;
 
-        public Beam(LivingEntity source, Player target, int now, int chargeTicks, double damage, Color color) {
-            this(source, null, target, now, chargeTicks, damage, color);
+        public Beam(LivingEntity source, Player target, int now, int chargeTicks, io.github.amitelia.occultech.boss.Mechanic mechanic, Color color) {
+            this(source, null, target, now, chargeTicks, mechanic, color);
         }
 
         /**
@@ -178,12 +169,12 @@ public final class Abyss {
          * (the pylon broke). Null origin: from the source's eyes.
          */
         public Beam(LivingEntity source, @Nullable java.util.function.Supplier<Location> origin, Player target, int now, int chargeTicks,
-            double damage, Color color) {
+            io.github.amitelia.occultech.boss.Mechanic mechanic, Color color) {
             this.origin = origin;
             this.source = source;
             this.target = target;
             this.fireAt = now + chargeTicks;
-            this.damage = damage;
+            this.mechanic = mechanic;
             this.color = color;
             this.startedAt = now;
             source.getWorld().playSound(source.getLocation(), Sound.ENTITY_GUARDIAN_ATTACK, 1.5F, 0.6F);
@@ -245,7 +236,7 @@ public final class Abyss {
             eye.getWorld().playSound(eye, Sound.ENTITY_ELDER_GUARDIAN_HURT, 1.5F, 0.6F);
             List<Player> hit = alongBeam(fight.players(), eye, aim, eye.distance(end), WIDTH);
             for (Player player : hit) {
-                magic(player, damage, source);
+                fight.hit(player, mechanic, source);
                 io.github.amitelia.occultech.boss.AirEffects.burst(fight, player.getLocation().add(0, 1.1, 0), io.github.amitelia.occultech.boss.AirEffects.Burst.CRACKLE, color, 1.8F);
             }
             return hit;

@@ -32,6 +32,9 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class BroodMother extends BossBehavior {
 
+    private static final io.github.amitelia.occultech.boss.Mechanic BITE = io.github.amitelia.occultech.boss.Mechanic.of("BROOD_MOTHER", "Bite", 7, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SPIDERLING = io.github.amitelia.occultech.boss.Mechanic.of("BROOD_MOTHER", "Spiderling bite", 2, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+
     private static final Color WEB = Color.fromRGB(235, 235, 235);
     private static final int SAC_INTERVAL = 240;
     private static final int HATCH_DELAY = 120;
@@ -59,7 +62,7 @@ public final class BroodMother extends BossBehavior {
             s.setCustomName(ChatColor.DARK_RED + "Brood Mother");
             s.setCustomNameVisible(true);
             BossFight.setAttribute(s, Attribute.MAX_HEALTH, 220);
-            BossFight.setAttribute(s, Attribute.ATTACK_DAMAGE, 7);
+            fight.label(s, BITE);
             BossFight.setAttribute(s, Attribute.SCALE, 2.2);
             BossFight.setAttribute(s, Attribute.MOVEMENT_SPEED, 0.32);
             BossFight.setAttribute(s, Attribute.KNOCKBACK_RESISTANCE, 0.6);
@@ -136,6 +139,7 @@ public final class BroodMother extends BossBehavior {
             fight.spawnAdd(CaveSpider.class, at, spider -> {
                 BossFight.setAttribute(spider, Attribute.MAX_HEALTH, 12);
                 spider.setHealth(12);
+                fight.label(spider, SPIDERLING);
             });
         }
     }

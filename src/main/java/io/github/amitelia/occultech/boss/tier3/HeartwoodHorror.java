@@ -35,16 +35,16 @@ public final class HeartwoodHorror extends BossBehavior {
 
     private static final double HEALTH = 320;
     private static final double ARMOR = 0.125;
-    private static final double MELEE = 50;
+    private static final io.github.amitelia.occultech.boss.Mechanic SWIPE = io.github.amitelia.occultech.boss.Mechanic.of("HEARTWOOD_HORROR", "Swipe", 50, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final int HEARTS = 4;
     private static final int HEART_HITS = 12;
     /** Staring at it this long (ticks) makes it snap and lunge at the starer. */
     private static final int STARE_LIMIT = 60;
     private static final int CREAK_INTERVAL = 240;
-    private static final double LUNGE_DAMAGE = 50;
+    private static final io.github.amitelia.occultech.boss.Mechanic LUNGE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("HEARTWOOD_HORROR", "Lunge", 50, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final int VULNERABLE_TICKS = 400;
     private static final int SNARE_INTERVAL = 160;
-    private static final double SNARE_DAMAGE = 30;
+    private static final io.github.amitelia.occultech.boss.Mechanic SNARE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("HEARTWOOD_HORROR", "Root snare", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final Color ROOTS = Color.fromRGB(90, 70, 50);
 
     private Creaking horror;
@@ -70,7 +70,7 @@ public final class HeartwoodHorror extends BossBehavior {
             c.setCustomName(ChatColor.GOLD + "Heartwood Horror");
             c.setCustomNameVisible(true);
             BossFight.setAttribute(c, Attribute.MAX_HEALTH, HEALTH);
-            BossFight.setAttribute(c, Attribute.ATTACK_DAMAGE, MELEE);
+            fight.label(c, SWIPE);
             BossFight.setAttribute(c, Attribute.SCALE, 1.6);
             BossFight.setAttribute(c, Attribute.FOLLOW_RANGE, 48);
             BossFight.setAttribute(c, Attribute.KNOCKBACK_RESISTANCE, 1);
@@ -154,7 +154,7 @@ public final class HeartwoodHorror extends BossBehavior {
             snareSpot.getWorld().playSound(snareSpot, Sound.BLOCK_ROOTS_BREAK, 2F, 0.6F);
             for (Player player : fight.players()) {
                 if (player.getLocation().distanceSquared(snareSpot) <= 6.25) {
-                    player.damage(SNARE_DAMAGE, horror);
+                    fight.hit(player, SNARE_DAMAGE, horror);
                     player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 4));
                 }
             }
@@ -195,7 +195,7 @@ public final class HeartwoodHorror extends BossBehavior {
         horror.teleport(spot);
         horror.swingMainHand();
         horror.getWorld().playSound(spot, Sound.ENTITY_CREAKING_ATTACK, 2F, 0.6F);
-        player.damage(LUNGE_DAMAGE, horror);
+        fight.hit(player, LUNGE_DAMAGE, horror);
         horror.setTarget(player);
     }
 

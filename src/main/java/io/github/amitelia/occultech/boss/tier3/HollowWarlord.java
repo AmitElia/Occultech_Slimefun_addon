@@ -36,6 +36,8 @@ import io.github.amitelia.occultech.boss.tier2.Abyss;
  */
 public final class HollowWarlord extends BossBehavior {
 
+    private static final io.github.amitelia.occultech.boss.Mechanic GUARD = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Guard", 25, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+
     /** The soul chains to the guards shielding it, drawn in the air (Session O5). */
     private final java.util.Map<WitherSkeleton, io.github.amitelia.occultech.boss.AirEffects.Streak> chains = new java.util.HashMap<>();
     /** The soul halo over it while its guards shield it. */
@@ -44,8 +46,8 @@ public final class HollowWarlord extends BossBehavior {
     private static final double HEALTH = 400;
     private static final double ARMOR = 0.18;
     private static final double GUARDED = 0.6;
-    private static final double MELEE = 45;
-    private static final double SWEEP_DAMAGE = 55;
+    private static final io.github.amitelia.occultech.boss.Mechanic BLADE = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Blade", 45, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SWEEP_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Soul sweep", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final double SWEEP_RADIUS = 4.5;
     private static final int SWEEP_INTERVAL = 120;
     private static final int GUARD_INTERVAL = 500;
@@ -71,7 +73,7 @@ public final class HollowWarlord extends BossBehavior {
             w.getEquipment().setLeggings(new ItemStack(Material.NETHERITE_LEGGINGS));
             w.getEquipment().setBoots(new ItemStack(Material.NETHERITE_BOOTS));
             BossFight.setAttribute(w, Attribute.MAX_HEALTH, HEALTH);
-            BossFight.setAttribute(w, Attribute.ATTACK_DAMAGE, MELEE);
+            fight.label(w, BLADE);
             BossFight.setAttribute(w, Attribute.SCALE, 1.8);
             BossFight.setAttribute(w, Attribute.FOLLOW_RANGE, 48);
             BossFight.setAttribute(w, Attribute.KNOCKBACK_RESISTANCE, 1);
@@ -167,7 +169,7 @@ public final class HollowWarlord extends BossBehavior {
         }
         for (Player player : fight.players()) {
             if (player.getLocation().distanceSquared(at) <= SWEEP_RADIUS * SWEEP_RADIUS) {
-                player.damage(SWEEP_DAMAGE, warlord);
+                fight.hit(player, SWEEP_DAMAGE, warlord);
                 player.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 100, 1));
                 Vector push = player.getLocation().toVector().subtract(at.toVector()).setY(0);
                 if (push.lengthSquared() > 0.01) {
@@ -184,7 +186,7 @@ public final class HollowWarlord extends BossBehavior {
                 g.getEquipment().setHelmet(new ItemStack(Material.CHAINMAIL_HELMET));
                 BossFight.setAttribute(g, Attribute.MAX_HEALTH, 60);
                 g.setHealth(60);
-                BossFight.setAttribute(g, Attribute.ATTACK_DAMAGE, 25);
+                fight.label(g, GUARD);
             });
             if (guard != null) {
                 guards.add(guard);

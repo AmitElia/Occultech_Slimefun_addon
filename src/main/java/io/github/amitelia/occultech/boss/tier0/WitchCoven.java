@@ -36,6 +36,8 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class WitchCoven extends BossBehavior {
 
+    private static final io.github.amitelia.occultech.boss.Mechanic HARMING = io.github.amitelia.occultech.boss.Mechanic.of("WITCH_COVEN", "Potion of Harming", 6, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+
     private enum Role {
         HEALER("Healer", ChatColor.GREEN, Color.fromRGB(90, 220, 90)),
         CURSER("Curser", ChatColor.DARK_PURPLE, Color.fromRGB(150, 50, 200)),
@@ -193,6 +195,7 @@ public final class WitchCoven extends BossBehavior {
         velocity.normalize().multiply(Math.min(1.1, 0.35 + distance * 0.06)).setY(0.35 + distance * 0.02);
         ThrownPotion thrown = bomber.launchProjectile(ThrownPotion.class, velocity);
         thrown.setItem(potion);
+        fight.label(thrown, HARMING);
         potions.put(thrown, thrown.getLocation());
         bomber.getWorld().playSound(bomber.getLocation(), Sound.ENTITY_WITCH_THROW, 1F, 1F);
     }

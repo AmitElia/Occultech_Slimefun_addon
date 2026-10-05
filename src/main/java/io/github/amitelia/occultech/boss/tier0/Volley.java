@@ -34,6 +34,8 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class Volley extends BossBehavior {
 
+    private static final io.github.amitelia.occultech.boss.Mechanic ARROW = io.github.amitelia.occultech.boss.Mechanic.of("VOLLEY", "Arrow", 3, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+
     private static final int VOLLEY_INTERVAL = 120;
     private static final int VOLLEY_WARNING = 20;
     private static final int WARD_INTERVAL = 300;
@@ -173,6 +175,7 @@ public final class Volley extends BossBehavior {
         }
         // arrow damage scales with speed: 1.2 x 2.1 ~ 3 per arrow, a full volley ~ 45% of an iron-geared player's health
         arrow.setDamage(1.2);
+        fight.label(arrow, ARROW);
         arrow.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
         archer.getWorld().playSound(from, Sound.ENTITY_SKELETON_SHOOT, 1F, 1.3F);
     }

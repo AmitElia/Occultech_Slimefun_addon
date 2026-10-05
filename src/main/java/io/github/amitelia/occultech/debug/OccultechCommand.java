@@ -182,6 +182,18 @@ public final class OccultechCommand implements TabExecutor {
     /** {@code fights}: every running boss fight; {@code fights end N}: ends fight N (no loot, the catalyst is lost). */
     private void fights(CommandSender sender, String[] args) {
         List<io.github.amitelia.occultech.boss.BossFight> fights = List.copyOf(plugin.rituals().bosses().fights());
+        if (args.length >= 2 && args[1].equalsIgnoreCase("stats")) {
+            if (fights.isEmpty()) {
+                sender.sendMessage("No boss fight is running.");
+            }
+            for (int i = 0; i < fights.size(); i++) {
+                if (args.length == 3 && !args[2].equals(String.valueOf(i + 1))) {
+                    continue;
+                }
+                fights.get(i).stats().forEach(sender::sendMessage);
+            }
+            return;
+        }
         if (args.length == 3 && args[1].equalsIgnoreCase("end")) {
             try {
                 io.github.amitelia.occultech.boss.BossFight fight = fights.get(Integer.parseInt(args[2]) - 1);
@@ -229,7 +241,7 @@ public final class OccultechCommand implements TabExecutor {
             return List.of("clear");
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("fights")) {
-            return List.of("end");
+            return List.of("end", "stats");
         }
         return List.of();
     }

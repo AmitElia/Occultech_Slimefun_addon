@@ -55,14 +55,18 @@ import io.github.amitelia.occultech.core.Keys;
  */
 public final class Gallus extends BossBehavior {
 
+    private static final io.github.amitelia.occultech.boss.Mechanic ECHO_BEAM = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Echo beam", 15, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic YOLK_BURN = io.github.amitelia.occultech.boss.Mechanic.piercing("GALLUS", "Yolk", 6, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic CHICK_JOCKEY = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Chick jockey", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+
     private static final double HEALTH = 500;
     private static final double ARMOR = 0.05;
     private static final double SCALE = 6;
     private static final double RIDER_HEALTH = 120;
-    private static final double JAB = 45;
-    private static final double SLAM = 55;
-    private static final double EGG_HIT = 20;
-    private static final double RIDER_MELEE = 35;
+    private static final io.github.amitelia.occultech.boss.Mechanic JAB = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Lance jab", 45, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SLAM = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Leap slam", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic EGG_HIT = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Egg", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic RIDER_MELEE = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Rider's blade", 35, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final int LEAP_INTERVAL = 200;
     private static final int REMOUNT_INTERVAL = 400;
     private static final int REMOUNT_TIME = 80;
@@ -124,7 +128,7 @@ public final class Gallus extends BossBehavior {
             z.getEquipment().setChestplate(new ItemStack(Material.NETHERITE_CHESTPLATE));
             BossFight.setAttribute(z, Attribute.MAX_HEALTH, RIDER_HEALTH);
             z.setHealth(RIDER_HEALTH);
-            BossFight.setAttribute(z, Attribute.ATTACK_DAMAGE, RIDER_MELEE);
+            fight.label(z, RIDER_MELEE);
             BossFight.setAttribute(z, Attribute.SCALE, 2.6);
             // it can't be killed while mounted in phase 1: the split in phase 2 is where it can fall
             Keys.setUnhittable(z, true);
@@ -233,7 +237,7 @@ public final class Gallus extends BossBehavior {
     private void joust(int now) {
         if (alive(target) && riderMounted() && every(20) && target.getLocation().distanceSquared(gallus.getLocation()) <= 30) {
             rider.swingMainHand();
-            target.damage(JAB, rider);
+            fight.hit(target, JAB, rider);
         }
         leap(now);
         if (every(140)) {
@@ -308,7 +312,7 @@ public final class Gallus extends BossBehavior {
             for (Guardian echo : guardianEchoes) {
                 Player near = fight.nearestPlayer(echo.getLocation());
                 if (near != null) {
-                    beams.add(new Abyss.Beam(echo, near, now, 30, 15, HOLLOW));
+                    beams.add(new Abyss.Beam(echo, near, now, 30, ECHO_BEAM, HOLLOW));
                 }
             }
         }
@@ -410,7 +414,7 @@ public final class Gallus extends BossBehavior {
         at.getWorld().spawnParticle(Particle.CLOUD, at.clone().add(0, 0.3, 0), 60, 3, 0.2, 3, 0.05);
         for (Player player : fight.players()) {
             if (player.getLocation().distanceSquared(at) <= 25) {
-                player.damage(SLAM, gallus);
+                fight.hit(player, SLAM, gallus);
                 player.setVelocity(player.getVelocity().setY(0.8));
             }
         }
@@ -432,7 +436,8 @@ public final class Gallus extends BossBehavior {
             Snowball egg = fight.spawnExtra(Snowball.class, from, s -> {
                 s.setItem(new ItemStack(Material.EGG));
                 s.setShooter(gallus);
-                s.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, EGG_HIT);
+                s.getPersistentDataContainer().set(Keys.DAMAGE, PersistentDataType.DOUBLE, EGG_HIT.damage());
+            fight.label(s, EGG_HIT);
             });
             egg.setVelocity(velocity);
             eggs.put(egg, egg.getLocation());
@@ -451,7 +456,7 @@ public final class Gallus extends BossBehavior {
             Location at = egg.getValue().clone();
             at.setY(Abyss.groundY(at));
             fight.addHazard(at, 2, 80, YOLK, FloorDecals.Zone.YOLK, player -> {
-                Abyss.magic(player, 6, gallus);
+                fight.hit(player, YOLK_BURN, gallus);
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 1));
             });
             at.getWorld().spawnParticle(Particle.ITEM, at.clone().add(0, 0.3, 0), 12, 0.3, 0.1, 0.3, 0.05, new ItemStack(Material.EGG));
@@ -476,7 +481,7 @@ public final class Gallus extends BossBehavior {
             z.setShouldBurnInDay(false);
             BossFight.setAttribute(z, Attribute.MAX_HEALTH, 16);
             z.setHealth(16);
-            BossFight.setAttribute(z, Attribute.ATTACK_DAMAGE, 20);
+            fight.label(z, CHICK_JOCKEY);
         });
         if (jockey != null) {
             chick.addPassenger(jockey);
