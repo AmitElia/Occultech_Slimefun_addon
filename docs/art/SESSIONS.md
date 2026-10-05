@@ -443,6 +443,24 @@ crystal), an onion (eyeblossom).
 apart in value from the tier below (tier-3 steel vs tier-1 steel); anything that is a vanilla model type (shield,
 bow) is designed as that model's texture, not as an icon.
 
+### Hollow Effigy redo (2026-10-04)
+The user: the worst texture in the pack, unclear what it even is - it should hint that Gallus is a chicken but look
+better. The rooster skull on a stake read as a vague bird blob at 1x (a skull in profile has no silhouette people know).
+- **Now a rooster idol:** the weathervane rooster's profile (two peaks, tail and head, with a dip between - the most
+  recognisable chicken silhouette) carved from black deepslate (Session G's ancient-city stone, the Hollow armour's
+  material) on a plinth with sculk creeping up its front. Crimson comb and wattle and a gold beak are what make it a
+  chicken; hollow cyan is the magic: a glowing eye, a crack in the breast, and **a tail of hollow soul-fire** - three
+  sickle tongues curling back, heat-coloured like Session B's soul flame (white core at the rump, dark tips), no
+  outline (emissive). Animated: the tongues flicker, sparks come off the tips, the eye and crack pulse. Hand-drawn
+  letter maps (`EFFIGY_BODY`, `EFFIGY_TAIL` in session_f.py).
+- Iterations: v1 scattered cyan specks (noise) and a stump tail; v2 one long crack read as a sash; v3 an arched stone
+  tail with an inlay line read as a ring/magnet; v4 the fire tail (first clear chicken at 1x) but a big white wedge;
+  v5 three tongues, small hot core; v6 a round breast and rump instead of a box. A variant with a gold saddle (hinting
+  at the jockey) became a gold blob at 1x and broke "one accent" - dropped.
+- **Lesson:** for a creature item, use the creature's best-known silhouette (here the weathervane rooster) and its
+  signature colours (comb, beak); turn its *theme* into the magic part (the Hollowing becomes a soul-fire tail)
+  instead of adding a symbol beside it.
+
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):
 

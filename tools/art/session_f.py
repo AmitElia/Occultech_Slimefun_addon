@@ -96,42 +96,57 @@ def hollow_crystal(frame=0):
     return icon
 
 
-ROOSTER_SKULL = [  # side view, beak to the right, open: R comb/wattle, B bone, b shade, K hollow, C socket fire, G beak
-    "....RR.RR......",
-    "...RRRRRRR.....",
-    "..BBBBKBBBB....",
-    ".BBBBBBKBBBBG..",
-    ".BKKKKBBBBBGGGG",
-    ".BKKCKBBKBGG...",
-    ".BKKKKBBBb..GGG",
-    "..bBBBBBbbGGG..",
-    "...bbbbbbRR....",
+IDOL_STONE = [(20, 20, 24, 255), (36, 36, 43, 255), (53, 53, 62, 255), (74, 74, 84, 255), (98, 98, 108, 255),
+              (126, 126, 136, 255)]   # Session G's ancient-city deepslate, the Hollow armour's stone
+EFFIGY_BODY = [   # side view, facing right: 1-5 stone, s/S sculk, c/C crack light, W eye, r/R/P comb and wattle, g/G/Y beak
+  # 0123456789012345
+    "................",  # 0
+    ".........P.P....",  # 1
+    "........RPRPr...",  # 2
+    "........34432...",  # 3
+    "........3W321GY.",  # 4
+    "........3321RGg.",  # 5
+    "......433322Rr..",  # 6
+    "....4443332c2...",  # 7
+    "...45444332C21..",  # 8
+    "..34333332c221..",  # 9
+    "..23131211c211..",  # 10
+    "....22111111....",  # 11
+    "......2..2......",  # 12
+    "...4555555544...",  # 13
+    "...2s2S2c2s21...",  # 14
+    "................",  # 15
 ]
+# the tail is soul fire: three sickle tongues curling back, heat-coloured (1 dark tips .. 5 white core at the rump)
+EFFIGY_TAIL = [
+    [".11.....", "..22....", "1..32...", "22.332..", ".23.43..", "1.3454..", ".2345...", "..2....."],
+    ["..1.....", ".122....", "...32...", "12.332..", ".23.43..", "..3454..", "12345...", "........"],
+    ["1.......", ".122....", "..232...", "1..332..", "223.43..", "..3454..", "1.345...", ".2......"],
+    [".11.....", "...2....", "..232...", "2..332..", "123.43..", "..3454..", ".2345...", "1......."],
+]
+EFFIGY_SPARKS = [[(5, 1)], [(4, 0)], [], [(5, 0)]]
 
 
 def hollow_effigy(frame=0):
-    """The catalyst that summons Gallus, the Hollow Jockey: a ritual totem - a rooster's skull with its crimson comb and
-    wattle, the eye socket burning hollow cyan, set on a sculk stake bound with twine and hung with black feathers.
-    Animated: the socket flares and a wisp rises from it."""
+    """The catalyst that summons Gallus, the Hollow Jockey: a rooster idol carved from black deepslate on a plinth -
+    crimson comb and wattle, a gold beak, a carved wing, its eye and a crack in its breast lit with hollow light, and its
+    tail a plume of hollow soul-fire (Gallus in the Hollowing). Animated: the tail flickers and sheds sparks, the eye and
+    crack pulse."""
     icon = Icon(16)
-    bone, cr, gd, sc, hc, tw, ink = (RAMPS["bone"], RAMPS["crimson"], RAMPS["gold"], RAMPS["sculk"], RAMPS["hollowcy"],
-                                     RAMPS["twine"], RAMPS["ink"])
-    stake = icon.box(6.0, 9.0, 8.0, 16.0, bevel=0.6)
-    icon.paint(stake, sc, bias=0.25)
-    put(icon, line_px((6, 11), (3, 14)) + [(3, 15)], ink[2])         # black feathers hanging off the binding
-    put(icon, line_px((7, 11), (10, 14)) + [(10, 15)], ink[3])
-    put(icon, [(6, 11), (7, 11), (6, 12), (7, 12)], tw[4])
-    glow = hc[5] if frame % 4 in (1, 2) else hc[4]
-    cols = {"R": cr[3], "B": bone[3], "b": bone[1], "K": sc[0], "C": glow, "G": gd[3]}
-    pixmap(icon, ROOSTER_SKULL, 0, 0, cols)
-    put(icon, [(2, 2), (3, 2), (4, 2), (5, 2)], bone[4])    # aged bone: only the crown of the skull catches light
-    put(icon, [(x, 3) for x in range(8, 12)], bone[2])
-    put(icon, [(13, 5), (12, 6)], gd[2])
-    put(icon, [(5, 0), (4, 1)], cr[5])
-    mask = {(x, y) for y, row in enumerate(ROOSTER_SKULL) for x, c in enumerate(row) if c != "."}
-    icon.outline(Part({p: (0, 0, 1) for p in mask}), [sc[0], sc[0]], over=False)
-    wisp = [[], [(4, 3)], [(5, 2)], [(4, 1)]][frame % 4]
-    put(icon, wisp, hc[4], 200)
+    st, hc, cr, gd, sk = IDOL_STONE, RAMPS["hollowcy"], RAMPS["crimson"], RAMPS["gold"], RAMPS["sculk"]
+    k = frame % 4
+    on = k in (1, 2)
+    pixmap(icon, EFFIGY_TAIL[k], 0, 0, {str(i): hc[i] for i in range(1, 6)})   # emissive: no outline
+    cols = {"1": st[1], "2": st[2], "3": st[3], "4": st[4], "5": st[5], "s": sk[2], "S": sk[3],
+            "c": hc[3] if on else hc[2], "C": hc[4] if on else hc[3], "W": hc[5] if on else hc[4],
+            "r": cr[2], "R": cr[3], "P": cr[4], "g": gd[2], "G": gd[3], "Y": gd[4]}
+    pixmap(icon, EFFIGY_BODY, 0, 0, cols)
+    cells = {(x, y): (0, 0, 1) for y, row in enumerate(EFFIGY_BODY) for x, ch in enumerate(row) if ch != "."}
+    for letters, ramp in (("rRP", cr), ("gGY", gd)):   # comb and beak outlined in their own darks first
+        icon.outline(Part({p: n for p, n in cells.items() if EFFIGY_BODY[p[1]][p[0]] in letters}), [ramp[0], ramp[1]],
+                     over=False)
+    icon.outline(Part(cells), [st[0], st[1]], over=False)
+    put(icon, EFFIGY_SPARKS[k], hc[3])
     return icon
 
 
