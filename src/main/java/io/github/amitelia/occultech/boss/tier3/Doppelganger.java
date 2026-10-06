@@ -40,29 +40,35 @@ import io.papermc.paper.datacomponent.item.ResolvableProfile;
  * <li>It wears the skin of the player hurting it most (or its target) with cosmetic copies of their gear - never
  * their actual items - and fights like the weapon they hold: melee for blades, arrows for bows, a fire cone for the
  * flame weapons.</li>
- * <li>Echo: it remembers where its target walked for 5s; then a shadow replays that path and hurts whoever stands on
- * it. Standing still or retracing your steps is punished.</li>
+ * <li>Echo: it remembers where its target walked for 5s. The path is marked on the floor, then a dark copy of the
+ * Doppelganger runs it and strikes whoever is on it as it passes. Standing still or retracing your steps is
+ * punished (Session R5: it used to be a particle cloud that had to meet you exactly at a sampled point).</li>
  * <li>Reflection: it glows white for 3s; hits taken then do nothing and are partly thrown back. Stop attacking.</li>
  * <li>Shattered mirror at half health: one reflection per player, each wearing that player's face. Only its owner can
  * break it, and the Doppelganger can't be hurt until every reflection is gone.</li>
  * </ul>
- * A Mannequin has no AI, so this script moves it. Takes a tenth of the damage dealt.
+ * It carries the copied player's exact name, so nothing tells it apart from the real one. A Mannequin has no AI, so
+ * this script moves it. Takes a tenth of the damage dealt.
  */
 public final class Doppelganger extends BossBehavior {
 
     private static final io.github.amitelia.occultech.boss.Mechanic REFLECT = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Reflected damage", 22, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic REFLECTION = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Reflection's blow", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic REFLECTION = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Reflection's blow", 41, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
 
-    private static final double HEALTH = 360;
+    private static final double HEALTH = 260;
     private static final double ARMOR = 0.1;
     private static final io.github.amitelia.occultech.boss.Mechanic MELEE_HIT = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Mirrored blow", 39, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic ARROW_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Mirrored arrow", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic FIRE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Mirrored fire", 10, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic ECHO_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Echo", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic ARROW_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Mirrored arrow", 38, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic FIRE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.piercing("DOPPELGANGER", "Mirrored fire", 10, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic ECHO_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DOPPELGANGER", "Echo", 34, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
     private static final double REFLECT_SHARE = 0.3;
     private static final double REFLECTION_HEALTH = 60;
     private static final int ECHO_SAMPLES = 20;
     private static final Color SHADOW = Color.fromRGB(30, 20, 40);
+    /** The marked path shows this long before the dark copy runs it. */
+    private static final int ECHO_WARNING = 30;
+    private static final double ECHO_REACH = 1.6;
+    private static final double ECHO_SPEED = 0.45;
 
     private enum Stance { MELEE, RANGED, FIRE }
 
@@ -75,6 +81,8 @@ public final class Doppelganger extends BossBehavior {
     private final Deque<Location> trail = new ArrayDeque<>();
     private List<Location> echo = List.of();
     private int echoIndex = -1;
+    private int echoStart = -1;
+    @javax.annotation.Nullable private Mannequin shade;
     private final Set<UUID> echoHit = new HashSet<>();
     private int reflectingUntil = -1;
     private double lastIncoming;
@@ -137,6 +145,7 @@ public final class Doppelganger extends BossBehavior {
             };
             Abyss.walk(body, target.getLocation(), stance == Stance.MELEE ? 0.3 : 0.24, keep);
         }
+        runShade();
         reflections.entrySet().removeIf(entry -> !entry.getKey().isValid() || entry.getKey().isDead());
         reflections.forEach((reflection, owner) -> {
             if (alive(owner)) {
@@ -181,17 +190,18 @@ public final class Doppelganger extends BossBehavior {
         attack(now);
         reflectionsAttack(now);
 
-        if (every(300) && echoIndex < 0 && trail.size() >= ECHO_SAMPLES / 2) {
+        if (every(300) && echoIndex < 0 && echoStart < 0 && trail.size() >= ECHO_SAMPLES / 2) {
             echo = new ArrayList<>(trail);
-            echoIndex = 0;
+            echoStart = now + ECHO_WARNING;
             for (int i = 0; i < echo.size(); i += 2) {
-                FloorDecals.patch(fight, echo.get(i), 0.9, echo.size() * 5 + 10, FloorDecals.Zone.SHADOW);
+                FloorDecals.patch(fight, echo.get(i), 0.9, ECHO_WARNING + echo.size() * 3 + 20, FloorDecals.Zone.SHADOW);
             }
             echoHit.clear();
-            fight.broadcast("&8Your echo walks again - &fdon't stand where you were.");
+            fight.broadcast("&8Your echo is about to walk again - &fget off the dark path.");
         }
-        if (echoIndex >= 0) {
-            replayEcho();
+        if (echoStart >= 0 && now >= echoStart) {
+            echoStart = -1;
+            summonShade(target);
         }
 
         if (every(360) && now >= reflectingUntil && liveReflections() == 0) {
@@ -248,20 +258,83 @@ public final class Doppelganger extends BossBehavior {
         }
     }
 
-    private void replayEcho() {
-        if (echoIndex >= echo.size()) {
+    /**
+     * The echo: a dark copy of the Doppelganger - the same face, in black, with a dark outline and trailing smoke -
+     * appears at the start of the marked path and runs it. It can't be hurt, and it's gone at the end of the path.
+     */
+    private void summonShade(@javax.annotation.Nullable Player copied) {
+        if (echo.isEmpty()) {
+            return;
+        }
+        Location start = echo.get(0).clone();
+        shade = fight.spawnExtra(Mannequin.class, start, m -> {
+            m.setCustomNameVisible(false);
+            m.setDescription(net.kyori.adventure.text.Component.empty());
+            if (copied != null) {
+                m.setProfile(ResolvableProfile.resolvableProfile(copied.getPlayerProfile()));
+            }
+            EntityEquipment gear = m.getEquipment();
+            gear.setChestplate(dark(Material.LEATHER_CHESTPLATE));
+            gear.setLeggings(dark(Material.LEATHER_LEGGINGS));
+            gear.setBoots(dark(Material.LEATHER_BOOTS));
+            m.setInvulnerable(true);
+            Keys.setUnhittable(m, true);
+            m.setGlowing(true);
+            shadeTeam().addEntity(m);
+        });
+        echoIndex = 1;
+        start.getWorld().playSound(start, Sound.ENTITY_WARDEN_SONIC_CHARGE, 1.5F, 1.6F);
+    }
+
+    /** Every tick: the dark copy runs the path, striking whoever it passes (once each). */
+    private void runShade() {
+        if (shade == null) {
+            return;
+        }
+        if (!shade.isValid() || echoIndex < 0 || echoIndex >= echo.size()) {
+            if (shade.isValid()) {
+                shade.getWorld().spawnParticle(Particle.LARGE_SMOKE, shade.getLocation().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.02);
+                shade.remove();
+            }
+            shade = null;
             echoIndex = -1;
             return;
         }
-        Location at = echo.get(echoIndex++);
-        at.getWorld().spawnParticle(Particle.DUST, at.clone().add(0, 1, 0), 20, 0.25, 0.6, 0.25, 0, new Particle.DustOptions(SHADOW, 1.5F));
-        at.getWorld().spawnParticle(Particle.SQUID_INK, at.clone().add(0, 0.2, 0), 3, 0.2, 0.05, 0.2, 0.01);
+        Location next = echo.get(echoIndex);
+        if (shade.getLocation().distanceSquared(next) < 0.8) {
+            echoIndex++;
+        } else {
+            Abyss.walk(shade, next, ECHO_SPEED, 0);
+        }
+        Location at = shade.getLocation();
+        at.getWorld().spawnParticle(Particle.SQUID_INK, at.clone().add(0, 0.3, 0), 2, 0.2, 0.1, 0.2, 0.01);
+        at.getWorld().spawnParticle(Particle.LARGE_SMOKE, at.clone().add(0, 1.2, 0), 1, 0.2, 0.4, 0.2, 0.01);
         for (Player player : fight.players()) {
-            if (!echoHit.contains(player.getUniqueId()) && player.getLocation().distanceSquared(at) <= 1.7) {
+            if (!echoHit.contains(player.getUniqueId()) && player.getLocation().distanceSquared(at) <= ECHO_REACH * ECHO_REACH) {
                 echoHit.add(player.getUniqueId());
+                shade.swingMainHand();
                 fight.hit(player, ECHO_DAMAGE, body);
             }
         }
+    }
+
+    private static ItemStack dark(Material leather) {
+        ItemStack item = new ItemStack(leather);
+        org.bukkit.inventory.meta.LeatherArmorMeta meta = (org.bukkit.inventory.meta.LeatherArmorMeta) item.getItemMeta();
+        meta.setColor(Color.fromRGB(16, 12, 22));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** A scoreboard team only for the outline colour of the dark copy. */
+    private static org.bukkit.scoreboard.Team shadeTeam() {
+        org.bukkit.scoreboard.Scoreboard board = org.bukkit.Bukkit.getScoreboardManager().getMainScoreboard();
+        org.bukkit.scoreboard.Team team = board.getTeam("occultech_shade");
+        if (team == null) {
+            team = board.registerNewTeam("occultech_shade");
+            team.color(net.kyori.adventure.text.format.NamedTextColor.DARK_PURPLE);
+        }
+        return team;
     }
 
     private void shatter() {
@@ -305,7 +378,8 @@ public final class Doppelganger extends BossBehavior {
     /** Takes on a player's face, gear (cosmetic copies) and fighting style. */
     private void become(Player player) {
         body.setProfile(ResolvableProfile.resolvableProfile(player.getPlayerProfile()));
-        body.setCustomName(ChatColor.WHITE + "Doppelganger " + ChatColor.GRAY + "(" + player.getName() + ")");
+        // exactly the player's name, like their own name tag: nothing tells the copy from the real one
+        body.customName(net.kyori.adventure.text.Component.text(player.getName()));
         dress(body, player);
         stance = stanceFor(player);
         body.getWorld().spawnParticle(Particle.REVERSE_PORTAL, body.getLocation().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.05);

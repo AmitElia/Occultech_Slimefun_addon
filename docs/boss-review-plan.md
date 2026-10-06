@@ -77,7 +77,7 @@ Tidebreaker, Volley, the Witch Coven and the Sovereign stay as they are: they we
   - thorn pulses around its hearts.
 - **Hits:** fewer but much stronger.
 
-## R5: Doppelganger
+## R5: Doppelganger - DONE (self-test 353/353)
 
 - **Health:** less tanky.
 - **Ground attacks:** fixed. The echo and fire stances currently show effects without reliably dealing damage. They'll

@@ -291,10 +291,8 @@ final class SelfTest {
         List<String> silent = bosses.blueprints().stream().map(io.github.amitelia.occultech.boss.BossBlueprint::id)
             .filter(id -> grades.stream().noneMatch(g -> g.mechanic().bossId().equals(id))).toList();
         check("every boss declares its attacks (" + grades.size() + " attacks)", silent.isEmpty(), "none for " + silent);
-        // every boss hits inside its band against its tier's benchmark gear (Sessions B2-R4); the Doppelganger is
-        // reworked in R5
-        java.util.Set<String> reworking = java.util.Set.of("DOPPELGANGER");
-        List<String> off = grades.stream().filter(g -> !reworking.contains(g.mechanic().bossId()) && !g.ok())
+        // every boss hits inside its band against its tier's benchmark gear (Sessions B2-R5)
+        List<String> off = grades.stream().filter(g -> !g.ok())
             .map(g -> g.mechanic().bossId() + " " + g.mechanic().name() + String.format(" %.0f%%", g.share() * 100)).toList();
         check("boss attacks land in their bands", off.isEmpty(), String.join("; ", off));
         // Session B2 armor: Abyssal = max netherite, Hollow = Protection X with extra toughness
@@ -894,7 +892,9 @@ final class SelfTest {
         RitualRecipe recipe = rituals.recipes().stream().filter(r -> CATALYST.equals(r.outputId())).findFirst().orElseThrow();
         fill(recipe);
         int offered = bowlTotal();
-        check("a ritual for the crash test starts", rituals.begin(null, altar) == RitualService.Outcome.STARTED && bowlsEmpty(), "did not start");
+        RitualService.Outcome began = rituals.begin(null, altar);
+        check("a ritual for the crash test starts", began == RitualService.Outcome.STARTED && bowlsEmpty(), began + ", bowls "
+            + (bowlsEmpty() ? "empty" : "not empty") + ", altar menu " + (BlockStorage.getInventory(altar) == null ? "missing" : "there"));
         rituals.crashSessionsForTest();   // the server dies mid-ritual
         rituals.recoverAltar(altar);      // ...and the altar loads again
         check("a crash mid-ritual gives every offering back", bowlTotal() == offered, offered + " offered, " + bowlTotal() + " back");

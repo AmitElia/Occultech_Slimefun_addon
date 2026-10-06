@@ -40,11 +40,11 @@ Difficulty factor 1.0. Share = health one hit takes after armor (20 HP).
 | 3 | CORRUPTED_COLOSSUS | Slam | area | yes | 58.0 | 31% | 18-35% | ok |
 | 3 | CORRUPTED_COLOSSUS | Pylon beam | magic (pierces armor) | yes | 32.0 | 26% | 18-35% | ok |
 | 3 | DOPPELGANGER | Reflected damage | magic (pierces armor) | no | 22.0 | 18% | 12-22% | ok |
-| 3 | DOPPELGANGER | Reflection's blow | melee | no | 30.0 | 11% | 12-22% | too low |
+| 3 | DOPPELGANGER | Reflection's blow | melee | no | 41.0 | 17% | 12-22% | ok |
 | 3 | DOPPELGANGER | Mirrored blow | melee | no | 39.0 | 16% | 12-22% | ok |
-| 3 | DOPPELGANGER | Mirrored arrow | projectile | no | 30.0 | 11% | 12-22% | too low |
-| 3 | DOPPELGANGER | Mirrored fire | magic (pierces armor) | no | 10.0 | 8% | 12-22% | too low |
-| 3 | DOPPELGANGER | Echo | magic (pierces armor) | yes | 30.0 | 24% | 18-35% | ok |
+| 3 | DOPPELGANGER | Mirrored arrow | projectile | no | 38.0 | 15% | 12-22% | ok |
+| 3 | DOPPELGANGER | Mirrored fire | zone (pierces armor) | no | 10.0 | 8% | 4-10% | ok |
+| 3 | DOPPELGANGER | Echo | magic (pierces armor) | yes | 34.0 | 27% | 18-35% | ok |
 | 3 | DREAD_RIDERS | Storm snipe | magic (pierces armor) | yes | 34.0 | 27% | 18-35% | ok |
 | 3 | DREAD_RIDERS | Arrow | projectile | no | 38.0 | 15% | 12-22% | ok |
 | 3 | DREAD_RIDERS | Arrow rain | area | yes | 52.0 | 26% | 18-35% | ok |
