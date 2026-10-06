@@ -156,39 +156,49 @@ def sun_frames():
     return frames
 
 
-# the horns are shaped like vanilla's warm-cow horns (WarmCowModel, read from the 26.2 client): per side a bar out from
-# the side of the head and one block rising at its outer end - two boxes, no staircase. At helm scale (16 units = the
-# head) that is a bar 8 out and 4 thick, and a tip block 4 x 5 x 4 standing on its end. The tip burns: a molten amber
-# skin glowing toward the top, and a little flame (vanilla's own fire animation) on top of it.
-HORN_BAR = (-8.0, 0.0, 10.4, 14.4, 5.0, 9.0)       # x0, x1, y0, y1, z0, z1 (left side; mirrored for the right)
-HORN_TIP = (-8.0, -4.0, 14.4, 19.4, 5.0, 9.0)
-FLAME = (-7.5, -4.5, 19.4, 22.9, 7.0)               # x0, x1, y0, y1, z centre of the crossed flames
+# The horns, built as modded armor builds them (Blockbench style): a few tapering pieces, each turned a step further
+# so the chain curves - a thick root at the temple, out, bending up in 22.5 degree steps, the last pieces leaning
+# forward to a small tip. (x0, y0, z0, x1, y1, z1, rotation axis, angle, rotation origin, texture) for the left horn;
+# the right is mirrored. The fire is in the material, not a flame on top: an ember crack glowing along the middle
+# pieces, and a molten amber tip.
+HORN = [
+    ((-3.2, 10.2, 4.4), (0.4, 14.6, 9.6), None, 0, None, "root"),
+    ((-7.2, 10.8, 4.9), (-2.6, 14.2, 9.1), "z", -22.5, (-2.6, 12.5, 7.0), "mid"),
+    ((-10.2, 12.0, 5.3), (-6.2, 15.0, 8.7), "z", -45.0, (-6.2, 13.5, 7.0), "mid"),
+    ((-10.6, 14.8, 5.6), (-8.0, 18.8, 8.4), "x", -22.5, (-9.3, 14.8, 7.0), "light"),
+    ((-10.0, 18.2, 4.4), (-8.6, 21.4, 6.2), "x", -45.0, (-9.3, 18.2, 6.2), "tip"),
+]
 
 
-def tip_frames(n=8):
-    """The horn tip: grey-silver at its foot turning to molten amber at the top, hot pixels flickering through it."""
+def horn_skin(tone, crack=False):
+    """A horn piece's skin: lit from above, a soft shadow beneath, a few growth rings; `crack`: an ember crack glowing
+    through it lengthwise."""
+    img = g.blank()
+    for y in range(16):
+        for x in range(16):
+            t = tone + 1 if y < 5 else tone if y < 12 else tone - 1
+            if x in (4, 10) and 3 <= y <= 13:
+                t -= 1
+            img.putpixel((x, y), SILVER[max(0, min(5, t))])
+    if crack:
+        path = [(0, 8), (2, 8), (3, 7), (5, 7), (6, 8), (8, 9), (9, 8), (11, 8), (12, 7), (14, 7), (15, 8)]
+        for k, (x, y) in enumerate(path):
+            img.putpixel((x, y), EMBER[4] if k % 3 else EMBER[5])
+            img.putpixel((x, y + 1), EMBER[2])
+    return img
+
+
+def molten_tip(n=8):
+    """The tip: molten amber, white-hot at the point, flickering (8 frames)."""
     import random
     frames = []
     for f in range(n):
-        rnd = random.Random(907 + f)
+        rnd = random.Random(911 + f)
         img = g.blank()
         for y in range(16):
             for x in range(16):
-                heat = (15 - y) / 15                     # 0 at the foot .. 1 at the top
-                heat += rnd.uniform(-0.12, 0.12)
-                if heat < 0.45:                          # the lower half is still horn
-                    c = SILVER[4] if y < 12 else SILVER[3]
-                elif heat < 0.55:
-                    c = EMBER[1]
-                elif heat < 0.7:
-                    c = EMBER[2]
-                elif heat < 0.85:
-                    c = EMBER[3]
-                else:
-                    c = EMBER[4]
-                img.putpixel((x, y), c)
-        for _ in range(5):                               # flickering hot spots in the upper half
-            img.putpixel((rnd.randrange(16), rnd.randrange(0, 8)), EMBER[5])
+                heat = (15 - y) / 15 + rnd.uniform(-0.1, 0.1)
+                img.putpixel((x, y), EMBER[2] if heat < 0.3 else EMBER[3] if heat < 0.6 else EMBER[4] if heat < 0.85 else EMBER[5])
         frames.append(img)
     return frames
 
@@ -211,11 +221,8 @@ def frenzied_helm_worn():
     top_i, side_i, back_i = g.tex_helm(PLATE, tone=3)
     t_top, t_side, t_back = m.texture("helm_top", top_i), m.texture("helm_side", side_i), m.texture("helm_back", back_i)
     t_brow = m.texture("brow", g.tex_smooth(SILVER, tone=3))
-    t_horn = m.texture("horn", horn_tex())
-    t_tip = m.texture("tip", tip_frames())
-    flame_frames, flame_meta = vanilla_flame()
-    t_flame = m.texture("flame", flame_frames)
-    m.mcmeta["flame"] = flame_meta
+    skins = {"root": m.texture("horn_root", horn_skin(2)), "mid": m.texture("horn_mid", horn_skin(3, crack=True)),
+             "light": m.texture("horn_light", horn_skin(4)), "tip": m.texture("horn_tip", molten_tip())}
     t_sun = m.texture("sun", sun_frames())
     T = lambda t, w, h: (t, [0, 0, max(1, min(16, round(w))), max(1, min(16, round(h)))])  # noqa: E731
     # the helmet shell (as the approved G6 helms)
@@ -232,22 +239,16 @@ def frenzied_helm_worn():
     # silver cheek guards
     for x0 in (0.2, 14.0):
         m.cube((x0, 3.0, -0.2), (x0 + 1.8, 11.4, 1.2), T(t_brow, 2, 8))
-    # the horns, mirrored: a bar and a burning tip block, with a small flame on top
-    mirror = lambda x0, x1, side: (x0, x1) if side < 0 else (16 - x1, 16 - x0)  # noqa: E731
+    # the horns, mirrored (a mirror reverses turns about y and z)
     for side in (-1, 1):
-        x0, x1, y0, y1, z0, z1 = HORN_BAR
-        a, b = mirror(x0, x1, side)
-        m.box((a, y0, z0), (b, y1, z1), {d: (t_horn, [0, 0, 16, 16]) for d in g.FACES_ALL})
-        x0, x1, y0, y1, z0, z1 = HORN_TIP
-        a, b = mirror(x0, x1, side)
-        m.box((a, y0, z0), (b, y1, z1), {d: (t_tip, [0, 0, 16, 16]) for d in g.FACES_ALL}, light=12)
-        x0, x1, y0, y1, zc = FLAME
-        a, b = mirror(x0, x1, side)
-        cx = (a + b) / 2
-        for angle in (45, -45):
-            el = m.box((a, y0, zc), (b, y1, zc), {"north": (t_flame, [0, 0, 16, 16]), "south": (t_flame, [16, 0, 0, 16])},
-                       shade=False, light=15)
-            el["rotation"] = {"origin": [cx, y0, zc], "axis": "y", "angle": angle}
+        for (a, b, axis, angle, origin, skin) in HORN:
+            if side > 0:
+                a, b = (16 - b[0], a[1], a[2]), (16 - a[0], b[1], b[2])
+            el = m.box(a, b, {d: (skins[skin], [0, 0, 16, 16]) for d in g.FACES_ALL},
+                       shade=skin != "tip", light=15 if skin == "tip" else 0)
+            if axis:
+                o = list(origin) if side < 0 else [16 - origin[0], origin[1], origin[2]]
+                el["rotation"] = {"origin": o, "axis": axis, "angle": angle if (side < 0 or axis == "x") else -angle}
     m.display = g.HEAD_DISPLAY
     return m
 
@@ -284,6 +285,8 @@ def worn_preview(layers, helm):
             r = dict(e["rotation"])
             o = r["origin"]
             r["origin"] = [8 - (o[0] - 8) * HEAD_SCALE, 28 + (o[1] - 8) * HEAD_SCALE, 8 - (o[2] - 8) * HEAD_SCALE]
+            if r["axis"] in ("x", "z"):
+                r["angle"] = -r["angle"]          # the half turn about y reverses turns about x and z
             el["rotation"] = r
         swap = {"north": "south", "south": "north", "east": "west", "west": "east", "up": "up", "down": "down"}
         for d, face in e["faces"].items():

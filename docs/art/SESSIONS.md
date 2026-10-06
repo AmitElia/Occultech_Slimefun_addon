@@ -480,6 +480,12 @@ the flat layers) and a helm GIF; `final` saves into session-g for the pack.
   of the head and one block rising at its end) at helm scale - a smooth grey-silver bar 8 out and 4 thick, a 4x5x4 tip
   block whose upper half turns to flickering molten amber, and a small flame on top (vanilla's fire_0 animation and
   timing, crossed planes). v4's fully amber tips read as candles.
+- v6 (user on v5: they look like burning candles - rework the horns, take inspiration from other mods): horns built
+  the way modded (Blockbench) armor builds them - five tapering pieces, each turned a step further (22.5 / 45 degrees
+  about z to bend up, then about x to lean forward) so the chain curves: a thick dark root at the temple, two middle
+  pieces with an ember crack glowing lengthwise, a light grey-silver upper piece, a small molten-amber tip that
+  flickers (8 frames, glowing). No flame sprite: the fire is in the material. The worn preview now also reverses
+  x/z turn angles for the head item's half turn.
 
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):
