@@ -37,12 +37,13 @@ public final class CorruptedColossus extends BossBehavior {
 
     private static final double HEALTH = 400;
     private static final double ARMOR = 0.1;
-    private static final io.github.amitelia.occultech.boss.Mechanic SMASH = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Smash", 39, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic SLAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Slam", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic SMASH = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Smash", 44, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SLAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Slam", 58, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final double SLAM_RADIUS = 7;
-    private static final io.github.amitelia.occultech.boss.Mechanic PYLON_BEAM = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Pylon beam", 18, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic PYLON_BEAM = io.github.amitelia.occultech.boss.Mechanic.of("CORRUPTED_COLOSSUS", "Pylon beam", 32, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
     private static final int PYLONS = 3;
-    private static final int PYLON_INTERVAL = 600;
+    private static final int PYLON_INTERVAL = 400;
+    private static final double SPEED = 0.32;
     private static final Color CORRUPT = Color.fromRGB(150, 40, 200);
 
     private IronGolem colossus;
@@ -68,6 +69,7 @@ public final class CorruptedColossus extends BossBehavior {
             fight.label(g, SMASH);
             BossFight.setAttribute(g, Attribute.SCALE, 1.8);
             BossFight.setAttribute(g, Attribute.FOLLOW_RANGE, 48);
+            BossFight.setAttribute(g, Attribute.MOVEMENT_SPEED, SPEED);
         });
         raisePylons();
     }
@@ -91,7 +93,7 @@ public final class CorruptedColossus extends BossBehavior {
 
         if (!overloaded && fight.healthFraction() < 0.3) {
             overloaded = true;
-            BossFight.setAttribute(colossus, Attribute.MOVEMENT_SPEED, 0.38);
+            BossFight.setAttribute(colossus, Attribute.MOVEMENT_SPEED, 0.4);
             fight.broadcast("&dThe Colossus overloads - &fits slams come faster!");
         }
         if (overloaded && every(10)) {
@@ -131,7 +133,7 @@ public final class CorruptedColossus extends BossBehavior {
                 }
             }
         }
-        if (!pylons.isEmpty() && every(120)) {
+        if (!pylons.isEmpty() && every(80)) {
             for (BossFight.FightObject pylon : pylons) {
                 Player target = fight.randomPlayer();
                 if (target != null) {
@@ -143,7 +145,7 @@ public final class CorruptedColossus extends BossBehavior {
         beams.forEach(beam -> beam.step(fight, now));
         beams.removeIf(Abyss.Beam::done);
 
-        if (every(overloaded ? 80 : 140) && slamAt < 0) {
+        if (every(overloaded ? 70 : 100) && slamAt < 0) {
             slamAt = now + 25;
             slamCenter = colossus.getLocation();
             slamCenter.setY(Abyss.groundY(slamCenter));

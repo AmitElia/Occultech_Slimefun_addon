@@ -51,7 +51,7 @@ Tidebreaker, Volley, the Witch Coven and the Sovereign stay as they are: they we
   - It glides instead of snapping around its target.
   - It keeps a target for at least 8 s.
 
-## R3: tier 3, part 1
+## R3: tier 3, part 1 - DONE (self-test 352/352)
 
 - **Tier-3 hits must matter against Infinity armor**, which carries Regeneration and Resistance. The model gets
   Regeneration, and the tier-3 bands get a higher floor. Small chip hits are dropped in favour of fewer, heavier blows.

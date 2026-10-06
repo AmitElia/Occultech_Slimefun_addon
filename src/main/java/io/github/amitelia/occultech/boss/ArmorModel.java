@@ -55,9 +55,20 @@ public final class ArmorModel {
         return after(mechanic.damage(), mechanic.ignoresArmor(), kit, difficulty) / kit.health();
     }
 
-    /** The band a mechanic should land in. */
+    /**
+     * The band a mechanic of a tier's boss should land in. Tier 3 is benchmarked against Infinity armor, which
+     * regenerates (Regeneration from the leggings) on top of the protection cap and Resistance: its hits have to be
+     * heavier to matter at all (Session R3).
+     */
     @Nonnull
-    public static Band band(@Nonnull Mechanic mechanic) {
+    public static Band band(@Nonnull Mechanic mechanic, int tier) {
+        if (tier >= 3) {
+            return switch (mechanic.kind()) {
+                case ADD -> new Band(0.05, 0.14);
+                case ZONE -> new Band(0.04, 0.10);
+                default -> mechanic.telegraphed() ? new Band(0.18, 0.35) : new Band(0.12, 0.22);
+            };
+        }
         return switch (mechanic.kind()) {
             case ADD -> new Band(0.03, 0.10);
             case ZONE -> new Band(0.02, 0.08);

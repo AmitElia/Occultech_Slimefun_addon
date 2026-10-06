@@ -36,31 +36,31 @@ Difficulty factor 1.0. Share = health one hit takes after armor (20 HP).
 | 2 | TIDEBREAKER | Ram | area | yes | 33.5 | 28% | 12-30% | ok |
 | 2 | TIDEBREAKER | Trident thrust | melee | no | 23.0 | 16% | 8-18% | ok |
 | 2 | TIDEBREAKER | Trident volley | projectile | no | 24.0 | 17% | 8-18% | ok |
-| 3 | CORRUPTED_COLOSSUS | Smash | melee | no | 39.0 | 16% | 8-18% | ok |
-| 3 | CORRUPTED_COLOSSUS | Slam | area | yes | 55.0 | 28% | 12-30% | ok |
-| 3 | CORRUPTED_COLOSSUS | Pylon beam | magic (pierces armor) | yes | 18.0 | 14% | 12-30% | ok |
-| 3 | DOPPELGANGER | Reflected damage | magic (pierces armor) | no | 22.0 | 18% | 8-18% | ok |
-| 3 | DOPPELGANGER | Reflection's blow | melee | no | 30.0 | 11% | 8-18% | ok |
-| 3 | DOPPELGANGER | Mirrored blow | melee | no | 39.0 | 16% | 8-18% | ok |
-| 3 | DOPPELGANGER | Mirrored arrow | projectile | no | 30.0 | 11% | 8-18% | ok |
-| 3 | DOPPELGANGER | Mirrored fire | magic (pierces armor) | no | 10.0 | 8% | 8-18% | too low |
-| 3 | DOPPELGANGER | Echo | magic (pierces armor) | yes | 30.0 | 24% | 12-30% | ok |
-| 3 | DREAD_RIDERS | Storm snipe | magic (pierces armor) | yes | 30.0 | 24% | 12-30% | ok |
-| 3 | DREAD_RIDERS | Arrow | projectile | no | 26.0 | 8% | 8-18% | ok |
-| 3 | DREAD_RIDERS | Arrow rain | area | yes | 35.0 | 13% | 12-30% | ok |
-| 3 | DREAD_RIDERS | Vanguard blade | melee | no | 39.0 | 16% | 8-18% | ok |
-| 3 | DREAD_RIDERS | Charge | area | yes | 55.0 | 28% | 12-30% | ok |
-| 3 | DREAD_RIDERS | Thrown spear | projectile | no | 40.0 | 17% | 8-18% | ok |
-| 3 | GALLUS | Echo beam | magic (pierces armor) | yes | 15.0 | 12% | 12-30% | too low |
-| 3 | GALLUS | Yolk | zone (pierces armor) | no | 6.0 | 5% | 2-8% | ok |
-| 3 | GALLUS | Chick jockey | add | no | 20.0 | 6% | 3-10% | ok |
-| 3 | GALLUS | Lance jab | melee | no | 39.0 | 16% | 8-18% | ok |
-| 3 | GALLUS | Leap slam | area | yes | 55.0 | 28% | 12-30% | ok |
-| 3 | GALLUS | Egg | projectile | no | 20.0 | 6% | 8-18% | too low |
-| 3 | GALLUS | Rider's blade | melee | no | 35.0 | 13% | 8-18% | ok |
-| 3 | HEARTWOOD_HORROR | Swipe | melee | no | 39.0 | 16% | 8-18% | ok |
-| 3 | HEARTWOOD_HORROR | Lunge | area | yes | 50.0 | 24% | 12-30% | ok |
-| 3 | HEARTWOOD_HORROR | Root snare | area | yes | 30.0 | 11% | 12-30% | too low |
-| 3 | HOLLOW_WARLORD | Guard | add | no | 25.0 | 8% | 3-10% | ok |
-| 3 | HOLLOW_WARLORD | Blade | melee | no | 39.0 | 16% | 8-18% | ok |
-| 3 | HOLLOW_WARLORD | Soul sweep | area | yes | 55.0 | 28% | 12-30% | ok |
+| 3 | CORRUPTED_COLOSSUS | Smash | melee | no | 44.0 | 19% | 12-22% | ok |
+| 3 | CORRUPTED_COLOSSUS | Slam | area | yes | 58.0 | 31% | 18-35% | ok |
+| 3 | CORRUPTED_COLOSSUS | Pylon beam | magic (pierces armor) | yes | 32.0 | 26% | 18-35% | ok |
+| 3 | DOPPELGANGER | Reflected damage | magic (pierces armor) | no | 22.0 | 18% | 12-22% | ok |
+| 3 | DOPPELGANGER | Reflection's blow | melee | no | 30.0 | 11% | 12-22% | too low |
+| 3 | DOPPELGANGER | Mirrored blow | melee | no | 39.0 | 16% | 12-22% | ok |
+| 3 | DOPPELGANGER | Mirrored arrow | projectile | no | 30.0 | 11% | 12-22% | too low |
+| 3 | DOPPELGANGER | Mirrored fire | magic (pierces armor) | no | 10.0 | 8% | 12-22% | too low |
+| 3 | DOPPELGANGER | Echo | magic (pierces armor) | yes | 30.0 | 24% | 18-35% | ok |
+| 3 | DREAD_RIDERS | Storm snipe | magic (pierces armor) | yes | 34.0 | 27% | 18-35% | ok |
+| 3 | DREAD_RIDERS | Arrow | projectile | no | 38.0 | 15% | 12-22% | ok |
+| 3 | DREAD_RIDERS | Arrow rain | area | yes | 52.0 | 26% | 18-35% | ok |
+| 3 | DREAD_RIDERS | Vanguard blade | melee | no | 46.0 | 21% | 12-22% | ok |
+| 3 | DREAD_RIDERS | Charge | area | yes | 60.0 | 33% | 18-35% | ok |
+| 3 | DREAD_RIDERS | Thrown spear | projectile | no | 40.0 | 17% | 12-22% | ok |
+| 3 | GALLUS | Echo beam | magic (pierces armor) | yes | 32.0 | 26% | 18-35% | ok |
+| 3 | GALLUS | Yolk | zone (pierces armor) | no | 9.0 | 7% | 4-10% | ok |
+| 3 | GALLUS | Chick jockey | add | no | 27.0 | 9% | 5-14% | ok |
+| 3 | GALLUS | Lance jab | melee | no | 39.0 | 16% | 12-22% | ok |
+| 3 | GALLUS | Leap slam | area | yes | 55.0 | 28% | 18-35% | ok |
+| 3 | GALLUS | Egg | projectile | no | 38.0 | 15% | 12-22% | ok |
+| 3 | GALLUS | Rider's blade | melee | no | 41.0 | 17% | 12-22% | ok |
+| 3 | HEARTWOOD_HORROR | Swipe | melee | no | 39.0 | 16% | 12-22% | ok |
+| 3 | HEARTWOOD_HORROR | Lunge | area | yes | 50.0 | 24% | 18-35% | ok |
+| 3 | HEARTWOOD_HORROR | Root snare | area | yes | 30.0 | 11% | 18-35% | too low |
+| 3 | HOLLOW_WARLORD | Guard | add | no | 30.0 | 11% | 5-14% | ok |
+| 3 | HOLLOW_WARLORD | Blade | melee | no | 46.0 | 21% | 12-22% | ok |
+| 3 | HOLLOW_WARLORD | Soul sweep | area | yes | 62.0 | 35% | 18-35% | ok |

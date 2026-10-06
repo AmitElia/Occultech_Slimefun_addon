@@ -50,7 +50,7 @@ final class Balance {
                 continue;
             }
             ArmorModel.Kit kit = ArmorModel.kit(spec.tier());
-            out.add(new Grade(mechanic, spec.tier(), ArmorModel.share(mechanic, kit, difficulty), ArmorModel.band(mechanic)));
+            out.add(new Grade(mechanic, spec.tier(), ArmorModel.share(mechanic, kit, difficulty), ArmorModel.band(mechanic, spec.tier())));
         }
         out.sort((a, b) -> a.tier() != b.tier() ? Integer.compare(a.tier(), b.tier()) : a.mechanic().bossId().compareTo(b.mechanic().bossId()));
         return out;

@@ -50,17 +50,20 @@ public final class DreadRiders extends BossBehavior {
     private static final double VANGUARD_HEALTH = 260;
     private static final double OUTRIDER_ARMOR = 0.1;
     private static final double VANGUARD_ARMOR = 0.05;
-    private static final io.github.amitelia.occultech.boss.Mechanic SNIPE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Storm snipe", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic ARROW_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Arrow", 26, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic RAIN_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Arrow rain", 35, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic MELEE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Vanguard blade", 39, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic RAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Charge", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic SNIPE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Storm snipe", 34, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic ARROW_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Arrow", 38, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic RAIN_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Arrow rain", 52, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic MELEE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Vanguard blade", 46, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic RAM_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Charge", 60, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final io.github.amitelia.occultech.boss.Mechanic SPEAR_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("DREAD_RIDERS", "Thrown spear", 40, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
     private static final double ORBIT = 14;
     private static final double ORBIT_ENRAGED = 8;
     private static final int CHARGE_WARNING = 20;
     private static final int CHARGE_TICKS = 25;
     private static final int STUN_TICKS = 40;
+    /** Every 10s the Outrider reins in for 3s to take aim: a window to hit it (Session R3). */
+    private static final int HALT_EVERY = 200;
+    private static final int HALT_TICKS = 60;
     private static final Color STORM = Color.fromRGB(170, 200, 255);
     private static final Color LANCE = Color.fromRGB(120, 20, 20);
 
@@ -73,6 +76,7 @@ public final class DreadRiders extends BossBehavior {
     private boolean outriderDown;
     private boolean vanguardDown;
     private double orbitAngle;
+    private int haltUntil = -1;
     private final List<Abyss.Beam> snipes = new ArrayList<>();
     private int rainAt = -1;
     private Location rainSpot;
@@ -92,7 +96,10 @@ public final class DreadRiders extends BossBehavior {
     public void spawn(Location at) {
         Location west = at.clone().add(-4, 1, 0);
         Location east = at.clone().add(4, 1, 0);
-        outriderHorse = fight.spawnExtra(SkeletonHorse.class, west, h -> mount(h));
+        outriderHorse = fight.spawnExtra(SkeletonHorse.class, west, h -> {
+            mount(h);
+            BossFight.setAttribute(h, Attribute.SCALE, 0.85);   // a smaller horse: its rider is easier to reach
+        });
         vanguardHorse = fight.spawnExtra(ZombieHorse.class, east, h -> mount(h));
         outrider = fight.spawnBoss(Skeleton.class, west, s -> {
             s.setCustomName(ChatColor.AQUA + "The Outrider");
@@ -145,7 +152,10 @@ public final class DreadRiders extends BossBehavior {
     @Override
     public void move() {
         int now = fight.elapsed();
-        if (!outriderDown && outriderHorse.isValid() && alive(outriderTarget)) {
+        if (!outriderDown && outriderHorse.isValid() && alive(outriderTarget) && now < haltUntil) {
+            outriderHorse.setVelocity(new Vector(0, outriderHorse.getVelocity().getY(), 0));
+            Abyss.face(outrider, outriderTarget.getEyeLocation());
+        } else if (!outriderDown && outriderHorse.isValid() && alive(outriderTarget)) {
             orbitAngle += 0.02;
             Location target = outriderTarget.getLocation();
             double radius = vanguardDown ? ORBIT_ENRAGED : ORBIT;
@@ -188,6 +198,11 @@ public final class DreadRiders extends BossBehavior {
         if (!outriderDown) {
             if (!alive(outriderTarget) || every(160)) {
                 outriderTarget = fight.randomPlayer();
+            }
+            if (every(HALT_EVERY)) {
+                haltUntil = now + HALT_TICKS;
+                outrider.getWorld().playSound(outrider.getLocation(), Sound.ENTITY_SKELETON_HORSE_AMBIENT, 1.5F, 0.7F);
+                snipes.add(new Abyss.Beam(outrider, outriderTarget, now, 40, SNIPE_DAMAGE, STORM));   // the aimed shot
             }
             outriderAttacks(now);
         }

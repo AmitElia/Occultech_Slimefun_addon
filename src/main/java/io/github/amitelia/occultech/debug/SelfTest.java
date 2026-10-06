@@ -291,10 +291,12 @@ final class SelfTest {
         List<String> silent = bosses.blueprints().stream().map(io.github.amitelia.occultech.boss.BossBlueprint::id)
             .filter(id -> grades.stream().noneMatch(g -> g.mechanic().bossId().equals(id))).toList();
         check("every boss declares its attacks (" + grades.size() + " attacks)", silent.isEmpty(), "none for " + silent);
-        // Session B2: tiers 0-2 hit inside their bands against benchmark gear (tier 3 waits for playtests)
-        List<String> off = grades.stream().filter(g -> g.tier() <= 2 && !g.ok())
+        // every boss hits inside its band against its tier's benchmark gear (Sessions B2, R3); the Heartwood Horror and
+        // the Doppelganger are reworked in R4/R5
+        java.util.Set<String> reworking = java.util.Set.of("HEARTWOOD_HORROR", "DOPPELGANGER");
+        List<String> off = grades.stream().filter(g -> !reworking.contains(g.mechanic().bossId()) && !g.ok())
             .map(g -> g.mechanic().bossId() + " " + g.mechanic().name() + String.format(" %.0f%%", g.share() * 100)).toList();
-        check("tier 0-2 boss attacks land in their bands", off.isEmpty(), String.join("; ", off));
+        check("boss attacks land in their bands", off.isEmpty(), String.join("; ", off));
         // Session B2 armor: Abyssal = max netherite, Hollow = Protection X with extra toughness
         ItemStack abyssal = SlimefunItem.getById(ItemKeys.slimefunId("ABYSSAL_HELMET")).getItem();
         check("Abyssal armor has Protection IV", abyssal.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 4,

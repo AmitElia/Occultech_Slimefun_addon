@@ -55,9 +55,9 @@ import io.github.amitelia.occultech.core.Keys;
  */
 public final class Gallus extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic ECHO_BEAM = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Echo beam", 15, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic YOLK_BURN = io.github.amitelia.occultech.boss.Mechanic.piercing("GALLUS", "Yolk", 6, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic CHICK_JOCKEY = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Chick jockey", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic ECHO_BEAM = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Echo beam", 32, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic YOLK_BURN = io.github.amitelia.occultech.boss.Mechanic.piercing("GALLUS", "Yolk", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic CHICK_JOCKEY = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Chick jockey", 27, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final double HEALTH = 500;
     private static final double ARMOR = 0.05;
@@ -65,8 +65,8 @@ public final class Gallus extends BossBehavior {
     private static final double RIDER_HEALTH = 120;
     private static final io.github.amitelia.occultech.boss.Mechanic JAB = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Lance jab", 39, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic SLAM = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Leap slam", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic EGG_HIT = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Egg", 20, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic RIDER_MELEE = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Rider's blade", 35, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic EGG_HIT = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Egg", 38, io.github.amitelia.occultech.boss.Mechanic.Kind.PROJECTILE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic RIDER_MELEE = io.github.amitelia.occultech.boss.Mechanic.of("GALLUS", "Rider's blade", 41, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final int LEAP_INTERVAL = 200;
     private static final int REMOUNT_INTERVAL = 400;
     private static final int REMOUNT_TIME = 80;

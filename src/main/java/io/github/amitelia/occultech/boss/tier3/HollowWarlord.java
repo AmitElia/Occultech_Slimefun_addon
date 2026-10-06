@@ -36,18 +36,20 @@ import io.github.amitelia.occultech.boss.tier2.Abyss;
  */
 public final class HollowWarlord extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic GUARD = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Guard", 25, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic GUARD = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Guard", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     /** The soul chains to the guards shielding it, drawn in the air (Session O5). */
     private final java.util.Map<WitherSkeleton, io.github.amitelia.occultech.boss.AirEffects.Streak> chains = new java.util.HashMap<>();
     /** The soul halo over it while its guards shield it. */
     @javax.annotation.Nullable private io.github.amitelia.occultech.boss.AirEffects.Aura halo;
 
-    private static final double HEALTH = 400;
+    private static final double HEALTH = 330;
+    /** It re-picks its target this often (ticks, randomised up to +60): vanilla AI kept one target forever. */
+    private static final int RETARGET_TICKS = 120;
     private static final double ARMOR = 0.18;
     private static final double GUARDED = 0.6;
-    private static final io.github.amitelia.occultech.boss.Mechanic BLADE = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Blade", 39, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic SWEEP_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Soul sweep", 55, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic BLADE = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Blade", 46, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SWEEP_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("HOLLOW_WARLORD", "Soul sweep", 62, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final double SWEEP_RADIUS = 4.5;
     private static final int SWEEP_INTERVAL = 120;
     private static final int GUARD_INTERVAL = 500;
@@ -57,6 +59,7 @@ public final class HollowWarlord extends BossBehavior {
     private final List<WitherSkeleton> guards = new ArrayList<>();
     private int sweepAt = -1;
     private boolean enraged;
+    private int retargetAt;
 
     public HollowWarlord(BossFight fight) {
         super(fight);
@@ -93,9 +96,7 @@ public final class HollowWarlord extends BossBehavior {
         }
         int now = fight.elapsed();
         guards.removeIf(g -> !g.isValid() || g.isDead());
-        if (warlord.getTarget() == null) {
-            warlord.setTarget(fight.nearestPlayer(warlord.getLocation()));
-        }
+        retarget(now);
 
         // faster as it weakens: up to +50% speed
         double speed = 0.25 * (1 + 0.5 * (1 - fight.healthFraction()));
@@ -156,6 +157,24 @@ public final class HollowWarlord extends BossBehavior {
             sweepAt = -1;
             sweep();
         }
+    }
+
+    /**
+     * Every 6-9s (or when its target is gone or out of the arena) it picks again: the top damager half the time - it
+     * goes for whoever hurts it most - otherwise the nearest player, so a group can trade its attention.
+     */
+    private void retarget(int now) {
+        LivingEntity current = warlord.getTarget();
+        boolean lost = !(current instanceof Player p) || !fight.players().contains(p);
+        if (!lost && now < retargetAt) {
+            return;
+        }
+        Player next = java.util.concurrent.ThreadLocalRandom.current().nextBoolean() ? fight.topDamager() : null;
+        if (next == null || next == current && fight.players().size() > 1) {
+            next = fight.nearestPlayer(warlord.getLocation());
+        }
+        warlord.setTarget(next);
+        retargetAt = now + RETARGET_TICKS + java.util.concurrent.ThreadLocalRandom.current().nextInt(13) * 5;
     }
 
     private void sweep() {
