@@ -33,4 +33,4 @@ Give yourself op from the server console (`op <name>`), then use `/sf guide` or 
 Then set `<slimefun.version>` (and `<paper.version>`) in `pom.xml` to match.
 
 ## Project layout
-See [CLAUDE.md](CLAUDE.md) for architecture and conventions, and [docs/](docs/) for scope, bosses, recipes and mechanics.
+See [docs/](docs/) for scope, bosses, recipes and mechanics.
