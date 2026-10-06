@@ -211,15 +211,31 @@ are added.
 
 - **Role:** matches enchanted diamond (diamond base, Protection IV, Unbreaking III). Set bonus: −10% damage from
   summoned creatures. That makes the tier ladder −10 / −20 / −25%.
-- **Look, from the Frenzy Idol:**
-  - deep purple, grey and orange;
-  - large ram horns curling back from the helm, drawn as flat silhouette planes like the warden's tendrils;
-  - the face open, like the Abyssal and Hollow sets;
-  - fiery effects: embers glowing along the plate seams (animated, sparse and bold), and a faint heat shimmer of orange
-    sparks off the horns and pauldrons now and then.
+- **Look, from the Frenzy Idol** (design talk 2026-10-06):
+  - **Colours:** dusk-violet plates as the base, grey-silver trims and horns, ember orange only where it glows.
+  - **Helm:** an open-face violet skullcap; a heavy silver brow ridge carrying the Idol's ember sun; the face showing,
+    like the Abyssal and Hollow sets.
+  - **Horns (decided):** large **bull horns** sweeping out to the sides and then up and forward. They're built from
+    **chunky 3D box segments** along the curve, like the Frenzy Idol's horns, so they have volume from every angle;
+    the earlier flat-plane idea read as a thin edge from the front. Ember-glowing tips that breathe (the helm item
+    model can animate).
+  - **Chestplate:** layered rounded violet pauldrons; a silver ridge down the middle with a small ember sun; ember
+    seams between the plates.
+  - **Leggings:** violet tassets with silver edges and an ember seam at the belt.
+  - **Boots:** violet greaves, silver toe caps, a thin ember line.
+  - **Fire (decided):** glow plus a few sparks. Bright ember seams in the worn textures (worn layers can't animate),
+    the breathing horn tips and emblem on the helm, and with the full set, occasional sparse sparks drifting off the
+    horn tips and pauldrons. Like the Hollow set's soul wisps, but warmer.
+- **References** (described from their mod pages; check the galleries):
+  - L_Ender's Cataclysm, Ignitium armor: fire living in the seams between dark plates.
+  - Cataclysm, Cursium armor: horns built into the helm's silhouette.
+  - Iron's Spells 'n Spellbooks, Pyromancer set: copper-orange as an accent.
+  - Minecraft Dungeons armors: bold, chunky shapes that read at pixel scale.
+  - Immersive Armors: vanilla coverage with character pieces.
+  - Goety: the occult mood.
 - **Follows the G6 lessons:**
   - vanilla netherite's coverage;
-  - all 3D in the helm;
+  - all 3D in the helm (the horns are the one exception to "flat silhouette planes": chunky segments, decided);
   - clean bevelled plates;
   - accents placed on the structure and mirrored;
   - no back pieces;
