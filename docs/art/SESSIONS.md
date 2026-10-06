@@ -461,6 +461,21 @@ better. The rooster skull on a stake read as a vague bird blob at 1x (a skull in
   signature colours (comb, beak); turn its *theme* into the magic part (the Hollowing becomes a soul-fire tail)
   instead of adding a symbol beside it.
 
+## Session G8 - the Frenzied set, tier-1 worn armor (2026-10-06)
+Design decided with the user first (docs/balance-plan.md, *Session G8*): Frenzy Idol colours (dusk-violet plates,
+grey-silver trims and horns, ember only where it glows), big **bull horns** built from chunky 3D segments, glow plus a
+few sparks. Inventory icons come only after the worn set is final in game. `python tools/art/session_g8.py <version>`
+writes `docs/art/session-g8/review-g8-<version>.png` (worn from four sides with the helm on the head, the helm alone,
+the flat layers) and a helm GIF; `final` saves into session-g for the pack.
+- New review render: the mannequin wearing the layers **with the helm model on its head** (scaled 0.625 and turned
+  half a turn about y, as CustomHeadLayer draws head items) - G6 never had the two together.
+- v1: horns were long thin sticks almost 3 head-widths across, ridges read as beads, the body busy (pastel plate
+  edges, many orange stripes); the preview showed the helm backwards.
+- v3 (first shown to the user): six chunky horn segments - a fist-thick root at the temple, out, then up and forward,
+  about 1.5 head-widths, a smooth grey-silver skin with two growth rings and an ember tip that breathes; a heavy silver
+  brow lower at the middle with the ember sun, silver cheek guards, a violet domed shell. Body: darker plates, ember
+  only under the pectorals, at the chest sun, belt buckle, knee studs and boot line; silver ridge, hem, belt, toe caps.
+
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):
 
