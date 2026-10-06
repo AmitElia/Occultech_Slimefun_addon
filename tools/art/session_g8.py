@@ -156,30 +156,66 @@ def sun_frames():
     return frames
 
 
-# one horn as chunky segments, from the temple out and then up and forward (x for the left side; mirrored for the right)
-# (x0, x1, y0, y1, z0, z1, tip): chunky at the base, tapering, the last one the glowing tip
-HORN = [
-    (-3.6, 0.0, 9.6, 15.2, 3.6, 10.4, False),     # the root, thick as a fist where it leaves the temple
-    (-6.6, -3.6, 10.6, 15.0, 4.2, 9.6, False),
-    (-8.8, -6.0, 12.4, 16.8, 4.0, 8.6, False),    # turning up
-    (-10.0, -7.6, 15.8, 19.8, 3.0, 7.0, False),
-    (-10.2, -8.2, 19.2, 22.6, 1.6, 5.0, False),   # and forward
-    (-9.8, -8.4, 22.0, 24.6, 0.2, 2.8, True),     # the glowing tip
-]
+# the horns are shaped like vanilla's warm-cow horns (WarmCowModel, read from the 26.2 client): per side a bar out from
+# the side of the head and one block rising at its outer end - two boxes, no staircase. At helm scale (16 units = the
+# head) that is a bar 8 out and 4 thick, and a tip block 4 x 5 x 4 standing on its end. The tip burns: a molten amber
+# skin glowing toward the top, and a little flame (vanilla's own fire animation) on top of it.
+HORN_BAR = (-8.0, 0.0, 10.4, 14.4, 5.0, 9.0)       # x0, x1, y0, y1, z0, z1 (left side; mirrored for the right)
+HORN_TIP = (-8.0, -4.0, 14.4, 19.4, 5.0, 9.0)
+FLAME = (-7.5, -4.5, 19.4, 22.9, 7.0)               # x0, x1, y0, y1, z centre of the crossed flames
+
+
+def tip_frames(n=8):
+    """The horn tip: grey-silver at its foot turning to molten amber at the top, hot pixels flickering through it."""
+    import random
+    frames = []
+    for f in range(n):
+        rnd = random.Random(907 + f)
+        img = g.blank()
+        for y in range(16):
+            for x in range(16):
+                heat = (15 - y) / 15                     # 0 at the foot .. 1 at the top
+                heat += rnd.uniform(-0.12, 0.12)
+                if heat < 0.45:                          # the lower half is still horn
+                    c = SILVER[4] if y < 12 else SILVER[3]
+                elif heat < 0.55:
+                    c = EMBER[1]
+                elif heat < 0.7:
+                    c = EMBER[2]
+                elif heat < 0.85:
+                    c = EMBER[3]
+                else:
+                    c = EMBER[4]
+                img.putpixel((x, y), c)
+        for _ in range(5):                               # flickering hot spots in the upper half
+            img.putpixel((rnd.randrange(16), rnd.randrange(0, 8)), EMBER[5])
+        frames.append(img)
+    return frames
+
+
+def vanilla_flame():
+    """Vanilla's fire_0 animation (all its frames, its own timing): the flame burning on each horn tip."""
+    import json
+    meta = json.load(open(os.path.join(g.VANILLA_FIRE, "fire_0.png.mcmeta")))
+    strip = Image.open(os.path.join(g.VANILLA_FIRE, "fire_0.png")).convert("RGBA")
+    return [strip.crop((0, k * 16, 16, k * 16 + 16)) for k in range(strip.size[1] // 16)], meta
 
 
 def frenzied_helm_worn():
     """The Frenzied Helm worn - open-faced (the whole face shows): a domed helm of deep violet plate; a heavy silver
     brow ridge bearing down toward the centre, the Frenzy Idol's ember sun set in it (breathing glow); silver cheek
-    guards; and two big bull horns of ridged grey-silver, built from chunky segments: out from the temples, then
-    sweeping up and forward, their tips glowing ember."""
+    guards; and two horns shaped like the warm cow's - a smooth grey-silver bar out from each side and a tip block
+    rising at its end - the tips burning: molten amber glowing toward the top, a small flame on each."""
     m = Model("frenzied_helmet_head")
     m.part = True
     top_i, side_i, back_i = g.tex_helm(PLATE, tone=3)
     t_top, t_side, t_back = m.texture("helm_top", top_i), m.texture("helm_side", side_i), m.texture("helm_back", back_i)
     t_brow = m.texture("brow", g.tex_smooth(SILVER, tone=3))
     t_horn = m.texture("horn", horn_tex())
-    t_tip = m.texture("tip", ember_frames())
+    t_tip = m.texture("tip", tip_frames())
+    flame_frames, flame_meta = vanilla_flame()
+    t_flame = m.texture("flame", flame_frames)
+    m.mcmeta["flame"] = flame_meta
     t_sun = m.texture("sun", sun_frames())
     T = lambda t, w, h: (t, [0, 0, max(1, min(16, round(w))), max(1, min(16, round(h)))])  # noqa: E731
     # the helmet shell (as the approved G6 helms)
@@ -196,14 +232,22 @@ def frenzied_helm_worn():
     # silver cheek guards
     for x0 in (0.2, 14.0):
         m.cube((x0, 3.0, -0.2), (x0 + 1.8, 11.4, 1.2), T(t_brow, 2, 8))
-    # the bull horns, mirrored
+    # the horns, mirrored: a bar and a burning tip block, with a small flame on top
+    mirror = lambda x0, x1, side: (x0, x1) if side < 0 else (16 - x1, 16 - x0)  # noqa: E731
     for side in (-1, 1):
-        for (x0, x1, y0, y1, z0, z1, tip) in HORN:
-            a, b = (x0, x1) if side < 0 else (16 - x1, 16 - x0)
-            if tip:
-                m.box((a, y0, z0), (b, y1, z1), {d: (t_tip, [0, 0, 16, 16]) for d in g.FACES_ALL}, shade=False, light=15)
-            else:
-                m.box((a, y0, z0), (b, y1, z1), {d: (t_horn, [0, 0, 16, 16]) for d in g.FACES_ALL})
+        x0, x1, y0, y1, z0, z1 = HORN_BAR
+        a, b = mirror(x0, x1, side)
+        m.box((a, y0, z0), (b, y1, z1), {d: (t_horn, [0, 0, 16, 16]) for d in g.FACES_ALL})
+        x0, x1, y0, y1, z0, z1 = HORN_TIP
+        a, b = mirror(x0, x1, side)
+        m.box((a, y0, z0), (b, y1, z1), {d: (t_tip, [0, 0, 16, 16]) for d in g.FACES_ALL}, light=12)
+        x0, x1, y0, y1, zc = FLAME
+        a, b = mirror(x0, x1, side)
+        cx = (a + b) / 2
+        for angle in (45, -45):
+            el = m.box((a, y0, zc), (b, y1, zc), {"north": (t_flame, [0, 0, 16, 16]), "south": (t_flame, [16, 0, 0, 16])},
+                       shade=False, light=15)
+            el["rotation"] = {"origin": [cx, y0, zc], "axis": "y", "angle": angle}
     m.display = g.HEAD_DISPLAY
     return m
 

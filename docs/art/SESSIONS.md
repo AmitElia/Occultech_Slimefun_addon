@@ -475,6 +475,11 @@ the flat layers) and a helm GIF; `final` saves into session-g for the pack.
   about 1.5 head-widths, a smooth grey-silver skin with two growth rings and an ember tip that breathes; a heavy silver
   brow lower at the middle with the ember sun, silver cheek guards, a violet domed shell. Body: darker plates, ember
   only under the pectorals, at the chest sun, belt buckle, knee studs and boot line; silver ridge, hem, belt, toe caps.
+- v5 (user on v3: horns too blocky - fewer blocks, needn't be pointy, like the cow variants' horns; fire amber on the
+  tips): the horns are now vanilla's warm-cow horns (WarmCowModel, read from the 26.2 client: a bar out from the side
+  of the head and one block rising at its end) at helm scale - a smooth grey-silver bar 8 out and 4 thick, a 4x5x4 tip
+  block whose upper half turns to flickering molten amber, and a small flame on top (vanilla's fire_0 animation and
+  timing, crossed planes). v4's fully amber tips read as candles.
 
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):
