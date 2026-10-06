@@ -291,9 +291,9 @@ final class SelfTest {
         List<String> silent = bosses.blueprints().stream().map(io.github.amitelia.occultech.boss.BossBlueprint::id)
             .filter(id -> grades.stream().noneMatch(g -> g.mechanic().bossId().equals(id))).toList();
         check("every boss declares its attacks (" + grades.size() + " attacks)", silent.isEmpty(), "none for " + silent);
-        // every boss hits inside its band against its tier's benchmark gear (Sessions B2, R3); the Heartwood Horror and
-        // the Doppelganger are reworked in R4/R5
-        java.util.Set<String> reworking = java.util.Set.of("HEARTWOOD_HORROR", "DOPPELGANGER");
+        // every boss hits inside its band against its tier's benchmark gear (Sessions B2-R4); the Doppelganger is
+        // reworked in R5
+        java.util.Set<String> reworking = java.util.Set.of("DOPPELGANGER");
         List<String> off = grades.stream().filter(g -> !reworking.contains(g.mechanic().bossId()) && !g.ok())
             .map(g -> g.mechanic().bossId() + " " + g.mechanic().name() + String.format(" %.0f%%", g.share() * 100)).toList();
         check("boss attacks land in their bands", off.isEmpty(), String.join("; ", off));
@@ -1030,6 +1030,8 @@ final class SelfTest {
             case "DREAD_RIDERS" -> check("both Dread Riders ride their horses", currentFight.bosses().stream().allMatch(b -> b.getVehicle() != null),
                 "a rider is on foot");
             case "GALLUS" -> check("Gallus starts with its knight in the saddle", !first.getPassengers().isEmpty(), "no rider");
+            case "HEARTWOOD_HORROR" -> check("the Heartwood Horror never freezes when watched (no vanilla creaking AI)",
+                first instanceof org.bukkit.entity.Mob mob && !mob.isAware() && first.hasGravity(), "aware or floating");
             case "DOPPELGANGER" -> check("the Doppelganger is a player model", first instanceof org.bukkit.entity.Mannequin, String.valueOf(first.getType()));
             case "NIGHT_MATRIARCH" -> {
                 org.bukkit.Location anchor = first instanceof org.bukkit.entity.Phantom phantom ? phantom.getAnchorLocation() : null;

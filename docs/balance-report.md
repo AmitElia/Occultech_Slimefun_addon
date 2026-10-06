@@ -58,9 +58,12 @@ Difficulty factor 1.0. Share = health one hit takes after armor (20 HP).
 | 3 | GALLUS | Leap slam | area | yes | 55.0 | 28% | 18-35% | ok |
 | 3 | GALLUS | Egg | projectile | no | 38.0 | 15% | 12-22% | ok |
 | 3 | GALLUS | Rider's blade | melee | no | 41.0 | 17% | 12-22% | ok |
-| 3 | HEARTWOOD_HORROR | Swipe | melee | no | 39.0 | 16% | 12-22% | ok |
-| 3 | HEARTWOOD_HORROR | Lunge | area | yes | 50.0 | 24% | 18-35% | ok |
-| 3 | HEARTWOOD_HORROR | Root snare | area | yes | 30.0 | 11% | 18-35% | too low |
+| 3 | HEARTWOOD_HORROR | Swipe | melee | no | 47.0 | 22% | 12-22% | ok |
+| 3 | HEARTWOOD_HORROR | Lunge | area | yes | 59.0 | 32% | 18-35% | ok |
+| 3 | HEARTWOOD_HORROR | Root eruption | area | yes | 55.0 | 28% | 18-35% | ok |
+| 3 | HEARTWOOD_HORROR | Sap rain | area | yes | 45.0 | 20% | 18-35% | ok |
+| 3 | HEARTWOOD_HORROR | Ground slam | area | yes | 57.0 | 30% | 18-35% | ok |
+| 3 | HEARTWOOD_HORROR | Heart thorns | area | yes | 42.0 | 18% | 18-35% | ok |
 | 3 | HOLLOW_WARLORD | Guard | add | no | 30.0 | 11% | 5-14% | ok |
 | 3 | HOLLOW_WARLORD | Blade | melee | no | 46.0 | 21% | 12-22% | ok |
 | 3 | HOLLOW_WARLORD | Soul sweep | area | yes | 62.0 | 35% | 18-35% | ok |

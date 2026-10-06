@@ -66,7 +66,7 @@ Tidebreaker, Volley, the Witch Coven and the Sovereign stay as they are: they we
   - Both riders hit harder.
 - **Health** for the tier-3 bosses called too tanky comes from the playtest logs.
 
-## R4: Heartwood Horror rework
+## R4: Heartwood Horror rework - DONE (self-test 353/353)
 
 - **Always attacks.** The creaking freezes while looked at (vanilla). That's replaced by our own movement and attacks,
   which keep going whether you look or not.
