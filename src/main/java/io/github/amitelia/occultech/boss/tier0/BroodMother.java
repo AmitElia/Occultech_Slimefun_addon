@@ -61,10 +61,10 @@ public final class BroodMother extends BossBehavior {
         mother = fight.spawnBoss(Spider.class, at, s -> {
             s.setCustomName(ChatColor.DARK_RED + "Brood Mother");
             s.setCustomNameVisible(true);
-            BossFight.setAttribute(s, Attribute.MAX_HEALTH, 220);
+            BossFight.setAttribute(s, Attribute.MAX_HEALTH, 320);
             fight.label(s, BITE);
             BossFight.setAttribute(s, Attribute.SCALE, 2.2);
-            BossFight.setAttribute(s, Attribute.MOVEMENT_SPEED, 0.32);
+            BossFight.setAttribute(s, Attribute.MOVEMENT_SPEED, 0.37);
             BossFight.setAttribute(s, Attribute.KNOCKBACK_RESISTANCE, 0.6);
             BossFight.setAttribute(s, Attribute.FOLLOW_RANGE, 32);
         });

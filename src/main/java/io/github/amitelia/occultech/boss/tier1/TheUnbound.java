@@ -43,11 +43,11 @@ public final class TheUnbound extends BossBehavior {
     private static final Particle.DustOptions WEDGE = new Particle.DustOptions(Color.fromRGB(220, 30, 30), 1.3F);
     private static final int CLEAVE_INTERVAL = 160;
     private static final int CLEAVE_WARNING = 25;
-    private static final int THRALL_INTERVAL = 400;
+    private static final int THRALL_INTERVAL = 280;
     private static final int SATED_TICKS = 60;
     private static final double BASE_SPEED = 0.30;
-    /** At most one axe swing every 1.5s: vanilla's pace (one a second) was too fast for most players. */
-    private static final int SWING_COOLDOWN = 30;
+    /** At most one axe swing every 1.2s: vanilla's pace (one a second) was too fast for most players, 1.5s too easy for groups. */
+    private static final int SWING_COOLDOWN = 24;
     private static final double CLEAVE_RANGE = 4.5;
 
     private final List<Husk> thralls = new ArrayList<>();
@@ -106,7 +106,8 @@ public final class TheUnbound extends BossBehavior {
         BossFight.setAttribute(unbound, Attribute.MOVEMENT_SPEED, BASE_SPEED * (1 + 0.2 * (1 - fight.healthFraction())));
 
         if (every(THRALL_INTERVAL)) {
-            for (int i = 0; i < 2; i++) {
+            // 2 thralls, one more per extra player (up to 4): a group gets more to bait it with, and more to deal with
+            for (int i = 0; i < Math.min(4, 1 + fight.playersAtStart()); i++) {
                 Husk thrall = fight.spawnAdd(Husk.class, fight.randomPoint(5, fight.radius() - 2), h -> {
                     h.setCustomName(ChatColor.GRAY + "Unbound Thrall");
                     BossFight.setAttribute(h, Attribute.MAX_HEALTH, 30);

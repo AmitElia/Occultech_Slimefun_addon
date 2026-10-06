@@ -12,9 +12,10 @@ Difficulty factor 1.0. Share = health one hit takes after armor (20 HP).
 | 0 | GELATINOUS_SOVEREIGN | Shard | add | no | 4.0 | 7% | 3-10% | ok |
 | 0 | VOLLEY | Arrow | projectile | no | 6.0 | 11% | 8-18% | ok |
 | 0 | WITCH_COVEN | Potion of Harming | magic (pierces armor) | yes | 6.0 | 20% | 12-30% | ok |
-| 1 | ARCHEVOKER | Fangs | magic (pierces armor) | yes | 10.0 | 18% | 12-30% | ok |
-| 1 | ARCHEVOKER | Vex | add | no | 9.0 | 5% | 3-10% | ok |
+| 1 | ARCHEVOKER | Fangs | magic (pierces armor) | yes | 12.0 | 22% | 12-30% | ok |
+| 1 | ARCHEVOKER | Vex | add | no | 7.0 | 3% | 3-10% | ok |
 | 1 | MIRRORED_MAGUS | Arrow | projectile | no | 16.0 | 10% | 8-18% | ok |
+| 1 | MIRRORED_MAGUS | Prism burst | magic (pierces armor) | yes | 12.0 | 22% | 12-30% | ok |
 | 1 | NIGHT_MATRIARCH | Dive | area | yes | 23.0 | 18% | 12-30% | ok |
 | 1 | NIGHT_MATRIARCH | Phantom bite | add | no | 9.0 | 5% | 3-10% | ok |
 | 1 | NIGHT_MATRIARCH | Bite | melee | no | 17.5 | 12% | 8-18% | ok |

@@ -33,12 +33,17 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class Archevoker extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic FANGS = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Fangs", 10, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic VEX = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Vex", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic FANGS = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Fangs", 12, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic VEX = io.github.amitelia.occultech.boss.Mechanic.of("ARCHEVOKER", "Vex", 7, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final Particle.DustOptions RUNE = new Particle.DustOptions(Color.fromRGB(160, 60, 220), 1.4F);
-    private static final int PATTERN_INTERVAL = 160;
-    private static final int PATTERN_INTERVAL_ENRAGED = 110;
+    private static final int PATTERN_INTERVAL = 120;
+    private static final int PATTERN_INTERVAL_ENRAGED = 80;
+    /** It holds about this far from its target: it chases from further, and answers anyone closer with a fang burst. */
+    private static final double HOLD_FAR = 8;
+    private static final double TOO_CLOSE = 3.5;
+    private static final int BURST_COOLDOWN = 100;
+    private static final int BURST_WARNING = 12;
     private static final int PATTERN_WARNING = 20;
 
     private enum Pattern { RING, LINE, SPIRAL }
@@ -50,6 +55,9 @@ public final class Archevoker extends BossBehavior {
     private int nextPattern = 80;
     private int patternIndex;
     private boolean revived;
+    private int nextBurst;
+    private int burstAt = -1;
+    private List<Location> burstPoints = List.of();
 
     public Archevoker(BossFight fight) {
         super(fight);
@@ -67,6 +75,10 @@ public final class Archevoker extends BossBehavior {
             BossFight.setAttribute(e, Attribute.KNOCKBACK_RESISTANCE, 0.6);
             BossFight.setAttribute(e, Attribute.FOLLOW_RANGE, 32);
         });
+        // the evoker's vanilla AI flees from players; the Archevoker stands its ground instead
+        org.bukkit.Bukkit.getMobGoals().getAllGoals(archevoker).stream()
+            .filter(goal -> goal.getKey().getNamespacedKey().getKey().contains("avoid"))
+            .toList().forEach(goal -> org.bukkit.Bukkit.getMobGoals().removeGoal(archevoker, goal));
         for (int i = 0; i < 3; i++) {
             double angle = Math.PI * 2 * i / 3;
             Location spot = fight.center().add(Math.cos(angle) * 7, 0, Math.sin(angle) * 7);
@@ -105,6 +117,7 @@ public final class Archevoker extends BossBehavior {
             return;
         }
         int now = fight.elapsed();
+        holdGround(now);
 
         if (now >= nextPattern && strikeAt < 0) {
             Player target = fight.randomPlayer();
@@ -132,6 +145,44 @@ public final class Archevoker extends BossBehavior {
                 });
             }
             archevoker.getWorld().playSound(archevoker.getLocation(), Sound.ENTITY_EVOKER_CAST_SPELL, 2F, 1F);
+        }
+    }
+
+    /** Chases a target that drifts away; a player who comes too close gets a quick fang burst around the Archevoker. */
+    private void holdGround(int now) {
+        Player target = fight.nearestPlayer(archevoker.getLocation());
+        if (target == null) {
+            return;
+        }
+        double distance = target.getLocation().distance(archevoker.getLocation());
+        if (distance > HOLD_FAR) {
+            archevoker.getPathfinder().moveTo(target.getLocation(), 1.0);
+        } else if (distance < HOLD_FAR - 2) {
+            archevoker.getPathfinder().stopPathfinding();
+        }
+        if (burstAt < 0 && now >= nextBurst && distance < TOO_CLOSE) {
+            nextBurst = now + BURST_COOLDOWN;
+            burstAt = now + BURST_WARNING;
+            List<Location> points = new ArrayList<>();
+            Location origin = archevoker.getLocation();
+            for (int i = 0; i < 10; i++) {
+                double angle = Math.PI * 2 * i / 10;
+                points.add(floor(origin.clone().add(Math.cos(angle) * 2.2, 0, Math.sin(angle) * 2.2), fight.center().getY()));
+            }
+            burstPoints = points;
+            for (Location point : points) {
+                fight.telegraph(point, 0.6, BURST_WARNING, RUNE.getColor(), null);
+            }
+            archevoker.getWorld().playSound(origin, Sound.ENTITY_EVOKER_PREPARE_ATTACK, 2F, 1.3F);
+        }
+        if (burstAt >= 0 && now >= burstAt) {
+            burstAt = -1;
+            for (Location point : burstPoints) {
+                point.getWorld().spawn(point, EvokerFangs.class, fangs -> {
+                    fangs.setOwner(archevoker);
+                    fight.label(fangs, FANGS);
+                });
+            }
         }
     }
 

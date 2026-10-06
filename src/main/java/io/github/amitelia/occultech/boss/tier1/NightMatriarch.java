@@ -30,12 +30,15 @@ public final class NightMatriarch extends BossBehavior {
     private static final io.github.amitelia.occultech.boss.Mechanic SWARM = io.github.amitelia.occultech.boss.Mechanic.of("NIGHT_MATRIARCH", "Phantom bite", 9, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final Color SHADOW = Color.fromRGB(35, 20, 60);
-    private static final int DIVE_INTERVAL_DAY = 160;
-    private static final int DIVE_INTERVAL_NIGHT = 120;
+    private static final int DIVE_INTERVAL_DAY = 100;
+    private static final int DIVE_INTERVAL_NIGHT = 80;
     private static final int DIVE_WARNING = 30;
     private static final int DIVE_MAX_TICKS = 40;
-    private static final int STUN_TICKS = 40;
-    private static final int SWARM_INTERVAL = 400;
+    private static final int STUN_TICKS = 30;
+    private static final int SWARM_INTERVAL = 240;
+    /** Reach and pace of its rake: a bite whenever it sweeps past a player, at most once a second. */
+    private static final double RAKE_REACH = 5;   // it is a scale-4 phantom: reach from its middle
+    private static final int RAKE_COOLDOWN = 20;
     private static final io.github.amitelia.occultech.boss.Mechanic BITE = io.github.amitelia.occultech.boss.Mechanic.of("NIGHT_MATRIARCH", "Bite", 17.5, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
 
     private Phantom matriarch;
@@ -44,6 +47,7 @@ public final class NightMatriarch extends BossBehavior {
     private int diveEnd = -1;
     private int stunnedUntil = -1;
     private int nextDive = 100;
+    private int nextRake;
     private boolean night;
 
     public NightMatriarch(BossFight fight) {
@@ -56,7 +60,7 @@ public final class NightMatriarch extends BossBehavior {
             p.setCustomName(ChatColor.DARK_PURPLE + "Night Matriarch");
             p.setCustomNameVisible(true);
             p.setShouldBurnInDay(false);
-            BossFight.setAttribute(p, Attribute.MAX_HEALTH, 260);
+            BossFight.setAttribute(p, Attribute.MAX_HEALTH, 380);
             fight.label(p, BITE);
             BossFight.setAttribute(p, Attribute.SCALE, 4);
             BossFight.setAttribute(p, Attribute.FOLLOW_RANGE, 40);
@@ -111,8 +115,10 @@ public final class NightMatriarch extends BossBehavior {
             matriarch.setVelocity(new Vector(0, 0.8, 0));
         }
 
+        rake(now);
+
         if (every(SWARM_INTERVAL)) {
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < Math.min(4, 1 + fight.playersAtStart()); i++) {
                 fight.spawnAdd(Phantom.class, fight.randomPoint(3, 8).add(0, 6, 0), p -> {
                     p.setShouldBurnInDay(false);
                     BossFight.setAttribute(p, Attribute.MAX_HEALTH, 12);
@@ -157,6 +163,25 @@ public final class NightMatriarch extends BossBehavior {
                 impact();
             } else {
                 matriarch.setVelocity(to.normalize().multiply(Math.min(1.3, 0.3 + to.length() * 0.1)));
+            }
+        }
+    }
+
+    /**
+     * Vanilla phantoms only swoop now and then, so the Matriarch also rakes: whenever it sweeps within reach of a player
+     * (circling low, or after a dive) it bites, at most once a second.
+     */
+    private void rake(int now) {
+        if (now < nextRake || diveEnd >= 0) {
+            return;
+        }
+        Location at = matriarch.getLocation().add(0, matriarch.getHeight() / 2, 0);
+        for (Player player : fight.players()) {
+            if (player.getLocation().add(0, 1, 0).distanceSquared(at) <= RAKE_REACH * RAKE_REACH) {
+                fight.hit(player, BITE, BITE.damage() * (night ? 1.2 : 1), matriarch);
+                matriarch.getWorld().playSound(at, Sound.ENTITY_PHANTOM_BITE, 1.2F, 0.7F);
+                nextRake = now + RAKE_COOLDOWN;
+                return;
             }
         }
     }
