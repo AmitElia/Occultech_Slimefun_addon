@@ -193,6 +193,10 @@ final class SelfTest {
             then(0, () -> summonTier1(bossId));
             then(60, () -> checkFightRunning(bossId));
             then(0, () -> checkMovement(bossId));
+            if (bossId.equals("BLAZE_CHOIR")) {
+                then(0, this::killAllButOneSinger);
+                then(15, this::lastSingerBare);
+            }
             then(0, this::killCurrentFight);
             then(30, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
         }
@@ -726,6 +730,21 @@ final class SelfTest {
                     : d.getItemStack().getItemMeta().getItemModel().getKey()).toList();
             check(ContentRegistrar.title(bossId) + " wears its aura (" + aura + ")", shown.contains(aura), String.valueOf(shown));
         }
+    }
+
+    private void killAllButOneSinger() {
+        if (currentFight != null) {
+            List<LivingEntity> singers = List.copyOf(currentFight.bosses());
+            for (int i = 1; i < singers.size(); i++) {
+                singers.get(i).setHealth(0);
+            }
+        }
+    }
+
+    private void lastSingerBare() {
+        LivingEntity last = currentFight == null || currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+        check("the Blaze Choir's last singer is never shielded", last != null && currentFight.bosses().size() == 1 && !last.isGlowing(),
+            last == null ? "no singer" : currentFight.bosses().size() + " singers, glowing " + last.isGlowing());
     }
 
     private void killCurrentFight() {

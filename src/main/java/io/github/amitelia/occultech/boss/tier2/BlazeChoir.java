@@ -112,7 +112,9 @@ public final class BlazeChoir extends BossBehavior {
             }
         }
 
-        if (every(SHIELD_INTERVAL) || shielded == null || !singers.contains(shielded)) {
+        if (singers.size() <= 1) {
+            dropShield();   // the last singer is never shielded: the end of the fight isn't a wall
+        } else if (every(SHIELD_INTERVAL) || shielded == null || !singers.contains(shielded)) {
             passShield();
         }
         drawShield();
@@ -160,6 +162,21 @@ public final class BlazeChoir extends BossBehavior {
             Location spot = fight.center().clone().add(Math.cos(angle) * ORBIT_RADIUS, 2.5 + Math.sin(spin * 2 + i) * 0.5, Math.sin(angle) * ORBIT_RADIUS);
             blaze.setVelocity(spot.toVector().subtract(blaze.getLocation().toVector()).multiply(0.3));
         }
+    }
+
+    private void dropShield() {
+        if (shielded == null && shieldRing == null) {
+            return;
+        }
+        if (shielded != null) {
+            shielded.setGlowing(false);
+        }
+        shielded = null;
+        if (shieldRing != null) {
+            shieldRing.end();
+            shieldRing = null;
+        }
+        fight.broadcast("&6The last singer's shield breaks - &fit stands bare!");
     }
 
     private void passShield() {

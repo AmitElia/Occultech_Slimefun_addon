@@ -63,6 +63,11 @@ public final class DrownedElder extends BossBehavior {
     private boolean surged;
     /** Movement goals, chosen each step and followed every tick. */
     private Player chase;
+    private int chaseUntil;
+    /** It keeps a target at least this long (it used to switch every step to whoever was nearest). */
+    private static final int CHASE_TICKS = 160;
+    /** Degrees it turns per tick at most: a slow, heavy turn. */
+    private static final float TURN = 4F;
     private final java.util.Map<Guardian, Player> guardianTargets = new java.util.HashMap<>();
 
     public DrownedElder(BossFight fight) {
@@ -98,7 +103,11 @@ public final class DrownedElder extends BossBehavior {
         int now = fight.elapsed();
         guardians.removeIf(g -> !g.isValid() || g.isDead());
 
-        chase = fight.nearestPlayer(elder.getLocation());
+        boolean keep = chase != null && chase.isValid() && !chase.isDead() && fight.players().contains(chase) && fight.elapsed() < chaseUntil;
+        if (!keep) {
+            chase = fight.nearestPlayer(elder.getLocation());
+            chaseUntil = fight.elapsed() + CHASE_TICKS;
+        }
 
         if (every(FATIGUE_INTERVAL)) {
             for (Player player : fight.players()) {
@@ -161,11 +170,11 @@ public final class DrownedElder extends BossBehavior {
             return;
         }
         if (!waveStarts.isEmpty() && waveCenter != null) {
-            Abyss.glide(elder, waveCenter, 0.12, 3, 0);
+            Abyss.glideSmooth(elder, waveCenter, 0.12, 3, 0, TURN);
         } else if (chase != null && chase.isValid() && chase.getWorld() == elder.getWorld()) {
-            Abyss.glide(elder, chase.getLocation(), 0.1, 2.5, 9);
+            Abyss.glideSmooth(elder, chase.getLocation(), 0.1, 2.5, 9, TURN);
         } else {
-            Abyss.glide(elder, fight.center(), 0.1, 2.5, 0);
+            Abyss.glideSmooth(elder, fight.center(), 0.1, 2.5, 0, TURN);
         }
         guardianTargets.entrySet().removeIf(entry -> !entry.getKey().isValid() || entry.getKey().isDead());
         guardianTargets.forEach((guardian, target) -> {

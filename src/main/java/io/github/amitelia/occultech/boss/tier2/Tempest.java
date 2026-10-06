@@ -35,8 +35,10 @@ public final class Tempest extends BossBehavior {
     private static final double HEALTH = 300;
     private static final double ARMOR = 0.33;
     private static final Color WIND = Color.fromRGB(200, 230, 255);
-    private static final int VOLLEY_INTERVAL = 100;
-    private static final int BURST_INTERVAL = 160;
+    private static final int VOLLEY_INTERVAL = 140;
+    private static final int BURST_INTERVAL = 220;
+    /** After a burst it hangs in the air, spent: an opening to hit it (Session R2). */
+    private static final int SPENT_TICKS = 30;
     private static final int RING_INTERVAL = 400;
     private static final int RING_TICKS = 160;
     private static final double RING_MIN = 5;
@@ -48,6 +50,7 @@ public final class Tempest extends BossBehavior {
     private int ringStart = -1;
     private int burstAt = -1;
     private boolean enraged;
+    private int spentUntil = -1;
 
     public Tempest(BossFight fight) {
         super(fight);
@@ -59,7 +62,9 @@ public final class Tempest extends BossBehavior {
             b.setCustomName(ChatColor.AQUA + "Tempest");
             b.setCustomNameVisible(true);
             BossFight.setAttribute(b, Attribute.MAX_HEALTH, HEALTH);
-            BossFight.setAttribute(b, Attribute.SCALE, 2.5);
+            BossFight.setAttribute(b, Attribute.SCALE, 3);   // a bigger target
+            BossFight.setAttribute(b, Attribute.MOVEMENT_SPEED, 0.42);
+            BossFight.setAttribute(b, Attribute.JUMP_STRENGTH, 0.3);
             BossFight.setAttribute(b, Attribute.FOLLOW_RANGE, 40);
         });
     }
@@ -100,6 +105,17 @@ public final class Tempest extends BossBehavior {
             }
         }
 
+        if (spentUntil >= 0 && now >= spentUntil) {
+            spentUntil = -1;
+            tempest.setAware(true);
+        }
+        if (spentUntil >= 0) {
+            tempest.getWorld().spawnParticle(Particle.CLOUD, tempest.getLocation().add(0, 1.5, 0), 3, 0.4, 0.3, 0.4, 0.01);
+            if (ringStart >= 0) {
+                squall(now);   // the squall closes in all the same
+            }
+            return;   // spent: no attacks, no moving
+        }
         if (every(VOLLEY_INTERVAL)) {
             volley();
         }
@@ -111,6 +127,9 @@ public final class Tempest extends BossBehavior {
         if (burstAt >= 0 && now >= burstAt) {
             burstAt = -1;
             burst();
+            spentUntil = now + SPENT_TICKS;
+            tempest.setAware(false);
+            tempest.setVelocity(new Vector());
         }
 
         if (every(RING_INTERVAL) && ringStart < 0) {

@@ -81,6 +81,43 @@ public final class Abyss {
     }
 
     /** Turns a creature (body and head) to look at a point. */
+    /**
+     * Like {@link #glide} but calm, for big slow creatures (Session R2): its speed eases in and out instead of snapping,
+     * it turns at most {@code maxTurn} degrees a tick, and it holds still anywhere from {@code keepDistance - 4} to
+     * {@code keepDistance + 1} - no flipping between closing in and backing off as its target moves around it.
+     */
+    public static void glideSmooth(LivingEntity mob, Location toward, double speed, double hover, double keepDistance, float maxTurn) {
+        Location at = mob.getLocation();
+        Vector flat = toward.toVector().subtract(at.toVector()).setY(0);
+        double distance = flat.length();
+        Vector want = new Vector();
+        if (distance > keepDistance + 1) {
+            want = flat.normalize().multiply(Math.min(speed, (distance - keepDistance) * 0.2));
+        } else if (distance < keepDistance - 4 && distance > 0.01) {
+            want = flat.normalize().multiply(-speed * 0.5);
+        }
+        Vector old = mob.getVelocity();
+        Vector velocity = old.clone().setY(0).multiply(0.8).add(want.multiply(0.2));
+        double wantY = groundY(at) + hover;
+        velocity.setY(Math.max(-0.3, Math.min(0.3, (wantY - at.getY()) * 0.2)));
+        mob.setVelocity(velocity);
+        turnToward(mob, toward, maxTurn);
+    }
+
+    /** Turns {@code mob} toward a point, at most {@code maxTurn} degrees this tick. */
+    public static void turnToward(LivingEntity mob, Location toward, float maxTurn) {
+        Vector look = toward.toVector().subtract(mob.getEyeLocation().toVector());
+        if (look.lengthSquared() < 0.01) {
+            return;
+        }
+        Location facing = mob.getLocation().setDirection(look);
+        float yaw = mob.getLocation().getYaw();
+        float delta = ((facing.getYaw() - yaw) % 360 + 540) % 360 - 180;
+        float turned = yaw + Math.max(-maxTurn, Math.min(maxTurn, delta));
+        mob.setRotation(turned, facing.getPitch());
+        mob.setBodyYaw(turned);
+    }
+
     public static void face(LivingEntity mob, Location toward) {
         Vector look = toward.toVector().subtract(mob.getEyeLocation().toVector());
         if (look.lengthSquared() < 0.01) {

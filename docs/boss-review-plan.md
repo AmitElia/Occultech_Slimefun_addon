@@ -35,7 +35,7 @@ Tidebreaker, Volley, the Witch Coven and the Sovereign stay as they are: they we
   - Getting close is answered with a **fang burst**: a quick ring of fangs around it.
   - Vexes hit softer (9 → 7).
 
-## R2: tier 2
+## R2: tier 2 - DONE (self-test 352/352)
 
 - **Abyssal Warden:** pretty hard, and very hard solo. Fewer beams for a solo player, and a longer gap between beams
   and spikes. Health a little lower.

@@ -32,12 +32,19 @@ import io.github.amitelia.occultech.boss.BossFight;
  */
 public final class AbyssalWarden extends BossBehavior {
 
-    static final double HEALTH = 300;
+    static final double HEALTH = 270;
     static final double ARMOR = 0.33;
     private static final Color BEAM = Color.fromRGB(90, 230, 210);
     private static final Color SPIKES = Color.fromRGB(230, 170, 60);
     private static final int BEAM_INTERVAL = 120;
     private static final int BEAM_INTERVAL_ENRAGED = 80;
+    /** Alone, one player takes every beam, lash and spike: the solo pace is slower (Session R2). */
+    private static final int SOLO_BEAM_INTERVAL = 160;
+    private static final int SOLO_BEAM_INTERVAL_ENRAGED = 120;
+    private static final int LASH_COOLDOWN = 20;
+    private static final int SOLO_LASH_COOLDOWN = 35;
+    /** After its spikes it rests, an opening to hit it. */
+    private static final int REST_TICKS = 40;
     private static final int SPIKE_INTERVAL = 240;
     private static final io.github.amitelia.occultech.boss.Mechanic BEAM_HIT = io.github.amitelia.occultech.boss.Mechanic.of("ABYSSAL_WARDEN", "Beam", 15.5, io.github.amitelia.occultech.boss.Mechanic.Kind.MAGIC, true);
     private static final io.github.amitelia.occultech.boss.Mechanic SPIKE_DAMAGE = io.github.amitelia.occultech.boss.Mechanic.of("ABYSSAL_WARDEN", "Spikes", 30, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
@@ -52,6 +59,7 @@ public final class AbyssalWarden extends BossBehavior {
     private Player chase;
     private int spikesAt = -1;
     private boolean enraged;
+    private int restUntil;
 
     public AbyssalWarden(BossFight fight) {
         super(fight);
@@ -84,8 +92,10 @@ public final class AbyssalWarden extends BossBehavior {
             return;
         }
         // close enough to lash anyone in melee; beams handle the rest
-        if (chase != null && chase.isValid() && chase.getWorld() == warden.getWorld()) {
-            Abyss.glide(warden, chase.getLocation(), 0.16, 1.5, 3);
+        if (fight.elapsed() < restUntil) {
+            Abyss.glide(warden, warden.getLocation(), 0, 1.2, 0);   // resting low after its spikes
+        } else if (chase != null && chase.isValid() && chase.getWorld() == warden.getWorld()) {
+            Abyss.glide(warden, chase.getLocation(), solo() ? 0.12 : 0.16, 1.5, 3);
         } else {
             Abyss.glide(warden, fight.center(), 0.1, 1.5, 0);
         }
@@ -105,7 +115,7 @@ public final class AbyssalWarden extends BossBehavior {
         }
 
         if (now >= nextBeam) {
-            nextBeam = now + (enraged ? BEAM_INTERVAL_ENRAGED : BEAM_INTERVAL);
+            nextBeam = now + (solo() ? (enraged ? SOLO_BEAM_INTERVAL_ENRAGED : SOLO_BEAM_INTERVAL) : (enraged ? BEAM_INTERVAL_ENRAGED : BEAM_INTERVAL));
             List<Player> players = new ArrayList<>(fight.players());
             java.util.Collections.shuffle(players);
             for (int i = 0; i < Math.min(enraged ? 2 : 1, players.size()); i++) {
@@ -120,7 +130,7 @@ public final class AbyssalWarden extends BossBehavior {
                 if (player.getLocation().add(0, 1, 0).distanceSquared(warden.getLocation().add(0, 1, 0)) <= LASH_RANGE * LASH_RANGE) {
                     fight.hit(player, LASH_DAMAGE, warden);
                     warden.getWorld().playSound(warden.getLocation(), Sound.ENTITY_GUARDIAN_HURT, 1F, 0.5F);
-                    nextLash = now + 20;
+                    nextLash = now + (solo() ? SOLO_LASH_COOLDOWN : LASH_COOLDOWN);
                 }
             }
         }
@@ -133,7 +143,12 @@ public final class AbyssalWarden extends BossBehavior {
         if (spikesAt >= 0 && now >= spikesAt) {
             spikesAt = -1;
             spikes();
+            restUntil = now + REST_TICKS;
         }
+    }
+
+    private boolean solo() {
+        return fight.players().size() <= 1;
     }
 
     private static Location ground(Location at) {
