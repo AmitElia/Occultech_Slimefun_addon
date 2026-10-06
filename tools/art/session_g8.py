@@ -207,58 +207,107 @@ HORN = [
 ]
 
 
-def bone_skin(tone, rings_vertical=True, scorched=False):
-    """A horn piece of bone: ivory lit from above, a soft shadow beneath, a few growth rings across it and pores;
-    `scorched`: the end nearest the fire darkens to charred bone (the top rows)."""
+CRIMSON = RAMPS["crimson"]
+
+
+def bone_shade(y, tone):
+    """Bone as a cylinder lit from the top-left (STYLE rule 3): a warm highlight band along its upper side, the body,
+    then shadows that lean violet (rule 4) - no lines anywhere."""
+    if y < 2:
+        return _mix(BONE[min(5, tone + 1)], EMBER[5], 0.15)           # warm highlight
+    if y < 5:
+        return BONE[min(5, tone + 1)] if y < 3 else BONE[tone]
+    if y < 11:
+        return BONE[tone]
+    if y < 14:
+        return _mix(BONE[tone - 1], DUSK[2], 0.25)                     # shadow leaning violet
+    return _mix(BONE[tone - 2], DUSK[1], 0.35)
+
+
+# a few hand-placed wear marks: small soft flecks, never lines (lighter scuffs high up, darker pits low down)
+WEAR_LIGHT = ((2, 3), (3, 3), (11, 4), (7, 6))
+WEAR_DARK = ((5, 9), (13, 8), (9, 12), (10, 12), (1, 11))
+
+
+def bone_skin(tone, drips=False):
+    """A horn piece of bone, shaded as a cylinder with a few scuffs and pits. `drips`: the blood running down from the
+    burning tip reaches over this piece's upper edge (the piece right under the tip)."""
     img = g.blank()
     for y in range(16):
         for x in range(16):
-            t = tone + 1 if y < 4 else tone if y < 12 else tone - 1
-            ring = (x in (3, 9, 14)) if rings_vertical else (y in (4, 10))
-            if ring:
-                t -= 1
-            col = BONE[max(0, min(5, t))]
-            if scorched and y < 5:
-                col = _mix(col, EMBER[0], (5 - y) / 6)        # charred toward the burning tip
-            img.putpixel((x, y), col)
-    for (x, y) in ((6, 6), (12, 8), (1, 11), (7, 13)):
-        img.putpixel((x, y), BONE[max(0, tone - 2)])           # pores
+            img.putpixel((x, y), bone_shade(y, tone))
+    for (x, y) in WEAR_LIGHT:
+        img.putpixel((x, y), _mix(BONE[min(5, tone + 1)], EMBER[5], 0.25))
+    for (x, y) in WEAR_DARK:
+        img.putpixel((x, y), _mix(BONE[tone - 1], DUSK[2], 0.4))
+    if drips:
+        for x, length in DRIP_ENDS:
+            for y in range(length):
+                img.putpixel((x, y), CRIMSON[2] if y < length - 1 else CRIMSON[1])
+            img.putpixel((x, 0), CRIMSON[3])
     return img
 
 
-def blaze_frames():
-    """The burning tip: vanilla's own fire (fire_0, its frames and timing) blazing over an opaque core that runs from
-    deep orange at the bottom to yellow at the top - square, solid, on fire."""
-    import json
-    meta = json.load(open(os.path.join(g.VANILLA_FIRE, "fire_0.png.mcmeta")))
-    strip = Image.open(os.path.join(g.VANILLA_FIRE, "fire_0.png")).convert("RGBA")
+# the blood stain on the tip: how far down each column the stain reaches (a ragged edge with drips - hand-drawn), and
+# the drips that run on down the piece below
+STAIN = [9, 10, 9, 8, 9, 11, 15, 10, 9, 8, 9, 10, 13, 15, 10, 9]
+DRIP_ENDS = ((6, 4), (13, 6))
+
+
+def stain_frames(n=6):
+    """The tip, burning like a fresh blood stain: white-hot and yellow at the very top, through orange to blood red,
+    to deep crimson at the stain's ragged edge, its drips running down the bone. Emissive (heat-coloured, no outline,
+    STYLE rule 10). Animated: the heat breathes up and down, and a glint of light runs down each drip."""
     frames = []
-    for k in range(strip.size[1] // 16):
-        fire = strip.crop((0, k * 16, 16, k * 16 + 16))
+    for f in range(n):
+        pulse = [0.0, 0.06, 0.12, 0.08, 0.02, -0.04][f % 6]
         img = g.blank()
         for y in range(16):
             for x in range(16):
-                img.putpixel((x, y), EMBER[2] if y > 11 else EMBER[3] if y > 5 else EMBER[4])
-        img.alpha_composite(fire)
+                depth = STAIN[x]
+                if y >= depth:
+                    img.putpixel((x, y), BONE[3] if x < 6 else BONE[2])   # bone below the stain, lit from the left
+                    continue
+                h = 1 - y / depth + pulse
+                col = (EMBER[5] if h > 0.86 else EMBER[4] if h > 0.68 else EMBER[3] if h > 0.5 else CRIMSON[4] if h > 0.34
+                       else CRIMSON[3] if h > 0.18 else CRIMSON[2])
+                img.putpixel((x, y), col)
+        for x, length in ((6, 15), (13, 15)):                  # a glint of light running down each drip
+            y = 9 + (f * 2) % 6
+            if y < length:
+                img.putpixel((x, y), CRIMSON[5])
         frames.append(img)
-    return frames, meta
+    return frames
+
+
+def stain_top_frames(n=6):
+    """The tip's cut face: the hottest part, white-hot in the middle cooling to orange and red at the rim."""
+    frames = []
+    for f in range(n):
+        pulse = [0.0, 0.3, 0.6, 0.4, 0.1, -0.2][f % 6]
+        img = g.blank()
+        for y in range(16):
+            for x in range(16):
+                d = math.hypot(x - 7.5, y - 7.5) - pulse
+                img.putpixel((x, y), EMBER[5] if d < 3 else EMBER[4] if d < 5.5 else EMBER[3] if d < 7.5 else CRIMSON[4])
+        frames.append(img)
+    return frames
 
 
 def frenzied_helm_worn():
     """The Frenzied Helm worn - open-faced (the whole face shows): a domed helm of deep violet plate; a heavy silver
     brow ridge bearing down toward the centre, the Frenzy Idol's ember sun set in it (breathing glow); silver cheek
-    guards; and two bull horns of bone, built of tapering pieces that bend out, up and forward, scorched toward the end
-    and cut off square into blazing tips (vanilla's fire burning over an orange-to-yellow core)."""
+    guards; and two bull horns of bone, built of tapering pieces that bend out, up and forward, cut off square at the
+    end - and the tips burn like fresh blood stains: white-hot at the top through orange to blood red, drips running
+    down the bone (animated)."""
     m = Model("frenzied_helmet_head")
     m.part = True
     top_i, side_i, back_i = g.tex_helm(PLATE, tone=3)
     t_top, t_side, t_back = m.texture("helm_top", top_i), m.texture("helm_side", side_i), m.texture("helm_back", back_i)
     t_brow = m.texture("brow", g.tex_smooth(SILVER, tone=3))
-    blaze, blaze_meta = blaze_frames()
     skins = {"root": m.texture("horn_root", bone_skin(2)), "mid": m.texture("horn_mid", bone_skin(3)),
-             "upper": m.texture("horn_upper", bone_skin(3, rings_vertical=False, scorched=True)),
-             "tip": m.texture("horn_tip", blaze)}
-    m.mcmeta["horn_tip"] = blaze_meta
+             "upper": m.texture("horn_upper", bone_skin(3, drips=True)),
+             "tip": m.texture("horn_tip", stain_frames()), "tip_top": m.texture("horn_tip_top", stain_top_frames())}
     t_sun = m.texture("sun", sun_frames())
     T = lambda t, w, h: (t, [0, 0, max(1, min(16, round(w))), max(1, min(16, round(h)))])  # noqa: E731
     # the helmet shell (as the approved G6 helms)
@@ -280,8 +329,10 @@ def frenzied_helm_worn():
         for (a, b, axis, angle, origin, skin) in HORN:
             if side > 0:
                 a, b = (16 - b[0], a[1], a[2]), (16 - a[0], b[1], b[2])
-            el = m.box(a, b, {d: (skins[skin], [0, 0, 16, 16]) for d in g.FACES_ALL},
-                       shade=skin != "tip", light=15 if skin == "tip" else 0)
+            faces = {d: (skins[skin], [0, 0, 16, 16]) for d in g.FACES_ALL}
+            if skin == "tip":
+                faces["up"] = (skins["tip_top"], [0, 0, 16, 16])
+            el = m.box(a, b, faces, shade=skin != "tip", light=12 if skin == "tip" else 0)
             if axis:
                 o = list(origin) if side < 0 else [16 - origin[0], origin[1], origin[2]]
                 el["rotation"] = {"origin": o, "axis": axis, "angle": angle if (side < 0 or axis == "x") else -angle}
@@ -351,6 +402,16 @@ def sheet(layers, helm, path):
     return worn
 
 
+def horn_closeup(helm, path):
+    """The horn and its burning tip up close, from the front-left and from above-right."""
+    views = [render3d.render(helm, frame=f, yaw=yaw, pitch=pitch, s=26, size=(520, 520), center=(18, 16, 7))
+             for (f, yaw, pitch) in ((0, 200, 15), (2, 150, 25))]
+    out = Image.new("RGBA", (1040, 520))
+    for i, v in enumerate(views):
+        out.alpha_composite(v, (i * 520, 0))
+    out.save(path)
+
+
 def helm_gif(helm, path):
     frames = [render3d.render(helm, frame=f, yaw=210, pitch=20, s=9, size=(360, 360), center=(8, 14, 8)).convert("RGB") for f in range(4)]
     frames[0].save(path, save_all=True, append_images=frames[1:], duration=220, loop=0)
@@ -363,6 +424,7 @@ if __name__ == "__main__":
     suffix = "" if version == "final" else "-" + version
     sheet(layers, helm, os.path.join(OUT, f"review-g8{suffix}.png"))
     helm_gif(helm, os.path.join(OUT, f"helm-g8{suffix}.gif"))
+    horn_closeup(helm, os.path.join(OUT, f"horn-g8{suffix}.png"))
     d = os.path.join(OUT, "equipment", "frenzied")
     os.makedirs(d, exist_ok=True)
     for layer, img in layers.items():

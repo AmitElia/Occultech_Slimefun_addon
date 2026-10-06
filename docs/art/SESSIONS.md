@@ -494,6 +494,15 @@ the flat layers) and a helm GIF; `final` saves into session-g for the pack.
   top-left, warm light from the fire below on its lower edge (a blend into the plate - v7 painted it as pure orange
   and the body turned into tiger stripes); more seams with yellow cores and a white-hot pixel (under the pectorals,
   between the abdominal bands, behind, between the pauldron layers, across the thighs, above the toe caps).
+- v9 (user on v8: tips still funny but better; the horizontal lines on the horns don't look real; the fire texture on
+  the tips is disgusting - relearn Sessions A and B, then make the tips blaze like blood stains). Re-read STYLE.md,
+  REFERENCES.md and Sessions A/B: one light from the top-left, volume from the real form, hue-shifted ramps, glows as
+  heat-coloured gradients with no outline, animated, hand-placed pixels instead of generated patterns or lines.
+  Horns: bone shaded as a cylinder (a warm highlight band along the top, shadows leaning violet), a few hand-placed
+  scuffs and pits, no rings. Tips: a glowing blood stain (`stain_frames`) - white-hot and yellow at the top, orange,
+  blood red, deep crimson at a hand-drawn ragged edge, two drips running down the side and on over the next piece's
+  edge; the cut face glows white-hot in the middle (`stain_top_frames`); the heat breathes and a glint runs down each
+  drip (6 frames). Vanilla's fire is gone from the helm. New close-up render: `horn-g8-<version>.png`.
 
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):
