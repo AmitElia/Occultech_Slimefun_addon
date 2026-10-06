@@ -486,6 +486,14 @@ the flat layers) and a helm GIF; `final` saves into session-g for the pack.
   pieces with an ember crack glowing lengthwise, a light grey-silver upper piece, a small molten-amber tip that
   flickers (8 frames, glowing). No flame sprite: the fire is in the material. The worn preview now also reverses
   x/z turn angles for the head item's half turn.
+- v8 (user on v6: the bent shape and angles are right; tips square not pointed, blazing; horns boney; armor much less
+  purple - muted greyish like the Frenzy block - with much more orange light play and more yellow): plates now a grey
+  with a breath of dusk violet (PLATE = boundsteel mixed 28% with dusk); horns of ivory bone (growth rings, pores),
+  the upper piece scorched toward the tip; the tip is square - the horn's own thickness cut off blunt - and blazes:
+  vanilla's fire_0 animation over an opaque orange-to-yellow core. The body is lit twice: cool grey on each plate's
+  top-left, warm light from the fire below on its lower edge (a blend into the plate - v7 painted it as pure orange
+  and the body turned into tiger stripes); more seams with yellow cores and a white-hot pixel (under the pectorals,
+  between the abdominal bands, behind, between the pauldron layers, across the thighs, above the toe caps).
 
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):

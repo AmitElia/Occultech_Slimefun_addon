@@ -23,18 +23,44 @@ import render3d  # noqa: E402
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "art", "session-g8")
 os.makedirs(OUT, exist_ok=True)
 
-PLATE = RAMPS["violet"]       # deep purple plates
-DUSK = RAMPS["dusk"]          # the warm violet-rose underlayer, as in the Frenzy Idol's stone
-SILVER = RAMPS["boundsteel"]  # grey-silver trims and horns
-EMBER = RAMPS["ember"]        # only where it glows
+SILVER = RAMPS["boundsteel"]  # grey-silver trims
+EMBER = RAMPS["ember"]        # the light: orange to yellow to white-hot
+BONE = RAMPS["bone"]          # the horns
+
+
+def _mix(a, b, t):
+    return tuple(round(a[k] * (1 - t) + b[k] * t) for k in range(3)) + (255,)
+
+
+# the Frenzy Idol's stone: grey with only a breath of violet (user, v6: much less purple, almost muted, greyish)
+PLATE = [_mix(SILVER[i], RAMPS["dusk"][i], 0.28) for i in range(6)]
+DUSK = [_mix(SILVER[i], RAMPS["dusk"][i], 0.4) for i in range(6)]   # the darker underlayer
 
 
 # ---------------------------------------------------------------- worn layers
 
 def seam(c, F, pts):
-    """An ember seam: a thin line of fire glowing in the gap between plates (bright core, dimmer ends)."""
+    """An ember seam: a line of fire glowing in the gap between plates - orange ends, a yellow core, one white-hot
+    pixel."""
     for i, (u, v) in enumerate(pts):
         c.px(F, u, v, EMBER[3] if i in (0, len(pts) - 1) else EMBER[4])
+    if len(pts) > 2:
+        c.px(F, *pts[len(pts) // 2], EMBER[5])
+
+
+def warm_plate(c, F, u0, v0, u1, v1, ramp, tone=3):
+    """A bevelled plate lit twice: cool grey light on its top-left edges, and warm light from the fire below - its
+    lower edge glows orange, brightest (yellow) at the lower-left corner."""
+    for v in range(v0, v1 + 1):
+        for u in range(u0, u1 + 1):
+            col = ramp[tone]
+            if v == v0 or u == u0:
+                col = ramp[min(5, tone + 1)]
+            if (u, v) == (u0, v0):
+                col = ramp[min(5, tone + 2)]
+            if v == v1 and v1 > v0:                   # warm light: a blend, not a stripe - stronger at the left
+                col = _mix(ramp[max(0, tone - 1)], EMBER[3], 0.55 if u == u0 else 0.35)
+            c.px(F, u, v, col)
 
 
 def frenzied_armor():
@@ -44,6 +70,9 @@ def frenzied_armor():
     the outer face. Leggings: a silver belt with an ember buckle, thigh plates, silver knee cops with an ember stud.
     Boots: violet greaves, silver toe caps, a thin ember line. No back piece."""
     c = g.covered_canvas()
+    base_plate = c.plate
+    c.plate = lambda F, u0, v0, u1, v1, ramp, tone=3: (warm_plate(c, F, u0, v0, u1, v1, ramp, tone) if ramp is PLATE
+                                                        else base_plate(F, u0, v0, u1, v1, ramp, tone))
     H, L = "humanoid", "humanoid_leggings"
     for layer in (H, L):                                     # the calm underlayer: dark warm violet, darker at the bottom
         for part in ("body", "arm", "leg"):
@@ -62,13 +91,16 @@ def frenzied_armor():
     c.px(F, 2, 2, EMBER[3]); c.px(F, 5, 3, EMBER[3])          # its rays, into the plates
     c.plate(F, 0, 6, 2, 7, PLATE, 2); c.plate(F, 5, 6, 7, 7, PLATE, 2)
     c.plate(F, 1, 9, 2, 10, PLATE, 2); c.plate(F, 5, 9, 6, 10, PLATE, 2)
-    seam(c, F, [(1, 5), (2, 5)]); seam(c, F, [(5, 5), (6, 5)])   # under the pectorals, either side of the sun
+    seam(c, F, [(0, 5), (1, 5), (2, 5)]); seam(c, F, [(5, 5), (6, 5), (7, 5)])   # under the pectorals
+    seam(c, F, [(0, 8), (1, 8), (2, 8)]); seam(c, F, [(5, 8), (6, 8), (7, 8)])   # between the abdominal bands
+    c.px(F, 2, 3, EMBER[4]); c.px(F, 5, 2, EMBER[4]); c.px(F, 1, 2, EMBER[3]); c.px(F, 6, 3, EMBER[3])   # the sun's rays
     for u in range(8):
         c.px(F, u, 11, SILVER[3] if u % 2 else SILVER[2])     # the silver hem
     F = c.face(H, "body", "back")
     c.plate(F, 0, 0, 2, 5, PLATE, 2); c.plate(F, 5, 0, 7, 5, PLATE, 2); c.plate(F, 1, 7, 6, 9, PLATE, 2)
     for v in range(0, 11):
         c.px(F, 3, v, SILVER[3]); c.px(F, 4, v, SILVER[2])
+    seam(c, F, [(0, 6), (1, 6), (2, 6)]); seam(c, F, [(5, 6), (6, 6), (7, 6)])
     for u in range(8):
         c.px(F, u, 11, SILVER[2])
     for face in ("right", "left"):
@@ -82,6 +114,8 @@ def frenzied_armor():
         F = c.face(H, "arm", face)
         c.plate(F, 0, 0, 3, 1, PLATE, 3); c.plate(F, 0, 2, 3, 3, PLATE, 2); c.plate(F, 0, 4, 3, 4, PLATE, 2)
         c.rect(F, 0, 5, 3, 5, SILVER[3]); c.px(F, 0, 5, SILVER[4])
+        if face in ("right", "left"):
+            seam(c, F, [(0, 2), (1, 2), (2, 2), (3, 2)])       # between the pauldron's layers
     for face in ("right", "left"):                            # the curl, mirrored on the two arms
         F = c.face(H, "arm", face)
         for (u, v) in ((1, 1), (2, 1), (2, 2), (1, 3)):
@@ -96,7 +130,7 @@ def frenzied_armor():
         c.rect(F, 0, 10, 3, 11, PLATE[1])
     F = c.face(H, "leg", "front")
     c.plate(F, 0, 10, 3, 11, SILVER, 2)                       # the silver toe cap
-    seam(c, F, [(1, 9), (2, 9)])
+    seam(c, F, [(0, 9), (1, 9), (2, 9), (3, 9)])
     c.rect(c.face(H, "leg", "bottom"), 0, 0, 3, 3, PLATE[1])
 
     # leggings: a silver belt with an ember buckle, thigh plates, silver knee cops with an ember stud
@@ -107,6 +141,8 @@ def frenzied_armor():
         G = c.face(L, "leg", face)
         c.plate(G, 0, 0, 3, 3, PLATE, 2)
         c.plate(G, 0, 6, 3, 7, PLATE, 2)
+        if face != "back":
+            seam(c, G, [(0, 4), (1, 4), (2, 4), (3, 4)])
     c.gem(c.face(L, "body", "front"), 3, 8, 4, 9, EMBER)
     F = c.face(L, "leg", "front")
     c.plate(F, 0, 4, 3, 5, SILVER, 2); c.gem(F, 1, 4, 2, 4, EMBER)
@@ -165,64 +201,64 @@ HORN = [
     ((-3.2, 10.2, 4.4), (0.4, 14.6, 9.6), None, 0, None, "root"),
     ((-7.2, 10.8, 4.9), (-2.6, 14.2, 9.1), "z", -22.5, (-2.6, 12.5, 7.0), "mid"),
     ((-10.2, 12.0, 5.3), (-6.2, 15.0, 8.7), "z", -45.0, (-6.2, 13.5, 7.0), "mid"),
-    ((-10.6, 14.8, 5.6), (-8.0, 18.8, 8.4), "x", -22.5, (-9.3, 14.8, 7.0), "light"),
-    ((-10.0, 18.2, 4.4), (-8.6, 21.4, 6.2), "x", -45.0, (-9.3, 18.2, 6.2), "tip"),
+    ((-10.6, 14.8, 5.6), (-8.0, 18.8, 8.4), "x", -22.5, (-9.3, 14.8, 7.0), "upper"),
+    # the tip: square, not pointed - the horn's own thickness, cut off blunt and burning (user, v6)
+    ((-10.6, 18.8, 5.6), (-8.0, 21.8, 8.4), "x", -22.5, (-9.3, 14.8, 7.0), "tip"),
 ]
 
 
-def horn_skin(tone, crack=False):
-    """A horn piece's skin: lit from above, a soft shadow beneath, a few growth rings; `crack`: an ember crack glowing
-    through it lengthwise."""
+def bone_skin(tone, rings_vertical=True, scorched=False):
+    """A horn piece of bone: ivory lit from above, a soft shadow beneath, a few growth rings across it and pores;
+    `scorched`: the end nearest the fire darkens to charred bone (the top rows)."""
     img = g.blank()
     for y in range(16):
         for x in range(16):
-            t = tone + 1 if y < 5 else tone if y < 12 else tone - 1
-            if x in (4, 10) and 3 <= y <= 13:
+            t = tone + 1 if y < 4 else tone if y < 12 else tone - 1
+            ring = (x in (3, 9, 14)) if rings_vertical else (y in (4, 10))
+            if ring:
                 t -= 1
-            img.putpixel((x, y), SILVER[max(0, min(5, t))])
-    if crack:
-        path = [(0, 8), (2, 8), (3, 7), (5, 7), (6, 8), (8, 9), (9, 8), (11, 8), (12, 7), (14, 7), (15, 8)]
-        for k, (x, y) in enumerate(path):
-            img.putpixel((x, y), EMBER[4] if k % 3 else EMBER[5])
-            img.putpixel((x, y + 1), EMBER[2])
+            col = BONE[max(0, min(5, t))]
+            if scorched and y < 5:
+                col = _mix(col, EMBER[0], (5 - y) / 6)        # charred toward the burning tip
+            img.putpixel((x, y), col)
+    for (x, y) in ((6, 6), (12, 8), (1, 11), (7, 13)):
+        img.putpixel((x, y), BONE[max(0, tone - 2)])           # pores
     return img
 
 
-def molten_tip(n=8):
-    """The tip: molten amber, white-hot at the point, flickering (8 frames)."""
-    import random
-    frames = []
-    for f in range(n):
-        rnd = random.Random(911 + f)
-        img = g.blank()
-        for y in range(16):
-            for x in range(16):
-                heat = (15 - y) / 15 + rnd.uniform(-0.1, 0.1)
-                img.putpixel((x, y), EMBER[2] if heat < 0.3 else EMBER[3] if heat < 0.6 else EMBER[4] if heat < 0.85 else EMBER[5])
-        frames.append(img)
-    return frames
-
-
-def vanilla_flame():
-    """Vanilla's fire_0 animation (all its frames, its own timing): the flame burning on each horn tip."""
+def blaze_frames():
+    """The burning tip: vanilla's own fire (fire_0, its frames and timing) blazing over an opaque core that runs from
+    deep orange at the bottom to yellow at the top - square, solid, on fire."""
     import json
     meta = json.load(open(os.path.join(g.VANILLA_FIRE, "fire_0.png.mcmeta")))
     strip = Image.open(os.path.join(g.VANILLA_FIRE, "fire_0.png")).convert("RGBA")
-    return [strip.crop((0, k * 16, 16, k * 16 + 16)) for k in range(strip.size[1] // 16)], meta
+    frames = []
+    for k in range(strip.size[1] // 16):
+        fire = strip.crop((0, k * 16, 16, k * 16 + 16))
+        img = g.blank()
+        for y in range(16):
+            for x in range(16):
+                img.putpixel((x, y), EMBER[2] if y > 11 else EMBER[3] if y > 5 else EMBER[4])
+        img.alpha_composite(fire)
+        frames.append(img)
+    return frames, meta
 
 
 def frenzied_helm_worn():
     """The Frenzied Helm worn - open-faced (the whole face shows): a domed helm of deep violet plate; a heavy silver
     brow ridge bearing down toward the centre, the Frenzy Idol's ember sun set in it (breathing glow); silver cheek
-    guards; and two horns shaped like the warm cow's - a smooth grey-silver bar out from each side and a tip block
-    rising at its end - the tips burning: molten amber glowing toward the top, a small flame on each."""
+    guards; and two bull horns of bone, built of tapering pieces that bend out, up and forward, scorched toward the end
+    and cut off square into blazing tips (vanilla's fire burning over an orange-to-yellow core)."""
     m = Model("frenzied_helmet_head")
     m.part = True
     top_i, side_i, back_i = g.tex_helm(PLATE, tone=3)
     t_top, t_side, t_back = m.texture("helm_top", top_i), m.texture("helm_side", side_i), m.texture("helm_back", back_i)
     t_brow = m.texture("brow", g.tex_smooth(SILVER, tone=3))
-    skins = {"root": m.texture("horn_root", horn_skin(2)), "mid": m.texture("horn_mid", horn_skin(3, crack=True)),
-             "light": m.texture("horn_light", horn_skin(4)), "tip": m.texture("horn_tip", molten_tip())}
+    blaze, blaze_meta = blaze_frames()
+    skins = {"root": m.texture("horn_root", bone_skin(2)), "mid": m.texture("horn_mid", bone_skin(3)),
+             "upper": m.texture("horn_upper", bone_skin(3, rings_vertical=False, scorched=True)),
+             "tip": m.texture("horn_tip", blaze)}
+    m.mcmeta["horn_tip"] = blaze_meta
     t_sun = m.texture("sun", sun_frames())
     T = lambda t, w, h: (t, [0, 0, max(1, min(16, round(w))), max(1, min(16, round(h)))])  # noqa: E731
     # the helmet shell (as the approved G6 helms)
