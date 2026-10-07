@@ -2509,7 +2509,9 @@ def paint_armor(painter):
 # elytra's wings); bodies, legs and boots are equipment textures (64x32, vanilla layout). Vanilla packs can't add
 # geometry anywhere else (shoulder plates and the like need a client mod).
 
-HEAD_DISPLAY = {"head": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]}}
+# worn helms sit a little larger and higher than the head, so the skin's hat layer (half a pixel out from the head)
+# never shows through the crown (user bug report: one pixel of the second skin layer on top of every helm)
+HEAD_DISPLAY = {"head": {"rotation": [0, 0, 0], "translation": [0, 0.8, 0], "scale": [1.08, 1.08, 1.08]}}
 
 
 ELYTRA_FRONT, ELYTRA_BACK = (24, 2), (36, 2)   # a wing's two broad faces (10 x 20) in the elytra texture

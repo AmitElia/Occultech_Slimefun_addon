@@ -519,19 +519,22 @@ def worn_preview(layers, helm):
         g.OUT = old_out
     for name, tex in helm.textures.items():
         body.textures["h_" + name] = tex
+    head = (helm.display or {}).get("head", {})              # the helm's own head display: larger, raised
+    k = HEAD_SCALE * head.get("scale", [1, 1, 1])[0]
+    cy = 28 + head.get("translation", [0, 0, 0])[1] * HEAD_SCALE
     for e in helm.elements:
         el = {"from": [], "to": [], "faces": {}, "shade": e.get("shade", True)}
         # a head item is turned half a turn about y (CustomHeadLayer): mirror x and z about the head's centre
         a, b = e["from"], e["to"]
-        lo = [8 - (b[0] - 8) * HEAD_SCALE, 28 + (a[1] - 8) * HEAD_SCALE, 8 - (b[2] - 8) * HEAD_SCALE]
-        hi = [8 - (a[0] - 8) * HEAD_SCALE, 28 + (b[1] - 8) * HEAD_SCALE, 8 - (a[2] - 8) * HEAD_SCALE]
+        lo = [8 - (b[0] - 8) * k, cy + (a[1] - 8) * k, 8 - (b[2] - 8) * k]
+        hi = [8 - (a[0] - 8) * k, cy + (b[1] - 8) * k, 8 - (a[2] - 8) * k]
         el["from"], el["to"] = lo, hi
         if "light_emission" in e:
             el["light_emission"] = e["light_emission"]
         if "rotation" in e:
             r = dict(e["rotation"])
             o = r["origin"]
-            r["origin"] = [8 - (o[0] - 8) * HEAD_SCALE, 28 + (o[1] - 8) * HEAD_SCALE, 8 - (o[2] - 8) * HEAD_SCALE]
+            r["origin"] = [8 - (o[0] - 8) * k, cy + (o[1] - 8) * k, 8 - (o[2] - 8) * k]
             if r["axis"] in ("x", "z"):
                 r["angle"] = -r["angle"]          # the half turn about y reverses turns about x and z
             el["rotation"] = r
