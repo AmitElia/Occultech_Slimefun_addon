@@ -114,6 +114,8 @@ final class Showcase {
     private final List<String> loops = new ArrayList<>();
     /** One line per row of studios, for the build message. */
     private final List<String> studioRows = new ArrayList<>();
+    /** Each studio's subject for /occultech studio: "kind;x;y;z;size;ID", saved in showcase.yml. */
+    private final List<String> studioShots = new ArrayList<>();
     private World world;
     private int floorY;
     private int ox;
@@ -690,7 +692,16 @@ final class Showcase {
     // ------------------------------------------------------------------ studios
 
     /** What one studio shows, built on the block above its floor at the studio's middle. */
-    private record Studio(String name, java.util.function.Consumer<Block> build) {}
+    /**
+     * What one studio shows, built on the block above its floor at the studio's middle; the subject the camera frames
+     * sits {@code dy}, {@code dz} from there and spans {@code size} blocks.
+     */
+    private record Studio(String name, java.util.function.Consumer<Block> build, int dy, int dz, int size) {
+
+        Studio(String name, java.util.function.Consumer<Block> build) {
+            this(name, build, 0, 0, 1);
+        }
+    }
 
     /**
      * The studios, west of the hallway: a row (or more) per kind - armor sets, weapons, machines, cosmetics, ritual
@@ -698,14 +709,22 @@ final class Showcase {
      */
     private void buildStudios() {
         Map<String, List<Studio>> kinds = new LinkedHashMap<>();
+        Map<String, String> keys = Map.of("armor sets", "armor", "weapons", "weapons", "machines", "machines", "cosmetics", "cosmetics",
+            "ritual recipes", "rituals");
         kinds.put("armor sets", List.of("FRENZIED", "ABYSSAL", "HOLLOW").stream()
             .filter(set -> SlimefunItem.getById(ItemKeys.slimefunId(set + "_HELMET")) != null)
             .map(set -> new Studio(set, center -> armorStudio(center, set))).toList());
         kinds.put("weapons", itemsWhere("weapon").stream().map(def -> new Studio(def.id(), center -> weaponStudio(center, def.id()))).toList());
-        kinds.put("machines", itemsWhere("machine").stream().map(def -> new Studio(def.id(), center -> machineStudio(center, def.id()))).toList());
-        kinds.put("cosmetics", itemsWhere("decoration").stream().map(def -> new Studio(def.id(), center -> cosmeticStudio(center, def.id()))).toList());
+        kinds.put("machines", itemsWhere("machine").stream().map(def -> new Studio(def.id(), center -> machineStudio(center, def.id()), 0, 0,
+            def.id().equals("ARCANE_ALTAR") ? 5 : 1)).toList());
+        kinds.put("cosmetics", itemsWhere("decoration").stream().map(def -> {
+            boolean tiles = def.id().endsWith("_TILE");
+            boolean floor = tiles || def.id().equals("FLOOR_SIGIL");
+            return new Studio(def.id(), center -> cosmeticStudio(center, def.id()), floor ? -1 : 0, 0, tiles ? 5 : floor ? 3 : 1);
+        }).toList());
         kinds.put("ritual recipes", plugin.rituals().recipes().stream().filter(recipe -> !recipe.isSummon() && recipe.outputId() != null)
-            .map(recipe -> new Studio(recipe.outputId(), center -> ritualStudio(center, recipe))).toList());
+            .map(recipe -> new Studio(recipe.outputId().substring(ItemKeys.PREFIX.length()), center -> ritualStudio(center, recipe), 0, -1,
+                2 * Circles.forTier(recipe.circle()).radius() + 1)).toList());
 
         int rows = kinds.values().stream().mapToInt(list -> (list.size() + STUDIOS_PER_ROW - 1) / STUDIOS_PER_ROW).sum();
         int pitchX = STUDIO_WIDTH + STUDIO_GAP;
@@ -728,8 +747,14 @@ final class Showcase {
                     z0 += pitchZ;
                 }
                 int x0 = east - STUDIO_WIDTH - (i % STUDIOS_PER_ROW) * pitchX;
-                studioShell(x0, z0);
-                studios.get(i).build().accept(world.getBlockAt(x0 + STUDIO_WIDTH / 2, floorY + 1, z0 + STUDIO_DEPTH / 2));
+                // armor turns on camera (studio orbit): its studio is closed all round, so every angle is white
+                studioShell(x0, z0, kind.getKey().equals("armor sets"));
+                Studio studio = studios.get(i);
+                Block center = world.getBlockAt(x0 + STUDIO_WIDTH / 2, floorY + 1, z0 + STUDIO_DEPTH / 2);
+                studio.build().accept(center);
+                Block subject = center.getRelative(0, studio.dy(), studio.dz());
+                studioShots.add(keys.get(kind.getKey()) + ";" + subject.getX() + ";" + subject.getY() + ";" + subject.getZ() + ";" + studio.size()
+                    + ";" + studio.name());
             }
             if (!studios.isEmpty()) {
                 studioRows.add(kind.getKey() + " (" + studios.size() + ") from x " + (east - 1) + ", z " + (z0 - (studios.size() - 1) / STUDIOS_PER_ROW * pitchZ)
@@ -739,12 +764,16 @@ final class Showcase {
         }
     }
 
-    /** White concrete floor (with an apron in front for a camera), a white backdrop on three sides, hidden lights. */
-    private void studioShell(int x0, int z0) {
+    /**
+     * White concrete floor (with an apron in front for a camera), a white backdrop on three sides - or all four when
+     * {@code closed} - and hidden lights.
+     */
+    private void studioShell(int x0, int z0, boolean closed) {
         for (int x = x0; x < x0 + STUDIO_WIDTH; x++) {
             for (int z = z0; z < z0 + STUDIO_DEPTH + STUDIO_APRON; z++) {
                 setBlock(world.getBlockAt(x, floorY, z), Material.WHITE_CONCRETE);
-                boolean wall = z < z0 + STUDIO_DEPTH && (z == z0 || x == x0 || x == x0 + STUDIO_WIDTH - 1);
+                int front = z0 + STUDIO_DEPTH + STUDIO_APRON - 1;
+                boolean wall = (z < z0 + STUDIO_DEPTH || closed) && (z == z0 || x == x0 || x == x0 + STUDIO_WIDTH - 1 || (closed && z == front));
                 for (int y = floorY + 1; y <= floorY + STUDIO_WALL; y++) {
                     if (wall) {
                         setBlock(world.getBlockAt(x, y, z), Material.WHITE_CONCRETE);
@@ -771,8 +800,13 @@ final class Showcase {
     private void mannequin(Block at, java.util.function.Consumer<org.bukkit.inventory.EntityEquipment> dress) {
         Location spot = at.getLocation().add(0.5, 0, 0.5);
         spot.setYaw(0);   // south: towards the open front
+        String skin = plugin.getConfig().getString("showcase.skin", "S4MURAI");
         world.spawn(spot, org.bukkit.entity.Mannequin.class, m -> {
             m.setDescription(net.kyori.adventure.text.Component.empty());
+            if (skin != null && !skin.isBlank()) {
+                // the skin of this player, looked up by name (the game fetches it from Mojang, as for player heads)
+                m.setProfile(io.papermc.paper.datacomponent.item.ResolvableProfile.resolvableProfile().name(skin).build());
+            }
             m.setImmovable(true);
             m.setInvulnerable(true);
             m.setSilent(true);
@@ -909,6 +943,7 @@ final class Showcase {
         previous.forEach((block, blockData) -> blocks.add(block.getX() + ";" + block.getY() + ";" + block.getZ() + ";" + blockData.getAsString()));
         data.set("blocks", blocks);
         data.set("loops", loops);
+        data.set("studios", studioShots);
         try {
             plugin.getDataFolder().mkdirs();
             data.save(new File(plugin.getDataFolder(), FILE));

@@ -33,6 +33,10 @@ ember-brazier:
   # Seconds between blaze powder (same rules as the Brood Egg).
   seconds-per-item: 60
 
+showcase:
+  # The player whose skin the showcase studios' mannequins wear (looked up by name; empty for the default skin).
+  skin: S4MURAI
+
 custom-blocks:
   # Occultech's blocks as real custom blocks, like Nexo makes them: each block look is a note-block (or, for the flat
   # ritual glyphs, a tripwire) state that the resource pack shows as the block's model. auto: on, unless Nexo is

@@ -20,6 +20,8 @@ import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
  * <li>{@code selftest}: in-game integration test (console friendly)</li>
  * <li>{@code showcase}: (re)build the item wall and ready-to-summon circles near spawn</li>
  * <li>{@code showcase clear}: remove the showcase and restore the original blocks</li>
+ * <li>{@code studio <armor|weapons|machines|cosmetics|rituals> [next|prev|N]}, {@code studio stop}: the showcase studios'
+ * camera (see {@link StudioCamera})</li>
  * <li>{@code restock <x> <y> <z> <BOSS_ID>}: refill a circle's altar and bowls for a boss (showcase buttons)</li>
  * <li>{@code inspect <x> <y> <z>}: print a Slimefun block's id and menu contents (debugging)</li>
  * <li>{@code unlockhalos <player>}: unlock every Hollow Halo style for a player (operators always have them)</li>
@@ -50,6 +52,14 @@ public final class OccultechCommand implements TabExecutor {
                 showcase.clear(true);
             } else {
                 showcase.rebuild();
+            }
+            return true;
+        }
+        if (args.length >= 2 && args[0].equalsIgnoreCase("studio")) {
+            if (sender instanceof org.bukkit.entity.Player player) {
+                StudioCamera.command(plugin, player, args[1], args.length > 2 ? args[2] : null);
+            } else {
+                sender.sendMessage("Only a player can use the studio camera.");
             }
             return true;
         }
@@ -253,10 +263,16 @@ public final class OccultechCommand implements TabExecutor {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            return List.of("selftest", "showcase", "restock", "inspect", "unlockhalos", "iteminfo", "setslot", "fights", "begin", "kit", "balance");
+            return List.of("selftest", "showcase", "studio", "restock", "inspect", "unlockhalos", "iteminfo", "setslot", "fights", "begin", "kit", "balance");
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("showcase")) {
             return List.of("clear");
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("studio")) {
+            return List.of("armor", "weapons", "machines", "cosmetics", "rituals", "stop");
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("studio")) {
+            return List.of("next", "prev");
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("fights")) {
             return List.of("end", "stats");
