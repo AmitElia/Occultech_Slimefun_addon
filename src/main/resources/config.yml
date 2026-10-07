@@ -36,6 +36,13 @@ ember-brazier:
 showcase:
   # The player whose skin the showcase studios' mannequins wear (looked up by name; empty for the default skin).
   skin: S4MURAI
+  # /occultech studio: the camera's distance (blocks) from a block / ritual altar, from the mannequin's right hand
+  # (weapons) and from the armor mannequin's chest; how long the armor turntable takes for one full turn.
+  camera:
+    block-distance: 2.6
+    hand-distance: 1.1
+    armor-distance: 3.0
+    turn-seconds: 16
 
 custom-blocks:
   # Occultech's blocks as real custom blocks, like Nexo makes them: each block look is a note-block (or, for the flat

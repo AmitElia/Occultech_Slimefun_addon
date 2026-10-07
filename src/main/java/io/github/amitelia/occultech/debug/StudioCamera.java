@@ -12,38 +12,38 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.Mannequin;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import io.github.amitelia.occultech.Occultech;
+import io.github.amitelia.occultech.core.Keys;
 import io.github.amitelia.occultech.setup.ContentRegistrar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
  * {@code /occultech studio <kind> [next|prev|N]}: steps through the showcase studios of one kind, putting the camera at
- * the same spot in each (spectator mode: no gravity, no hand drawn; F1 hides the HUD). {@code /occultech studio stop}
- * gives back the game mode and position from before.
+ * exactly the same spot relative to each studio's subject, so cutting between them looks like the subject swapping in
+ * place (spectator mode: no gravity, no hand drawn; F1 hides the HUD). {@code /occultech studio stop} gives back the
+ * game mode and position from before.
  * <ul>
- * <li>armor: a slow orbit round the mannequin. The player watches through an invisible display entity that the server
- * glides round the circle (its teleports are interpolated by the client), so the turn is smooth, not tick-stepped.</li>
+ * <li>armor: a turntable - the camera stays still in front and the mannequin turns. (Moving the camera round it
+ * jittered: the game sends an entity's facing in 1.4-degree steps; a mannequin's body eases towards its facing, which
+ * smooths those steps out.)</li>
  * <li>weapons: a close-up of the mannequin's right hand and the weapon in it.</li>
- * <li>machines, cosmetics: an isometric view (45 degrees round, 35 down) of the block on the white backdrop.</li>
- * <li>rituals: the same from higher (45 down), the whole circle in shot.</li>
+ * <li>machines, cosmetics, rituals: one isometric view (45 degrees round, 35 down) at one distance from the subject
+ * block (the altar, for a ritual), whatever its size.</li>
  * </ul>
- * The studios come from {@code showcase.yml} ({@code studios}: "kind;x;y;z;size;ID", the subject block and its size).
+ * Distances and the turn speed are in config.yml ({@code showcase.camera}). The studios come from {@code showcase.yml}
+ * ({@code studios}: "kind;x;y;z;size;ID", the subject block).
  */
 final class StudioCamera {
 
-    /** One full turn of the armor orbit, in ticks, and how often the camera moves (its interpolation spans the gap). */
-    private static final int ORBIT_TICKS = 320;
-    private static final int ORBIT_STEP = 2;
-    private static final double ORBIT_RADIUS = 3.2;
     private static final double ISO_YAW = 45;
     private static final double ISO_PITCH = 35.26;
-    private static final double RITUAL_PITCH = 45;
     private static final double EYE = 1.62;
 
     private record Shot(String kind, World world, int x, int y, int z, int size, String id) {}
@@ -53,8 +53,8 @@ final class StudioCamera {
         Location previousSpot;
         String kind;
         int index;
-        ItemDisplay rig;
-        BukkitTask orbit;
+        Mannequin turning;
+        BukkitTask turntable;
     }
 
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
@@ -66,8 +66,7 @@ final class StudioCamera {
         Session session = SESSIONS.get(player.getUniqueId());
         if (kind.equals("stop")) {
             if (session != null) {
-                stopOrbit(session);
-                player.setSpectatorTarget(null);
+                stopTurntable(session);
                 player.setGameMode(session.previousMode);
                 player.teleport(session.previousSpot);
                 SESSIONS.remove(player.getUniqueId());
@@ -105,15 +104,22 @@ final class StudioCamera {
         session.index = index;
         Shot shot = shots.get(index);
 
-        stopOrbit(session);
-        player.setSpectatorTarget(null);
+        stopTurntable(session);
         player.setGameMode(GameMode.SPECTATOR);
         Location subject = new Location(shot.world(), shot.x() + 0.5, shot.y(), shot.z() + 0.5);
+        var camera = plugin.getConfig().getConfigurationSection("showcase.camera");
+        double blockDistance = camera == null ? 2.6 : camera.getDouble("block-distance", 2.6);
+        double handDistance = camera == null ? 1.1 : camera.getDouble("hand-distance", 1.1);
+        double armorDistance = camera == null ? 3.0 : camera.getDouble("armor-distance", 3.0);
+        double turnSeconds = camera == null ? 16 : camera.getDouble("turn-seconds", 16);
         switch (kind) {
-            case "armor" -> orbit(plugin, player, session, subject);
-            case "weapons" -> place(player, rightHand(subject));
-            case "rituals" -> place(player, aim(subject.clone().add(0, 0.3, 0), 2.6 + shot.size() * 1.15, ISO_YAW, RITUAL_PITCH));
-            default -> place(player, aim(subject.clone().add(0, 0.5, 0), 3.4 + shot.size() * 1.1, ISO_YAW, ISO_PITCH));
+            case "armor" -> {
+                Location chest = subject.clone().add(0, 1.0, 0);
+                place(player, lookAt(chest.clone().add(0, 0.45, armorDistance), chest));
+                turntable(plugin, player, session, subject, turnSeconds);
+            }
+            case "weapons" -> place(player, rightHand(subject, handDistance));
+            default -> place(player, aim(subject.clone().add(0, 0.5, 0), blockDistance, ISO_YAW, ISO_PITCH));
         }
         player.sendActionBar(Component.text(kind + " " + (index + 1) + "/" + shots.size() + ": " + ContentRegistrar.title(shot.id())
             + "   (F1 hides the HUD)", NamedTextColor.GRAY));
@@ -148,10 +154,11 @@ final class StudioCamera {
         return lookAt(target.clone().add(offset), target);
     }
 
-    /** The mannequin faces south, so its right hand is on its west side, a little below the shoulder. */
-    private static Location rightHand(Location feet) {
+    /** The mannequin faces south, so its right hand is on its west side, a little below the shoulder; seen from front-right. */
+    private static Location rightHand(Location feet, double distance) {
         Location hand = feet.clone().add(-0.4, 0.8, 0.25);
-        return lookAt(hand.clone().add(-0.75, 0.35, 1.25), hand);
+        Vector from = new Vector(-0.5, 0.25, 0.83).normalize().multiply(distance);
+        return lookAt(hand.clone().add(from), hand);
     }
 
     private static Location lookAt(Location eye, Location target) {
@@ -167,39 +174,34 @@ final class StudioCamera {
         player.teleport(eye.clone().subtract(0, EYE, 0));
     }
 
-    private static void orbit(Occultech plugin, Player player, Session session, Location feet) {
-        Location target = feet.clone().add(0, 1.05, 0);
-        double height = 0.55;
-        Location start = lookAt(target.clone().add(0, height, ORBIT_RADIUS), target);
-        place(player, start);
-        session.rig = feet.getWorld().spawn(start, ItemDisplay.class, rig -> {
-            rig.setPersistent(false);
-            rig.setTeleportDuration(ORBIT_STEP);
-        });
-        int[] tick = { 0 };
-        session.orbit = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (!player.isOnline() || session.rig == null || !session.rig.isValid()) {
-                stopOrbit(session);
+    /** Turns the studio's mannequin a full turn every {@code seconds}, every tick, until the camera moves on. */
+    private static void turntable(Occultech plugin, Player player, Session session, Location feet, double seconds) {
+        session.turning = feet.getWorld().getNearbyEntities(feet, 1, 2, 1, e -> e instanceof Mannequin
+            && e.getPersistentDataContainer().has(Keys.SHOWCASE, PersistentDataType.BYTE)).stream()
+            .map(Mannequin.class::cast).findFirst().orElse(null);
+        if (session.turning == null) {
+            return;
+        }
+        double step = 360.0 / Math.max(1, seconds * 20);
+        double[] yaw = { 0 };
+        session.turntable = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (session.turning == null || !session.turning.isValid() || !player.isOnline()) {
+                stopTurntable(session);
                 return;
             }
-            if (tick[0] == 2) {
-                player.setSpectatorTarget(session.rig);   // once the rig is known to the client
-            }
-            tick[0] += ORBIT_STEP;
-            double angle = 2 * Math.PI * tick[0] / ORBIT_TICKS;
-            Location at = lookAt(target.clone().add(ORBIT_RADIUS * Math.sin(angle), height, ORBIT_RADIUS * Math.cos(angle)), target);
-            session.rig.teleport(at);
-        }, ORBIT_STEP, ORBIT_STEP);
+            yaw[0] = (yaw[0] + step) % 360;
+            session.turning.setRotation((float) yaw[0], 0);
+        }, 1L, 1L);
     }
 
-    private static void stopOrbit(Session session) {
-        if (session.orbit != null) {
-            session.orbit.cancel();
-            session.orbit = null;
+    private static void stopTurntable(Session session) {
+        if (session.turntable != null) {
+            session.turntable.cancel();
+            session.turntable = null;
         }
-        if (session.rig != null) {
-            session.rig.remove();
-            session.rig = null;
+        if (session.turning != null && session.turning.isValid()) {
+            session.turning.setRotation(0, 0);   // back to facing the front
         }
+        session.turning = null;
     }
 }
