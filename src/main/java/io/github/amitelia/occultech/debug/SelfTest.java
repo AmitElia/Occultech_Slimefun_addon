@@ -168,6 +168,8 @@ final class SelfTest {
         then(70, this::beesKept);
         then(0, this::speedRules);
         then(0, this::placementCap);
+        then(0, this::placeGhostShrine);
+        then(60, this::ghostShrineCleared);
         then(0, this::startAcolyte);
         then(200, this::acolyteRestocked);
         then(0, this::contractSwap);
@@ -1252,6 +1254,21 @@ final class SelfTest {
         check("a shrine 30 blocks away is still allowed", servitors.canPlace(shrine.getLocation().add(30, 0, 0)), "blocked");
         fakes.forEach(servitors::unregisterForTest);
         check("with 3 fakes gone, placing is allowed again", servitors.canPlace(here), servitors.nearbyShrines(here) + " nearby");
+    }
+
+    private Block ghost;
+
+    /** Slimefun data for a shrine on an empty spot (what a placement cancelled too late used to leave behind). */
+    private void placeGhostShrine() {
+        ghost = shrine.getRelative(3, 2, 3);
+        check("the ghost shrine's spot is empty", ghost.getType().isAir(), ghost.getType().name());
+        BlockStorage.addBlockInfo(ghost, "id", ItemKeys.slimefunId("SERVITOR_SHRINE"), true);
+    }
+
+    private void ghostShrineCleared() {
+        check("a ghost shrine (data on air) is cleared by its ticker", BlockStorage.checkID(ghost) == null, BlockStorage.checkID(ghost));
+        check("the ghost shrine's spirit is gone", !plugin.servitors().shrineLocations().contains(ghost.getLocation()), "still registered");
+        BlockStorage.clearBlockInfo(ghost);
     }
 
     private void startAcolyte() {

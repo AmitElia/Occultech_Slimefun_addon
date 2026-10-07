@@ -28,6 +28,7 @@ import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Sheep;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.inventory.BrewerInventory;
@@ -99,6 +100,7 @@ public final class ServitorService implements Listener {
     }
 
     public static final String TETHER_ID = ItemKeys.slimefunId("ABYSSAL_TETHER");
+    private static final String SHRINE_ID = ItemKeys.slimefunId("SERVITOR_SHRINE");
     static final String OWNER_KEY = "occultech_owner";
     static final String EMPOWERED_KEY = "occultech_empowered_until";
     public static final int MAX_NEARBY = 4;
@@ -225,6 +227,21 @@ public final class ServitorService implements Listener {
     /** Registers a shrine the moment it is placed, so quick placements can't slip past the cap. */
     void onPlaced(Block block) {
         register(block.getLocation());
+    }
+
+    /**
+     * The shrine cap. Runs before Slimefun's own place listener (HIGHEST), which stores the block's data before it calls
+     * the item's place handler: a cancel there would leave a ghost shrine on the empty spot.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onShrinePlace(org.bukkit.event.block.BlockPlaceEvent e) {
+        io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem item =
+            io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem.getByItem(e.getItemInHand());
+        if (item != null && SHRINE_ID.equals(item.getId()) && !canPlace(e.getBlock().getLocation())) {
+            e.setCancelled(true);
+            e.getPlayer().sendMessage(org.bukkit.ChatColor.RED + "Too many spirits bound nearby (max " + MAX_NEARBY
+                + " shrines within " + CAP_RADIUS + " blocks).");
+        }
     }
 
     /** False if {@value #MAX_NEARBY} shrines already stand within {@value #CAP_RADIUS} blocks. */

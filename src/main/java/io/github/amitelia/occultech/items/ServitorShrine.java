@@ -132,12 +132,8 @@ public class ServitorShrine extends SlimefunItem {
         addItemHandler(new BlockPlaceHandler(false) {
             @Override
             public void onPlayerPlace(BlockPlaceEvent e) {
-                if (!servitors.canPlace(e.getBlock().getLocation())) {
-                    e.setCancelled(true);
-                    e.getPlayer().sendMessage(ChatColor.RED + "Too many spirits bound nearby (max " + ServitorService.MAX_NEARBY
-                        + " shrines within " + ServitorService.CAP_RADIUS + " blocks).");
-                    return;
-                }
+                // the shrine cap is checked in ServitorService.onShrinePlace, before Slimefun stores the block: cancelling
+                // here would leave Slimefun's data on an empty spot (a ghost shrine whose spirit never goes away)
                 BlockStorage.addBlockInfo(e.getBlock(), ServitorService.OWNER_KEY, e.getPlayer().getUniqueId().toString());
                 servitors.onPlaced(e.getBlock());
             }
@@ -151,6 +147,10 @@ public class ServitorShrine extends SlimefunItem {
 
             @Override
             public void tick(Block block, SlimefunItem sfItem, Config data) {
+                if (block.getType().isAir()) {
+                    clearGhost(block, rituals, servitors);
+                    return;
+                }
                 BlockMenu menu = BlockStorage.getInventory(block);
                 if (menu != null) {
                     String status = servitors.tick(block, menu, STORE, CONTRACT_SLOT, UPGRADE_SLOT);
@@ -172,6 +172,21 @@ public class ServitorShrine extends SlimefunItem {
                 }
             }
         });
+    }
+
+    /**
+     * A ghost shrine: Slimefun data on an empty spot (left by a placement cancelled after Slimefun stored it - the old
+     * shrine-cap check did that). Its spirit and hologram go, anything in its menu drops, and the data is cleared.
+     */
+    private static void clearGhost(Block block, RitualService rituals, ServitorService servitors) {
+        rituals.holograms().clear(block);
+        servitors.removeShrine(block.getLocation());
+        BlockMenu menu = BlockStorage.getInventory(block);
+        if (menu != null) {
+            menu.dropItems(block.getLocation(), CONTRACT_SLOT, UPGRADE_SLOT);
+            menu.dropItems(block.getLocation(), STORE);
+        }
+        BlockStorage.clearBlockInfo(block);
     }
 
     /** Updates the range readout (only when it changes) and outlines the work area while the menu is open. */
