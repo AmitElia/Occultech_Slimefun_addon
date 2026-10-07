@@ -63,6 +63,11 @@ public final class GearListener implements Listener {
     private static final String ABYSSAL_LEGGINGS = ItemKeys.slimefunId("ABYSSAL_LEGGINGS");
     private static final String ABYSSAL_BOOTS = ItemKeys.slimefunId("ABYSSAL_BOOTS");
     private static final NamespacedKey FRENZY = new NamespacedKey("occultech", "frenzy");
+    private static final java.util.List<String> FRENZIED_SET = java.util.List.of(ItemKeys.slimefunId("FRENZIED_HELMET"),
+        ItemKeys.slimefunId("FRENZIED_CHESTPLATE"), ItemKeys.slimefunId("FRENZIED_LEGGINGS"), ItemKeys.slimefunId("FRENZIED_BOOTS"));
+    /** Where the burning horn tips sit on a wearer's head: above the eyes, out to each side (from the helm model). */
+    private static final double HORN_UP = 0.5;
+    private static final double HORN_OUT = 0.65;
     private static final int MAX_STACKS = 5;
     private static final long STACK_WINDOW_MS = 3000;
     private static final long JUMP_COOLDOWN_MS = 4000;
@@ -75,6 +80,7 @@ public final class GearListener implements Listener {
     private final Map<UUID, Long> wardReady = new HashMap<>();
     private final Set<UUID> grantedFlight = new HashSet<>();
     private final Set<UUID> noFall = new HashSet<>();
+    private int ticks;
 
     public GearListener(Plugin plugin) {
         this.plugin = plugin;
@@ -83,6 +89,7 @@ public final class GearListener implements Listener {
 
     private void tick() {
         long now = System.currentTimeMillis();
+        ticks += 5;
         for (Player player : Bukkit.getOnlinePlayers()) {
             UUID id = player.getUniqueId();
 
@@ -119,6 +126,58 @@ public final class GearListener implements Listener {
             if (is(player.getInventory().getBoots(), ABYSSAL_BOOTS)) {
                 refresh(player, PotionEffectType.DOLPHINS_GRACE);
             }
+
+            // the Frenzied set (Session G8): the burning horn tips throw off fire and angry sparks
+            if (player.getGameMode() != GameMode.SPECTATOR && !player.isInvisible() && wearsFrenziedSet(player)) {
+                frenziedSparks(player);
+            }
+        }
+    }
+
+    /** All four Frenzied pieces worn (in their own slots). */
+    public static boolean wearsFrenziedSet(Player player) {
+        ItemStack[] armor = { player.getInventory().getHelmet(), player.getInventory().getChestplate(), player.getInventory().getLeggings(),
+            player.getInventory().getBoots() };
+        for (int i = 0; i < armor.length; i++) {
+            if (!is(armor[i], FRENZIED_SET.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Fire off the Frenzied horns (every 5 ticks, sparse): small flames licking up from each burning tip, now and then
+     * an angry spark (the mad villager's storm puff) or a popping ember, and an ember drifting off a pauldron.
+     */
+    private void frenziedSparks(Player player) {
+        java.util.concurrent.ThreadLocalRandom random = java.util.concurrent.ThreadLocalRandom.current();
+        org.bukkit.Location eye = player.getEyeLocation();
+        Vector look = eye.getDirection().setY(0);
+        if (look.lengthSquared() < 1e-4) {
+            look = new Vector(0, 0, 1);
+        }
+        look.normalize();
+        Vector right = new Vector(-look.getZ(), 0, look.getX());
+        for (int side = -1; side <= 1; side += 2) {
+            org.bukkit.Location tip = eye.clone().add(0, HORN_UP, 0).add(right.clone().multiply(HORN_OUT * side));
+            if (random.nextInt(3) == 0) {
+                player.getWorld().spawnParticle(Particle.SMALL_FLAME, tip, 1, 0.04, 0.03, 0.04, 0.008);
+            }
+            if (random.nextInt(8) == 0) {
+                player.getWorld().spawnParticle(Particle.FLAME, tip, 1, 0.03, 0.05, 0.03, 0.01);
+            }
+            if (random.nextInt(24) == 0) {
+                player.getWorld().spawnParticle(Particle.ANGRY_VILLAGER, tip.clone().add(0, 0.15, 0), 1, 0.05, 0.05, 0.05, 0);
+            }
+            if (random.nextInt(60) == 0) {
+                player.getWorld().spawnParticle(Particle.LAVA, tip, 1, 0, 0, 0, 0);
+            }
+        }
+        if (ticks % 20 == 0 && random.nextInt(3) == 0) {
+            int side = random.nextBoolean() ? 1 : -1;
+            org.bukkit.Location shoulder = eye.clone().add(0, -0.35, 0).add(right.clone().multiply(0.42 * side));
+            player.getWorld().spawnParticle(Particle.SMALL_FLAME, shoulder, 1, 0.05, 0.02, 0.05, 0.01);
         }
     }
 

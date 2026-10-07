@@ -526,6 +526,11 @@ the flat layers) and a helm GIF; `final` saves into session-g for the pack.
   shoulders): the helm shell's lower rim is a gold band lit orange from below (v12's orange tint over ash read as
   copper); the tips lean -5 (from -12); pauldrons get a gold cap and a gold lower rim lit from just above, and a
   bigger bone horn-stud (2 x 3, its tip catching the light) on the outer face and on top, mirrored.
+- **Final (user: "good as final").** Saved with `session_g8.py final` (the helm `frenzied_helmet_head` and the equipment
+  set `frenzied` into session-g). Then the inventory icons, drawn from the final worn look in Session O2's style
+  (`session_o2_armor.py`, FRENZIED: left half mirrored a step darker; ash plate, gold trims, the ember sun, bone horns
+  with blazing tips that pulse): Frenzied Helm, Breastplate, Greaves, Sabatons (session-d). v1 of the icons merged the
+  sun, ridge and glow into an orange column on the breastplate and had antenna-thin horns; v2 fixed both.
 
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):

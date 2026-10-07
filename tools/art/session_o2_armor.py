@@ -169,6 +169,86 @@ HOLLOW = {
 }
 
 
+# ---------------------------------------------------------------- Frenzied (T1, Session G8): drawn from the approved
+# worn set - ash plate (the Frenzy Idol's muted grey-violet), gold trims, the ember sun, bone horns with blazing tips.
+# Extra letters: G g h gold (light, mid, dark) | E ember (pulses) | e ember, steady | B b bone (light, mid) |
+# F the blazing horn tip (pulses: crimson to yellow) | f its dimmer edge
+FRENZIED = {
+    "frenzied_helm": [
+        "FF......",
+        "fF......",
+        "BB......",
+        "bBB.....",
+        ".bbB.OOO",
+        "..bbO554",
+        "...O5444",
+        "...OhgGE",
+        "...O43KK",
+        "...Og3KK",
+        "...Og3KK",
+        "....OgO.",
+        "........",
+        "........",
+        "........",
+        "........",
+    ],
+    "frenzied_breastplate": [
+        "........",
+        "........",
+        ".OOOOO..",
+        ".OGGgBO.",
+        ".Og44bOO",
+        ".O44433O",
+        ".Oe4433g",
+        ".OOh433g",
+        "...O43gE",
+        "...O434g",
+        "...O344g",
+        "...O334g",
+        "...O23eE",
+        "....OO2e",
+        ".....OOO",
+        "........",
+    ],
+    "frenzied_greaves": [
+        "........",
+        "........",
+        "....OOOO",
+        "...OgGGg",
+        "...O44gE",
+        "...O4433",
+        "...O43eO",
+        "...O43O.",
+        "...OGgO.",
+        "...OgEO.",
+        "...O43O.",
+        "...O32O.",
+        "...O22O.",
+        "...OOOO.",
+        "........",
+        "........",
+    ],
+    "frenzied_sabatons": [
+        "........",
+        "........",
+        "........",
+        "...OOOO.",
+        "...O44O.",
+        "...O43O.",
+        "...O43O.",
+        "...Oe3O.",
+        "...O43O.",
+        "..O443O.",
+        ".O5443O.",
+        "O54e33O.",
+        "OGGggGO.",
+        "OOOOOOO.",
+        "........",
+        "........",
+    ],
+}
+
+
 def mirror(rows):
     """The full 16 px row from its left half: the right half mirrored, a step darker, the outline its dark tone."""
     out = []
@@ -217,7 +297,23 @@ def hollow_cols(ch, frame):
             "S": sk[3], "s": sk[1], "T": sk[4], "P": vi[4], "p": vi[2]}[ch]
 
 
-SETS = [("session-e", ABYSSAL, abyssal_cols), ("session-f", HOLLOW, hollow_cols)]
+def _mix(a, b, t):
+    return tuple(round(a[k] * (1 - t) + b[k] * t) for k in range(3)) + (255,)
+
+
+ASH = [_mix(RAMPS["boundsteel"][i], RAMPS["dusk"][i], 0.28) for i in range(6)]   # the worn set's plate (session_g8)
+
+
+def frenzied_cols(ch, frame):
+    if ch.isdigit():
+        return ASH[int(ch)]
+    gold, em, bone, cr = RAMPS["gold"], RAMPS["ember"], RAMPS["bone"], RAMPS["crimson"]
+    return {"O": ASH[1], "o": ASH[0], "K": ASH[0], "G": gold[4], "g": gold[3], "h": gold[2],
+            "E": em[[3, 4, 5, 4][frame % 4]], "e": em[3], "B": bone[5], "b": bone[3],
+            "F": [cr[4], em[3], em[4], em[3]][frame % 4], "f": cr[3]}[ch]
+
+
+SETS = [("session-e", ABYSSAL, abyssal_cols), ("session-f", HOLLOW, hollow_cols), ("session-d", FRENZIED, frenzied_cols)]
 
 
 def icon(name, frame=0):

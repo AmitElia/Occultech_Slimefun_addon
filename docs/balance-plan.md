@@ -207,7 +207,7 @@ are added.
 - **Load test:** 3 fights + 20 shrines + 50 decorations on the test server. Target: under 2 ms per tick for Occultech
   in total.
 
-## Session G8 (later): tier-1 worn armor, the Frenzied set
+## Session G8: tier-1 worn armor, the Frenzied set - DONE (self-test 356/356)
 
 - **Role:** matches enchanted diamond (diamond base, Protection IV, Unbreaking III). Set bonus: −10% damage from
   summoned creatures. That makes the tier ladder −10 / −20 / −25%.

@@ -299,6 +299,23 @@ final class SelfTest {
         ItemStack abyssal = SlimefunItem.getById(ItemKeys.slimefunId("ABYSSAL_HELMET")).getItem();
         check("Abyssal armor has Protection IV", abyssal.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 4,
             String.valueOf(abyssal.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION)));
+        // Session G8: the Frenzied set - enchanted diamond, worn in its own look, made by Bound-circle rituals
+        ItemStack frenziedHelm = SlimefunItem.getById(ItemKeys.slimefunId("FRENZIED_HELMET")).getItem();
+        check("Frenzied armor is enchanted diamond (Protection IV)", frenziedHelm.getType() == org.bukkit.Material.DIAMOND_HELMET
+            && frenziedHelm.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROTECTION) == 4, String.valueOf(frenziedHelm.getType()));
+        if (plugin.resourcePack().hasEquipment("frenzied")) {
+            var helmWorn = frenziedHelm.getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE);
+            var chestWorn = SlimefunItem.getById(ItemKeys.slimefunId("FRENZIED_CHESTPLATE")).getItem()
+                .getData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE);
+            check("the Frenzied set is worn in its own look (3D horned helm, equipment occultech:frenzied)",
+                helmWorn != null && helmWorn.assetId() == null && chestWorn != null && chestWorn.assetId() != null
+                    && chestWorn.assetId().asString().equals("occultech:frenzied"),
+                (helmWorn == null ? "helm: none" : "helm " + helmWorn.assetId()) + ", chest " + (chestWorn == null ? "none" : chestWorn.assetId()));
+        } else {
+            check("the pack draws the Frenzied set worn", false, "no equipment asset occultech:frenzied");
+        }
+        long frenziedRituals = rituals.recipes().stream().filter(rr -> rr.outputId() != null && rr.outputId().startsWith(ItemKeys.slimefunId("FRENZIED_"))).count();
+        check("each Frenzied piece has its Bound-circle ritual", frenziedRituals == 4, frenziedRituals + " rituals");
         ItemStack hollow = SlimefunItem.getById(ItemKeys.slimefunId("HOLLOW_CHESTPLATE")).getItem();
         var modifiers = hollow.getItemMeta().getAttributeModifiers();
         double toughness = modifiers == null ? 0 : modifiers.get(org.bukkit.attribute.Attribute.ARMOR_TOUGHNESS).stream().mapToDouble(m -> m.getAmount()).sum();

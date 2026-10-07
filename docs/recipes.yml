@@ -95,6 +95,7 @@ researches:
   FINAL_TALISMANS:   {id: 19, name: "Final Talismans",  cost: 80, items: [HOLLOW_HALO, WISHBONE_TALISMAN, AURA_TALISMAN, GALLUS_EGG]}
   HOLLOW_DECOR:      {id: 20, name: "Hollow Decor",     cost: 20, items: [WATCHFUL_EYEBLOSSOM, RESIN_TILE]}
   ARCANE_ALTAR:      {id: 21, name: "Arcane Altar",     cost: 5,  items: [ARCANE_ALTAR, ARCANE_PEDESTAL]}
+  FRENZIED_WARDROBE: {id: 22, name: "Frenzied Wardrobe", cost: 25, items: [FRENZIED_HELMET, FRENZIED_CHESTPLATE, FRENZIED_LEGGINGS, FRENZIED_BOOTS]}
   SERVITUDE:         {id: 6, name: "Servitude",         cost: 35, items: [SERVITOR_SHRINE, HARVEST_CONTRACT, GATHER_CONTRACT, WARD_CONTRACT, BREWER_CONTRACT, SHEPHERD_CONTRACT, BEEKEEPER_CONTRACT, ACOLYTE_CONTRACT]}
 
 items:
@@ -212,6 +213,19 @@ items:
   FRENZY_CLEAVER:
     {tier: 1, material: DIAMOND_AXE, durability: 1500, repair: FRENZIED_EDGE, cat: weapon, name: Frenzy Cleaver, purpose: "Each hit within 3s stacks attack speed (max 5 stacks). Durability 1500, repair: Frenzied Edge",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {mc:DIAMOND_AXE: 1, FRENZIED_EDGE: 3, BOUND_STEEL: 2, BOUND_SIGIL: 1, SOVEREIGN_GEL: 1, RESONANT_CRYSTAL: 1}}}
+  # the Frenzied set (Session G8): tier-1 armor at enchanted-diamond level, themed on the Frenzy Idol
+  FRENZIED_HELMET:
+    {tier: 1, material: DIAMOND_HELMET, enchants: {PROTECTION: 4, UNBREAKING: 3}, cat: armor, name: Frenzied Helm, purpose: "Enchanted-diamond defense: Protection IV, Unbreaking III. Bull horns of bone, their tips burning. Set (4/4): -10% damage from summoned creatures, sparks and fire off the horns",
+     recipe: {type: RITUAL, circle: 1, out: 1, center: mc:DIAMOND_HELMET, in: {FRENZIED_EDGE: 2, BOUND_STEEL: 4, SPIRIT_ESSENCE: 4, mc:GOLD_INGOT: 4, mc:BONE_BLOCK: 2, BOUND_SIGIL: 1}}}
+  FRENZIED_CHESTPLATE:
+    {tier: 1, material: DIAMOND_CHESTPLATE, enchants: {PROTECTION: 4, UNBREAKING: 3}, cat: armor, name: Frenzied Breastplate, purpose: "Enchanted-diamond defense: Protection IV, Unbreaking III. An ember sun burns on the chest",
+     recipe: {type: RITUAL, circle: 1, out: 1, center: mc:DIAMOND_CHESTPLATE, in: {FRENZIED_EDGE: 3, DUSK_MEMBRANE: 1, BOUND_STEEL: 6, SPIRIT_ESSENCE: 6, mc:GOLD_INGOT: 6, BOUND_SIGIL: 1}}}
+  FRENZIED_LEGGINGS:
+    {tier: 1, material: DIAMOND_LEGGINGS, enchants: {PROTECTION: 4, UNBREAKING: 3}, cat: armor, name: Frenzied Greaves, purpose: "Enchanted-diamond defense: Protection IV, Unbreaking III",
+     recipe: {type: RITUAL, circle: 1, out: 1, center: mc:DIAMOND_LEGGINGS, in: {FRENZIED_EDGE: 2, MIRROR_DUST: 1, BOUND_STEEL: 5, SPIRIT_ESSENCE: 5, mc:GOLD_INGOT: 5, BOUND_SIGIL: 1}}}
+  FRENZIED_BOOTS:
+    {tier: 1, material: DIAMOND_BOOTS, enchants: {PROTECTION: 4, UNBREAKING: 3}, cat: armor, name: Frenzied Sabatons, purpose: "Enchanted-diamond defense: Protection IV, Unbreaking III",
+     recipe: {type: RITUAL, circle: 1, out: 1, center: mc:DIAMOND_BOOTS, in: {FRENZIED_EDGE: 2, DUSK_MEMBRANE: 1, BOUND_STEEL: 4, SPIRIT_ESSENCE: 4, mc:GOLD_INGOT: 4, BOUND_SIGIL: 1}}}
   DUSKWING_CHARM:
     {tier: 1, material: TURTLE_SCUTE, cat: charm, name: Duskwing Charm, purpose: "Double jump, and no fall damage after it (cooldown)",
      recipe: {type: MAGIC_WORKBENCH, out: 1, in: {DUSK_MEMBRANE: 4, BINDING_THREAD: 2, BOUND_STEEL: 1, sf:ANCIENT_RUNE_AIR: 2}}}

@@ -35,6 +35,7 @@ public final class WeaponListener implements Listener {
     public static final String WARDING_CHARM = ItemKeys.slimefunId("WARDING_CHARM");
     private static final float FULL_DRAW = 0.95F;
     private static final double WARDING_MULTIPLIER = 0.85;
+    private static final double FRENZIED_SET_MULTIPLIER = 0.9;
     private static final double ABYSSAL_SET_MULTIPLIER = 0.8;
     private static final double HOLLOW_SET_MULTIPLIER = 0.75;
     private static final java.util.List<String> ABYSSAL_SET = java.util.List.of(ItemKeys.slimefunId("ABYSSAL_HELMET"),
@@ -87,6 +88,9 @@ public final class WeaponListener implements Listener {
         }
         if (carries(player, WARDING_CHARM)) {
             e.setDamage(e.getDamage() * WARDING_MULTIPLIER);
+        }
+        if (GearListener.wearsFrenziedSet(player)) {
+            e.setDamage(e.getDamage() * FRENZIED_SET_MULTIPLIER);
         }
         if (wearsAbyssalSet(player)) {
             e.setDamage(e.getDamage() * ABYSSAL_SET_MULTIPLIER);
