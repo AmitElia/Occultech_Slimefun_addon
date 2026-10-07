@@ -537,6 +537,14 @@ the flat layers) and a helm GIF; `final` saves into session-g for the pack.
   B's gold sparkle (its 5-frame life) and crimson soul flame on small planes facing different ways, each alive a few
   frames of a 16-frame cycle at its own moment, the right horn's a few frames after the left's (`sparks-g8-*.png`
   shows four moments). The helm icon's tips are bone too; the server-side horn sparks moved forward to the new tips.
+- **Shader bug + new particles** (user: with shaders on the helm looks transparent; drop the red soul flames). Cause:
+  Session B's sparkle and soul flame carry semi-transparent glow pixels, and one such pixel makes the game draw the
+  whole helm model translucent - shader packs then show it see-through (the Hollow helm has none). Fix: every spark
+  pixel is fully opaque or clear (`solid`), and build_pack now refuses a worn helm (`*_head`) with any semi-transparent
+  pixel. The crimson soul flames are replaced by new fire particles drawn for the helm (heat-coloured, no outline,
+  life cycles): a rising ember (white-hot with a halo, cooling through yellow and orange to a dark red speck, a short
+  trail) and a tongue of fire (grows, sways, peaks with a white-hot core, gutters); the gold sparkle stays (made
+  solid). Spark planes 7 units (embers read on the head). `particles-g8-*.png` shows each life frame by frame.
 
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):

@@ -348,8 +348,8 @@ def frenzied_helm_worn(pal=None):
     """The Frenzied Helm worn - open-faced (the whole face shows): a domed helm of deep violet plate; a heavy silver
     brow ridge bearing down toward the centre, the Frenzy Idol's ember sun set in it (breathing glow); silver cheek
     guards; and two bull horns of bone, built of tapering pieces that bend out and up, their ends curving forward like a
-    charging bull's, cut off square; gold sparkles and crimson soul flames flicker in the air round them now and then
-    (Session B's particles, animated)."""
+    charging bull's, cut off square; fire flickers in the air round them now and then - rising embers, tongues of
+    flame and gold sparkles (animated, every pixel solid so shader packs draw the helm as solid)."""
     pal = pal or PALETTES[DEFAULT]
     m = Model("frenzied_helmet_head")
     m.part = True
@@ -401,19 +401,83 @@ def frenzied_helm_worn(pal=None):
 
 SESSION_B = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "art", "session-b")
 # (x, y, z, facing, kind, first frame) round the left horn; the right one mirrors them a few frames later
-SPARKS = [(-12.5, 22.5, 0.5, "z", "sparkle", 0), (-6.5, 19.0, 3.5, "x", "flame", 5),
-          (-11.5, 15.5, 9.5, "y45", "sparkle", 9), (-4.0, 16.5, 10.5, "x", "flame", 12)]
-SPARK_SIZE = 5.0
+SPARKS = [(-12.5, 22.5, 0.5, "z", "sparkle", 0), (-6.5, 19.0, 3.5, "x", "tongue", 5),
+          (-11.5, 15.5, 9.5, "y45", "ember", 9), (-4.0, 16.5, 10.5, "x", "ember", 12)]
+SPARK_SIZE = 7.0      # big enough that an ember and a tongue of fire read on the head
+
+
+def solid(img, cut=128):
+    """Every pixel fully opaque or fully clear. One semi-transparent pixel makes the game draw the whole helm model as
+    translucent, and shader packs then show the helmet see-through (user bug report: Session B's sparkle glow did it)."""
+    out = img.copy()
+    for y in range(out.height):
+        for x in range(out.width):
+            r_, g_, b_, a = out.getpixel((x, y))
+            out.putpixel((x, y), (r_, g_, b_, 255) if a >= cut else (0, 0, 0, 0))
+    return out
+
+
+def ember_life():
+    """A rising ember (STYLE rule 10: heat-coloured, no outline, a life cycle): born white-hot low in the frame with a
+    halo, it drifts up and sideways, cooling through yellow and orange to a dark red speck that goes out (6 frames)."""
+    path = [(8, 13), (8, 11), (9, 9), (9, 7), (10, 5), (10, 3)]
+    frames = []
+    for k, (x, y) in enumerate(path):
+        img = g.blank()
+        heat = 5 - k
+        core = EMBER[max(1, heat)]
+        img.putpixel((x, y), core)
+        if k < 3:                                            # a halo while it's hot
+            for (dx, dy) in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                img.putpixel((x + dx, y + dy), EMBER[max(1, heat - 1)])
+        if k < 2:
+            img.putpixel((x, y), EMBER[5])
+            img.putpixel((x + 1, y - 1), EMBER[4])
+        if 0 < k < 5:                                        # a short cooling trail below it
+            px, py = path[k - 1]
+            img.putpixel((px, py + 1), EMBER[max(1, heat - 2)])
+        frames.append(img)
+    return frames
+
+
+def tongue_life():
+    """A tongue of fire (heat-coloured, no outline): it rises small, sways and peaks - white-hot core, yellow body,
+    orange and deep orange edges - then gutters to a low glow (6 frames)."""
+    heights = [4, 7, 9, 9, 6, 3]
+    sways = [0, 1, 0, -1, 0, 0]
+    frames = []
+    for k, (hgt, sway) in enumerate(zip(heights, sways)):
+        img = g.blank()
+        base = 13
+        for dy in range(hgt):
+            y = base - dy
+            t = dy / max(1, hgt - 1)                       # 0 at the base .. 1 at the tip
+            half = max(0, round((1 - t) * 2.2 + (0.6 if dy == 0 else 0)))
+            cx = 8 + round(sway * t)
+            for x in range(cx - half, cx + half + 1):
+                edge = abs(x - cx) == half and half > 0
+                inner = abs(x - cx) <= max(0, half - 1)
+                if edge:
+                    col = EMBER[2] if t < 0.5 else EMBER[3]
+                elif inner and t < 0.4 and hgt > 5:
+                    col = EMBER[5]
+                else:
+                    col = EMBER[4] if t < 0.7 else EMBER[3]
+                img.putpixel((x, y), col)
+        frames.append(img)
+    return frames
 
 
 def spark_frames(kind, start, n=16):
-    """One floating spark's 16 frames: blank, then Session B's gold sparkle (its 5-frame life) or crimson soul flame
-    (6 frames of its flicker) from `start`, then blank again - so each spark appears now and then, at its own moment."""
+    """One floating spark's 16 frames: blank, then its life - a gold sparkle (Session B's, made solid), a rising ember or
+    a tongue of fire - from `start`, then blank again, so each appears now and then at its own moment. Every pixel is
+    fully opaque or clear (see `solid`)."""
     if kind == "sparkle":
-        life = [Image.open(os.path.join(SESSION_B, f"sparkle_gold_{k}.png")).convert("RGBA") for k in range(5)]
+        life = [solid(Image.open(os.path.join(SESSION_B, f"sparkle_gold_{k}.png")).convert("RGBA")) for k in range(5)]
+    elif kind == "ember":
+        life = ember_life()
     else:
-        flame = [Image.open(os.path.join(SESSION_B, f"soul_flame_crimson_{k}.png")).convert("RGBA") for k in range(4)]
-        life = [flame[k % 4] for k in range(6)]
+        life = tongue_life()
     frames = [g.blank() for _ in range(n)]
     for k, img in enumerate(life):
         frames[(start + k) % n] = img
@@ -518,6 +582,16 @@ def body_closeup(layers, helm, path):
     out.save(path)
 
 
+def particle_sheet(path, scale=12):
+    """The helm's fire particles up close: each life cycle frame by frame (gold sparkle, rising ember, tongue of fire)."""
+    rows = [("sparkle", spark_frames("sparkle", 0)[:5]), ("ember", ember_life()), ("tongue", tongue_life())]
+    out = Image.new("RGBA", (6 * (16 * scale + 8) + 8, len(rows) * (16 * scale + 8) + 8), (34, 32, 40, 255))
+    for r_, (name, frames) in enumerate(rows):
+        for k, img in enumerate(frames):
+            out.alpha_composite(img.resize((16 * scale, 16 * scale), Image.NEAREST), (8 + k * (16 * scale + 8), 8 + r_ * (16 * scale + 8)))
+    out.save(path)
+
+
 def sparks_sheet(helm, path):
     """The helm at four moments (the floating sparks each show only now and then), three-quarter and side."""
     out = Image.new("RGBA", (420 * 4, 840), (34, 32, 40, 255))
@@ -555,6 +629,7 @@ if __name__ == "__main__":
     helm_gif(helm, os.path.join(OUT, f"helm-g8{suffix}.gif"))
     horn_closeup(helm, os.path.join(OUT, f"horn-g8{suffix}.png"))
     sparks_sheet(helm, os.path.join(OUT, f"sparks-g8{suffix}.png"))
+    particle_sheet(os.path.join(OUT, f"particles-g8{suffix}.png"))
     body_closeup(layers, helm, os.path.join(OUT, f"body-g8{suffix}.png"))
     d = os.path.join(OUT, "equipment", "frenzied")
     os.makedirs(d, exist_ok=True)

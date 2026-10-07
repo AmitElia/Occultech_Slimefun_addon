@@ -419,6 +419,11 @@ def main():
         base = key[:-len("_head")]
         if base.upper() not in items or base.upper() not in with_models:
             raise SystemExit(f"{key}: no item {base.upper()} with a 2D icon")
+        # one semi-transparent pixel makes the game draw the whole helm translucent, and shader packs then show it
+        # see-through: worn helms keep every pixel fully opaque or fully clear
+        for png in sorted(os.listdir(os.path.join(gdir, key))):
+            if png.endswith(".png") and any(0 < px[3] < 255 for px in Image.open(os.path.join(gdir, key, png)).convert("RGBA").getdata()):
+                raise SystemExit(f"{key}/{png}: semi-transparent pixels - worn helms must be fully opaque or clear")
         files[f"assets/{NS}/items/{base}.json"] = {"model": {
             "type": "minecraft:select", "property": "minecraft:display_context",
             "cases": [{"when": "head", "model": {"type": "minecraft:model", "model": f"{NS}:block/{key}"}}],
