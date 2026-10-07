@@ -512,6 +512,16 @@ the flat layers) and a helm GIF; `final` saves into session-g for the pack.
   and stepped lames with a small bone horn-stud on the outer face (mirrored); a gold belt and ember buckle, gold-edged
   tassets, gold knee cops with an ember stud; sabatons stepping down to a gold toe cap, a gold heel. Three colour
   options rendered side by side (`colours-g8-<version>.png`): ash (the muted grey-violet), blackened iron, dark bronze.
+- v12 (user on v10: almost good - but no horizontal lines; the amount of orange/gold is right, its places aren't; ash
+  colour, orange highlights on the helmet too). The body is now hand-drawn pixel maps (`MAPS`, Session B's lesson)
+  instead of stacked plates: each plate shaded as one curved surface (lit left, darker right - columns, not rows),
+  edges as V's and curves. The fire is placed: the ember sun just under the neckline (an orange ring round a
+  white-hot core - v11's yellow sun merged with the gold into a "T"), the gold ridge down to a molten V under the
+  breastplate, ember vents either side of the gold spine, the buckle, knee studs, toe caps. Vanilla netherite's
+  coverage was checked pixel by pixel: the chestplate has a V-neck (rows 0-2 cover only the shoulders) and the boots
+  start at row 6 - v11's collar and sun were partly cut off by it. Map tones one step lighter than v11 (it read
+  near-black). Helm in ash: the shell's lower rim warmed by firelight, the brow an ash plate with a gold upper edge and
+  firelight on its lower edge. New `body-g8-<version>.png`: the body large, front and back.
 
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):
