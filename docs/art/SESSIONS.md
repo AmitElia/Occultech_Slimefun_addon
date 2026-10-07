@@ -531,6 +531,12 @@ the flat layers) and a helm GIF; `final` saves into session-g for the pack.
   (`session_o2_armor.py`, FRENZIED: left half mirrored a step darker; ash plate, gold trims, the ember sun, bone horns
   with blazing tips that pulse): Frenzied Helm, Breastplate, Greaves, Sabatons (session-d). v1 of the icons merged the
   sun, ridge and glow into an orange column on the breastplate and had antenna-thin horns; v2 fixed both.
+- **Revision after the in-game look** (user): the horn ends curve forward like a charging bull (the upper piece leans
+  -30, the tip -50, set on the end of the piece below and sunk into it so the bend shows no gap); the whole horn is
+  bone, the tip too (the blood-stain glow is gone); floating sparks round the horns like the Hollow helm's - Session
+  B's gold sparkle (its 5-frame life) and crimson soul flame on small planes facing different ways, each alive a few
+  frames of a 16-frame cycle at its own moment, the right horn's a few frames after the left's (`sparks-g8-*.png`
+  shows four moments). The helm icon's tips are bone too; the server-side horn sparks moved forward to the new tips.
 
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):

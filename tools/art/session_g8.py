@@ -235,14 +235,26 @@ def sun_frames():
 # forward to a small tip. (x0, y0, z0, x1, y1, z1, rotation axis, angle, rotation origin, texture) for the left horn;
 # the right is mirrored. The fire is in the material, not a flame on top: an ember crack glowing along the middle
 # pieces, and a molten amber tip.
-HORN = [
-    ((-3.2, 10.2, 4.4), (0.4, 14.6, 9.6), None, 0, None, "root"),
-    ((-7.2, 10.8, 4.9), (-2.6, 14.2, 9.1), "z", -22.5, (-2.6, 12.5, 7.0), "mid"),
-    ((-10.2, 12.0, 5.3), (-6.2, 15.0, 8.7), "z", -45.0, (-6.2, 13.5, 7.0), "mid"),
-    ((-10.6, 14.8, 5.6), (-8.0, 18.8, 8.4), "x", -22.5, (-9.3, 14.8, 7.0), "upper"),
-    # the tip: square, not pointed - the horn's own thickness, cut off blunt and burning (user, v6)
-    ((-10.6, 18.5, 4.07), (-8.0, 21.5, 6.87), "x", -5.0, (-9.3, 18.5, 5.47), "tip"),    # nearly upright on its base
-]
+UPPER_LEAN = -30.0     # the upper piece leans forward ...
+TIP_LEAN = -50.0       # ... and the tip further, curving the end forward like a charging bull (user, final+1)
+
+
+def _horn():
+    """The left horn's pieces (x0, y0, z0), (x1, y1, z1), rotation axis, angle, origin, skin. The tip sits on the end of
+    the upper piece wherever that piece's lean puts it."""
+    a = math.radians(UPPER_LEAN)
+    by, bz = 14.8 + 4 * math.cos(a), 7.0 + 4 * math.sin(a)       # the upper piece's top centre after its lean
+    return [
+        ((-3.2, 10.2, 4.4), (0.4, 14.6, 9.6), None, 0, None, "root"),
+        ((-7.2, 10.8, 4.9), (-2.6, 14.2, 9.1), "z", -22.5, (-2.6, 12.5, 7.0), "mid"),
+        ((-10.2, 12.0, 5.3), (-6.2, 15.0, 8.7), "z", -45.0, (-6.2, 13.5, 7.0), "mid"),
+        ((-10.6, 14.8, 5.6), (-8.0, 18.8, 8.4), "x", UPPER_LEAN, (-9.3, 14.8, 7.0), "upper"),
+        ((-10.4, by - 0.8, bz - 1.2), (-8.2, by + 2.6, bz + 1.2), "x", TIP_LEAN, (-9.3, by, bz), "tip"),   # bone, square; sunk
+        # into the piece below so the bend shows no gap
+    ]
+
+
+HORN = _horn()
 
 
 CRIMSON = RAMPS["crimson"]
@@ -335,9 +347,9 @@ def stain_top_frames(n=6):
 def frenzied_helm_worn(pal=None):
     """The Frenzied Helm worn - open-faced (the whole face shows): a domed helm of deep violet plate; a heavy silver
     brow ridge bearing down toward the centre, the Frenzy Idol's ember sun set in it (breathing glow); silver cheek
-    guards; and two bull horns of bone, built of tapering pieces that bend out, up and forward, cut off square at the
-    end - and the tips burn like fresh blood stains: white-hot at the top through orange to blood red, drips running
-    down the bone (animated)."""
+    guards; and two bull horns of bone, built of tapering pieces that bend out and up, their ends curving forward like a
+    charging bull's, cut off square; gold sparkles and crimson soul flames flicker in the air round them now and then
+    (Session B's particles, animated)."""
     pal = pal or PALETTES[DEFAULT]
     m = Model("frenzied_helmet_head")
     m.part = True
@@ -356,8 +368,7 @@ def frenzied_helm_worn(pal=None):
         brow.putpixel((x, 14), _mix(brow.getpixel((x, 14)), EMBER[3], 0.3))
     t_brow = m.texture("brow", brow)
     skins = {"root": m.texture("horn_root", bone_skin(2)), "mid": m.texture("horn_mid", bone_skin(3)),
-             "upper": m.texture("horn_upper", bone_skin(3, drips=True)),
-             "tip": m.texture("horn_tip", stain_frames()), "tip_top": m.texture("horn_tip_top", stain_top_frames())}
+             "upper": m.texture("horn_upper", bone_skin(3)), "tip": m.texture("horn_tip", bone_skin(4))}
     t_sun = m.texture("sun", sun_frames())
     T = lambda t, w, h: (t, [0, 0, max(1, min(16, round(w))), max(1, min(16, round(h)))])  # noqa: E731
     # the helmet shell (as the approved G6 helms)
@@ -379,15 +390,50 @@ def frenzied_helm_worn(pal=None):
         for (a, b, axis, angle, origin, skin) in HORN:
             if side > 0:
                 a, b = (16 - b[0], a[1], a[2]), (16 - a[0], b[1], b[2])
-            faces = {d: (skins[skin], [0, 0, 16, 16]) for d in g.FACES_ALL}
-            if skin == "tip":
-                faces["up"] = (skins["tip_top"], [0, 0, 16, 16])
-            el = m.box(a, b, faces, shade=skin != "tip", light=12 if skin == "tip" else 0)
+            el = m.box(a, b, {d: (skins[skin], [0, 0, 16, 16]) for d in g.FACES_ALL})
             if axis:
                 o = list(origin) if side < 0 else [16 - origin[0], origin[1], origin[2]]
                 el["rotation"] = {"origin": o, "axis": axis, "angle": angle if (side < 0 or axis == "x") else -angle}
+    floating_sparks(m)
     m.display = g.HEAD_DISPLAY
     return m
+
+
+SESSION_B = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "art", "session-b")
+# (x, y, z, facing, kind, first frame) round the left horn; the right one mirrors them a few frames later
+SPARKS = [(-12.5, 22.5, 0.5, "z", "sparkle", 0), (-6.5, 19.0, 3.5, "x", "flame", 5),
+          (-11.5, 15.5, 9.5, "y45", "sparkle", 9), (-4.0, 16.5, 10.5, "x", "flame", 12)]
+SPARK_SIZE = 5.0
+
+
+def spark_frames(kind, start, n=16):
+    """One floating spark's 16 frames: blank, then Session B's gold sparkle (its 5-frame life) or crimson soul flame
+    (6 frames of its flicker) from `start`, then blank again - so each spark appears now and then, at its own moment."""
+    if kind == "sparkle":
+        life = [Image.open(os.path.join(SESSION_B, f"sparkle_gold_{k}.png")).convert("RGBA") for k in range(5)]
+    else:
+        flame = [Image.open(os.path.join(SESSION_B, f"soul_flame_crimson_{k}.png")).convert("RGBA") for k in range(4)]
+        life = [flame[k % 4] for k in range(6)]
+    frames = [g.blank() for _ in range(n)]
+    for k, img in enumerate(life):
+        frames[(start + k) % n] = img
+    return frames
+
+
+def floating_sparks(m):
+    for side in (-1, 1):
+        for k, (x, y, z, facing, kind, start) in enumerate(SPARKS):
+            px = x if side < 0 else 16 - x
+            t = m.texture(f"spark_{'l' if side < 0 else 'r'}{k}", spark_frames(kind, start + (0 if side < 0 else 3)))
+            h = SPARK_SIZE / 2
+            if facing == "x":
+                m.box((px, y - h, z - h), (px, y + h, z + h), {"west": (t, [0, 0, 16, 16]), "east": (t, [0, 0, 16, 16])},
+                      shade=False, light=15)
+            else:
+                el = m.box((px - h, y - h, z), (px + h, y + h, z), {"north": (t, [0, 0, 16, 16]), "south": (t, [0, 0, 16, 16])},
+                           shade=False, light=15)
+                if facing == "y45":
+                    el["rotation"] = {"origin": [px, y, z], "axis": "y", "angle": 45}
 
 
 # ---------------------------------------------------------------- review renders
@@ -472,6 +518,15 @@ def body_closeup(layers, helm, path):
     out.save(path)
 
 
+def sparks_sheet(helm, path):
+    """The helm at four moments (the floating sparks each show only now and then), three-quarter and side."""
+    out = Image.new("RGBA", (420 * 4, 840), (34, 32, 40, 255))
+    for i, f in enumerate((1, 6, 10, 13)):
+        out.alpha_composite(render3d.render(helm, frame=f, yaw=210, pitch=18, s=9, size=(420, 420), center=(8, 15, 8)), (i * 420, 0))
+        out.alpha_composite(render3d.render(helm, frame=f, yaw=250, pitch=8, s=9, size=(420, 420), center=(8, 15, 8)), (i * 420, 420))
+    out.save(path)
+
+
 def helm_gif(helm, path):
     frames = [render3d.render(helm, frame=f, yaw=210, pitch=20, s=9, size=(360, 360), center=(8, 14, 8)).convert("RGB") for f in range(4)]
     frames[0].save(path, save_all=True, append_images=frames[1:], duration=220, loop=0)
@@ -499,6 +554,7 @@ if __name__ == "__main__":
     sheet(layers, helm, os.path.join(OUT, f"review-g8{suffix}.png"))
     helm_gif(helm, os.path.join(OUT, f"helm-g8{suffix}.gif"))
     horn_closeup(helm, os.path.join(OUT, f"horn-g8{suffix}.png"))
+    sparks_sheet(helm, os.path.join(OUT, f"sparks-g8{suffix}.png"))
     body_closeup(layers, helm, os.path.join(OUT, f"body-g8{suffix}.png"))
     d = os.path.join(OUT, "equipment", "frenzied")
     os.makedirs(d, exist_ok=True)

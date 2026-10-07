@@ -170,13 +170,13 @@ HOLLOW = {
 
 
 # ---------------------------------------------------------------- Frenzied (T1, Session G8): drawn from the approved
-# worn set - ash plate (the Frenzy Idol's muted grey-violet), gold trims, the ember sun, bone horns with blazing tips.
+# worn set - ash plate (the Frenzy Idol's muted grey-violet), gold trims, the ember sun, bone horns.
 # Extra letters: G g h gold (light, mid, dark) | E ember (pulses) | e ember, steady | B b bone (light, mid) |
 # F the blazing horn tip (pulses: crimson to yellow) | f its dimmer edge
 FRENZIED = {
     "frenzied_helm": [
-        "FF......",
-        "fF......",
+        "BB......",
+        "bB......",
         "BB......",
         "bBB.....",
         ".bbB.OOO",

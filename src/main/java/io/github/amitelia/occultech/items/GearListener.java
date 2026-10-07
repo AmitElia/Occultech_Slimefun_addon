@@ -68,6 +68,7 @@ public final class GearListener implements Listener {
     /** Where the burning horn tips sit on a wearer's head: above the eyes, out to each side (from the helm model). */
     private static final double HORN_UP = 0.5;
     private static final double HORN_OUT = 0.65;
+    private static final double HORN_FORWARD = 0.2;   // the tips curve forward (an attacking pose)
     private static final int MAX_STACKS = 5;
     private static final long STACK_WINDOW_MS = 3000;
     private static final long JUMP_COOLDOWN_MS = 4000;
@@ -160,7 +161,8 @@ public final class GearListener implements Listener {
         look.normalize();
         Vector right = new Vector(-look.getZ(), 0, look.getX());
         for (int side = -1; side <= 1; side += 2) {
-            org.bukkit.Location tip = eye.clone().add(0, HORN_UP, 0).add(right.clone().multiply(HORN_OUT * side));
+            org.bukkit.Location tip = eye.clone().add(0, HORN_UP, 0).add(right.clone().multiply(HORN_OUT * side))
+                .add(look.clone().multiply(HORN_FORWARD));
             if (random.nextInt(3) == 0) {
                 player.getWorld().spawnParticle(Particle.SMALL_FLAME, tip, 1, 0.04, 0.03, 0.04, 0.008);
             }
