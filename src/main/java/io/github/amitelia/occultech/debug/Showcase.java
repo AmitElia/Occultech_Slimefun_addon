@@ -15,7 +15,6 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
-import org.bukkit.Color;
 import org.bukkit.DyeColor;
 import org.bukkit.GameRule;
 import org.bukkit.Location;
@@ -60,11 +59,15 @@ import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 /**
  * {@code /occultech showcase}: a hallway of progression running south from spawn.
  * <ul>
- * <li>One segment per tier. West side: pedestals with each item hovering above and a hologram explaining it, plus the
+ * <li>One segment per tier. West side: pedestals with each item hovering above, plus the
  * tier's crafting-ritual demos. East side: a summoning arena with its edge marked by a glowing ring, the circle, and a
  * kit chest per boss holding exactly that boss's offerings (the first boss is already in the bowls).</li>
  * <li>A final "Servitors and Curios" segment with the live blocks and one working shrine per contract.</li>
  * <li>The grass is replaced by themed floors, natural mob spawning is switched off and natural mobs are removed.</li>
+ * <li>West of the hallway, the studios: one per ritual recipe, cosmetic, machine, armor set and weapon, each on its own
+ * white concrete floor before a white backdrop (back and side walls), evenly lit by hidden light blocks, with room in
+ * front for a camera - for screenshots and recordings. No text anywhere in them (blocks carry no floating text; the
+ * hallway keeps only its section titles).</li>
  * </ul>
  * Every block it changes (and the mob-spawning rule) is recorded in {@code plugins/Occultech/showcase.yml};
  * {@code /occultech showcase clear} (or rebuilding) restores them exactly.
@@ -90,6 +93,15 @@ final class Showcase {
         2, List.of("upgrade:ABYSSAL_ALTAR"),
         3, List.of("upgrade:HOLLOW_ALTAR"));
     private static final Material[] PEDESTALS = { Material.CHISELED_POLISHED_BLACKSTONE, Material.PURPUR_PILLAR, Material.PRISMARINE_BRICKS, Material.CHISELED_DEEPSLATE };
+    /** A studio: floor and backdrop width (x), depth to the open front (z), the apron in front, wall height. */
+    private static final int STUDIO_WIDTH = 19;
+    private static final int STUDIO_DEPTH = 19;
+    private static final int STUDIO_APRON = 6;
+    private static final int STUDIO_WALL = 12;
+    private static final int STUDIO_GAP = 4;
+    private static final int STUDIOS_PER_ROW = 8;
+    /** The studios' east edge, west of the hallway. */
+    private static final int STUDIOS_EAST = -32;
     private static final Material[] RINGS = { Material.PEARLESCENT_FROGLIGHT, Material.VERDANT_FROGLIGHT, Material.OCHRE_FROGLIGHT, Material.CRYING_OBSIDIAN };
 
     private final Occultech plugin;
@@ -100,6 +112,8 @@ final class Showcase {
     private final List<Runnable> fills = new ArrayList<>();
     /** Demos the showcase loop keeps running ("TYPE;x;y;z[;more]"), saved in showcase.yml. */
     private final List<String> loops = new ArrayList<>();
+    /** One line per row of studios, for the build message. */
+    private final List<String> studioRows = new ArrayList<>();
     private World world;
     private int floorY;
     private int ox;
@@ -137,6 +151,7 @@ final class Showcase {
             buildTier(segment[0], segment[1], segment[2]);
         }
         buildServitors(servitorStart);
+        buildStudios();
         clearMobs();
 
         save();
@@ -146,6 +161,7 @@ final class Showcase {
             say("&a[Occultech] Showcase built: a hallway south of spawn (tiers 0-" + ContentRegistrar.IMPLEMENTED_TIER
                 + ", then servitors). Natural mob spawning is off. &7Clear with /occultech showcase clear");
             summonAltars.forEach((tier, altar) -> say("&7Summoning altar, tier " + tier + ": " + altar.getX() + " " + altar.getY() + " " + altar.getZ()));
+            studioRows.forEach(row -> say("&7Studios: " + row));
         }, 10L);
     }
 
@@ -165,6 +181,21 @@ final class Showcase {
             YamlConfiguration data = YamlConfiguration.loadConfiguration(file);
             World saved = Bukkit.getWorld(data.getString("world", main.getName()));
             List<String> blocks = data.getStringList("blocks");
+            // displays and mannequins in chunks that unloaded since the build: load each chunk's entities and remove them
+            Set<Long> chunks = new HashSet<>();
+            for (String entry : blocks) {
+                String[] parts = entry.split(";", 4);
+                int cx = Integer.parseInt(parts[0]) >> 4;
+                int cz = Integer.parseInt(parts[2]) >> 4;
+                if (chunks.add(((long) cx << 32) ^ (cz & 0xffffffffL))) {
+                    for (Entity entity : saved.getChunkAt(cx, cz).getEntities()) {
+                        if (entity.getPersistentDataContainer().has(Keys.SHOWCASE, PersistentDataType.BYTE) && entity.isValid()) {
+                            entity.remove();
+                            removed++;
+                        }
+                    }
+                }
+            }
             for (int i = blocks.size() - 1; i >= 0; i--) {
                 String[] parts = blocks.get(i).split(";", 4);
                 Block block = saved.getBlockAt(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
@@ -274,14 +305,10 @@ final class Showcase {
                 }
             }
         }
-        label(new Location(world, cx - radius + 0.5, floorY + 2.2, cz + 0.5),
-            "&c&lArena edge\n&7" + radius + " blocks from the altar.\n&7Bosses can't leave this ring.");
 
         List<String> bosses = BOSS_ORDER.getOrDefault(tier, List.of());
         Optional<RitualRecipe> first = bosses.isEmpty() ? Optional.empty() : recipeFor(bosses.get(0));
-        Block altar = circle(cx, cz, tier, "&c" + Circles.name(tier) + " &7- summoning",
-            "&7Kits beside the circle hold each boss's offerings.\n&7"
-                + first.map(r -> ContentRegistrar.title(r.bossId()) + " is ready: open the altar, press &fBegin Ritual&7.").orElse(""));
+        Block altar = circle(cx, cz, tier);
         summonAltars.put(tier, altar);
         first.ifPresent(recipe -> fills.add(() -> fill(altar, recipe)));
 
@@ -304,19 +331,6 @@ final class Showcase {
             display.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(0.65F, 0.65F, 0.65F), new AxisAngle4f()));
             tag(display);
         });
-        String source = def.isBossDrop()
-            ? "&8Dropped by " + ContentRegistrar.title(def.recipe().boss())
-                + (def.recipe().chance() < 1 ? " (" + Math.round(def.recipe().chance() * 100) + "%)" : "")
-            : "&8Made by: " + ContentRegistrar.title(def.recipe().type());
-        world.spawn(base.getLocation().add(0.5, 2.35, 0.5), TextDisplay.class, text -> {
-            text.setText(ChatColor.translateAlternateColorCodes('&', item.getItemName() + "\n&7" + def.purpose() + "\n" + source));
-            text.setBillboard(Display.Billboard.VERTICAL);
-            text.setLineWidth(150);
-            text.setShadowed(true);
-            text.setBackgroundColor(Color.fromARGB(110, 10, 5, 20));
-            text.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(0.5F, 0.5F, 0.5F), new AxisAngle4f()));
-            tag(text);
-        });
     }
 
     private void kit(Block chestBlock, String bossId) {
@@ -338,9 +352,6 @@ final class Showcase {
             chest.getBlockInventory().clear();
             contents.stream().filter(java.util.Objects::nonNull).forEach(i -> chest.getBlockInventory().addItem(i));
         }
-        boolean major = plugin.catalog().boss(bossId).map(b -> "major".equals(b.kind())).orElse(false);
-        label(chestBlock.getLocation().add(0.5, 1.6, 0.5), "&c" + ContentRegistrar.title(bossId) + " kit\n&7"
-            + (major ? "Catalyst on the altar, the rest in bowls" : "One stack per bowl, altar empty") + "\n&eButton: restock the circle");
     }
 
     /** A command block with a button on top that refills the circle for one boss. */
@@ -363,9 +374,18 @@ final class Showcase {
      * ritual or fight is running there. Used by the showcase buttons via {@code /occultech restock}.
      */
     static void restock(Occultech plugin, CommandSender sender, Block altar, String bossId) {
-        Optional<RitualRecipe> recipe = plugin.rituals().recipes().stream().filter(r -> bossId.equals(r.bossId())).findFirst();
+        String output = ItemKeys.slimefunId(bossId);
+        Optional<RitualRecipe> recipe = plugin.rituals().recipes().stream()
+            .filter(r -> bossId.equals(r.bossId()) || (!r.isSummon() && output.equals(r.outputId()))).findFirst();
+        if (recipe.isPresent() && recipe.get().inPlace() && !plugin.rituals().isLocked(altar.getLocation())
+            && !recipe.get().center().equals(BlockStorage.checkID(altar))) {
+            // an upgrade ritual already ran here: put the altar it starts from back
+            DebugWorld.emptyMenu(altar);
+            BlockStorage.clearBlockInfo(altar);
+            DebugWorld.placeSlimefun(altar, recipe.get().center(), block -> { });
+        }
         if (recipe.isEmpty() || plugin.rituals().checkCircle(altar).isEmpty()) {
-            sender.sendMessage("No summoning ritual for " + bossId + " at that circle.");
+            sender.sendMessage("No ritual for " + bossId + " at that circle.");
             return;
         }
         String message;
@@ -396,17 +416,13 @@ final class Showcase {
         if (recipe.isEmpty()) {
             return;
         }
-        String from = recipe.get().center() == null ? "altar" : ContentRegistrar.title(recipe.get().center().substring(recipe.get().center().indexOf('_') + 1));
-        String title = upgrade ? "&dUpgrade demo: " + from + " -> " + ContentRegistrar.title(id) : "&dCrafting demo: " + ContentRegistrar.title(id);
-        String hint = upgrade ? "&7The altar stays empty. Press &fBegin Ritual&7." : "&7Everything is in place. Press &fBegin Ritual&7.";
-        Block altar = circle(x, z, upgrade ? recipe.get().circle() : tier, title, hint);
+        Block altar = circle(x, z, upgrade ? recipe.get().circle() : tier);
         fills.add(() -> fill(altar, recipe.get()));
     }
 
-    private Block circle(int x, int z, int tier, String title, String hint) {
+    private Block circle(int x, int z, int tier) {
         Block altar = world.getBlockAt(x, floorY + 1, z);
         DebugWorld.buildCircle(altar, tier, this::record);
-        label(altar.getLocation().add(0.5, 3.4, 0.5), title + "\n" + hint);
         return altar;
     }
 
@@ -439,10 +455,10 @@ final class Showcase {
         int y = floorY + 1;
 
         // curios along the walkway
-        demoBlock(world.getBlockAt(ox - 5, y, startZ + 3), "BROOD_EGG", "&fBrood Egg\n&7Spins string. Right-click to collect.");
-        demoBlock(world.getBlockAt(ox + 5, y, startZ + 3), "PHANTOM_ROOST", "&fPhantom Roost\n&7Makes phantom membranes.");
+        demoBlock(world.getBlockAt(ox - 5, y, startZ + 3), "BROOD_EGG");
+        demoBlock(world.getBlockAt(ox + 5, y, startZ + 3), "PHANTOM_ROOST");
         Block mirror = world.getBlockAt(ox + 5, y, startZ + 9);
-        demoBlock(mirror, "SCRYING_MIRROR", "&dScrying Mirror\n&7Watching the Bound summoning circle.");
+        demoBlock(mirror, "SCRYING_MIRROR");
         Block watched = summonAltars.getOrDefault(1, summonAltars.get(0));
         if (watched != null) {
             BlockStorage.addBlockInfo(mirror, "occultech_link", world.getName() + ";" + watched.getX() + ";" + watched.getY() + ";" + watched.getZ());
@@ -462,18 +478,18 @@ final class Showcase {
                 }
             }
         }
-        shrine(harvest, "HARVEST_CONTRACT", "&5Contract: Harvest\n&7Reaps and replants the wart.\n&7(the Frenzy Idol makes it 1.5x faster)", Map.of());
-        demoBlock(world.getBlockAt(ox - 7, y, startZ + 8), "FRENZY_IDOL", "&6Frenzy Idol\n&7Shrines within 8 blocks work 1.5x faster.");
+        shrine(harvest, "HARVEST_CONTRACT", Map.of());
+        demoBlock(world.getBlockAt(ox - 7, y, startZ + 8), "FRENZY_IDOL");
 
         Block gather = world.getBlockAt(ox - 14, y, startZ + 22);
-        shrine(gather, "GATHER_CONTRACT", "&5Contract: Gather\n&7Drop items nearby - it collects them.", Map.of());
+        shrine(gather, "GATHER_CONTRACT", Map.of());
         fills.add(() -> {
             for (int i = 0; i < 4; i++) {
                 world.dropItem(gather.getLocation().add(-2 + i, 0.5, 2.5), new ItemStack(Material.BONE, 4)).setPickupDelay(0);
             }
         });
         Block ward = world.getBlockAt(ox - 14, y, startZ + 36);
-        shrine(ward, "WARD_CONTRACT", "&5Contract: Ward &3+ Abyssal Tether\n&7No hostile mobs spawn within 32 blocks\n&7(24 without the tether). Its spirit patrols the edge.\n&8(showcase spawning is off anyway)", Map.of());
+        shrine(ward, "WARD_CONTRACT", Map.of());
         fills.add(() -> {
             BlockMenu menu = BlockStorage.getInventory(ward);
             SlimefunItem tether = SlimefunItem.getById(ItemKeys.slimefunId("ABYSSAL_TETHER"));
@@ -483,46 +499,43 @@ final class Showcase {
         });
 
         // tier-2 curios and powered machines along the walkway
-        demoBlock(world.getBlockAt(ox - 5, y, startZ + 15), "GUARDIAN_EYE", "&3Guardian Eye\n&7Beams hostile mobs within 12 blocks.\n&6Frenzied by the idol: 1.5x damage.");
-        demoBlock(world.getBlockAt(ox + 5, y, startZ + 15), "PEARL_BED", "&bPearl Bed\n&7Grows prismarine shards and crystals.");
-        demoBlock(world.getBlockAt(ox - 5, y, startZ + 21), "EMBER_BRAZIER", "&6Ember Brazier\n&7Makes blaze powder.");
-        demoBlock(world.getBlockAt(ox + 5, y, startZ + 21), "WIND_CHIME", "&bWind Chime\n&7Speed II and Jump Boost II within 32 blocks.\n&7Chimes softly now and then.");
+        demoBlock(world.getBlockAt(ox - 5, y, startZ + 15), "GUARDIAN_EYE");
+        demoBlock(world.getBlockAt(ox + 5, y, startZ + 15), "PEARL_BED");
+        demoBlock(world.getBlockAt(ox - 5, y, startZ + 21), "EMBER_BRAZIER");
+        demoBlock(world.getBlockAt(ox + 5, y, startZ + 21), "WIND_CHIME");
 
         // decoration gallery across the end of the hall
         title(new Location(world, ox + 0.5, floorY + 5, startZ + 41.5), "&d&lDECORATIONS\n&7Sneak + right-click one to change its look");
         String[] decorations = { "WISP_JAR", "ABYSSAL_LANTERN", "RUNE_OBELISK", "OCCULT_ORRERY", "SOULFIRE_BRAZIER", "BOTTLED_GALE" };
         for (int i = 0; i < decorations.length; i++) {
             String id = decorations[i];
-            demoBlock(world.getBlockAt(ox - 10 + i * 4, y, startZ + 45), id, "&d" + ContentRegistrar.title(id) + " &8(tier 2)\n&7Sneak + right-click: next palette");
+            demoBlock(world.getBlockAt(ox - 10 + i * 4, y, startZ + 45), id);
         }
 
         // cosmetics from every tier: flowers need soil, the netherrack is lit, tiles are laid in the floor to walk on
         setBlock(world.getBlockAt(ox - 10, y - 1, startZ + 50), Material.GRASS_BLOCK);
-        demoBlock(world.getBlockAt(ox - 10, y, startZ + 50), "MOONLIT_LILY", "&fMoonlit Lily &8(tier 1)\n&7Sneak + right-click: star color");
+        demoBlock(world.getBlockAt(ox - 10, y, startZ + 50), "MOONLIT_LILY");
         setBlock(world.getBlockAt(ox - 5, y - 1, startZ + 50), Material.GRASS_BLOCK);
-        demoBlock(world.getBlockAt(ox - 5, y, startZ + 50), "WITCHCAP", "&cWitchcap &8(tier 1)\n&7Sneak + right-click: brew colors");
+        demoBlock(world.getBlockAt(ox - 5, y, startZ + 50), "WITCHCAP");
         setBlock(world.getBlockAt(ox - 15, y - 1, startZ + 50), Material.GRASS_BLOCK);
-        demoBlock(world.getBlockAt(ox - 15, y, startZ + 50), "WATCHFUL_EYEBLOSSOM", "&6Watchful Eyeblossom &8(tier 3)\n&7Walk close: it opens and watches you");
+        demoBlock(world.getBlockAt(ox - 15, y, startZ + 50), "WATCHFUL_EYEBLOSSOM");
         for (int dx = -3; dx <= 3; dx++) {
             DebugWorld.placeSlimefun(world.getBlockAt(ox + dx, y - 1, startZ + 56), ItemKeys.slimefunId("RESIN_TILE"), this::record);
         }
-        label(new Location(world, ox + 0.5, y + 1.6, startZ + 56.5), "&6Resin Tile &8(tier 3)\n&7Walk on it");
-        demoBlock(world.getBlockAt(ox + 12, y - 1, startZ + 57), "FLOOR_SIGIL", "&5Floor Sigil &8(tier 1)\n&7Sneak + right-click it: color, 5x5 or 3x3");
-        demoBlock(world.getBlockAt(ox + 5, y, startZ + 50), "EVERLIVING_CORAL", "&bEverliving Coral &8(tier 2)\n&7Never dries. Sneak + right-click: coral type");
+        demoBlock(world.getBlockAt(ox + 12, y - 1, startZ + 57), "FLOOR_SIGIL");
+        demoBlock(world.getBlockAt(ox + 5, y, startZ + 50), "EVERLIVING_CORAL");
         Block netherrack = world.getBlockAt(ox + 10, y, startZ + 50);
-        demoBlock(netherrack, "PRISMATIC_NETHERRACK", "&dPrismatic Netherrack &8(tier 2)\n&7Light it: rainbow fire. Sneak + right-click: palette");
+        demoBlock(netherrack, "PRISMATIC_NETHERRACK");
         setBlock(netherrack.getRelative(0, 1, 0), Material.FIRE);
         for (int dx = -6; dx <= 6; dx++) {
             if (dx != 0) {
                 DebugWorld.placeSlimefun(world.getBlockAt(ox + dx, y - 1, startZ + 54), ItemKeys.slimefunId(dx < 0 ? "CHIMING_TILE" : "TIDAL_TILE"), this::record);
             }
         }
-        label(new Location(world, ox - 3.5, y + 1.6, startZ + 54.5), "&dChiming Amethyst Tile &8(tier 0)\n&7Walk on it (sneak to stay quiet)");
         Block trophy = world.getBlockAt(ox, y, startZ + 50);
-        demoBlock(trophy, "TROPHY_BOARD", "&6Trophy Board &8(tier 0)\n&7Sneak + right-click: show a boss you've defeated");
+        demoBlock(trophy, "TROPHY_BOARD");
         // the showcase board starts on the Brood Mother so it isn't empty
         BlockStorage.addBlockInfo(trophy, "occultech_trophy", "BROOD_MOTHER;0;the showcase");
-        label(new Location(world, ox + 4.5, y + 1.6, startZ + 54.5), "&bTidal Coral Tile &8(tier 2)\n&7Walk on it. Sneak + right-click: coral");
 
         // east column: brewer, shepherd, beekeeper
         Block brewer = world.getBlockAt(ox + 14, y, startZ + 8);
@@ -541,8 +554,7 @@ final class Showcase {
                 }
             });
         }
-        shrine(brewer, "BREWER_CONTRACT", "&5Contract: Brewer's Aid\n&7Fuels the stands and adds nether wart.",
-            Map.of(Material.NETHER_WART, 16, Material.BLAZE_POWDER, 8));
+        shrine(brewer, "BREWER_CONTRACT", Map.of(Material.NETHER_WART, 16, Material.BLAZE_POWDER, 8));
 
         Block shepherd = world.getBlockAt(ox + 14, y, startZ + 22);
         for (int dx = -3; dx <= 3; dx++) {
@@ -552,7 +564,7 @@ final class Showcase {
                 }
             }
         }
-        shrine(shepherd, "SHEPHERD_CONTRACT", "&5Contract: Shepherd\n&7Shears the sheep in the pen.", Map.of());
+        shrine(shepherd, "SHEPHERD_CONTRACT", Map.of());
         fills.add(() -> {
             DyeColor[] colors = { DyeColor.WHITE, DyeColor.PURPLE, DyeColor.BLACK };
             for (int i = 0; i < colors.length; i++) {
@@ -573,7 +585,7 @@ final class Showcase {
             data.setHoneyLevel(data.getMaximumHoneyLevel());
             hive.setBlockData(data, false);
         }
-        shrine(beekeeper, "BEEKEEPER_CONTRACT", "&5Contract: Beekeeper\n&7Takes honeycomb from full hives.", Map.of());
+        shrine(beekeeper, "BEEKEEPER_CONTRACT", Map.of());
 
         // Acolyte: beside the tier-0 summoning circle, stocked with the Brood Mother's offerings
         Block tier0 = summonAltars.get(0);
@@ -581,7 +593,7 @@ final class Showcase {
         if (tier0 != null && brood.isPresent()) {
             Block acolyte = tier0.getRelative(0, 0, 6);
             Map<Material, Integer> stock = Map.of(Material.STRING, 32, Material.SPIDER_EYE, 16, Material.FERMENTED_SPIDER_EYE, 4);
-            shrine(acolyte, "ACOLYTE_CONTRACT", "&5Contract: Acolyte\n&7Refills the bowls with the offerings\n&7of the last ritual done here.", stock);
+            shrine(acolyte, "ACOLYTE_CONTRACT", stock);
             loops.add("ACOLYTE;" + acolyte.getX() + ";" + acolyte.getY() + ";" + acolyte.getZ() + ";" + tier0.getX() + ";" + tier0.getY() + ";" + tier0.getZ());
             fills.add(() -> {
                 plugin.rituals().rememberRitual(tier0, brood.get());
@@ -606,20 +618,17 @@ final class Showcase {
         title(new Location(world, ox + 0.5, floorY + 5, z0 + 1.5), "&c&lMACHINES & POWER\n&7Working machines on a Slimefun power network");
         boolean generator = ShowcaseLoop.exists("IE_INFINITY_PANEL");
         if (generator) {
-            demoBlock(world.getBlockAt(ox - 15, y, z0 + 6), "IE_INFINITY_PANEL", "&bInfinity Panel &8(InfinityExpansion2)\n&7Generates power day and night");
+            demoBlock(world.getBlockAt(ox - 15, y, z0 + 6), "IE_INFINITY_PANEL");
         }
-        demoBlock(world.getBlockAt(ox - 12, y, z0 + 6), "ENERGY_REGULATOR", "&eEnergy Regulator\n&7Every power network needs one.\n&7Connectors carry power 6 blocks each.");
-        demoBlock(world.getBlockAt(ox - 12, y, z0 + 8), "SMALL_CAPACITOR", "&eSmall Capacitor\n&7Stores spare power");
+        demoBlock(world.getBlockAt(ox - 12, y, z0 + 6), "ENERGY_REGULATOR");
+        demoBlock(world.getBlockAt(ox - 12, y, z0 + 8), "SMALL_CAPACITOR");
         for (int x : new int[] { -8, -3, 2 }) {
             DebugWorld.placeSlimefun(world.getBlockAt(ox + x, y, z0 + 6), "ENERGY_CONNECTOR", this::record);
         }
-        String[][] machines = {
-            { "OCCULT_FORGE", "&cOccult Forge\n&7Forges alloys and tier-2/3 metals.\n&7Flames rise while it works." },
-            { "SOUL_CONDENSER", "&cSoul Condenser\n&7Condenses Spirit and Hollow Essence.\n&7Souls drift while it works." },
-            { "HOLLOW_ASSEMBLER", "&8Hollow Assembler\n&7Builds tier-3 gear from 9 input slots." } };
+        String[] machines = { "OCCULT_FORGE", "SOUL_CONDENSER", "HOLLOW_ASSEMBLER" };
         for (int i = 0; i < machines.length; i++) {
             Block machine = world.getBlockAt(ox - 8 + i * 5, y, z0 + 4);
-            demoBlock(machine, machines[i][0], machines[i][1] + "\n&8Open it to watch the recipe run.");
+            demoBlock(machine, machines[i]);
             loops.add("MACHINE;" + machine.getX() + ";" + machine.getY() + ";" + machine.getZ());
             if (!generator) {
                 loops.add("CHARGE;" + machine.getX() + ";" + machine.getY() + ";" + machine.getZ());
@@ -628,7 +637,7 @@ final class Showcase {
 
         // the Arcane Altar: everything in the middle, the pedestals only show it; the loop runs an infusion every 10s
         Block arcane = world.getBlockAt(ox + 13, y, z0 + 5);
-        demoBlock(arcane, "ARCANE_ALTAR", "&5Arcane Altar\n&7All ingredients go in the middle;\n&7the pedestals only show them.");
+        demoBlock(arcane, "ARCANE_ALTAR");
         for (int[] o : new int[][] { { 2, 0 }, { 2, 2 }, { 0, 2 }, { -2, 2 }, { -2, 0 }, { -2, -2 }, { 0, -2 }, { 2, -2 } }) {
             DebugWorld.placeSlimefun(arcane.getRelative(o[0], 0, o[1]), "OCCULTECH_ARCANE_PEDESTAL", this::record);
         }
@@ -637,7 +646,7 @@ final class Showcase {
         // the Servitor Nexus with its own two shrines (far enough from the contract demos not to link them)
         int zn = z0 + 16;
         Block nexus = world.getBlockAt(ox, y, zn);
-        demoBlock(nexus, "SERVITOR_NEXUS", "&3Servitor Nexus &8(tier 3)\n&7The two shrines beside it deliver here.\n&7Open it: shared store, Overview, Empower all.");
+        demoBlock(nexus, "SERVITOR_NEXUS");
         Block linkedHarvest = world.getBlockAt(ox - 6, y, zn);
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
@@ -651,15 +660,13 @@ final class Showcase {
                 }
             }
         }
-        shrine(linkedHarvest, "HARVEST_CONTRACT", "&5Harvest &3(linked to the Nexus)", Map.of());
+        shrine(linkedHarvest, "HARVEST_CONTRACT", Map.of());
         Block linkedGather = world.getBlockAt(ox + 6, y, zn);
-        shrine(linkedGather, "GATHER_CONTRACT", "&5Gather &3(linked to the Nexus)", Map.of());
-        // these two deliver to the Nexus, not their own store: fix the labels the shrine() helper wrote
-        label(new Location(world, ox + 0.5, y + 4.2, zn + 0.5), "&3Linked shrines put their output in the Nexus store");
+        shrine(linkedGather, "GATHER_CONTRACT", Map.of());
     }
 
-    private void shrine(Block block, String contract, String text, Map<Material, Integer> supplies) {
-        demoBlock(block, "SERVITOR_SHRINE", text + "\n&8Output: this shrine's store. The demo resets every 10s.");
+    private void shrine(Block block, String contract, Map<Material, Integer> supplies) {
+        demoBlock(block, "SERVITOR_SHRINE");
         String demo = contract.replace("_CONTRACT", "");
         if (List.of("HARVEST", "GATHER", "BREWER", "SHEPHERD", "BEEKEEPER").contains(demo)) {
             loops.add(demo + ";" + block.getX() + ";" + block.getY() + ";" + block.getZ());
@@ -676,10 +683,177 @@ final class Showcase {
         });
     }
 
-    private void demoBlock(Block block, String id, String text) {
-        if (DebugWorld.placeSlimefun(block, ItemKeys.slimefunId(id), this::record)) {
-            label(block.getLocation().add(0.5, 2.6, 0.5), text);
+    private boolean demoBlock(Block block, String id) {
+        return DebugWorld.placeSlimefun(block, ItemKeys.slimefunId(id), this::record);
+    }
+
+    // ------------------------------------------------------------------ studios
+
+    /** What one studio shows, built on the block above its floor at the studio's middle. */
+    private record Studio(String name, java.util.function.Consumer<Block> build) {}
+
+    /**
+     * The studios, west of the hallway: a row (or more) per kind - armor sets, weapons, machines, cosmetics, ritual
+     * recipes - each studio on its own, its open front to the south.
+     */
+    private void buildStudios() {
+        Map<String, List<Studio>> kinds = new LinkedHashMap<>();
+        kinds.put("armor sets", List.of("FRENZIED", "ABYSSAL", "HOLLOW").stream()
+            .filter(set -> SlimefunItem.getById(ItemKeys.slimefunId(set + "_HELMET")) != null)
+            .map(set -> new Studio(set, center -> armorStudio(center, set))).toList());
+        kinds.put("weapons", itemsWhere("weapon").stream().map(def -> new Studio(def.id(), center -> weaponStudio(center, def.id()))).toList());
+        kinds.put("machines", itemsWhere("machine").stream().map(def -> new Studio(def.id(), center -> machineStudio(center, def.id()))).toList());
+        kinds.put("cosmetics", itemsWhere("decoration").stream().map(def -> new Studio(def.id(), center -> cosmeticStudio(center, def.id()))).toList());
+        kinds.put("ritual recipes", plugin.rituals().recipes().stream().filter(recipe -> !recipe.isSummon() && recipe.outputId() != null)
+            .map(recipe -> new Studio(recipe.outputId(), center -> ritualStudio(center, recipe))).toList());
+
+        int rows = kinds.values().stream().mapToInt(list -> (list.size() + STUDIOS_PER_ROW - 1) / STUDIOS_PER_ROW).sum();
+        int pitchX = STUDIO_WIDTH + STUDIO_GAP;
+        int pitchZ = STUDIO_DEPTH + STUDIO_APRON + STUDIO_GAP;
+        int east = ox + STUDIOS_EAST;
+        int north = oz + START_Z;
+        for (int x = east - STUDIOS_PER_ROW * pitchX; x <= east + 15; x += 16) {
+            for (int z = north; z <= north + rows * pitchZ + 15; z += 16) {
+                Chunk chunk = world.getChunkAt(x >> 4, z >> 4);
+                if (ticketed.add(chunk)) {
+                    chunk.addPluginChunkTicket(plugin);
+                }
+            }
         }
+        int z0 = north;
+        for (Map.Entry<String, List<Studio>> kind : kinds.entrySet()) {
+            List<Studio> studios = kind.getValue();
+            for (int i = 0; i < studios.size(); i++) {
+                if (i > 0 && i % STUDIOS_PER_ROW == 0) {
+                    z0 += pitchZ;
+                }
+                int x0 = east - STUDIO_WIDTH - (i % STUDIOS_PER_ROW) * pitchX;
+                studioShell(x0, z0);
+                studios.get(i).build().accept(world.getBlockAt(x0 + STUDIO_WIDTH / 2, floorY + 1, z0 + STUDIO_DEPTH / 2));
+            }
+            if (!studios.isEmpty()) {
+                studioRows.add(kind.getKey() + " (" + studios.size() + ") from x " + (east - 1) + ", z " + (z0 - (studios.size() - 1) / STUDIOS_PER_ROW * pitchZ)
+                    + ", running west");
+                z0 += pitchZ;
+            }
+        }
+    }
+
+    /** White concrete floor (with an apron in front for a camera), a white backdrop on three sides, hidden lights. */
+    private void studioShell(int x0, int z0) {
+        for (int x = x0; x < x0 + STUDIO_WIDTH; x++) {
+            for (int z = z0; z < z0 + STUDIO_DEPTH + STUDIO_APRON; z++) {
+                setBlock(world.getBlockAt(x, floorY, z), Material.WHITE_CONCRETE);
+                boolean wall = z < z0 + STUDIO_DEPTH && (z == z0 || x == x0 || x == x0 + STUDIO_WIDTH - 1);
+                for (int y = floorY + 1; y <= floorY + STUDIO_WALL; y++) {
+                    if (wall) {
+                        setBlock(world.getBlockAt(x, y, z), Material.WHITE_CONCRETE);
+                    }
+                }
+            }
+        }
+        // light blocks (invisible, no collision) keep the studio evenly bright, day or night
+        for (int lx = x0 + 3; lx < x0 + STUDIO_WIDTH - 1; lx += 6) {
+            for (int lz = z0 + 3; lz < z0 + STUDIO_DEPTH + STUDIO_APRON - 1; lz += 6) {
+                for (int ly : new int[] { floorY + 4, floorY + 9 }) {
+                    setBlock(world.getBlockAt(lx, ly, lz), Material.LIGHT);
+                }
+            }
+        }
+    }
+
+    private List<ItemCatalog.ItemDef> itemsWhere(String category) {
+        return plugin.catalog().items().stream()
+            .filter(def -> category.equals(def.category()) && SlimefunItem.getById(ItemKeys.slimefunId(def.id())) != null).toList();
+    }
+
+    /** A player-shaped stand (a Mannequin: no AI, can't be pushed or hurt, no caption), facing the camera. */
+    private void mannequin(Block at, java.util.function.Consumer<org.bukkit.inventory.EntityEquipment> dress) {
+        Location spot = at.getLocation().add(0.5, 0, 0.5);
+        spot.setYaw(0);   // south: towards the open front
+        world.spawn(spot, org.bukkit.entity.Mannequin.class, m -> {
+            m.setDescription(net.kyori.adventure.text.Component.empty());
+            m.setImmovable(true);
+            m.setInvulnerable(true);
+            m.setSilent(true);
+            m.setRemoveWhenFarAway(false);
+            dress.accept(m.getEquipment());
+            tag(m);
+        });
+    }
+
+    private static ItemStack stack(String id) {
+        SlimefunItem item = SlimefunItem.getById(ItemKeys.slimefunId(id));
+        return item == null ? null : item.getItem().clone();
+    }
+
+    private void armorStudio(Block center, String set) {
+        mannequin(center, gear -> {
+            gear.setHelmet(stack(set + "_HELMET"));
+            gear.setChestplate(stack(set + "_CHESTPLATE"));
+            gear.setLeggings(stack(set + "_LEGGINGS"));
+            gear.setBoots(stack(set + "_BOOTS"));
+        });
+    }
+
+    private void weaponStudio(Block center, String id) {
+        mannequin(center, gear -> gear.setItemInMainHand(stack(id)));
+    }
+
+    /** A machine, front to the camera, kept charged and stocked by the showcase loop (the Arcane Altar infuses). */
+    private void machineStudio(Block center, String id) {
+        if (id.equals("ARCANE_ALTAR")) {
+            demoBlock(center, id);
+            for (int[] o : new int[][] { { 2, 0 }, { 2, 2 }, { 0, 2 }, { -2, 2 }, { -2, 0 }, { -2, -2 }, { 0, -2 }, { 2, -2 } }) {
+                DebugWorld.placeSlimefun(center.getRelative(o[0], 0, o[1]), "OCCULTECH_ARCANE_PEDESTAL", this::record);
+            }
+            loops.add("ARCANE;" + center.getX() + ";" + center.getY() + ";" + center.getZ());
+            return;
+        }
+        if (demoBlock(center, id) && plugin.customBlocks() != null && plugin.customBlocks().enabled()) {
+            plugin.customBlocks().place(center, ItemKeys.slimefunId(id), 0, BlockFace.SOUTH);   // its front to the camera
+        }
+        loops.add("MACHINE;" + center.getX() + ";" + center.getY() + ";" + center.getZ());
+        loops.add("CHARGE;" + center.getX() + ";" + center.getY() + ";" + center.getZ());
+    }
+
+    /** A cosmetic as it's used: tiles laid in the floor, flowers on grass, the netherrack lit, the trophy board filled. */
+    private void cosmeticStudio(Block center, String id) {
+        switch (id) {
+            case "CHIMING_TILE", "TIDAL_TILE", "RESIN_TILE" -> {
+                for (int dx = -2; dx <= 2; dx++) {
+                    for (int dz = -2; dz <= 2; dz++) {
+                        DebugWorld.placeSlimefun(center.getRelative(dx, -1, dz), ItemKeys.slimefunId(id), this::record);
+                    }
+                }
+            }
+            case "FLOOR_SIGIL" -> demoBlock(center.getRelative(0, -1, 0), id);
+            case "MOONLIT_LILY", "WITCHCAP", "WATCHFUL_EYEBLOSSOM" -> {
+                setBlock(center.getRelative(0, -1, 0), Material.GRASS_BLOCK);
+                demoBlock(center, id);
+            }
+            case "PRISMATIC_NETHERRACK" -> {
+                demoBlock(center, id);
+                setBlock(center.getRelative(0, 1, 0), Material.FIRE);
+            }
+            case "TROPHY_BOARD" -> {
+                demoBlock(center, id);
+                BlockStorage.addBlockInfo(center, "occultech_trophy", "BROOD_MOTHER;0;the showcase");
+            }
+            default -> demoBlock(center, id);
+        }
+    }
+
+    /**
+     * A ritual ready to run: its circle (the altar a little behind the middle, so the whole circle is in shot) filled
+     * with the offerings; press Begin Ritual. A button behind the east wall (out of shot) restocks it.
+     */
+    private void ritualStudio(Block center, RitualRecipe recipe) {
+        Block altar = center.getRelative(0, 0, -1);
+        DebugWorld.buildCircle(altar, recipe.circle(), this::record);
+        fills.add(() -> fill(altar, recipe));
+        Block outside = world.getBlockAt(center.getX() + STUDIO_WIDTH / 2 + 2, floorY, center.getZ() + STUDIO_DEPTH / 2 - 2);
+        restockButton(outside, altar, recipe.outputId().substring(ItemKeys.PREFIX.length()));
     }
 
     // ------------------------------------------------------------------ helpers
@@ -713,15 +887,6 @@ final class Showcase {
             display.setBillboard(Display.Billboard.CENTER);
             display.setShadowed(true);
             display.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(2F, 2F, 2F), new AxisAngle4f()));
-            tag(display);
-        });
-    }
-
-    private void label(Location at, String text) {
-        at.getWorld().spawn(at, TextDisplay.class, display -> {
-            display.setText(ChatColor.translateAlternateColorCodes('&', text));
-            display.setBillboard(Display.Billboard.CENTER);
-            display.setShadowed(true);
             tag(display);
         });
     }
