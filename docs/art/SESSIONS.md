@@ -1143,3 +1143,9 @@ fittings, sea glow; fire blocks in ember.
   client; the floor-fire shape from template_fire_floor) recoloured: every pixel keeps vanilla's lightness, its hue
   runs through the palette rolling up the flame and through time, like the first version's rainbow sparks.
 
+
+## Session G9 - Abyssal helm bubbles
+- Sea-glow bubbles on the Abyssal helm model (`floating_bubbles` in session_g.py, like the Frenzied sparks): small planes
+  round the fins and in front of the face, each showing a bubble's life now and then - a single bubble that swells,
+  catches a glint and bursts, or a trail of three tiny ones. Every pixel solid or clear. Approved first round (v2).
+- Full set in game: bubbles breathed out underwater, a bubble popping now and then at the mouth or a fin in air.

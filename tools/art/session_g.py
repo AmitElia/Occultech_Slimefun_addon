@@ -3314,7 +3314,8 @@ def abyssal_helm_worn():
     """The Abyssal Helm worn - an open-faced sea-creature helm (the whole face shows): a crown of clean teal plates, a
     heavy brow band with a sea-glow gem, cheek guards along the sides of the face; fins tilted out like wings - two
     layered fan fins on each side, angled up and out - and a dorsal crest from the brow back over the crown. Textures
-    in a clean, vanilla-like style so it sits well beside vanilla blocks."""
+    in a clean, vanilla-like style so it sits well beside vanilla blocks. Sea-glow bubbles drift up round the fins and
+    are breathed out in front of the face, now and then, and burst (Session G9, animated)."""
     m = Model("abyssal_helmet_head")
     m.part = True
     ab, sg = RAMPS["abyss"], RAMPS["seaglow"]
@@ -3342,8 +3343,132 @@ def abyssal_helm_worn():
             el["rotation"] = {"origin": [px, y0, (z0 + z1) / 2], "axis": "z", "angle": -sgn * ang}
     fin_plane(m, t_fin, 8.0, 16.0, 27.0, 0.0, 17.0)                                            # dorsal crest
     m.cube((7.4, 16.0, 0.0), (8.6, 17.2, 15.0), T(t_brow, 1, 15), top=T(t_brow, 1, 15))
+    floating_bubbles(m)
     m.display = HEAD_DISPLAY
     return m
+
+
+# ---------------------------------------------------------------- the Abyssal helm's bubbles (Session G9)
+# Like the Frenzied helm's sparks and the Hollow helm's plasma: small planes in the air, each showing one bubble's life
+# now and then at its own moment. Every pixel fully opaque or clear (one translucent pixel makes shader packs draw the
+# whole helm see-through). A bubble is a sea-glow ring, lit from the top-left (a white glint there, the rim darker at
+# the bottom-right), clear inside.
+BUBBLE_SHAPES = {
+    1: ["#"],
+    2: [".#.", "#.#", ".#."],
+    3: [".##.", "#..#", "#..#", ".##."],
+    4: [".###.", "#...#", "#...#", "#...#", ".###."],
+}
+
+
+def put_bubble(img, cx, cy, size):
+    """One bubble of `size` (1-4) centred near (cx, cy)."""
+    sg = RAMPS["seaglow"]
+    rows = BUBBLE_SHAPES[size]
+    n = len(rows)
+    x0, y0 = cx - n // 2, cy - n // 2
+    for j, row in enumerate(rows):
+        for i, ch in enumerate(row):
+            if ch != "#" or not (0 <= x0 + i < 16 and 0 <= y0 + j < 16):
+                continue
+            if size == 1:
+                col = sg[4]
+            else:
+                lit = (i + j) / (2 * (n - 1))                 # 0 at the top-left .. 1 at the bottom-right
+                col = sg[4] if lit < 0.4 else sg[3] if lit < 0.7 else sg[2]
+            img.putpixel((x0 + i, y0 + j), col)
+    if size == 3:
+        img.putpixel((x0 + 1, y0), sg[5])                     # the glint, on the rim at the top-left
+    elif size == 4:
+        img.putpixel((x0 + 1, y0 + 1), sg[5])                 # the glint, just inside the rim
+
+
+def put_pop(img, cx, cy, spread, col):
+    """A bubble bursting: droplets flung out on the diagonals and the sides."""
+    for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
+        x, y = cx + dx * spread, cy + dy * spread
+        if 0 <= x < 16 and 0 <= y < 16:
+            img.putpixel((x, y), col)
+    for dx, dy in ((0, -1), (-1, 0), (1, 0)):
+        x, y = cx + dx * (spread + 1), cy + dy * (spread + 1)
+        if spread == 1 and 0 <= x < 16 and 0 <= y < 16:
+            img.putpixel((x, y), col)
+
+
+def bubble_life():
+    """A bubble breathed out (8 frames): a speck low in the frame wobbles up, swelling, its glint showing once it's big,
+    then bursts into droplets that fly apart and are gone."""
+    sg = RAMPS["seaglow"]
+    path = [(7, 14, 1), (8, 12, 2), (7, 10, 2), (8, 8, 3), (8, 6, 3), (9, 4, 4)]
+    frames = []
+    for (x, y, size) in path:
+        img = blank()
+        put_bubble(img, x, y, size)
+        frames.append(img)
+    img = blank()                                             # the burst: the rim breaks into pieces ...
+    for (dx, dy) in ((-1, -3), (2, -2), (3, 1), (1, 3), (-2, 2), (-3, -1)):
+        if 0 <= 9 + dx < 16 and 0 <= 4 + dy < 16:
+            img.putpixel((9 + dx, 4 + dy), sg[4])
+    frames.append(img)
+    img = blank()                                             # ... that fly apart and are gone
+    put_pop(img, 9, 4, 3, sg[3])
+    frames.append(img)
+    return frames
+
+
+def bubble_trail():
+    """Three small bubbles rising one after another, wobbling (8 frames); the leader pops at the top."""
+    sg = RAMPS["seaglow"]
+    frames = []
+    for f in range(8):
+        img = blank()
+        for k, delay in enumerate((0, 2, 4)):
+            t = f - delay
+            if t < 0:
+                continue
+            y = 14 - 2 * t
+            x = 8 + (1 if (t + k) % 4 in (1, 2) else 0) - k
+            if y < 3:
+                if y >= 1 and k == 0:
+                    put_pop(img, x, 3, 1, sg[4])
+                continue
+            put_bubble(img, x, y, 2 if t >= 2 and k == 0 else 1)
+        frames.append(img)
+    return frames
+
+
+def bubble_frames(kind, start, n=16):
+    """One floating bubble plane's 16 frames: blank, then its life from `start`, then blank again."""
+    life = bubble_life() if kind == "bubble" else bubble_trail()
+    frames = [blank() for _ in range(n)]
+    for k, img in enumerate(life):
+        frames[(start + k) % n] = img
+    return frames
+
+
+# (x, y, z, facing, kind, first frame): round the left fins (the right ones mirror them, a few frames later) ...
+FIN_BUBBLES = [(-9.0, 21.0, 9.0, "z", "bubble", 0), (-6.0, 17.5, 15.5, "x", "trail", 6),
+               (-11.5, 14.0, 5.0, "y45", "bubble", 10)]
+# ... and breathed out in front of the open face, rising past the cheeks
+MOUTH_BUBBLES = [(10.5, 7.0, -3.0, "z", "bubble", 3), (5.0, 8.0, -2.5, "y45", "trail", 11)]
+BUBBLE_SIZE = 8.0
+
+
+def floating_bubbles(m):
+    spots = [(x if side < 0 else 16 - x, y, z, facing, kind, start + (0 if side < 0 else 4), "l" if side < 0 else "r")
+             for side in (-1, 1) for (x, y, z, facing, kind, start) in FIN_BUBBLES]
+    spots += [(x, y, z, facing, kind, start, "m") for (x, y, z, facing, kind, start) in MOUTH_BUBBLES]
+    h = BUBBLE_SIZE / 2
+    for k, (px, y, z, facing, kind, start, tag) in enumerate(spots):
+        t = m.texture(f"bubble_{tag}{k}", bubble_frames(kind, start))
+        if facing == "x":
+            m.box((px, y - h, z - h), (px, y + h, z + h), {"west": (t, [0, 0, 16, 16]), "east": (t, [0, 0, 16, 16])},
+                  shade=False, light=15)
+        else:
+            el = m.box((px - h, y - h, z), (px + h, y + h, z), {"north": (t, [0, 0, 16, 16]), "south": (t, [0, 0, 16, 16])},
+                       shade=False, light=15)
+            if facing == "y45":
+                el["rotation"] = {"origin": [px, y, z], "axis": "y", "angle": 45}
 
 
 def hollow_helm_worn():

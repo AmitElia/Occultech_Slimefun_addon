@@ -128,6 +128,11 @@ public final class GearListener implements Listener {
                 refresh(player, PotionEffectType.DOLPHINS_GRACE);
             }
 
+            // the Abyssal set (Session G9): bubbles breathed out and drifting off the fins
+            if (player.getGameMode() != GameMode.SPECTATOR && !player.isInvisible() && WeaponListener.wearsAbyssalSet(player)) {
+                abyssalBubbles(player);
+            }
+
             // the Frenzied set (Session G8): the burning horn tips throw off fire and angry sparks
             if (player.getGameMode() != GameMode.SPECTATOR && !player.isInvisible() && wearsFrenziedSet(player)) {
                 frenziedSparks(player);
@@ -180,6 +185,41 @@ public final class GearListener implements Listener {
             int side = random.nextBoolean() ? 1 : -1;
             org.bukkit.Location shoulder = eye.clone().add(0, -0.35, 0).add(right.clone().multiply(0.42 * side));
             player.getWorld().spawnParticle(Particle.SMALL_FLAME, shoulder, 1, 0.05, 0.02, 0.05, 0.01);
+        }
+    }
+
+    /**
+     * Bubbles off the Abyssal helm (every 5 ticks, sparse). Underwater the wearer breathes out a little stream of rising
+     * bubbles; in air (where the game's rising bubble can't live) a bubble now and then bursts at the mouth or by a fin.
+     */
+    private void abyssalBubbles(Player player) {
+        java.util.concurrent.ThreadLocalRandom random = java.util.concurrent.ThreadLocalRandom.current();
+        org.bukkit.Location eye = player.getEyeLocation();
+        Vector look = eye.getDirection().setY(0);
+        if (look.lengthSquared() < 1e-4) {
+            look = new Vector(0, 0, 1);
+        }
+        look.normalize();
+        Vector right = new Vector(-look.getZ(), 0, look.getX());
+        org.bukkit.Location mouth = eye.clone().add(0, -0.2, 0).add(look.clone().multiply(0.35));
+        if (player.isInWater()) {
+            if (ticks % 40 < 10) {                                     // a breath out every 2 s
+                player.getWorld().spawnParticle(Particle.BUBBLE, mouth, 2, 0.06, 0.04, 0.06, 0.02);
+            }
+            if (random.nextInt(6) == 0) {
+                int side = random.nextBoolean() ? 1 : -1;
+                player.getWorld().spawnParticle(Particle.BUBBLE, eye.clone().add(0, 0.35, 0).add(right.clone().multiply(0.45 * side)),
+                    1, 0.05, 0.05, 0.05, 0.01);
+            }
+            return;
+        }
+        if (random.nextInt(10) == 0) {
+            player.getWorld().spawnParticle(Particle.BUBBLE_POP, mouth.clone().add(0, random.nextDouble(0.1, 0.4), 0), 1, 0.05, 0.05, 0.05, 0.02);
+        }
+        if (random.nextInt(12) == 0) {
+            int side = random.nextBoolean() ? 1 : -1;
+            player.getWorld().spawnParticle(Particle.BUBBLE_POP, eye.clone().add(0, 0.45, 0).add(right.clone().multiply(0.5 * side)),
+                1, 0.08, 0.08, 0.08, 0.02);
         }
     }
 
