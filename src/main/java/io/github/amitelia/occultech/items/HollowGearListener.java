@@ -39,8 +39,9 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
  * Tier-3 gear behavior.
  * <ul>
  * <li>Hollow armor: Crown - immune to Darkness and Blindness; Cuirass - immune to Wither; Greaves - immune to
- * Slowness; Sabatons - no fall damage. Full set: -25% damage from summoned creatures (see {@link WeaponListener}) and
- * faint soul wisps drifting off the armor.</li>
+ * Slowness; Sabatons - no fall damage. Full set: -25% damage from summoned creatures (see {@link WeaponListener}),
+ * faint soul wisps drifting off the armor, and battle regeneration: every hit you land gives Regeneration I, which runs
+ * out a few seconds after your last hit (Infinity armor regenerates all the time; Hollow only while you fight).</li>
  * <li>Dreadlance: every hit heals 15% of the damage dealt, at most 4 health per second.</li>
  * <li>Stormstring Bow: a hit calls lightning on the creature and arcs to 2 more hostile mobs within 6 blocks. The
  * lightning is visual only (no fire, no transformed mobs); never hits players, pets or minions.</li>
@@ -139,6 +140,28 @@ public final class HollowGearListener implements Listener {
     }
 
     // ------------------------------------------------------------------ Dreadlance
+
+    /** How long battle regeneration lasts after a hit, and when a hit tops it up (ticks). */
+    private static final int BATTLE_REGEN_TICKS = 100;
+    private static final int BATTLE_REGEN_TOP_UP = 50;
+
+    /**
+     * Hollow set (4/4): every hit the wearer lands - melee, arrow, held weapon - keeps Regeneration I going. The effect is
+     * only topped up once half of it has run, because Regeneration I heals when its remaining time crosses a multiple of
+     * 50 ticks: refreshed on every hit, a fast attacker would never reach one and never heal.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBattleRegen(EntityDamageByEntityEvent e) {
+        Entity source = e.getDamager() instanceof Projectile projectile && projectile.getShooter() instanceof Entity shooter ? shooter : e.getDamager();
+        if (!(source instanceof Player player) || !(e.getEntity() instanceof LivingEntity) || e.getEntity() instanceof org.bukkit.entity.ArmorStand
+            || e.getFinalDamage() <= 0 || !wearsHollowSet(player)) {
+            return;
+        }
+        PotionEffect current = player.getPotionEffect(PotionEffectType.REGENERATION);
+        if (current == null || (current.getAmplifier() == 0 && current.getDuration() <= BATTLE_REGEN_TOP_UP)) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, BATTLE_REGEN_TICKS, 0, true, true, true));
+        }
+    }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onLanceHit(EntityDamageByEntityEvent e) {
