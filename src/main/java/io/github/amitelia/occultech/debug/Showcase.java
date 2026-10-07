@@ -720,10 +720,11 @@ final class Showcase {
         kinds.put("cosmetics", itemsWhere("decoration").stream().map(def -> {
             boolean tiles = def.id().endsWith("_TILE");
             boolean floor = tiles || def.id().equals("FLOOR_SIGIL");
-            return new Studio(def.id(), center -> cosmeticStudio(center, def.id()), floor ? -1 : 0, 0, tiles ? 5 : floor ? 3 : 1);
+            // the camera frames the same spot in every studio (the block above the floor), even for what lies in the floor
+            return new Studio(def.id(), center -> cosmeticStudio(center, def.id()), 0, 0, tiles ? 5 : floor ? 3 : 1);
         }).toList());
         kinds.put("ritual recipes", plugin.rituals().recipes().stream().filter(recipe -> !recipe.isSummon() && recipe.outputId() != null)
-            .map(recipe -> new Studio(recipe.outputId().substring(ItemKeys.PREFIX.length()), center -> ritualStudio(center, recipe), 0, -1,
+            .map(recipe -> new Studio(recipe.outputId().substring(ItemKeys.PREFIX.length()), center -> ritualStudio(center, recipe), 0, 0,
                 2 * Circles.forTier(recipe.circle()).radius() + 1)).toList());
 
         int rows = kinds.values().stream().mapToInt(list -> (list.size() + STUDIOS_PER_ROW - 1) / STUDIOS_PER_ROW).sum();
@@ -879,11 +880,11 @@ final class Showcase {
     }
 
     /**
-     * A ritual ready to run: its circle (the altar a little behind the middle, so the whole circle is in shot) filled
+     * A ritual ready to run: its circle (the altar in the middle, where every studio's camera looks) filled
      * with the offerings; press Begin Ritual. A button behind the east wall (out of shot) restocks it.
      */
     private void ritualStudio(Block center, RitualRecipe recipe) {
-        Block altar = center.getRelative(0, 0, -1);
+        Block altar = center;
         DebugWorld.buildCircle(altar, recipe.circle(), this::record);
         fills.add(() -> fill(altar, recipe));
         Block outside = world.getBlockAt(center.getX() + STUDIO_WIDTH / 2 + 2, floorY, center.getZ() + STUDIO_DEPTH / 2 - 2);
