@@ -503,6 +503,15 @@ the flat layers) and a helm GIF; `final` saves into session-g for the pack.
   blood red, deep crimson at a hand-drawn ragged edge, two drips running down the side and on over the next piece's
   edge; the cut face glows white-hot in the middle (`stain_top_frames`); the heat breathes and a glint runs down each
   drip (6 frames). Vanilla's fire is gone from the helm. New close-up render: `horn-g8-<version>.png`.
+- v10 (user on v9: "much much better"; the last tip a little less angled; more orange/yellow accents, maybe a new
+  armour colour; start on a detailed body). The 26.2 client takes any element angle (CuboidModelElement/CuboidRotation
+  have no 22.5-degree rule; Euler x/y/z rotations too), so the tip sits on the end of the piece below it, leaning
+  -12 instead of -22.5. Trims are gold now (the yellow), on helm brow and body. The body is a detailed fire-lit
+  harness: gold gorget, pectorals either side of a gold ridge with the ember sun, two abdominal lames narrowing to the
+  belt; shoulder blades with two ember vents between them, a gold spine, a lower back plate; pauldrons of a gold cap
+  and stepped lames with a small bone horn-stud on the outer face (mirrored); a gold belt and ember buckle, gold-edged
+  tassets, gold knee cops with an ember stud; sabatons stepping down to a gold toe cap, a gold heel. Three colour
+  options rendered side by side (`colours-g8-<version>.png`): ash (the muted grey-violet), blackened iron, dark bronze.
 
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):

@@ -32,9 +32,32 @@ def _mix(a, b, t):
     return tuple(round(a[k] * (1 - t) + b[k] * t) for k in range(3)) + (255,)
 
 
-# the Frenzy Idol's stone: grey with only a breath of violet (user, v6: much less purple, almost muted, greyish)
-PLATE = [_mix(SILVER[i], RAMPS["dusk"][i], 0.28) for i in range(6)]
-DUSK = [_mix(SILVER[i], RAMPS["dusk"][i], 0.4) for i in range(6)]   # the darker underlayer
+GOLD = RAMPS["gold"]          # the trims: gold brings the yellow (user, v9: more orange and yellow accents)
+DUSK = [_mix(SILVER[i], RAMPS["dusk"][i], 0.4) for i in range(6)]   # a violet-grey, for the bone's cool shadows
+
+
+class Palette:
+    """One colour option for the set: the plates, the dark underlayer between them, and the trims."""
+
+    def __init__(self, name, plate, under, trim):
+        self.name, self.plate, self.under, self.trim = name, plate, under, trim
+
+
+def _darker(ramp, k=1):
+    return [ramp[max(0, i - k)] for i in range(6)]
+
+
+ASH = [_mix(SILVER[i], RAMPS["dusk"][i], 0.28) for i in range(6)]       # the Frenzy Idol's stone (v8-v9)
+IRON = g.DEEPSLATE                                                      # blackened iron
+BRONZE = [(26, 18, 16, 255), (46, 33, 28, 255), (74, 54, 44, 255), (107, 80, 64, 255), (143, 109, 85, 255),
+          (184, 148, 120, 255)]                                         # dark, warm, fire-tempered bronze
+PALETTES = {
+    "ash": Palette("ash (muted grey-violet)", ASH, _darker(ASH), GOLD),
+    "iron": Palette("blackened iron", IRON, _darker(IRON), GOLD),
+    "bronze": Palette("dark bronze", BRONZE, _darker(BRONZE), GOLD),
+}
+DEFAULT = "ash"
+PLATE = ASH
 
 
 # ---------------------------------------------------------------- worn layers
@@ -63,90 +86,112 @@ def warm_plate(c, F, u0, v0, u1, v1, ramp, tone=3):
             c.px(F, u, v, col)
 
 
-def frenzied_armor():
-    """Frenzied, worn - dusk-violet plates over a dark warm underlayer, grey-silver trims, ember seams glowing between
-    the plates. Chest: two pectoral plates either side of a silver ridge with an ember sun at its heart, two abdominal
-    bands, ember seams between them. Pauldrons: three layered rounded plates with a silver rim and a curl of silver on
-    the outer face. Leggings: a silver belt with an ember buckle, thigh plates, silver knee cops with an ember stud.
-    Boots: violet greaves, silver toe caps, a thin ember line. No back piece."""
+def frenzied_armor(pal=None):
+    """Frenzied, worn - a detailed fire-lit plate harness. Every plate is lit twice (cool light on its top-left edges,
+    warm firelight from below on its lower edge); ember seams with yellow cores glow in the gaps; gold trims.
+    - Chest: a gold gorget; two pectoral plates; a gold ridge down the middle carrying the ember sun (a cut gem with
+      rays); two abdominal lames narrowing toward the belt, seams between all of them.
+    - Back: two shoulder-blade plates and a lower back plate either side of a gold spine; two short ember vents glowing
+      between the blades.
+    - Pauldrons: a gold cap, then three lames stepping down, each lip lit by the seam below; a small bone horn-stud on
+      the outer face (the helm's horns, echoed), mirrored.
+    - Leggings: a gold belt with an ember buckle; tassets over the thighs with a gold edge; gold knee cops with an ember
+      stud; greave tops.
+    - Boots: sabatons in three steps to a gold toe cap, an ember seam above it, a gold heel.
+    No back piece (capes and elytras stay free)."""
+    pal = pal or PALETTES[DEFAULT]
+    P, U, T = pal.plate, pal.under, pal.trim
     c = g.covered_canvas()
-    base_plate = c.plate
-    c.plate = lambda F, u0, v0, u1, v1, ramp, tone=3: (warm_plate(c, F, u0, v0, u1, v1, ramp, tone) if ramp is PLATE
-                                                        else base_plate(F, u0, v0, u1, v1, ramp, tone))
     H, L = "humanoid", "humanoid_leggings"
-    for layer in (H, L):                                     # the calm underlayer: dark warm violet, darker at the bottom
+    plate = lambda F, u0, v0, u1, v1, tone=2: warm_plate(c, F, u0, v0, u1, v1, P, tone)  # noqa: E731
+    trim = lambda F, u0, v0, u1, v1, tone=3: c.plate(F, u0, v0, u1, v1, T, tone)           # noqa: E731
+
+    for layer in (H, L):                                     # the underlayer between the plates
         for part in ("body", "arm", "leg"):
             for face in ("front", "back", "right", "left", "top", "bottom"):
                 F = c.face(layer, part, face)
                 for v in range(F[4]):
                     for u in range(F[3]):
-                        c.px(F, u, v, DUSK[1] if v < F[4] - 2 else DUSK[0])
+                        c.px(F, u, v, U[2] if v < F[4] - 2 else U[1])
 
-    # chest: pectorals either side of a silver ridge, the ember sun, two abdominal bands, seams between
+    # ---- chest
     F = c.face(H, "body", "front")
-    c.plate(F, 0, 0, 2, 4, PLATE, 2); c.plate(F, 5, 0, 7, 4, PLATE, 2)
-    for v in range(0, 10):                                    # the silver ridge down the middle
-        c.px(F, 3, v, SILVER[4] if v % 4 else SILVER[5]); c.px(F, 4, v, SILVER[2])
+    trim(F, 0, 0, 7, 0)                                       # the gorget
+    c.px(F, 0, 0, T[5]); c.px(F, 7, 0, T[2])
+    plate(F, 0, 1, 2, 4, 3); plate(F, 5, 1, 7, 4, 3)          # pectorals
+    for v in range(1, 9):                                     # the gold ridge
+        c.px(F, 3, v, T[4]); c.px(F, 4, v, T[2])
     c.gem(F, 3, 2, 4, 3, EMBER)                               # the ember sun
-    c.px(F, 2, 2, EMBER[3]); c.px(F, 5, 3, EMBER[3])          # its rays, into the plates
-    c.plate(F, 0, 6, 2, 7, PLATE, 2); c.plate(F, 5, 6, 7, 7, PLATE, 2)
-    c.plate(F, 1, 9, 2, 10, PLATE, 2); c.plate(F, 5, 9, 6, 10, PLATE, 2)
-    seam(c, F, [(0, 5), (1, 5), (2, 5)]); seam(c, F, [(5, 5), (6, 5), (7, 5)])   # under the pectorals
-    seam(c, F, [(0, 8), (1, 8), (2, 8)]); seam(c, F, [(5, 8), (6, 8), (7, 8)])   # between the abdominal bands
-    c.px(F, 2, 3, EMBER[4]); c.px(F, 5, 2, EMBER[4]); c.px(F, 1, 2, EMBER[3]); c.px(F, 6, 3, EMBER[3])   # the sun's rays
+    c.px(F, 2, 2, EMBER[4]); c.px(F, 5, 3, EMBER[4]); c.px(F, 3, 1, EMBER[3]); c.px(F, 4, 4, EMBER[3])
+    seam(c, F, [(0, 5), (1, 5), (2, 5)]); seam(c, F, [(5, 5), (6, 5), (7, 5)])
+    plate(F, 0, 6, 2, 7); plate(F, 5, 6, 7, 7)                # first lame
+    seam(c, F, [(1, 8), (2, 8)]); seam(c, F, [(5, 8), (6, 8)])
+    plate(F, 1, 9, 2, 10); plate(F, 5, 9, 6, 10)              # second lame, narrower
+    c.px(F, 3, 9, T[3]); c.px(F, 4, 9, T[2]); c.px(F, 3, 10, EMBER[3]); c.px(F, 4, 10, EMBER[2])
     for u in range(8):
-        c.px(F, u, 11, SILVER[3] if u % 2 else SILVER[2])     # the silver hem
+        c.px(F, u, 11, T[3] if u % 2 else T[2])               # hem
+    # ---- back
     F = c.face(H, "body", "back")
-    c.plate(F, 0, 0, 2, 5, PLATE, 2); c.plate(F, 5, 0, 7, 5, PLATE, 2); c.plate(F, 1, 7, 6, 9, PLATE, 2)
-    for v in range(0, 11):
-        c.px(F, 3, v, SILVER[3]); c.px(F, 4, v, SILVER[2])
+    trim(F, 0, 0, 7, 0, 2)
+    plate(F, 0, 1, 2, 5, 2); plate(F, 5, 1, 7, 5, 2)          # shoulder blades
+    for v in range(1, 11):                                    # the gold spine
+        c.px(F, 3, v, T[3]); c.px(F, 4, v, T[2])
+    seam(c, F, [(2, 2), (2, 3), (2, 4)]); seam(c, F, [(5, 2), (5, 3), (5, 4)])   # ember vents between the blades
     seam(c, F, [(0, 6), (1, 6), (2, 6)]); seam(c, F, [(5, 6), (6, 6), (7, 6)])
+    plate(F, 0, 7, 2, 10, 2); plate(F, 5, 7, 7, 10, 2)        # lower back
     for u in range(8):
-        c.px(F, u, 11, SILVER[2])
+        c.px(F, u, 11, T[2])
+    # ---- sides and top
     for face in ("right", "left"):
         F = c.face(H, "body", face)
-        c.plate(F, 0, 0, 3, 4, PLATE, 2); c.plate(F, 0, 6, 3, 9, PLATE, 2)
-        seam(c, F, [(0, 5), (1, 5), (2, 5), (3, 5)])
-    c.plate(c.face(H, "body", "top"), 0, 0, 7, 3, PLATE, 2)
+        trim(F, 0, 0, 3, 0, 2)
+        plate(F, 0, 1, 3, 4); seam(c, F, [(0, 5), (1, 5), (2, 5), (3, 5)]); plate(F, 0, 6, 3, 10)
+        for u in range(4):
+            c.px(F, u, 11, T[2])
+    trim(c.face(H, "body", "top"), 0, 0, 7, 3, 3)
 
-    # pauldrons: three layered rounded plates, a silver rim, a silver curl on the outer face, seams between the layers
+    # ---- pauldrons
     for face in ("front", "back", "right", "left"):
         F = c.face(H, "arm", face)
-        c.plate(F, 0, 0, 3, 1, PLATE, 3); c.plate(F, 0, 2, 3, 3, PLATE, 2); c.plate(F, 0, 4, 3, 4, PLATE, 2)
-        c.rect(F, 0, 5, 3, 5, SILVER[3]); c.px(F, 0, 5, SILVER[4])
-        if face in ("right", "left"):
-            seam(c, F, [(0, 2), (1, 2), (2, 2), (3, 2)])       # between the pauldron's layers
-    for face in ("right", "left"):                            # the curl, mirrored on the two arms
+        trim(F, 0, 0, 3, 0)                                   # the gold cap
+        plate(F, 0, 1, 3, 2, 3)
+        seam(c, F, [(0, 3), (1, 3), (2, 3), (3, 3)]) if face in ("right", "left", "front") else None
+        plate(F, 0, 3 if face == "back" else 4, 3, 4, 2) if face == "back" else plate(F, 0, 4, 3, 5, 2)
+    for face in ("right", "left"):                            # the bone horn-stud on the outer face, mirrored
         F = c.face(H, "arm", face)
-        for (u, v) in ((1, 1), (2, 1), (2, 2), (1, 3)):
-            c.px(F, u if face == "left" else 3 - u, v, SILVER[4])
+        u = 1 if face == "left" else 2
+        c.px(F, u, 1, BONE[4]); c.px(F, u + (1 if face == "left" else -1), 1, BONE[3]); c.px(F, u, 2, BONE[2])
     F = c.face(H, "arm", "top")
-    c.plate(F, 0, 0, 3, 3, PLATE, 3); c.px(F, 1, 1, SILVER[5]); c.px(F, 2, 2, SILVER[3])
+    trim(F, 0, 0, 3, 3, 3); c.px(F, 1, 1, T[5]); c.px(F, 2, 2, T[1])
 
-    # boots: violet greaves, silver toe caps, an ember line
+    # ---- boots
     for face in ("front", "back", "right", "left"):
         F = c.face(H, "leg", face)
-        c.plate(F, 0, 7, 3, 9, PLATE, 2)
-        c.rect(F, 0, 10, 3, 11, PLATE[1])
+        plate(F, 0, 7, 3, 8, 2)
+        plate(F, 0, 9, 3, 9, 2)
+        c.rect(F, 0, 10, 3, 11, U[1])
     F = c.face(H, "leg", "front")
-    c.plate(F, 0, 10, 3, 11, SILVER, 2)                       # the silver toe cap
     seam(c, F, [(0, 9), (1, 9), (2, 9), (3, 9)])
-    c.rect(c.face(H, "leg", "bottom"), 0, 0, 3, 3, PLATE[1])
+    trim(F, 0, 10, 3, 11, 3)                                  # the gold toe cap
+    F = c.face(H, "leg", "back")
+    trim(F, 1, 10, 2, 11, 2)                                  # the gold heel
+    c.rect(c.face(H, "leg", "bottom"), 0, 0, 3, 3, U[0])
 
-    # leggings: a silver belt with an ember buckle, thigh plates, silver knee cops with an ember stud
+    # ---- leggings
     for face in ("front", "back", "right", "left"):
         F = c.face(L, "body", face)
-        for u in range(F[3]):
-            c.px(F, u, 8, SILVER[3]); c.px(F, u, 9, SILVER[2])
+        for u in range(F[3]):                                 # the gold belt
+            c.px(F, u, 8, T[4] if u == 0 else T[3]); c.px(F, u, 9, T[2])
         G = c.face(L, "leg", face)
-        c.plate(G, 0, 0, 3, 3, PLATE, 2)
-        c.plate(G, 0, 6, 3, 7, PLATE, 2)
+        plate(G, 0, 0, 3, 3, 2)                               # tassets
+        c.rect(G, 0, 0, 3, 0, T[3]); c.px(G, 0, 0, T[4])      # their gold edge
         if face != "back":
             seam(c, G, [(0, 4), (1, 4), (2, 4), (3, 4)])
-    c.gem(c.face(L, "body", "front"), 3, 8, 4, 9, EMBER)
+        plate(G, 0, 7, 3, 8, 2)                               # greave tops
+    c.gem(c.face(L, "body", "front"), 3, 8, 4, 9, EMBER)      # the buckle
     F = c.face(L, "leg", "front")
-    c.plate(F, 0, 4, 3, 5, SILVER, 2); c.gem(F, 1, 4, 2, 4, EMBER)
-    c.plate(c.face(L, "leg", "top"), 0, 0, 3, 3, PLATE, 2)
+    trim(F, 0, 5, 3, 6, 3); c.gem(F, 1, 5, 2, 5, EMBER)       # knee cop with an ember stud
+    trim(c.face(L, "leg", "top"), 0, 0, 3, 3, 2)
     return c.layers
 
 
@@ -203,7 +248,7 @@ HORN = [
     ((-10.2, 12.0, 5.3), (-6.2, 15.0, 8.7), "z", -45.0, (-6.2, 13.5, 7.0), "mid"),
     ((-10.6, 14.8, 5.6), (-8.0, 18.8, 8.4), "x", -22.5, (-9.3, 14.8, 7.0), "upper"),
     # the tip: square, not pointed - the horn's own thickness, cut off blunt and burning (user, v6)
-    ((-10.6, 18.8, 5.6), (-8.0, 21.8, 8.4), "x", -22.5, (-9.3, 14.8, 7.0), "tip"),
+    ((-10.6, 18.5, 4.07), (-8.0, 21.5, 6.87), "x", -12.0, (-9.3, 18.5, 5.47), "tip"),   # leaning less than its base
 ]
 
 
@@ -294,17 +339,18 @@ def stain_top_frames(n=6):
     return frames
 
 
-def frenzied_helm_worn():
+def frenzied_helm_worn(pal=None):
     """The Frenzied Helm worn - open-faced (the whole face shows): a domed helm of deep violet plate; a heavy silver
     brow ridge bearing down toward the centre, the Frenzy Idol's ember sun set in it (breathing glow); silver cheek
     guards; and two bull horns of bone, built of tapering pieces that bend out, up and forward, cut off square at the
     end - and the tips burn like fresh blood stains: white-hot at the top through orange to blood red, drips running
     down the bone (animated)."""
+    pal = pal or PALETTES[DEFAULT]
     m = Model("frenzied_helmet_head")
     m.part = True
-    top_i, side_i, back_i = g.tex_helm(PLATE, tone=3)
+    top_i, side_i, back_i = g.tex_helm(pal.plate, tone=3)
     t_top, t_side, t_back = m.texture("helm_top", top_i), m.texture("helm_side", side_i), m.texture("helm_back", back_i)
-    t_brow = m.texture("brow", g.tex_smooth(SILVER, tone=3))
+    t_brow = m.texture("brow", g.tex_smooth(pal.trim, tone=3))
     skins = {"root": m.texture("horn_root", bone_skin(2)), "mid": m.texture("horn_mid", bone_skin(3)),
              "upper": m.texture("horn_upper", bone_skin(3, drips=True)),
              "tip": m.texture("horn_tip", stain_frames()), "tip_top": m.texture("horn_tip_top", stain_top_frames())}
@@ -417,10 +463,24 @@ def helm_gif(helm, path):
     frames[0].save(path, save_all=True, append_images=frames[1:], duration=220, loop=0)
 
 
+def colour_sheet(path):
+    """The colour options side by side: each palette worn, from the front-left and the back."""
+    out = Image.new("RGBA", (300 * 2 * len(PALETTES), 450), (34, 32, 40, 255))
+    draw = ImageDraw.Draw(out)
+    for k, (key, pal) in enumerate(PALETTES.items()):
+        worn = worn_preview(frenzied_armor(pal), frenzied_helm_worn(pal))
+        for n, yaw in enumerate((25, 205)):
+            out.alpha_composite(render3d.render(worn, yaw=yaw, pitch=12, s=11, size=(300, 420), center=(8, 18, 8)),
+                                ((2 * k + n) * 300, 30))
+        draw.text((2 * k * 300 + 10, 8), key + ": " + pal.name, fill=(230, 220, 200, 255))
+    out.save(path)
+
+
 if __name__ == "__main__":
     version = sys.argv[1] if len(sys.argv) > 1 else "v1"
     layers = frenzied_armor()
     helm = frenzied_helm_worn()
+    colour_sheet(os.path.join(OUT, f"colours-g8{'' if version == 'final' else '-' + version}.png"))
     suffix = "" if version == "final" else "-" + version
     sheet(layers, helm, os.path.join(OUT, f"review-g8{suffix}.png"))
     helm_gif(helm, os.path.join(OUT, f"helm-g8{suffix}.gif"))
