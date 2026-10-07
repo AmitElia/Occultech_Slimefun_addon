@@ -522,6 +522,10 @@ the flat layers) and a helm GIF; `final` saves into session-g for the pack.
   start at row 6 - v11's collar and sun were partly cut off by it. Map tones one step lighter than v11 (it read
   near-black). Helm in ash: the shell's lower rim warmed by firelight, the brow an ash plate with a gold upper edge and
   firelight on its lower edge. New `body-g8-<version>.png`: the body large, front and back.
+- v13 (user on v12: "a lot better"; the copper-coloured band to gold/orange; tips a little less angled; more on the
+  shoulders): the helm shell's lower rim is a gold band lit orange from below (v12's orange tint over ash read as
+  copper); the tips lean -5 (from -12); pauldrons get a gold cap and a gold lower rim lit from just above, and a
+  bigger bone horn-stud (2 x 3, its tip catching the light) on the outer face and on top, mirrored.
 
 ## Session G - blocks, held models, armor (2026-10-01)
 **Split** (the user asked to split G where needed):

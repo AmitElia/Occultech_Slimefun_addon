@@ -96,7 +96,7 @@ def warm_plate(c, F, u0, v0, u1, v1, ramp, tone=3):
 #   o q  plate lit by the fire (warm light / warm shadow)
 #   G g h j  gold: light, mid, dark, darkest
 #   w y e r  fire: white-hot, yellow, orange, deep orange
-#   b B  bone (the horn-stud)
+#   i b B  bone (the horn-stud): its lit tip, body, shadow
 MAPS = {
     ("humanoid", "body", "front"): [
         "HL....PD",          # vanilla's chestplate has a V-neck: rows 0-2 cover only the shoulders
@@ -131,11 +131,13 @@ MAPS = {
     ("humanoid", "body", "left"): [
         "HLPD", "LPPD", "LPPD", "LPDD", "LPDD", "oPDq", "reoq", ".oe.", ".e..", ".LPD", ".LPD", ".hgh"],
     ("humanoid", "body", "top"): ["HLgGGgPD", "LPPhgPPD", "LPPhgPDD", "LPPPPPDK"],
-    ("humanoid", "arm", "front"): ["hGgh", "HLPD", "LPPD", "LPPD", "oPPq", "reqr"],
-    ("humanoid", "arm", "back"): ["hggj", "LPPD", "LPPD", "LPDD", "oPDq", ".rr."],
-    ("humanoid", "arm", "right"): ["hGgh", "HLPD", "LbBD", "LPPD", "oPPq", "reqr"],
-    ("humanoid", "arm", "left"): ["hGgh", "HLPD", "LBbD", "LPPD", "oPPq", "rqer"],
-    ("humanoid", "arm", "top"): ["hGgh", "GgGh", "gGgh", "hhhj"],
+    # pauldrons (user, v12: more on the shoulders): a gold cap and a gold lower rim lit from just above by the fire,
+    # and a bigger bone horn-stud - 2 x 3, its tip catching the light - on the outer face and on top, mirrored
+    ("humanoid", "arm", "front"): ["hGGh", "HLPD", "LPPD", "LPDD", "oyeq", "hGgj"],
+    ("humanoid", "arm", "back"): ["hggj", "LPPD", "LPPD", "LPDD", "oeeq", "hggj"],
+    ("humanoid", "arm", "right"): ["hGGh", "HLib", "LPbB", "LPbB", "oyeq", "hGgj"],
+    ("humanoid", "arm", "left"): ["hGGh", "biPD", "BbPD", "BbPD", "qeyo", "jgGh"],
+    ("humanoid", "arm", "top"): ["hGGh", "GibH", "gbBh", "hhhj"],
     ("humanoid", "leg", "front"): [None] * 6 + ["HLPD", "LPPD", "LPPD", "oPDq", "Gyeh", "hggj"],   # boots cover rows 6-11
     ("humanoid", "leg", "back"): [None] * 6 + ["LPPD", "LPPD", "LPPD", "LPDD", ".gh.", ".hj."],
     ("humanoid", "leg", "right"): [None] * 6 + ["HLPD", "LPPD", "LPDD", "oPDq", "hggj", "jhhj"],
@@ -165,7 +167,7 @@ def frenzied_armor(pal=None):
         "o": _mix(P[3], EMBER[3], 0.45), "q": _mix(P[2], EMBER[2], 0.4),
         "G": T[4], "g": T[3], "h": T[2], "j": T[1],
         "w": EMBER[5], "y": EMBER[4], "e": EMBER[3], "r": EMBER[2],
-        "b": BONE[4], "B": BONE[2],
+        "i": BONE[5], "b": BONE[4], "B": BONE[2],
     }
     c = g.covered_canvas()
     for layer in ("humanoid", "humanoid_leggings"):          # the underlayer everywhere first
@@ -239,7 +241,7 @@ HORN = [
     ((-10.2, 12.0, 5.3), (-6.2, 15.0, 8.7), "z", -45.0, (-6.2, 13.5, 7.0), "mid"),
     ((-10.6, 14.8, 5.6), (-8.0, 18.8, 8.4), "x", -22.5, (-9.3, 14.8, 7.0), "upper"),
     # the tip: square, not pointed - the horn's own thickness, cut off blunt and burning (user, v6)
-    ((-10.6, 18.5, 4.07), (-8.0, 21.5, 6.87), "x", -12.0, (-9.3, 18.5, 5.47), "tip"),   # leaning less than its base
+    ((-10.6, 18.5, 4.07), (-8.0, 21.5, 6.87), "x", -5.0, (-9.3, 18.5, 5.47), "tip"),    # nearly upright on its base
 ]
 
 
@@ -340,10 +342,11 @@ def frenzied_helm_worn(pal=None):
     m = Model("frenzied_helmet_head")
     m.part = True
     top_i, side_i, back_i = g.tex_helm(pal.plate, tone=3)
-    for img in (side_i, back_i):                      # orange highlights: the fire's light along the shell's lower rim
-        for x in range(16):
-            for y, k in ((13, 0.25), (14, 0.45), (15, 0.3)):
-                img.putpixel((x, y), _mix(img.getpixel((x, y)), EMBER[3], k))
+    for img in (side_i, back_i):                      # the shell's lower rim: a gold band lit orange by the fire
+        for x in range(16):                           # (v12's orange tint over the ash plate read as copper)
+            img.putpixel((x, 13), pal.trim[4] if x % 5 else pal.trim[5])
+            img.putpixel((x, 14), pal.trim[3])
+            img.putpixel((x, 15), _mix(pal.trim[2], EMBER[3], 0.5))
     t_top, t_side, t_back = m.texture("helm_top", top_i), m.texture("helm_side", side_i), m.texture("helm_back", back_i)
     brow = g.tex_smooth(pal.plate, tone=3)
     for x in range(16):                               # a gold upper edge, firelight on the lower edge
