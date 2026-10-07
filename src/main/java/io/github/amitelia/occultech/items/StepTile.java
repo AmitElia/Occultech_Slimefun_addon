@@ -58,7 +58,7 @@ public class StepTile extends SlimefunItem {
      */
     /** The look's material (its name in messages): the reverse of {@link #lookVariant}. */
     public Material lookMaterial(int variant) {
-        Material own = getItem().getType();
+        Material own = CustomBlockService.vanillaMaterial(this);
         if (variant <= 0) {
             return own;
         }
@@ -67,7 +67,7 @@ public class StepTile extends SlimefunItem {
     }
 
     public int lookVariant(Material type) {
-        Material own = getItem().getType();
+        Material own = CustomBlockService.vanillaMaterial(this);
         if (type == own) {
             return 0;
         }

@@ -41,6 +41,7 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     private ContentRegistrar registrar;
     private io.github.amitelia.occultech.pack.ResourcePackService resourcePack;
     private io.github.amitelia.occultech.items.BlockSkinService skins;
+    private io.github.amitelia.occultech.items.CustomBlockService customBlocks;
 
     @Override
     public void onEnable() {
@@ -79,14 +80,15 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         resourcePack = new io.github.amitelia.occultech.pack.ResourcePackService(this);
         resourcePack.load();
         io.github.amitelia.occultech.boss.FloorDecals.enable(this, resourcePack.hasSigils());   // boss-fight floor markings
+        // custom blocks before the items: a custom block's item is made of the block state it places (no blink)
+        customBlocks = new io.github.amitelia.occultech.items.CustomBlockService(this, resourcePack);
+        customBlocks.start();
         registrar = new ContentRegistrar(this, catalog, rituals);
         registrar.registerAll();
         registrar.problems().forEach(problem -> getLogger().warning("Content problem: " + problem));
 
         bosses.start();
         resourcePack.start();
-        var customBlocks = new io.github.amitelia.occultech.items.CustomBlockService(this, resourcePack);
-        customBlocks.start();
         skins = new io.github.amitelia.occultech.items.BlockSkinService(this, resourcePack, customBlocks);
         skins.start();
         getServer().getPluginManager().registerEvents(new io.github.amitelia.occultech.core.ClearLagGuard(), this);
@@ -168,6 +170,11 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     }
 
     @Nonnull
+    @javax.annotation.Nullable
+    public io.github.amitelia.occultech.items.CustomBlockService customBlocks() {
+        return customBlocks;
+    }
+
     public io.github.amitelia.occultech.items.BlockSkinService skins() {
         return skins;
     }

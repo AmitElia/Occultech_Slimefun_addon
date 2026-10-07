@@ -34,7 +34,7 @@ final class DebugWorld {
             return false;
         }
         recorder.record(block);
-        block.setType(item.getItem().getType());
+        block.setType(io.github.amitelia.occultech.items.CustomBlockService.vanillaMaterial(item));
         // coral, conduits, chains, rods... are "waterlogged" by default when set from code
         if (block.getBlockData() instanceof org.bukkit.block.data.Waterlogged wet && wet.isWaterlogged()) {
             wet.setWaterlogged(false);

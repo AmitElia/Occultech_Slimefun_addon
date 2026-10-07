@@ -381,6 +381,58 @@ final class SelfTest {
 
     private org.bukkit.entity.ItemDisplay glyphSkinInTest;
 
+    /** The state an item carries for the game's placement prediction (null if none). */
+    private static org.bukkit.block.data.BlockData carried(org.bukkit.inventory.ItemStack item) {
+        return item.getItemMeta() instanceof org.bukkit.inventory.meta.BlockDataMeta meta && meta.hasBlockData()
+            ? meta.getBlockData(item.getType() == Material.STRING ? Material.TRIPWIRE : item.getType()) : null;
+    }
+
+    /** Custom blocks place without a blink: their items are made of the state they place (see CustomBlockService). */
+    private void noBlinkItems(io.github.amitelia.occultech.items.CustomBlockService blocks) {
+        SlimefunItem shrineItem = SlimefunItem.getById(ItemKeys.slimefunId("SERVITOR_SHRINE"));
+        org.bukkit.inventory.ItemStack shrineStack = shrineItem.getItem().clone();
+        var shrineState = carried(shrineStack);
+        check("a full-cube block's item is a note block carrying its look's state", shrineStack.getType() == Material.NOTE_BLOCK
+            && shrineState != null && blocks.lookOf(placedAt(shrineState)) != null, shrineStack.getType() + " " + shrineState);
+        check("the block's own vanilla block is still known", io.github.amitelia.occultech.items.CustomBlockService.vanillaMaterial(shrineItem)
+            == Material.PURPUR_PILLAR, String.valueOf(io.github.amitelia.occultech.items.CustomBlockService.vanillaMaterial(shrineItem)));
+        org.bukkit.inventory.ItemStack glyph = SlimefunItem.getById(ItemKeys.slimefunId("CHALK_GLYPH")).getItem().clone();
+        check("a glyph's item is string carrying its tripwire state", glyph.getType() == Material.STRING && carried(glyph) != null
+            && carried(glyph).getMaterial() == Material.TRIPWIRE, glyph.getType() + " " + carried(glyph));
+        // a look smaller than a cube is predicted as a note-block state showing its model, then becomes its chorus state
+        String bowlId = ItemKeys.slimefunId("OFFERING_BOWL");
+        org.bukkit.inventory.ItemStack bowl = SlimefunItem.getById(bowlId).getItem().clone();
+        var predicted = carried(bowl);
+        check("a small block's item carries a note-block prediction state", bowl.getType() == Material.NOTE_BLOCK && predicted != null
+            && blocks.lookOf(placedAt(predicted)) != null && !blocks.lookOf(placedAt(predicted)).current(), bowl.getType() + " " + predicted);
+        Block spot = altar.getRelative(0, 4, 0);
+        remember(spot);
+        spot.setBlockData(predicted, false);
+        blocks.ensure(spot, bowlId);
+        check("the predicted block becomes its chorus-plant look", spot.getType() == Material.CHORUS_PLANT && blocks.lookOf(spot) != null
+            && blocks.lookOf(spot).current() && blocks.lookOf(spot).itemId().equals("OFFERING_BOWL"), spot.getBlockData().getAsString());
+        spot.setType(Material.AIR, false);
+        // the Forge carries the facing its holder looks along
+        org.bukkit.inventory.ItemStack forge = SlimefunItem.getById(ItemKeys.slimefunId("OCCULT_FORGE")).getItem().clone();
+        blocks.carryState(forge, org.bukkit.block.BlockFace.EAST);
+        var forgeLook = carried(forge) == null ? null : blocks.lookOf(placedAt(carried(forge)));
+        check("a held Occult Forge carries the facing to place", forgeLook != null && forgeLook.facing() == org.bukkit.block.BlockFace.EAST,
+            String.valueOf(carried(forge)));
+        // an item from before (made of its vanilla block) is converted
+        org.bukkit.inventory.ItemStack old = shrineItem.getItem().clone().withType(Material.PURPUR_PILLAR);
+        org.bukkit.inventory.ItemStack fresh = blocks.upgrade(old);
+        check("an old block item is converted to the new make", fresh != null && fresh.getType() == Material.NOTE_BLOCK && carried(fresh) != null
+            && fresh.isSimilar(shrineStack), fresh == null ? "not converted" : fresh.getType().name());
+    }
+
+    /** A scratch block showing a state (for lookOf). */
+    private Block placedAt(org.bukkit.block.data.BlockData data) {
+        Block probe = altar.getRelative(0, 5, 0);
+        remember(probe);
+        probe.setBlockData(data, false);
+        return probe;
+    }
+
     private void circleDetection() {
         var blocks = plugin.skins().blocks();
         if (blocks.enabled()) {
@@ -413,6 +465,7 @@ final class SelfTest {
 
     /** Session N: the altar and the glyphs the build placed are custom blocks (a note block, tripwire states). */
     private void customBlocks(io.github.amitelia.occultech.items.CustomBlockService blocks) {
+        noBlinkItems(blocks);
         Block glyphBlock = altar.getRelative(-2, 0, -2);
         var altarLook = blocks.lookOf(altar);
         check("the altar is its custom block (a note-block state)", altar.getType() == Material.NOTE_BLOCK && altarLook != null
@@ -562,8 +615,8 @@ final class SelfTest {
     private void hologramsShown() {
         long holograms = altar.getWorld().getNearbyEntities(altar.getLocation(), 4, 4, 4).stream()
             .filter(e -> e.getPersistentDataContainer().has(Keys.HOLOGRAM, org.bukkit.persistence.PersistentDataType.BYTE)).count();
-        // 4 bowls + the altar, each an item display and a label
-        check("holograms above the bowls and altar", holograms >= 10, holograms + " hologram entities");
+        // 4 bowls + the altar, an item display each (no labels: blocks carry no floating text)
+        check("holograms above the bowls and altar", holograms >= 5, holograms + " hologram entities");
     }
 
     private void placeBroodEgg() {

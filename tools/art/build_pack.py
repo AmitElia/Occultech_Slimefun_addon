@@ -95,12 +95,17 @@ def state_props(state):
 
 def custom_blocks(skins, gdir):
     """Gives every block look its state (keeping the ones already given out) and returns
-    [(item_id, look, facing, state, model_key, y)] plus the retired states [(item_id, state, model_key, y)].
+    [(item_id, look, facing, state, model_key, y)], the retired states [(item_id, state, model_key, y)] and the
+    prediction states [(item_id, look, facing, state, model_key, y)].
+    A chorus-plant look also gets a note-block state showing the same model (key "~predict ITEM look facing"): its item
+    is made of that state, so the game's placement prediction draws the look at once (a chorus plant can't be placed
+    freely); the plugin then turns the placed block into the chorus state.
     A look whose kind of block changed (a model that stopped filling its cube) gets a new state; its old one is
     retired - never given out again, and still shown with the model until the plugin converts the placed blocks."""
     given = json.load(open(BLOCK_STATES, encoding="utf-8")) if os.path.exists(BLOCK_STATES) else {}
     used = set(given.values())
     out = []
+    predict = []
     makers = {"tripwire": (tripwire_state, 64), "note_block": (note_state, 24 * len(NOTE_INSTRUMENTS)),
               "chorus_plant": (chorus_state, 16)}
     for base in sorted(skins):
@@ -126,6 +131,17 @@ def custom_blocks(skins, gdir):
                 # approved look: plain blocks turn 180, a front faces its way (north = as drawn)
                 y = FACING_Y[facing] if facing != "-" else 180
                 out.append((base.upper(), look, facing, given[key], model, y))
+                if kind == "chorus_plant" and look == 0:
+                    pkey = f"~predict {key}"
+                    if pkey not in given:
+                        slot = 0
+                        while note_state(slot) in used:
+                            slot += 1
+                        if slot >= 24 * len(NOTE_INSTRUMENTS):
+                            raise SystemExit("out of note_block states")
+                        given[pkey] = note_state(slot)
+                        used.add(given[pkey])
+                    predict.append((base.upper(), look, facing, given[pkey], model, y))
     retired = []
     for k, state in given.items():
         if k.startswith("~retired "):
@@ -136,10 +152,10 @@ def custom_blocks(skins, gdir):
     with open(BLOCK_STATES, "w", encoding="utf-8", newline="\n") as f:
         json.dump(dict(sorted(given.items())), f, indent=1)
         f.write("\n")
-    return out, retired
+    return out, retired, predict
 
 
-def blockstate_files(blocks, retired):
+def blockstate_files(blocks, retired, predict=()):
     """note_block.json, tripwire.json, chorus_plant.json: our states show our models; every other state keeps vanilla's
     look."""
     def apply(model, y):
@@ -149,6 +165,7 @@ def blockstate_files(blocks, retired):
         return a
     ours = {b[3]: apply(f"{NS}:block/{b[4]}", b[5]) for b in blocks}
     ours.update({r[1]: apply(f"{NS}:block/{r[2]}", r[3]) for r in retired})
+    ours.update({p[3]: apply(f"{NS}:block/{p[4]}", p[5]) for p in predict})
     note = [{"when": {"powered": "false"}, "apply": {"model": "minecraft:block/note_block"}}]
     taken = {}
     for state, a in ours.items():
@@ -454,8 +471,8 @@ def main():
         equipment.append(name)
 
     # custom blocks (Session N): every skinned block look gets its block state and the blockstate files
-    blocks, retired = custom_blocks(skins, gdir)
-    files.update(blockstate_files(blocks, retired))
+    blocks, retired, predict = custom_blocks(skins, gdir)
+    files.update(blockstate_files(blocks, retired, predict))
 
     files["pack.mcmeta"] = {"pack": {
         "description": "Occultech - occult rituals, bosses and relics",
@@ -490,6 +507,7 @@ def main():
                 "# tools/art/block_states.json - a state never changes once given out)\n")
         f.write("".join(f"{b[0]} {b[1]} {b[2]} {b[3]}\n" for b in blocks))
         f.write("".join(f"{r[0]} ~ - {r[1]}\n" for r in retired))   # retired: placed blocks are converted
+        f.write("".join(f"{p[0]} ^{p[1]} {p[2]} {p[3]}\n" for p in predict))   # an item's prediction state
     os.makedirs(os.path.join(ROOT, "docs", "nexo"), exist_ok=True)
     with open(os.path.join(ROOT, "docs", "nexo", "occultech-blocks.yml"), "w", encoding="utf-8", newline="\n") as f:
         f.write(nexo_config(blocks, items))

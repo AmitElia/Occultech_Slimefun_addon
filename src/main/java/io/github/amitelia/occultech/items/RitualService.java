@@ -555,7 +555,7 @@ public final class RitualService {
         private void upgradeAltar(SlimefunItem output, boolean withEffects) {
             holograms.clear(altar);
             BlockStorage.clearBlockInfo(altar);
-            altar.setType(output.getItem().getType());
+            altar.setType(CustomBlockService.vanillaMaterial(output));
             BlockStorage.store(altar, output.getId());
             if (io.github.amitelia.occultech.Occultech.instance().skins() != null) {
                 io.github.amitelia.occultech.Occultech.instance().skins().ensure(altar);   // the new altar's skin

@@ -7,13 +7,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.ItemDisplay;
-import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -26,7 +24,8 @@ import io.github.amitelia.occultech.core.Keys;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
 
 /**
- * Floating item + label above a block (offering bowls, altars, the Brood Egg).
+ * Floating item above a block (offering bowls, altars). Blocks carry no floating text: the user removed every label
+ * (the {@code text} argument of {@link #show} is ignored; a block's status lives in its menu or its click message).
  * <p>
  * The displays are not saved with the world: they are recreated by the block's ticker, and a sweep removes any whose
  * block is gone. So a restart or chunk unload never leaves stray holograms behind.
@@ -37,15 +36,14 @@ public final class Holograms {
     private static final float SPIN_STEP = 0.4F;
     private static final int SPIN_TICKS = 12;
 
-    private record Hologram(ItemDisplay item, TextDisplay text) {
+    private record Hologram(ItemDisplay item) {
 
         boolean isValid() {
-            return item.isValid() && text.isValid();
+            return item.isValid();
         }
 
         void remove() {
             item.remove();
-            text.remove();
         }
     }
 
@@ -61,7 +59,7 @@ public final class Holograms {
      * Shows (or updates) the hologram above a block.
      *
      * @param item shown spinning above the block, or null for none
-     * @param text label above the item (color codes allowed), or null for none
+     * @param text ignored: blocks show no floating text any more
      */
     public void show(Block block, @Nullable ItemStack item, @Nullable String text) {
         Location key = block.getLocation();
@@ -82,11 +80,6 @@ public final class Holograms {
         hologram.item().setInterpolationDuration(SPIN_TICKS);
         hologram.item().setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(angle, 0, 1, 0),
             new Vector3f(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE), new AxisAngle4f()));
-
-        String label = text == null ? "" : MenuUtils.color(text);
-        if (!label.equals(hologram.text().getText())) {
-            hologram.text().setText(label);
-        }
     }
 
     public void clear(Block block) {
@@ -122,14 +115,7 @@ public final class Holograms {
             d.setBillboard(Display.Billboard.FIXED);
             d.getPersistentDataContainer().set(Keys.HOLOGRAM, PersistentDataType.BYTE, (byte) 1);
         });
-        TextDisplay text = block.getWorld().spawn(base.clone().add(0, 1.85, 0), TextDisplay.class, d -> {
-            d.setPersistent(false);
-            d.setBillboard(Display.Billboard.CENTER);
-            d.setShadowed(true);
-            d.setBackgroundColor(Color.fromARGB(90, 0, 0, 0));
-            d.getPersistentDataContainer().set(Keys.HOLOGRAM, PersistentDataType.BYTE, (byte) 1);
-        });
-        return new Hologram(item, text);
+        return new Hologram(item);
     }
 
     private void sweep() {

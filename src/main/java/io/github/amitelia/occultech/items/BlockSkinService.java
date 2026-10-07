@@ -336,7 +336,7 @@ public final class BlockSkinService implements Listener {
      * Returns whether the block is (now) the item's own type.
      */
     public static boolean restoreWeathered(@Nonnull Block block, @Nonnull SlimefunItem item) {
-        Material own = item.getItem().getType();
+        Material own = CustomBlockService.vanillaMaterial(item);
         Material now = block.getType();
         if (now == own) {
             return true;
@@ -412,7 +412,7 @@ public final class BlockSkinService implements Listener {
 
     /** Whether a block of this type can still be this item (a tile may have swapped to another of its looks). */
     private static boolean isLook(SlimefunItem item, Material type) {
-        return item instanceof StepTile tile ? tile.lookVariant(type) >= 0 : type == item.getItem().getType();
+        return item instanceof StepTile tile ? tile.lookVariant(type) >= 0 : type == CustomBlockService.vanillaMaterial(item);
     }
 
     /**

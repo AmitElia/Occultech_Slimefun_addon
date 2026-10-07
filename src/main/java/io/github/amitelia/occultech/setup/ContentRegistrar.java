@@ -257,8 +257,15 @@ public final class ContentRegistrar {
         };
         String id = ItemKeys.slimefunId(def.id());
         String name = nameColor(def.category()) + def.name();
+        var customBlocks = Occultech.instance().customBlocks();
+        if (customBlocks != null && def.head() == null) {
+            material = customBlocks.itemMaterial(id, material);   // a custom block: made of the state it places (no blink)
+        }
         // a head texture replaces the material look (textures come from recipes.yml `head`)
         SlimefunItemStack stack = def.head() != null ? new SlimefunItemStack(id, def.head(), name, look) : new SlimefunItemStack(id, material, name, look);
+        if (customBlocks != null) {
+            customBlocks.carryState((Object) stack instanceof ItemStack itemStack ? itemStack : stack.item(), id, null);
+        }
         if (HeldWeapons.isHeld(id)) {
             // item() is a copy on Slimefun Legacy, where the stack itself is the ItemStack
             HeldWeapons.makeHoldable((Object) stack instanceof ItemStack itemStack ? itemStack : stack.item());

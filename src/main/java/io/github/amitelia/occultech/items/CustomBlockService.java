@@ -20,7 +20,12 @@ import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.NotePlayEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockDataMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.annotation.Nonnull;
@@ -48,6 +53,13 @@ import java.util.Set;
  * ({@code NexoBlocks.place}), and {@code /occultech blocks convert} re-places existing blocks - see
  * docs/nexo-migration.md.
  *
+ * <p>No blink on placing: with custom blocks on, a block's item is made of a note block (string for the glyphs) carrying
+ * its look's state, so the game's own placement prediction draws the custom block at once - not the item's vanilla block
+ * for a moment until the server's answer arrives. A look smaller than a cube (a chorus-plant state, which can't be placed
+ * freely) is predicted as a note-block state set aside to show the same model, and turned into its chorus state on the
+ * server. A block with a front (the Occult Forge) carries the facing its holder looks along, kept up to date while held.
+ * The block's own vanilla block (recipes.yml {@code material}) stays known to the code ({@link #vanillaMaterial}).
+ *
  * <p>Like Nexo, it needs Paper's {@code block-updates.disable-noteblock-updates}, {@code disable-chorus-plant-updates} and
  * {@code disable-tripwire-updates}
  * (config/paper-global.yml): otherwise a neighbour or redstone could change a block's state, and so its look. It warns
@@ -67,6 +79,10 @@ public final class CustomBlockService implements Listener {
     private final Map<String, Look> byState = new HashMap<>();          // state (as the server prints it) -> look
     private final Map<String, Integer> looks = new HashMap<>();         // ITEM -> how many looks
     private final Set<String> directional = new HashSet<>();
+    /** "ITEM look facing" -> a note-block state the client can predict, showing a chorus look's model (see the class doc). */
+    private final Map<String, BlockData> predicted = new HashMap<>();
+    /** Slimefun id -> its own vanilla block, for the items made of a note block or string here. */
+    private static final Map<String, Material> VANILLA = new HashMap<>();
     private boolean enabled;
 
     public CustomBlockService(@Nonnull JavaPlugin plugin, @Nonnull ResourcePackService pack) {
@@ -91,6 +107,11 @@ public final class CustomBlockService implements Listener {
                 continue;
             }
             BlockFace facing = line[2].equals("-") ? null : BlockFace.valueOf(line[2].toUpperCase(Locale.ROOT));
+            if (line[1].startsWith("^")) {   // a prediction state: shows the look, converted to its real state once placed
+                predicted.put(line[0] + " " + line[1].substring(1) + " " + line[2], data);
+                byState.put(data.getAsString(), new Look(line[0], Integer.parseInt(line[1].substring(1)), facing, false));
+                continue;
+            }
             if (retired) {
                 byState.put(data.getAsString(), new Look(line[0], 0, null, false));
                 continue;
@@ -111,6 +132,7 @@ public final class CustomBlockService implements Listener {
             return;
         }
         Bukkit.getPluginManager().registerEvents(this, plugin);
+        Bukkit.getScheduler().runTaskTimer(plugin, this::faceHeld, 4L, 4L);
         plugin.getLogger().info("Custom blocks: " + looks.size() + " blocks, " + states.size() + " states.");
         warnAboutBlockUpdates();
     }
@@ -118,6 +140,117 @@ public final class CustomBlockService implements Listener {
     /** Whether Occultech's blocks are custom blocks here (false: display skins). */
     public boolean enabled() {
         return enabled;
+    }
+
+    /** A block's own vanilla block (its recipes.yml material), even when its item is made of a note block or string. */
+    public static Material vanillaMaterial(@Nonnull SlimefunItem item) {
+        return VANILLA.getOrDefault(item.getId(), item.getItem().getType());
+    }
+
+    /**
+     * The state a custom block's item carries so the game predicts the custom block on placing it (its first look; a
+     * front facing {@code facing}, north if null), or null if the item stays as it is.
+     */
+    @Nullable
+    public BlockData placedState(@Nonnull String slimefunId, @Nullable BlockFace facing) {
+        if (!isCustom(slimefunId)) {
+            return null;
+        }
+        String item = BlockSkinService.stripPrefix(slimefunId);
+        String key = item + " 0 " + (directional.contains(item) ? (facing == null ? BlockFace.NORTH : facing).name().toLowerCase(Locale.ROOT) : "-");
+        BlockData data = predicted.getOrDefault(key, states.get(key));
+        return data == null || data.getMaterial() == Material.CHORUS_PLANT ? null : data;
+    }
+
+    /**
+     * Registration: the material a custom block's item is made of (a note block, or string for a tripwire look), or
+     * {@code own} if it stays as it is. Remembers {@code own} as the block's vanilla block.
+     */
+    public Material itemMaterial(@Nonnull String slimefunId, @Nonnull Material own) {
+        BlockData data = placedState(slimefunId, null);
+        if (data == null) {
+            return own;
+        }
+        VANILLA.put(slimefunId, own);
+        return data.getMaterial() == Material.TRIPWIRE ? Material.STRING : data.getMaterial();
+    }
+
+    /** Puts the predicted state on a custom block's item (see {@link #placedState}); false if nothing changed. */
+    public boolean carryState(@Nullable ItemStack item, @Nullable BlockFace facing) {
+        SlimefunItem sf = item == null || item.getType().isAir() ? null : SlimefunItem.getByItem(item);
+        return sf != null && carryState(item, sf.getId(), facing);
+    }
+
+    /** The same, by id (registration: the item isn't registered yet). */
+    public boolean carryState(@Nonnull ItemStack item, @Nonnull String slimefunId, @Nullable BlockFace facing) {
+        BlockData data = placedState(slimefunId, facing);
+        if (data == null || !(item.getItemMeta() instanceof BlockDataMeta meta)) {
+            return false;
+        }
+        BlockData now = meta.hasBlockData() ? meta.getBlockData(item.getType() == Material.STRING ? Material.TRIPWIRE : item.getType()) : null;
+        if (now != null && now.matches(data)) {
+            return false;
+        }
+        meta.setBlockData(data);
+        item.setItemMeta(meta);
+        return true;
+    }
+
+    /**
+     * A custom block's item from before this (made of its vanilla block): made of a note block or string now, carrying
+     * its state, so it stacks with new ones and places without a blink. Returns the converted item, or null if it was fine.
+     */
+    @Nullable
+    public ItemStack upgrade(@Nullable ItemStack item) {
+        SlimefunItem sf = item == null || item.getType().isAir() ? null : SlimefunItem.getByItem(item);
+        if (sf == null || !isCustom(sf.getId()) || item.getType() == sf.getItem().getType()) {
+            return null;
+        }
+        Material target = sf.getItem().getType();
+        if (target != Material.NOTE_BLOCK && target != Material.STRING) {
+            return null;
+        }
+        ItemStack fresh = item.withType(target);
+        carryState(fresh, sf.getId(), null);
+        return fresh;
+    }
+
+    private void upgradeAll(Inventory inventory) {
+        ItemStack[] contents = inventory.getContents();
+        for (int i = 0; i < contents.length; i++) {
+            ItemStack fresh = upgrade(contents[i]);
+            if (fresh != null) {
+                inventory.setItem(i, fresh);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        upgradeAll(event.getPlayer().getInventory());
+        upgradeAll(event.getPlayer().getEnderChest());
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onOpen(InventoryOpenEvent event) {
+        upgradeAll(event.getInventory());
+        upgradeAll(event.getPlayer().getInventory());
+    }
+
+    /** A held block with a front carries the facing its holder looks along, so it's predicted facing the right way. */
+    private void faceHeld() {
+        if (directional.isEmpty()) {
+            return;
+        }
+        for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
+            BlockFace facing = player.getFacing().getOppositeFace();
+            for (ItemStack held : new ItemStack[] { player.getInventory().getItemInMainHand(), player.getInventory().getItemInOffHand() }) {
+                SlimefunItem sf = held.getType().isAir() ? null : SlimefunItem.getByItem(held);
+                if (sf != null && directional.contains(BlockSkinService.stripPrefix(sf.getId()))) {
+                    carryState(held, facing);   // the held stack itself: the change reaches the client with the next sync
+                }
+            }
+        }
     }
 
     /** Whether this Slimefun id is a custom block. */
@@ -191,7 +324,11 @@ public final class CustomBlockService implements Listener {
         return Math.floorMod(block.getX() * 31 + block.getZ() * 17 + block.getY() * 7, count);
     }
 
-    /** A player placed an Occultech block: it becomes its custom block in the same tick, facing the player if it has a front. */
+    /**
+     * A player placed an Occultech block: it becomes its custom block in the same tick. Usually it already is - the item
+     * carried the state and the client predicted it - so only a chorus look (predicted as a note block) or a glyph's
+     * variant by position changes it; a front keeps the facing it was placed with.
+     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         SlimefunItem item = SlimefunItem.getByItem(event.getItemInHand());
@@ -199,7 +336,13 @@ public final class CustomBlockService implements Listener {
             String id = BlockSkinService.stripPrefix(item.getId());
             Block block = event.getBlockPlaced();
             int look = looks.get(id) > 1 && !(item instanceof StepTile) ? positionLook(block, looks.get(id)) : 0;
-            place(block, item.getId(), look, event.getPlayer().getFacing().getOppositeFace());
+            Look now = lookOf(block);
+            BlockFace facing = now != null && now.itemId().equals(id) && now.facing() != null ? now.facing()
+                : event.getPlayer().getFacing().getOppositeFace();
+            if (now != null && now.current() && now.itemId().equals(id) && now.look() == look) {
+                return;   // predicted exactly
+            }
+            place(block, item.getId(), look, facing);
         } else if (item == null && event.getBlockPlaced().getType() == Material.NOTE_BLOCK && isCustomState(event.getBlockPlaced())) {
             unpower(event.getBlockPlaced());   // a plain note block placed next to power must not look like one of ours
         }
