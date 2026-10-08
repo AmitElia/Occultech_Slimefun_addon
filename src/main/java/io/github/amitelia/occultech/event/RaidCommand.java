@@ -20,7 +20,11 @@ import org.bukkit.entity.Player;
  * <li>{@code status}: the raid's state, slot by slot</li>
  * <li>{@code spawn <name> [players]}: one staff member (or their pair) by username or display name where you stand, to
  * try them; {@code spawn clear} removes them</li>
- * <li>{@code stage <1|2> [players]}: starts the raid at the Staff Floor, or straight at the Council</li>
+ * <li>{@code stage 1 [targets] [players]}: the Staff Floor with a set number of staff; {@code stage 1 with <name,name,...>
+ * [players]}: with those staff first (a slot each), random after; {@code stage 2 [players] [band 1-3]}: straight at the
+ * Council, its bar full / at 50% / at 20% for the pace band. {@code players} sizes health and (in Act 2) the soak
+ * circles, to see a big raid alone</li>
+ * <li>{@code perf}: what each event fight costs the server, against the raid's budget</li>
  * <li>{@code demo [soak|marker|barrier|laser|ring|all] [band 1-3]}, {@code demo stop}: Act 2's toolkit on its own, at the
  * arena's middle (or where you stand without an arena), at a pace band</li>
  * </ul>
@@ -77,13 +81,33 @@ public final class RaidCommand {
                 }
                 case "stage" -> {
                     String stage = args.length > 2 ? args[2] : "1";
-                    Integer players = args.length > 3 ? Integer.valueOf(args[3]) : null;
-                    List<String> problems = stage.equals("2") ? raids.beginCouncil(players) : raids.begin(null, players);
+                    List<String> problems;
+                    if (stage.equals("2")) {
+                        // stage 2 [players] [band]
+                        Integer players = args.length > 3 ? Integer.valueOf(args[3]) : null;
+                        int band = args.length > 4 ? Integer.parseInt(args[4]) : 1;
+                        problems = raids.beginCouncil(raids.arena(), players, band);
+                    } else if (args.length > 3 && args[3].equalsIgnoreCase("with")) {
+                        // stage 1 with <name,name,...> [players]
+                        if (args.length < 5) {
+                            usage(sender);
+                            return;
+                        }
+                        List<String> names = List.of(args[4].split(","));
+                        Integer players = args.length > 5 ? Integer.valueOf(args[5]) : null;
+                        problems = raids.arena() == null ? List.of("no arena set") : raids.begin(raids.arena(), null, players, names);
+                    } else {
+                        // stage 1 [targets] [players]
+                        Integer targets = args.length > 3 ? Integer.valueOf(args[3]) : null;
+                        Integer players = args.length > 4 ? Integer.valueOf(args[4]) : null;
+                        problems = raids.begin(targets, players);
+                    }
                     if (!problems.isEmpty()) {
                         tell(sender, "&cThe raid can't start:");
                         problems.forEach(p -> tell(sender, "&c - " + p));
                     }
                 }
+                case "perf" -> raids.perf().forEach(line -> tell(sender, "&7" + line));
                 case "demo" -> {
                     if (args.length > 2 && args[2].equalsIgnoreCase("stop")) {
                         raids.stopDemo();
@@ -140,20 +164,31 @@ public final class RaidCommand {
 
     private static void usage(CommandSender sender) {
         tell(sender, "&7Usage: /occultech event <arena [set <radius>] | start [targets] [players] | skip | stop | hp <multiplier> | status"
-            + " | spawn <name> [players] | spawn clear | stage <1|2> [players] | demo [hazard|all] [band] | demo stop>");
+            + " | spawn <name> [players] | spawn clear | stage 1 [targets] [players] | stage 1 with <names> [players]"
+            + " | stage 2 [players] [band] | demo [hazard|all] [band] | demo stop | perf>");
     }
 
     /** Tab completion after "event"; {@code roster} names the staff for {@code spawn}. */
     @Nonnull
     public static List<String> complete(@Nonnull String[] args, @javax.annotation.Nullable StaffRoster roster) {
         if (args.length == 2) {
-            return List.of("arena", "start", "skip", "stop", "hp", "status", "spawn", "stage", "demo");
+            return List.of("arena", "start", "skip", "stop", "hp", "status", "spawn", "stage", "demo", "perf");
         }
         if (args.length == 3 && args[1].equalsIgnoreCase("arena")) {
             return List.of("set");
         }
         if (args.length == 3 && args[1].equalsIgnoreCase("stage")) {
             return List.of("1", "2");
+        }
+        if (args.length == 4 && args[1].equalsIgnoreCase("stage") && args[2].equals("1")) {
+            return List.of("with", "3", "5", "10");
+        }
+        if (args.length == 5 && args[1].equalsIgnoreCase("stage") && args[3].equalsIgnoreCase("with") && roster != null) {
+            String typed = args[4];
+            String done = typed.contains(",") ? typed.substring(0, typed.lastIndexOf(',') + 1) : "";
+            String part = typed.substring(done.length()).toLowerCase(java.util.Locale.ROOT);
+            return roster.members().values().stream().map(StaffMember::display)
+                .filter(n -> n.toLowerCase(java.util.Locale.ROOT).startsWith(part)).map(n -> done + n).toList();
         }
         if (args.length == 3 && args[1].equalsIgnoreCase("spawn") && roster != null) {
             List<String> names = new java.util.ArrayList<>(List.of("clear"));

@@ -266,6 +266,18 @@ final class SelfTest {
         then(0, this::councilFalls);
         then(20, this::councilWon);
         then(30, this::raidCleanedUp);
+        // ---- Session E8: test line-ups, the whole roster at once, the Council at its hardest band
+        then(0, this::lineupStart);
+        then(0, () -> plugin.raids().stop());
+        then(30, this::raidCleanedUp);
+        then(0, this::wholeRosterStart);
+        then(200, this::wholeRosterRan);
+        then(0, () -> plugin.raids().clearTests());
+        then(30, this::raidCleanedUp);
+        then(0, this::councilBandStart);
+        then(200, this::councilBandRan);
+        then(0, () -> plugin.raids().stop());
+        then(30, this::raidCleanedUp);
         next();
     }
 
@@ -2144,6 +2156,55 @@ final class SelfTest {
         BossFight pair = made.stream().filter(f -> f.bosses().size() == 2).findFirst().orElse(null);
         double earlScale = pair == null ? -1 : pair.bosses().get(0).getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue();
         check("Earl and Sam share one slot, Earl small", pair != null && Math.abs(earlScale - 0.7) < 1e-6, "scale " + earlScale);
+    }
+
+    /** Session E8: test tools. */
+    private void lineupStart() {
+        List<String> problems = plugin.raids().begin(raidArena, null, 9, List.of("Kon", "pyr0", "Earl"));
+        List<String> names = plugin.raids().fights().stream().map(f -> f.spec().name()).sorted().toList();
+        check("stage 1 with a line-up puts exactly those staff on the floor", problems.isEmpty()
+            && names.equals(List.of("Earl & Sam", "Kon", "pyr0")), String.join("; ", problems) + " " + names);
+    }
+
+    private int rosterSlots;
+
+    private void wholeRosterStart() {
+        var slots = plugin.raids().roster().slots();
+        List<double[]> spots = io.github.amitelia.occultech.event.RaidScaling.spots(slots.size(), raidArena.radius());
+        List<String> problems = new java.util.ArrayList<>();
+        for (int i = 0; i < slots.size(); i++) {
+            org.bukkit.Location at = raidArena.floor(spots.get(i)[0], spots.get(i)[1]).getLocation().add(0.5, 1, 0.5);
+            problems.addAll(plugin.raids().spawnTest(slots.get(i).get(0).name(), at, 3));
+        }
+        rosterSlots = slots.size();
+        check("the whole roster (" + slots.size() + " slots) spawns at once", problems.isEmpty(), String.join("; ", problems));
+    }
+
+    private void wholeRosterRan() {
+        long running = bosses.fights().stream().filter(f -> f.isEvent() && !f.isOver()).count();
+        double cost = plugin.raids().eventMsPerTick();
+        check("the whole roster runs together for 10 s", running == rosterSlots, running + " of " + rosterSlots + " running");
+        check(String.format(java.util.Locale.ROOT, "...within the raid's performance budget (%.2f ms a tick of %.1f)", cost,
+            io.github.amitelia.occultech.event.RaidService.BUDGET_MS), cost <= io.github.amitelia.occultech.event.RaidService.BUDGET_MS,
+            String.join(" | ", plugin.raids().perf()));
+    }
+
+    private void councilBandStart() {
+        List<String> problems = plugin.raids().beginCouncil(raidArena, 25, 3);
+        BossFight fight = plugin.raids().council();
+        double share = fight != null && fight.behavior() instanceof io.github.amitelia.occultech.event.CouncilBehavior c ? c.poolFraction() : -1;
+        check("stage 2 at band 3 starts the Council at 20% of its bar", problems.isEmpty() && Math.abs(share - 0.2) < 0.01,
+            String.join("; ", problems) + " share " + share);
+    }
+
+    private void councilBandRan() {
+        BossFight fight = plugin.raids().council();
+        if (fight == null || !(fight.behavior() instanceof io.github.amitelia.occultech.event.CouncilBehavior council)) {
+            check("the Council runs at its last pace band", false, "no council");
+            return;
+        }
+        check("the Council runs at its last pace band, several mechanics at once", council.paceBand() == 2 && council.majorsLaunched() >= 2,
+            "band " + (council.paceBand() + 1) + ", " + council.majorsLaunched() + " mechanics");
     }
 
     /** Session E7: the Council. */

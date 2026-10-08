@@ -564,6 +564,42 @@ public final class BossFight {
         return falls.remove(player);
     }
 
+    // ------------------------------------------------------------------ Session E8: what a fight costs the server
+
+    private long costNanos;
+    private int costTicks;
+    private double msPerTick;
+
+    /** Adds {@code nanos} of server time spent on this fight. */
+    void cost(long nanos) {
+        costNanos += nanos;
+    }
+
+    /** One server tick passed: every 100, the average cost is worked out afresh. */
+    void costTick() {
+        if (++costTicks >= 100) {
+            msPerTick = costNanos / 100.0 / 1_000_000.0;
+            costNanos = 0;
+            costTicks = 0;
+        }
+    }
+
+    /** Average server time this fight took per tick over the last 5 s (ms). */
+    public double msPerTick() {
+        return msPerTick;
+    }
+
+    /** Living extra creatures and other fight entities (displays, projectiles...) it holds now. */
+    public int entityCount() {
+        int count = 0;
+        for (Entity extra : extras) {
+            if (extra.isValid()) {
+                count++;
+            }
+        }
+        return count + bosses.size();
+    }
+
     /** This fight's behavior (the raid's tools look at their own). */
     @Nonnull
     public BossBehavior behavior() {

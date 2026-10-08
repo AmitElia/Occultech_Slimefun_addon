@@ -111,6 +111,15 @@ public final class RaidService implements Listener {
     }
 
     private void tick() {
+        int now = (++steps) * BossService.STEP;
+        if ((raid != null || demo != null) && now - lastBudgetWarning > 1200 && now % 100 == 0) {
+            double cost = eventMsPerTick();
+            if (cost > BUDGET_MS) {
+                lastBudgetWarning = now;
+                plugin.getLogger().warning(String.format(java.util.Locale.ROOT, "The Staff Raid takes %.1f ms a tick (budget %.1f): see /occultech event perf",
+                    cost, BUDGET_MS));
+            }
+        }
         if (raid == null) {
             return;
         }
@@ -165,6 +174,29 @@ public final class RaidService implements Listener {
     /** As {@link #begin(Integer, Integer)} at another arena than the saved one (the self-test's). */
     @Nonnull
     public List<String> begin(@Nonnull RaidArena arena, @Nullable Integer targets, @Nullable Integer players) {
+        return begin(arena, targets, players, List.of());
+    }
+
+    /**
+     * As {@link #begin(RaidArena, Integer, Integer)} with a test line-up: these staff (usernames or display names) go
+     * onto the floor first, a slot each (a pair shares one); after them the picks are random. With no targets given,
+     * there are as many slots as names.
+     */
+    @Nonnull
+    public List<String> begin(@Nonnull RaidArena arena, @Nullable Integer targets, @Nullable Integer players, List<String> names) {
+        List<List<StaffMember>> lineup = new java.util.ArrayList<>();
+        for (String name : names) {
+            List<StaffMember> slot = slotOf(name);
+            if (slot == null) {
+                return List.of("nobody called " + name + " on the roster");
+            }
+            if (!lineup.contains(slot)) {
+                lineup.add(slot);
+            }
+        }
+        if (targets == null && !lineup.isEmpty()) {
+            targets = lineup.size();
+        }
         if (raid != null) {
             return List.of("a raid is already running");
         }
@@ -177,6 +209,7 @@ public final class RaidService implements Listener {
             return List.of("the roster (config raid.roster) needs at least " + RaidScaling.MIN_TARGETS + " entries");
         }
         raid = new StaffRaid(bosses, arena, roster, settings, targets, players);
+        raid.lineup(lineup);
         raid.start();
         return List.of();
     }
@@ -230,16 +263,22 @@ public final class RaidService implements Listener {
      * Spawns one staff member (or their pair) by username or display name at {@code at}, outside any raid, with health
      * for {@code players}. Their fight spans the arena when {@code at} is in it, else 20 blocks around.
      */
-    @Nonnull
-    public List<String> spawnTest(String name, org.bukkit.Location at, int players) {
-        java.util.List<StaffMember> slot = null;
-        for (java.util.List<StaffMember> each : roster.slots()) {
-            for (StaffMember member : each) {
+    /** The roster slot holding {@code name} (username or display name, any case), or null. */
+    @Nullable
+    private List<StaffMember> slotOf(String name) {
+        for (List<StaffMember> slot : roster.slots()) {
+            for (StaffMember member : slot) {
                 if (member.name().equalsIgnoreCase(name) || member.display().equalsIgnoreCase(name)) {
-                    slot = each;
+                    return slot;
                 }
             }
         }
+        return null;
+    }
+
+    @Nonnull
+    public List<String> spawnTest(String name, org.bukkit.Location at, int players) {
+        java.util.List<StaffMember> slot = slotOf(name);
         if (slot == null) {
             return List.of("nobody called " + name + " on the roster");
         }
@@ -274,11 +313,61 @@ public final class RaidService implements Listener {
     /** Starts a raid straight at Act 2, the Council. */
     @Nonnull
     public List<String> beginCouncil(@Nullable Integer players) {
-        List<String> problems = begin(1, players);
+        return beginCouncil(arena, players, 1);
+    }
+
+    /**
+     * Starts a raid straight at Act 2, the Council, at pace {@code band} (1-3: the bar starts full, at 50% or at 20%).
+     * {@code players} also sizes the raid mechanics, to see a big raid's density alone.
+     */
+    @Nonnull
+    public List<String> beginCouncil(@Nullable RaidArena at, @Nullable Integer players, int band) {
+        if (at == null) {
+            return List.of("no arena: stand in its middle and use /occultech event arena set <radius>");
+        }
+        List<String> problems = begin(at, 1, players);
         if (problems.isEmpty() && raid != null) {
             raid.skip();
+            if (raid.council() != null && raid.council().behavior() instanceof CouncilBehavior council && band > 1) {
+                council.setShare(band >= 3 ? 0.2 : 0.5);
+            }
         }
         return problems;
+    }
+
+    // ------------------------------------------------------------------ Session E8: what the raid costs the server
+
+    /** Server time a whole raid may take per tick before it's flagged (ms; a tick has 50). */
+    public static final double BUDGET_MS = 5;
+    private int lastBudgetWarning = -100000;
+    private int steps;
+
+    /** Every event fight running now (raid, tests, demo). */
+    private List<io.github.amitelia.occultech.boss.BossFight> eventFights() {
+        return bosses.fights().stream().filter(io.github.amitelia.occultech.boss.BossFight::isEvent).toList();
+    }
+
+    /** Server time all event fights take per tick now (ms, averaged over 5 s). */
+    public double eventMsPerTick() {
+        return eventFights().stream().mapToDouble(io.github.amitelia.occultech.boss.BossFight::msPerTick).sum();
+    }
+
+    /** {@code /occultech event perf}: each event fight's cost and entities, and the total against the budget. */
+    @Nonnull
+    public List<String> perf() {
+        List<io.github.amitelia.occultech.boss.BossFight> fights = eventFights();
+        List<String> lines = new java.util.ArrayList<>();
+        double total = 0;
+        int entities = 0;
+        for (io.github.amitelia.occultech.boss.BossFight fight : fights) {
+            total += fight.msPerTick();
+            entities += fight.entityCount();
+            lines.add(String.format(java.util.Locale.ROOT, "  %-24s %5.2f ms/tick, %3d entities, %d adds", fight.spec().name(), fight.msPerTick(),
+                fight.entityCount(), fight.liveAdds()));
+        }
+        lines.add(0, String.format(java.util.Locale.ROOT, "%d event fights: %.2f ms/tick in all (budget %.1f ms), %d entities%s", fights.size(), total,
+            BUDGET_MS, entities, total > BUDGET_MS ? " - OVER BUDGET" : ""));
+        return lines;
     }
 
     /**

@@ -52,6 +52,8 @@ public final class CouncilBehavior extends BossBehavior {
     private record Pending(int at, Runnable action) {}
 
     private final Cast cast;
+    /** A player count to size the raid mechanics for when more than are really there (testing 25-player density alone). */
+    private final int crowd;
     private double poolMax;
     private double pool;
     private final List<CouncilMember> members = new ArrayList<>();
@@ -68,9 +70,10 @@ public final class CouncilBehavior extends BossBehavior {
     Archer archer;
     Brewer brewer;
 
-    CouncilBehavior(BossFight fight, Cast cast, double pool) {
+    CouncilBehavior(BossFight fight, Cast cast, double pool, int crowd) {
         super(fight);
         this.cast = cast;
+        this.crowd = crowd;
         this.poolMax = Math.max(1, pool);
         this.pool = this.poolMax;
     }
@@ -81,8 +84,28 @@ public final class CouncilBehavior extends BossBehavior {
     }
 
     @Nonnull
-    static BossBlueprint blueprint(Cast cast, double pool) {
-        return new BossBlueprint(ID, CouncilBehavior.class, fight -> new CouncilBehavior(fight, cast, pool));
+    static BossBlueprint blueprint(Cast cast, double pool, int crowd) {
+        return new BossBlueprint(ID, CouncilBehavior.class, fight -> new CouncilBehavior(fight, cast, pool, crowd));
+    }
+
+    /** The players the raid mechanics are sized for: everyone in the arena, or the test crowd if that's more. */
+    int crowd() {
+        return Math.max(fight.players().size(), crowd);
+    }
+
+    /** Admin/test: the bar jumps to {@code share} of the pool (to try a later pace band). */
+    public void setShare(double share) {
+        pool = poolMax * Math.max(0.01, Math.min(1, share));
+        for (CouncilMember member : members) {
+            if (member.alive()) {
+                member.body.setHealth(Math.max(0.5, poolFraction() * BODY_HEALTH));
+            }
+        }
+    }
+
+    /** The pace band now, 0-2 (self-test). */
+    public int paceBand() {
+        return pace.band();
     }
 
     @Override
@@ -290,7 +313,7 @@ public final class CouncilBehavior extends BossBehavior {
 
     /** Soak circles for {@code players}: about one in five to a circle, up to 3 circles, spread over the floor. */
     void soakCircles(Mechanic share, Mechanic empty, LivingEntity source) {
-        int players = fight.players().size();
+        int players = crowd();
         int circles = Math.max(1, Math.min(3, (players + 7) / 8));
         int needed = Math.max(1, (int) Math.round(players / 5.0));
         List<Location> spots = new ArrayList<>();

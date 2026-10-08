@@ -76,6 +76,8 @@ final class StaffRaid {
     private int ticks;
     private int kills;
     @Nullable private BossFight council;
+    /** Staff to put on the floor first, in this order (a test line-up); after them the picks are random. */
+    private final java.util.Deque<List<StaffMember>> lineup = new java.util.ArrayDeque<>();
 
     /**
      * @param targets      staff on the floor at once, or null to work it out from the players in the arena
@@ -92,6 +94,11 @@ final class StaffRaid {
         this.targets = targets != null ? Math.max(1, Math.min(roster.slots().size(), targets))
             : Math.min(roster.slots().size(), settings.scaling().targets(players()));
         this.bar = Bukkit.createBossBar("", BarColor.BLUE, BarStyle.SEGMENTED_10);
+    }
+
+    /** A test line-up: these slots go onto the floor first. */
+    void lineup(List<List<StaffMember>> slots) {
+        lineup.addAll(slots);
     }
 
     void start() {
@@ -172,7 +179,14 @@ final class StaffRaid {
                 onField.add(other.staff.members().get(0).name().toLowerCase(Locale.ROOT));
             }
         }
-        List<StaffMember> members = picker.next(onField);
+        List<StaffMember> lined = null;
+        while (!lineup.isEmpty() && lined == null) {
+            List<StaffMember> next = lineup.poll();
+            if (!onField.contains(next.get(0).name().toLowerCase(Locale.ROOT))) {
+                lined = next;
+            }
+        }
+        List<StaffMember> members = lined != null ? lined : picker.next(onField);
         if (members == null) {
             slot.refillAt = ticks + REFILL_TICKS;
             return;
@@ -195,8 +209,8 @@ final class StaffRaid {
         dismissAll();
         act = Act.COUNCIL;
         announce("&b&lThe staff floor is cleared! &7(" + kills + " staff beaten) &6&lThe Council arrives at the middle of the arena...");
-        council = bosses.startEvent(CouncilBehavior.blueprint(settings.council(), councilPool()), CouncilBehavior.spec(arena.radius()),
-            arena.floor(0, 0));
+        council = bosses.startEvent(CouncilBehavior.blueprint(settings.council(), councilPool(), fixedPlayers == null ? 0 : fixedPlayers),
+            CouncilBehavior.spec(arena.radius()), arena.floor(0, 0));
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.6F, 0.8F);
         }

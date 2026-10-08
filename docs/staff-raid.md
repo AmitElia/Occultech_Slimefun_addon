@@ -22,7 +22,11 @@ Staff have agreed to the idea. Rewards are not designed yet.
   the sky has to be open 30 blocks above the floor, because players get thrown up.
 - `/occultech event spawn <name> [players]` spawns one staff member (or their pair) by username or display name where you
   stand, outside any raid, to try them; `event spawn clear` removes them. `event stage <1|2> [players]` starts the raid at
-  the Staff Floor or straight at the Council.
+  the Staff Floor or straight at the Council: `stage 1 [targets] [players]` sets how many staff are on the floor,
+  `stage 1 with <name,name,...> [players]` puts those staff on first (a slot each, random refills after), and
+  `stage 2 [players] [band 1-3]` starts the Council with its bar full, at 50% or at 20%. A `[players]` count above the real
+  one also sizes Act 2's soak circles, to see a 25-player raid's density alone. `event perf` shows what each event fight
+  costs the server against the raid's 5 ms-a-tick budget; the server warns in its log when a raid goes over.
 - `/occultech event start [targets] [players]` starts Act 1 (the numbers override the staff on the floor and the player count it scales for), `event skip` goes on to Act 2, and `event stop` ends the event
   and cleans up. `event hp <multiplier>` changes boss health during the event, for tuning live on the first runs.
 - Participants are everyone inside the arena, and players can join mid-event. A player who dies respawns at the arena
@@ -184,11 +188,25 @@ The pace rises with the shared bar, not with separate phases.
 - One scheduler task for the whole event. Hazard checks go over arena players once per tick.
 
 ## Testing
-- The self-test spawns every roster signature and the council, ticks them, and checks cleanup.
-- `event start <targets> <players>` with a fake player count shows how dense the mechanics get at 25 on the test server.
-- `/occultech balance` grades every mechanic against `TIER_2`.
-- Health can't be tested without a real crowd. Run the first live event with `event hp` at hand, then tune
-  `staff-health` / `council-health` from the combat logs (`tools/balance.py`).
+- **Self-test** (`occultech selftest`). It covers:
+  - a raid that starts, fills, refills and stops;
+  - every archetype and every staff member's signatures, attached and running;
+  - the whole roster at once within the performance budget;
+  - a named line-up;
+  - the toolkit demo;
+  - the Council: shared pool, the band-3 start, mechanics running, a win when the bar empties.
+
+  It can't fire moves at players (the test server has nobody online), so how they feel is for playtests.
+- **Grading**: `/occultech balance` grades every raid mechanic against max-enchanted netherite (`TIER_2`).
+- **Playtest recipe**:
+  1. `event arena set <radius>`.
+  2. `event stage 1 with <the staff you want to try>` (or `event spawn <name>`).
+  3. `event stage 2 [players] 3` for the Council's hardest band.
+  4. `event demo <hazard> <band>` for one Act 2 mechanic on its own.
+  5. `event perf` while it runs.
+- **Health** can't be tuned without a real crowd. Run the first live event with `event hp` at hand, then tune
+  `staff-health` and `council-health` from the combat logs (`plugins/Occultech/combat-log`, `tools/balance.py`). Kidnap and
+  updraft falls show there as "Kidnap (Archer) (fall)" and "Updraft (Brewer) (fall)".
 
 ## Decided
 - Act 1 has nothing to do with Act 2's bar: Act 1 kills don't change the council's health, so it's tuned on its own.
@@ -211,5 +229,5 @@ Each session ends with a build, the unit tests and a self-test run.
 | E5 - Signatures III | Kon (decoys), bee_grand (bees), Bat (bats), Griffon (mount), Jenn (foxes), Nick/Spleen (DENIED), Jolly (config reload), Raven (spiders: egg sacs, web zone, pounce, from the Brood Mother). mrlonelydwarf's rework: *lonely* becomes **burrow** (mining, pickaxe, can't be interrupted). Act 1 polish Then Jolly's rework (done): config_reload became trick arrows, fart jumps and whoopee cushions, with him as a very fast archer |
 | E6 - Raid toolkit | Act 2 building blocks: soak circles, player markers, moving barriers, spinning lasers, expanding rings, the pace bands |
 | **E7 - The Council** (done) | X, Chlo (flight, kidnap), Pancake (potions, syrup, taste test, updraft, drink), the shared bar, pace and soft enrage, the rules for moving players. Act 2 follows Act 1; the raid is won when the bar runs out |
-| E8 - Test and tune | Self-test for every signature and the council, mechanic density with a fake count of 25 players, balance report, performance budget, fall damage in the combat log |
+| **E8 - Test and tune** (tools done; tuning needs a real run) | Self-test for every signature and the council, mechanic density with a fake count of 25 players, balance report, performance budget, fall damage in the combat log |
 | E9 - Art pass | Katana model and the new ground and visual effects through the art pipeline |

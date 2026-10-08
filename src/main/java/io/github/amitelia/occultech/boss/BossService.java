@@ -343,13 +343,18 @@ public final class BossService implements Listener {
 
     private void tick() {
         for (BossFight fight : new ArrayList<>(fights.values())) {
+            long start = System.nanoTime();
             fight.tick();
+            fight.cost(System.nanoTime() - start);
         }
     }
 
     private void move() {
         for (BossFight fight : new ArrayList<>(fights.values())) {
+            long start = System.nanoTime();
             fight.move();
+            fight.cost(System.nanoTime() - start);
+            fight.costTick();
         }
     }
 
