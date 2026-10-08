@@ -218,7 +218,7 @@ final class JollySignatures {
                 Location at = kit.body.getLocation();
                 fart(at, 1.2F);
                 cloud(at.clone().add(0, 0.4, 0), 40, STINK_RADIUS / 2);
-                kit.fight.addHazard(at, STINK_RADIUS, 60, STINK,
+                kit.fight.addHazard(at, STINK_RADIUS, 60, STINK, io.github.amitelia.occultech.boss.FloorDecals.Zone.POISON,
                     player -> player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 80, 0, false, true)));
             }
         }

@@ -173,6 +173,17 @@ public final class FloorDecals {
         return decal(fight, floor(at).add(0, WARNING_HEIGHT, 0), model, visible(tint), true, (float) size);
     }
 
+    /** Shows {@code model} on a display made here instead of its current one, keeping its tint. */
+    public static void remodel(@Nonnull ItemDisplay display, @Nonnull String model) {
+        if (display.isValid()) {
+            ItemStack stack = display.getItemStack();
+            ItemMeta meta = stack.getItemMeta();
+            meta.setItemModel(new NamespacedKey("occultech", model));
+            stack.setItemMeta(meta);
+            display.setItemStack(stack);
+        }
+    }
+
     /** Re-tints a display made here (a marker that locks turns red). */
     public static void tint(@Nonnull ItemDisplay display, @Nonnull Color tint) {
         if (display.isValid()) {

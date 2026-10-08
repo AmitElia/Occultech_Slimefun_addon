@@ -74,7 +74,7 @@ final class ControllerKit extends StaffKit {
             fight.telegraph(at, ZONE_RADIUS, ZONE_WARNING, COLOR);
             later(ZONE_WARNING, () -> {
                 if (alive()) {
-                    fight.addHazard(at, ZONE_RADIUS, ZONE_TICKS, COLOR, p -> fight.hit(p, DENIED, body));
+                    fight.addHazard(at, ZONE_RADIUS, ZONE_TICKS, COLOR, io.github.amitelia.occultech.boss.FloorDecals.Zone.FROST, p -> fight.hit(p, DENIED, body));
                 }
             });
         }

@@ -210,7 +210,8 @@ final class SamuraiSignatures {
             kit.claim(CRESCENT_WARNING + 5);
             at.getWorld().playSound(at, Sound.ITEM_TRIDENT_RETURN, 1.5F, 0.5F);
             Particle.DustOptions dust = new Particle.DustOptions(RED, 1.3F);
-            for (int t = 0; t < CRESCENT_WARNING; t += 5) {
+            boolean decal = kit.warnFan(at, aim, Math.PI, CRESCENT_REACH, CRESCENT_WARNING, RED);
+            for (int t = 0; t < CRESCENT_WARNING && !decal; t += 5) {
                 kit.later(t, () -> {
                     for (double a = aim - Math.PI / 2; a <= aim + Math.PI / 2; a += 0.12) {
                         for (double r : new double[] { 2.5, CRESCENT_REACH }) {

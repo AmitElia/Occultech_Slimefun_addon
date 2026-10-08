@@ -56,9 +56,33 @@ final class RaidRing implements RaidHazard {
         this.mechanic = mechanic;
         this.source = source;
         if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
-            // the pack's travelling wave, timed to this ring (a tall ring keeps its particle curtain, which shows the gap)
-            io.github.amitelia.occultech.boss.FloorDecals.wave(fight, this.center, radius, maxRadius, (int) Math.ceil((maxRadius - radius) / speed), color);
+            Location at = this.center.clone();
+            at.setYaw(0F);
+            at.setPitch(0F);
+            shell = io.github.amitelia.occultech.boss.FloorDecals.model(fight, at, model(), color);
+            shell.setTransformation(shape());
         }
+    }
+
+    /** With the pack: the ring itself, a glowing shell (a tall one with a gap that stays about 3 blocks wide). */
+    @Nullable private org.bukkit.entity.ItemDisplay shell;
+    private String shellModel;
+
+    /** The shell for this ring now: low, or tall with as many panels missing as the gap needs at this radius. */
+    private String model() {
+        if (height <= LOW) {
+            return "raid_ring_low";
+        }
+        double panels = (GAP_HALF_WIDTH * 2 / radius) / (Math.PI * 2 / 32);
+        return "raid_ring_tall_gap" + Math.max(1, Math.min(16, (int) Math.round(panels)));
+    }
+
+    /** The shell's shape: the ring's radius and height, standing on the floor, its gap (made round +x) turned to face it. */
+    private org.bukkit.util.Transformation shape() {
+        float turn = Double.isNaN(gapAngle) ? 0F : (float) -gapAngle;
+        float across = (float) (radius * 2);
+        return new org.bukkit.util.Transformation(new org.joml.Vector3f(0, (float) height / 2, 0), new org.joml.AxisAngle4f(turn, 0, 1, 0),
+            new org.joml.Vector3f(across, (float) height, across), new org.joml.AxisAngle4f());
     }
 
     /** One tick: grows, draws (every other tick), hits. False once it's past its reach. */
@@ -66,9 +90,22 @@ final class RaidRing implements RaidHazard {
     public boolean step() {
         radius += speed;
         if (radius > maxRadius) {
+            if (shell != null) {
+                shell.remove();
+            }
             return false;
         }
-        if (age++ % 2 == 0 && (height > LOW || !io.github.amitelia.occultech.boss.FloorDecals.enabled())) {
+        if (shell != null && shell.isValid()) {
+            String now = model();
+            if (!now.equals(shellModel)) {
+                shellModel = now;
+                io.github.amitelia.occultech.boss.FloorDecals.remodel(shell, now);
+            }
+            shell.setInterpolationDelay(0);
+            shell.setInterpolationDuration(1);
+            shell.setTransformation(shape());
+            age++;
+        } else if (age++ % 2 == 0) {
             draw();
         }
         double band = Math.max(0.6, speed);

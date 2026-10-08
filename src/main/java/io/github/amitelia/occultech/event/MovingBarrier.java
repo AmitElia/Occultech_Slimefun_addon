@@ -69,13 +69,12 @@ final class MovingBarrier implements RaidHazard {
         this.warnTicks = warnTicks;
         this.mechanic = mechanic;
         this.source = source;
-        // two slabs, one each side of the gap
-        piece(look, -halfLength, gapCenter - gapHalfWidth);
-        piece(look, gapCenter + gapHalfWidth, halfLength);
-        if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
-            // the pack's energy panes instead of stretched glass
-            pieces.forEach(BlockDisplay::remove);
-            pieces.clear();
+        if (!io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+            // without the pack: two slabs of glass, one each side of the gap
+            piece(look, -halfLength, gapCenter - gapHalfWidth);
+            piece(look, gapCenter + gapHalfWidth, halfLength);
+        } else {
+            // the pack's force field, one section each side of the gap, a pylon at every end
             Color tint = RaidWall.tintOf(look);
             for (double[] span : new double[][] { { -halfLength, gapCenter - gapHalfWidth }, { gapCenter + gapHalfWidth, halfLength } }) {
                 if (span[1] - span[0] > 0.1) {
@@ -84,6 +83,11 @@ final class MovingBarrier implements RaidHazard {
                     org.bukkit.entity.ItemDisplay pane = RaidWall.pane(fight, from, to, HEIGHT, 1F, tint);
                     pane.setTeleportDuration(1);
                     panes.add(pane);
+                    for (Location end : new Location[] { from, to }) {
+                        org.bukkit.entity.ItemDisplay post = RaidWall.post(fight, end, HEIGHT + 0.2, tint);
+                        post.setTeleportDuration(1);
+                        panes.add(post);
+                    }
                 }
             }
         }

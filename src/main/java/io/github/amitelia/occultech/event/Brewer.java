@@ -175,7 +175,8 @@ final class Brewer extends CouncilMember {
             Location near = players.get(i % players.size()).getLocation();
             Location spot = near.clone().add((Math.random() - 0.5) * 6, 0, (Math.random() - 0.5) * 6);
             spot.setY(spot.getWorld().getHighestBlockYAt(spot) + 1);
-            fight.addHazard(spot, 3, 300, SYRUP, p -> p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1, false, true)));
+            fight.addHazard(spot, 3, 300, SYRUP, io.github.amitelia.occultech.boss.FloorDecals.Zone.YOLK,
+                p -> p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1, false, true)));
             spot.getWorld().playSound(spot, Sound.BLOCK_HONEY_BLOCK_PLACE, 1.5F, 0.6F);
         }
     }

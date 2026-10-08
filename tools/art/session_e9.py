@@ -21,6 +21,7 @@ from PIL import Image  # noqa: E402
 import render3d  # noqa: E402
 import session_g as g  # noqa: E402
 import session_o4 as o4  # noqa: E402
+import session_o5 as o5  # noqa: E402
 
 REVIEW = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "art", "session-e9")
 os.makedirs(REVIEW, exist_ok=True)
@@ -206,25 +207,35 @@ def reticle():
 TARGET = reticle()
 
 
-def wall_frames(n=6):
-    """An energy pane in greys (tinted per wall): bright rails top and bottom, a see-through field that glows more toward
-    the rails, faint upright streaks, and a band of light rising through it over the frames."""
+# ---------------------------------------------------------------- the raid's obstacles (round 2: no particles at all)
+# Everything here is drawn in O4's greys and tinted by the game per attack. Light sprites: coloured by heat, no outline,
+# brightest in the middle of the light, animated (STYLE rules 10-11).
+
+def _px(img, x, y, tone, alpha):
+    if alpha > 0:
+        img.putpixel((x % 16, y % 16), o4.rgba(o4.GREY[max(0, min(5, tone))], max(0, min(255, int(alpha)))))
+
+
+def wall_frames(n=8):
+    """A force field (walls, sweeping barriers): bright rails top and bottom, a faint lattice of light between them, and
+    a band of brightness travelling along the wall over the frames."""
     out = []
     for f in range(n):
         img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-        band = (16 - f * 16 / n) % 16
+        band = f * 16 / n
         for y in range(16):
             for x in range(16):
+                near = abs(((x - band + 8) % 16) - 8)
+                lift = 2 if near < 1.5 else 1 if near < 3.5 else 0
                 if y in (0, 15):
-                    img.putpixel((x, y), o4.rgba(o4.GREY[5]))           # the rails
-                    continue
-                rail = min(y, 15 - y)                                    # 1 next to a rail .. 7 in the middle
-                near = abs(((y - band + 8) % 16) - 8)
-                lift = 2 if near < 1.0 else 1 if near < 2.5 else 0
-                streak = x % 4 == (f + y // 5) % 4                      # faint upright streaks, drifting
-                tone = min(5, (5 if rail == 1 else 4 if rail <= 3 else 3) + lift + (1 if streak else 0))
-                alpha = min(230, (190 if rail == 1 else 110 if rail <= 3 else 55) + 50 * lift + (40 if streak else 0))
-                img.putpixel((x, y), o4.rgba(o4.GREY[tone], alpha))
+                    _px(img, x, y, 5, 255)                               # the rails
+                elif y in (1, 14):
+                    _px(img, x, y, 4, 200 + 25 * lift)
+                elif (x + y) % 8 == 0 or (x - y) % 8 == 0:
+                    _px(img, x, y, 3 + lift, 120 + 45 * lift)            # the lattice
+                else:
+                    rail = min(y, 15 - y)
+                    _px(img, x, y, 3, (70 if rail <= 3 else 40) + 30 * lift)
         out.append(img)
     return out
 
@@ -234,7 +245,7 @@ def raid_wall():
     m = g.Model("raid_wall")
     m.part = True
     t = m.texture("field", wall_frames())
-    m.mcmeta["field"] = {"animation": {"frametime": 2, "interpolate": False}}
+    m.mcmeta["field"] = {"animation": {"frametime": 2, "interpolate": True}}
     e = m.box((0, 0, 8), (16, 16, 8), {"south": (t, [0, 0, 16, 16]), "north": (t, [16, 0, 0, 16])}, shade=False, light=15)
     for face in e["faces"].values():
         face["tintindex"] = 0
@@ -242,44 +253,185 @@ def raid_wall():
     return m
 
 
+def raid_wall_post():
+    """A pylon at each end of a wall section (scaled by the plugin to the wall's height): a dark steel post, a glowing
+    tinted strip up each face pulsing upward, and a glowing cap."""
+    m = g.Model("raid_wall_post")
+    m.part = True
+    t_body = m.texture("body", g.metal(BLACK, 995, tone=2))
+    strip = []
+    for f in range(8):
+        img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+        for y in range(16):
+            pulse = abs(((y - (16 - f * 2) + 8) % 16) - 8)
+            for x in range(16):
+                _px(img, x, y, 5 if pulse < 1.5 else 4, 255)
+        strip.append(img)
+    t_glow = m.texture("glow", strip)
+    m.mcmeta["glow"] = {"animation": {"frametime": 2, "interpolate": True}}
+    g.prism(m, 5, 0, 15, t_body)                                         # the post
+    for d, frm, to in (("south", (7, 1.5, 10.55), (9, 13.5, 10.55)), ("north", (7, 1.5, 5.45), (9, 13.5, 5.45)),
+                       ("east", (10.55, 1.5, 7), (10.55, 13.5, 9)), ("west", (5.45, 1.5, 7), (5.45, 13.5, 9))):
+        e = m.box(frm, to, {d: (t_glow, [0, 0, 2, 12])}, shade=False, light=15)   # a glowing strip up each face
+        e["faces"][d]["tintindex"] = 0
+    e = m.box((6, 15, 6), (10, 16.5, 10), {d: (t_glow, [0, 0, 4, 4]) for d in ("north", "south", "east", "west", "up", "down")},
+              shade=False, light=15)                                    # the cap
+    for face in e["faces"].values():
+        face["tintindex"] = 0
+    m.tinted = True
+    return m
+
+
+def laser_frames(n=8):
+    """A laser seen side-on (u across it, v along it): a white-hot core, a glow falling away to either side, and pulses
+    of light running along it over the frames."""
+    profile = {7: (5, 255), 8: (5, 255), 6: (5, 225), 9: (5, 225), 5: (4, 175), 10: (4, 175), 4: (3, 120), 11: (3, 120),
+               3: (3, 70), 12: (3, 70), 2: (2, 35), 13: (2, 35)}
+    out = []
+    for f in range(n):
+        img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+        for y in range(16):
+            pulse = abs(((y - f * 2 + 8) % 16) - 8) % 8
+            lift = 1 if pulse < 2 else 0
+            for x, (tone, alpha) in profile.items():
+                _px(img, x, y, tone + lift, alpha + 50 * lift)
+        out.append(img)
+    return out
+
+
+def raid_laser():
+    """A laser beam: two crossed glowing planes along the model's y (stretched by the plugin between two points)."""
+    return o5.streak("raid_laser", laser_frames(), 4)
+
+
+def curtain_frames(n=8, crest=False):
+    """A curtain of light (u along it, v up it): brightest at the floor, fading upward to a thin bright top edge, with
+    light running along it over the frames. crest: a low ring's band - bright along both its top and its bottom."""
+    out = []
+    for f in range(n):
+        img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+        for y in range(16):
+            for x in range(16):
+                run = abs(((x - f * 2 + 8) % 16) - 8)
+                lift = 1 if run < 1.5 else 0
+                up = 15 - y                                                  # 0 at the floor .. 15 at the top
+                if crest:
+                    edge = min(up, 15 - up)
+                    tone, alpha = (5, 255) if edge <= 1 else (4, 190) if edge <= 3 else (3, 55)
+                    lift = lift if edge <= 3 else 0                          # the light runs along the crests only
+                elif up <= 1:
+                    tone, alpha = 5, 255
+                elif up <= 4:
+                    tone, alpha = 4, 220
+                elif up < 15:
+                    tone, alpha = 3, 170 - up * 8
+                else:
+                    tone, alpha = 4, 200
+                _px(img, x, y, tone + lift, alpha + 40 * lift)
+        out.append(img)
+    return out
+
+
+def laser_wall():
+    """A full-height laser's section: an upright curtain of light through the model's centre, both faces, tinted (the
+    plugin scales it to the section's length and the beam's height)."""
+    m = g.Model("raid_laser_wall")
+    m.part = True
+    t = m.texture("curtain", curtain_frames())
+    m.mcmeta["curtain"] = {"animation": {"frametime": 2, "interpolate": True}}
+    e = m.box((0, 0, 8), (16, 16, 8), {"south": (t, [0, 0, 16, 16]), "north": (t, [16, 0, 0, 16])}, shade=False, light=15)
+    for face in e["faces"].values():
+        face["tintindex"] = 0
+    m.tinted = True
+    return m
+
+
+RING_PANELS = 32
+
+
+def ring_shell(key, frames, missing=0):
+    """A ring of light: a cylinder shell of 32 upright panels, 8 units out from the centre, 16 tall (the plugin scales
+    it to the ring's radius and height). missing panels are left out round the +x side: the gap of a ring you walk
+    through."""
+    m = g.Model(key)
+    m.part = True
+    t = m.texture("band", frames)
+    m.mcmeta["band"] = {"animation": {"frametime": 2, "interpolate": True}}
+    step = 360 / RING_PANELS
+    chord = 2 * 8 * math.tan(math.radians(step / 2)) + 0.06
+    for k in range(RING_PANELS):
+        theta = k * step
+        facing = (90 - theta) % 360                                          # where this panel ends up (atan2 of z, x)
+        off = min(facing, 360 - facing)
+        if missing and off < missing * step / 2 + 0.01:
+            continue
+        u0 = (k % 4) * 4
+        e = m.box((8 - chord / 2, 0, 16), (8 + chord / 2, 16, 16),
+                  {"south": (t, [u0, 0, u0 + 4, 16]), "north": (t, [u0 + 4, 0, u0, 16])}, shade=False, light=15)
+        e["rotation"] = {"origin": [8, 8, 8], "axis": "y", "angle": theta}
+        for face in e["faces"].values():
+            face["tintindex"] = 0
+    m.tinted = True
+    return m
+
+
+def ring_models():
+    low = ring_shell("raid_ring_low", curtain_frames(crest=True))
+    tall = curtain_frames()
+    return [low] + [ring_shell(f"raid_ring_tall_gap{n}", tall, n) for n in range(1, 17)]
+
+
 def models():
-    return [katana_held(), o4.plane("floor_mark_soak", o4.symbol(SOAK), tint=True, light=15),
-            o4.plane("floor_mark_target", o4.symbol(TARGET), tint=True, light=15), raid_wall()]
+    return ([katana_held(), o4.plane("floor_mark_soak", o4.symbol(SOAK), tint=True, light=15),
+             o4.plane("floor_mark_target", o4.symbol(TARGET), tint=True, light=15), raid_wall(), raid_wall_post(),
+             raid_laser(), laser_wall()] + ring_models())
+
+
+def _tinted(img, tint):
+    out = img.copy()
+    px = out.load()
+    for yy in range(out.height):
+        for xx in range(out.width):
+            r, gg, b, a = px[xx, yy]
+            px[xx, yy] = (r * tint[0] // 255, gg * tint[1] // 255, b * tint[2] // 255, a)
+    return out
+
+
+def _tinted_model(m, tint):
+    """A copy of m with its textures coloured like the game would (for the review renders)."""
+    import copy
+    c = copy.copy(m)
+    c.textures = {k: ([_tinted(f, tint) for f in v] if isinstance(v, list) else _tinted(v, tint)) for k, v in m.textures.items()}
+    return c
 
 
 def review(ms):
-    katana = ms[0]
-    # the katana in the hand's frame is laid on the diagonal; render it lying flat from a few angles, edge frames too
-    views = [render3d.render(katana, frame=f, yaw=yaw, pitch=pitch, s=18, size=(520, 520), center=(8, 9, 8))
-             for (yaw, pitch, f) in ((0, 0, 0), (30, 25, 2), (330, 20, 5))]
-    sheet = Image.new("RGBA", (520 * 3 + 40, 520 + 260), (40, 38, 46, 255))
-    for i, v in enumerate(views):
-        sheet.alpha_composite(v, (10 + i * 530, 10))
-    # floor symbols tinted like the game would, the wall field over a floor
-    tints = [(80, 220, 110), (240, 170, 40), (255, 60, 60), (200, 60, 230)]
+    by = {m.key: m for m in ms}
+    katana = by["s4murai_katana"]
+    sheet = Image.new("RGBA", (1600, 1170), (40, 38, 46, 255))
+    for i, (yaw, pitch, f) in enumerate(((0, 0, 0), (30, 25, 2), (330, 20, 5))):
+        sheet.alpha_composite(render3d.render(katana, frame=f, yaw=yaw, pitch=pitch, s=18, size=(520, 520), center=(8, 9, 8)), (10 + i * 530, 10))
     x = 10
-    for m, tint in ((ms[1], tints[0]), (ms[1], tints[1]), (ms[2], tints[3]), (ms[2], tints[2])):
-        img = m.textures["face"].resize((160, 160), Image.NEAREST)
-        px = img.load()
-        for yy in range(160):
-            for xx in range(160):
-                r, gg, b, a = px[xx, yy]
-                px[xx, yy] = (r * tint[0] // 255, gg * tint[1] // 255, b * tint[2] // 255, a)
-        sheet.alpha_composite(img, (x, 540))
-        x += 180
-    for fi, fr in enumerate(ms[3].textures["field"][:3]):
-        for tint in ((120, 200, 255),):
-            img = fr.resize((160, 160), Image.NEAREST)
-            px = img.load()
-            for yy in range(160):
-                for xx in range(160):
-                    r, gg, b, a = px[xx, yy]
-                    px[xx, yy] = (r * tint[0] // 255, gg * tint[1] // 255, b * tint[2] // 255, a)
-            sheet.alpha_composite(img, (x + fi * 180, 540))
+    for key, tint in (("floor_mark_soak", (80, 220, 110)), ("floor_mark_soak", (240, 170, 40)), ("floor_mark_target", (200, 60, 230)),
+                      ("floor_mark_target", (255, 60, 60))):
+        sheet.alpha_composite(_tinted(by[key].textures["face"], tint).resize((150, 150), Image.NEAREST), (x, 540))
+        x += 165
+    # the obstacles, tinted as the game would, in 3D
+    shots = [("raid_wall", (110, 200, 255), 20, 8), ("raid_wall_post", (110, 200, 255), 30, 20), ("raid_laser", (255, 200, 40), 60, 10),
+             ("raid_laser_wall", (255, 60, 60), 20, 8), ("raid_ring_low", (230, 120, 40), 30, 30), ("raid_ring_tall_gap3", (150, 80, 255), 30, 30),
+             ("raid_ring_tall_gap8", (150, 80, 255), 30, 30)]
+    for i, (key, tint, yaw, pitch) in enumerate(shots):
+        view = render3d.render(_tinted_model(by[key], tint), frame=i, yaw=yaw, pitch=pitch, s=11, size=(300, 300), center=(8, 8, 8),
+                               bg=(30, 30, 36, 255), blend=True)
+        pos = (680 + (i % 3) * 305, 540 + (i // 3) * 305) if i < 6 else (10, 860)
+        sheet.alpha_composite(view, pos)
     path = os.path.join(REVIEW, "review-e9.png")
     sheet.save(path)
     frames = [render3d.render(katana, frame=f, yaw=30, pitch=25, s=18, size=(420, 420), center=(8, 9, 8)).convert("RGB") for f in range(8)]
     frames[0].save(os.path.join(REVIEW, "preview-katana.gif"), save_all=True, append_images=frames[1:], duration=100, loop=0)
+    ring = _tinted_model(by["raid_ring_tall_gap4"], (150, 80, 255))
+    rf = [render3d.render(ring, frame=f, yaw=30, pitch=25, s=11, size=(320, 320), center=(8, 8, 8), blend=True).convert("RGB") for f in range(8)]
+    rf[0].save(os.path.join(REVIEW, "preview-ring.gif"), save_all=True, append_images=rf[1:], duration=100, loop=0)
     return path
 
 

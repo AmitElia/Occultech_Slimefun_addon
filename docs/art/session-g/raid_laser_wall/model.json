@@ -1,0 +1,45 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "curtain": "occultech:block/raid_laser_wall_curtain",
+    "particle": "occultech:block/raid_laser_wall_curtain"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        8
+      ],
+      "to": [
+        16,
+        16,
+        8
+      ],
+      "shade": false,
+      "light_emission": 15,
+      "faces": {
+        "south": {
+          "texture": "#curtain",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "tintindex": 0
+        },
+        "north": {
+          "texture": "#curtain",
+          "uv": [
+            16,
+            0,
+            0,
+            16
+          ],
+          "tintindex": 0
+        }
+      }
+    }
+  ]
+}

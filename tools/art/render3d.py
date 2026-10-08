@@ -48,7 +48,8 @@ def rotn(n, r):
     return rot(n, rr)
 
 
-def render(model, frame=0, yaw=30, pitch=30, s=24, size=(600, 600), bg=(34, 32, 40, 255), center=(8, 8, 8)):
+def render(model, frame=0, yaw=30, pitch=30, s=24, size=(600, 600), bg=(34, 32, 40, 255), center=(8, 8, 8), blend=False):
+    """blend: draw see-through texels with their alpha (glowing fields, beams) instead of cutting below half."""
     cy, sy = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
     cp, sp = math.cos(math.radians(pitch)), math.sin(math.radians(pitch))
 
@@ -79,17 +80,17 @@ def render(model, frame=0, yaw=30, pitch=30, s=24, size=(600, 600), bg=(34, 32, 
                     uu = u0 + (u1 - u0) * (i + 0.5) / nu
                     vv = v0 + (v1 - v0) * (j + 0.5) / nv
                     c = img.getpixel((min(img.width - 1, int(uu * img.width / 16)), min(img.height - 1, int(vv * img.height / 16))))
-                    if c[3] < 128:
+                    if c[3] < (1 if blend else 128):
                         continue
                     pts = []
                     for (a, b) in ((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1)):
                         p = tuple(o[k] + du[k] * a / nu + dv[k] * b / nv for k in range(3))
                         pts.append(view(rot(p, r)))
                     depth = sum(q[2] for q in pts) / 4
-                    col = tuple(int(c[k] * light) for k in range(3)) + (255,)
+                    col = tuple(int(c[k] * light) for k in range(3)) + ((c[3] if blend else 255),)
                     quads.append((depth, [(size[0] / 2 + q[0] * s, size[1] / 2 - q[1] * s) for q in pts], col))
     out = Image.new("RGBA", size, bg)
-    dr = ImageDraw.Draw(out)
+    dr = ImageDraw.Draw(out, "RGBA") if blend else ImageDraw.Draw(out)
     for depth, pts, col in sorted(quads, key=lambda q: q[0]):
         dr.polygon(pts, fill=col, outline=col)
     return out

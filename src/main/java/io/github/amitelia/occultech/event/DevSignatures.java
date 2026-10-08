@@ -142,7 +142,8 @@ final class DevSignatures {
             kit.claim(WARNING + SWEEP_TICKS);
             kit.body.getWorld().playSound(center, Sound.BLOCK_NOTE_BLOCK_BIT, 1.5F, 0.9F);
             // the fan it will swing through: its two edges and its rim
-            for (int t = 0; t < WARNING; t += 5) {
+            boolean decal = kit.warnFan(center, sweepFrom + SWEEP_ARC / 2, SWEEP_ARC, SWEEP_LENGTH, WARNING, HOTFIX);
+            for (int t = 0; t < WARNING && !decal; t += 5) {
                 kit.later(t, () -> {
                     Location base = kit.body.getLocation().add(0, 0.15, 0);
                     kit.drawLine(base, point(base, sweepFrom, SWEEP_LENGTH), HOTFIX, 0.6);

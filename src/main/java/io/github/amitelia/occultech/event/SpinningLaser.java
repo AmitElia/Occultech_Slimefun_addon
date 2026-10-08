@@ -44,6 +44,8 @@ final class SpinningLaser implements RaidHazard {
     private int age;
     /** With the pack: a beam streak per beam, row and section (a full-height beam with a gap has two sections). */
     private final java.util.List<io.github.amitelia.occultech.boss.AirEffects.Streak> streaks = new java.util.ArrayList<>();
+    /** With the pack: a full-height beam's curtains (one per section). */
+    private final java.util.List<org.bukkit.entity.ItemDisplay> curtains = new java.util.ArrayList<>();
 
     /**
      * @param spin     radians per tick (negative: the other way)
@@ -74,6 +76,7 @@ final class SpinningLaser implements RaidHazard {
         age++;
         if (age > warnTicks + lifeTicks || !pivot.isValid() || pivot.isDead()) {
             streaks.forEach(io.github.amitelia.occultech.boss.AirEffects.Streak::snap);
+            curtains.forEach(org.bukkit.entity.ItemDisplay::remove);
             return false;
         }
         boolean live = age > warnTicks;
@@ -112,27 +115,49 @@ final class SpinningLaser implements RaidHazard {
         return true;
     }
 
-    /** The pack's beams: thin while they warn, full width once they turn; re-aimed every tick as they spin. */
+    /**
+     * The pack's beams, re-aimed every tick as they spin. A low beam is a laser at shin height (thin while it warns, full
+     * once it turns); a full-height one is a curtain of light per section, a line on the floor while it warns that rises
+     * to its height once it turns.
+     */
     private void beams(Location center, boolean live) {
-        double[] rows = height > LOW ? new double[] { 0.4, 1.4, 2.4 } : new double[] { 0.4 };
         double[][] sections = Double.isNaN(gapFrom) ? new double[][] { { 0.8, length } } : new double[][] { { 0.8, gapFrom }, { gapTo, length } };
-        float width = live ? 0.55F : 0.12F;
         int i = 0;
         for (int b = 0; b < beams; b++) {
             double beam = angle + Math.PI * 2 * b / beams;
             double cos = Math.cos(beam);
             double sin = Math.sin(beam);
-            for (double row : rows) {
-                for (double[] section : sections) {
-                    Location from = center.clone().add(cos * section[0], row, sin * section[0]);
-                    Location to = center.clone().add(cos * section[1], row, sin * section[1]);
+            for (double[] section : sections) {
+                if (height > LOW) {
+                    Location from = center.clone().add(cos * section[0], 0, sin * section[0]);
+                    Location to = center.clone().add(cos * section[1], 0, sin * section[1]);
+                    Location middle = from.clone().add(to).multiply(0.5);
+                    middle.setYaw(0F);
+                    middle.setPitch(0F);
+                    org.bukkit.util.Transformation shape = RaidWall.paneShape(to.getX() - from.getX(), to.getZ() - from.getZ(), live ? height : 0.15);
+                    if (i >= curtains.size()) {
+                        org.bukkit.entity.ItemDisplay curtain = io.github.amitelia.occultech.boss.FloorDecals.model(fight, middle, "raid_laser_wall", color);
+                        curtain.setTeleportDuration(1);
+                        curtain.setTransformation(shape);
+                        curtains.add(curtain);
+                    } else {
+                        org.bukkit.entity.ItemDisplay curtain = curtains.get(i);
+                        curtain.teleport(middle);
+                        curtain.setInterpolationDelay(0);
+                        curtain.setInterpolationDuration(age == warnTicks + 1 ? 6 : 1);   // rises as it starts to turn
+                        curtain.setTransformation(shape);
+                    }
+                } else {
+                    Location from = center.clone().add(cos * section[0], 0.4, sin * section[0]);
+                    Location to = center.clone().add(cos * section[1], 0.4, sin * section[1]);
+                    float width = live ? 0.6F : 0.15F;
                     if (i >= streaks.size()) {
-                        streaks.add(io.github.amitelia.occultech.boss.AirEffects.Streak.create(fight, "air_beam", from, to, color, width));
+                        streaks.add(io.github.amitelia.occultech.boss.AirEffects.Streak.create(fight, "raid_laser", from, to, color, width));
                     } else {
                         streaks.get(i).aim(from, to, width, 1);
                     }
-                    i++;
                 }
+                i++;
             }
         }
     }

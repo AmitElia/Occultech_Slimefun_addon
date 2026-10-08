@@ -18,7 +18,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **O2** | Art retouch: the tier sigils and pentagrams crisp and finished; the armor inventory icons professional and symmetric | **Done** |
 | **O3** | Trophy Board as a real pedestal with bosses shown at one size; the Arcane Altar reworked with the Session B pentagram | **Done** |
 | **O4** | Floor markings for boss fights: attack warnings and ground zones (the user's picks) | **Done** |
-| **E9** | Staff Raid art: S4MURAI's katana (held), the soak and target floor marks, the energy wall; the raid's lanes, cones, rings, lasers and tether moved onto O4/O5 models | **Done** - awaiting in-game review |
+| **E9** | Staff Raid art: S4MURAI's katana (held), soak and target marks, and (round 2) the raid's own lasers, light curtains, 3D rings with gaps, force-field walls with pylons | **Done** - awaiting in-game review |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
 
 ## Session A - style and toolkit (2026-10-01)
@@ -1181,4 +1181,24 @@ Script `tools/art/session_e9.py`; parts in `session-g/` (`s4murai_katana`, `floo
   - walls and sweeping barriers -> `raid_wall`.
 - Self-critique: silhouettes read (the katana at hand scale, both marks at 1x), one accent each, emissive parts
   animated. Still to check in game: the katana's size in the Mannequin's hand, and how the wall looks against the sky.
+
+### Round 2 - the raid's obstacles get their own art (user: "the beams, rings, rotating obstacles need a texture"; no particle rings)
+The user had seen the old stand-ins: stretched light-blue glass walls (an older jar on the server), and the raid had
+borrowed O4/O5 models for its beams and rings. New parts, all in O4's greys and tinted per attack, emissive, animated:
+- `raid_laser`: crossed planes (stretched between two points like O5's streaks); a white-hot core, a glow falling off
+  to either side, and pulses running along it. Used for low spinning beams and the gadgeteer's beam.
+- `raid_laser_wall`: an upright curtain of light, brightest at the floor and fading up to a thin top edge, with light
+  running along it. A full-height spinning beam is one curtain per section, either side of its gap; it lies as a line
+  on the floor while it warns, then rises.
+- `raid_ring_low` and `raid_ring_tall_gap1`..`16`: real 3D rings, each a cylinder shell of 32 upright panels (element
+  rotations about y). The low ring has bright crests top and bottom and a see-through middle (round 1 read as a barrel).
+  The tall ring is a curtain with 1-16 panels missing round +x: its gap stays about 3 blocks wide as it grows, so the
+  plugin swaps the model as the radius changes and turns it to face the gap. No particles and no floor wave.
+- `raid_wall` remade as a force field (bright rails, a faint diamond lattice, a band of light running along it), with
+  `raid_wall_post` (a dark steel pylon with a glowing strip up each face and a glowing cap) at both ends of every wall
+  section and sweeping barrier.
+- The remaining particle warnings and zones went onto pack art too: the HOTFIX sweep fan and the katana's crescent as
+  floor wedges, the Controller's zone on O4's frost surface, Pancake's syrup on yolk, Jolly's stink cloud on poison.
+- `render3d.render(..., blend=True)` draws see-through texels with their alpha, so glowing fields can be reviewed.
+
 

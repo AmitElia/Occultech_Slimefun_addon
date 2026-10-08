@@ -322,6 +322,24 @@ abstract class StaffKit {
         }
     }
 
+    /**
+     * Warns of a fan on the floor from {@code origin}, centred on {@code aim} (radians, atan2 of z and x),
+     * {@code arc} wide (radians), {@code range} long: the pack's wedges side by side. False without the pack (the caller
+     * draws its particles).
+     */
+    protected boolean warnFan(Location origin, double aim, double arc, double range, int ticks, Color color) {
+        if (!io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+            return false;
+        }
+        int wedges = Math.max(1, (int) Math.ceil(arc / (Math.PI / 2)));
+        double step = wedges == 1 ? 0 : (arc - Math.PI / 2) / (wedges - 1);
+        for (int i = 0; i < wedges; i++) {
+            double a = aim - (arc - Math.PI / 2) / 2 + step * i;
+            io.github.amitelia.occultech.boss.FloorDecals.wedge(fight, origin, new org.bukkit.util.Vector(Math.cos(a), 0, Math.sin(a)), range, ticks, color);
+        }
+        return true;
+    }
+
     /** A dotted warning line on the floor from {@code from} to {@code to}. */
     protected void drawLine(Location from, Location to, Color color, double step) {
         Particle.DustOptions dust = new Particle.DustOptions(color, 1.3F);

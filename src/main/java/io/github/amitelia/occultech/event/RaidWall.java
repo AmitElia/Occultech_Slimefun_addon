@@ -45,6 +45,7 @@ final class RaidWall implements RaidHazard {
     private final Map<UUID, Integer> shocked = new HashMap<>();
     @Nullable private BlockDisplay display;
     @Nullable private org.bukkit.entity.ItemDisplay pane;
+    private final java.util.List<org.bukkit.entity.ItemDisplay> posts = new java.util.ArrayList<>();
     private final Color tint;
     private int age;
 
@@ -84,6 +85,21 @@ final class RaidWall implements RaidHazard {
         return pane;
     }
 
+    /** A glowing pylon at {@code at} (a wall section's end), {@code height} tall, rising from the floor. */
+    static org.bukkit.entity.ItemDisplay post(BossFight fight, Location at, double height, Color tint) {
+        Location foot = at.clone();
+        foot.setYaw(0F);
+        foot.setPitch(0F);
+        org.bukkit.entity.ItemDisplay post = io.github.amitelia.occultech.boss.FloorDecals.model(fight, foot, "raid_wall_post", tint);
+        post.setTransformation(postShape(height));
+        return post;
+    }
+
+    static Transformation postShape(double height) {
+        return new Transformation(new Vector3f(0, (float) height / 2, 0), new AxisAngle4f(), new Vector3f(1.1F, (float) Math.max(0.01, height), 1.1F),
+            new AxisAngle4f());
+    }
+
     /** The pane's shape: its +x along the wall, {@code height} tall standing on the floor. */
     static Transformation paneShape(double dx, double dz, double height) {
         float length = (float) Math.hypot(dx, dz);
@@ -108,6 +124,11 @@ final class RaidWall implements RaidHazard {
             pane.setInterpolationDelay(0);
             pane.setInterpolationDuration(RISE_TICKS);
             pane.setTransformation(paneShape(b.getX() - a.getX(), b.getZ() - a.getZ(), height));
+            for (org.bukkit.entity.ItemDisplay post : posts) {
+                post.setInterpolationDelay(0);
+                post.setInterpolationDuration(RISE_TICKS);
+                post.setTransformation(postShape(height + 0.2));
+            }
         } else if (age == warnTicks + 1 && display != null && display.isValid()) {
             // a tick after it appears: grow to full height, smoothly
             Transformation flat = display.getTransformation();
@@ -123,6 +144,7 @@ final class RaidWall implements RaidHazard {
             if (pane != null) {
                 pane.remove();
             }
+            posts.forEach(org.bukkit.entity.ItemDisplay::remove);
             return false;
         }
         if (age >= warnTicks + RISE_TICKS / 2) {
@@ -157,6 +179,8 @@ final class RaidWall implements RaidHazard {
     private void rise() {
         if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
             pane = pane(fight, a, b, height, 0.01F, tint);
+            posts.add(post(fight, a, 0.01, tint));
+            posts.add(post(fight, b, 0.01, tint));
             a.getWorld().playSound(a.clone().add((b.getX() - a.getX()) / 2, 0, (b.getZ() - a.getZ()) / 2), Sound.BLOCK_BEACON_ACTIVATE, 1F, 1.4F);
             return;
         }

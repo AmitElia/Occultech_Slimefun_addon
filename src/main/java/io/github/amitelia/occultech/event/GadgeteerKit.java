@@ -99,7 +99,7 @@ final class GadgeteerKit extends StaffKit {
         body.getWorld().playSound(from, Sound.BLOCK_BEACON_ACTIVATE, 1F, 1.8F);
         warnLane(body.getLocation(), StaffKit.lane(body.getLocation(), to, BEAM_LENGTH), BEAM_WIDTH * 2, BEAM_WARNING, BEAM_COLOR);
         io.github.amitelia.occultech.boss.AirEffects.Streak aimLine = io.github.amitelia.occultech.boss.FloorDecals.enabled()
-            ? io.github.amitelia.occultech.boss.AirEffects.Streak.create(fight, "air_beam", from, to, BEAM_COLOR, 0.08F) : null;
+            ? io.github.amitelia.occultech.boss.AirEffects.Streak.create(fight, "raid_laser", from, to, BEAM_COLOR, 0.12F) : null;
         later(BEAM_WARNING, () -> {
             if (!alive()) {
                 return;
