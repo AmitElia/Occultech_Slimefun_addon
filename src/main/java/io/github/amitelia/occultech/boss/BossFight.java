@@ -547,6 +547,23 @@ public final class BossFight {
         return event ? 1 : service.healthMultiplier() * service.groupScaling().factor(playersAtStart);
     }
 
+    /** Falls this fight caused and hasn't seen land yet: player -> the mechanic to log the fall under. */
+    private final Map<UUID, String> falls = new HashMap<>();
+
+    /**
+     * {@code player} was thrown up by {@code mechanic} (a kidnap, an updraft): when they land, the combat log records the
+     * fall damage under it. Only a record: the fall is ordinary vanilla fall damage.
+     */
+    public void expectFall(Player player, String mechanic) {
+        falls.put(player.getUniqueId(), mechanic);
+    }
+
+    /** The mechanic a pending fall of {@code player} belongs to (taken: a fall is logged once), or null. */
+    @Nullable
+    String takeFall(UUID player) {
+        return falls.remove(player);
+    }
+
     /** This fight's behavior (the raid's tools look at their own). */
     @Nonnull
     public BossBehavior behavior() {
@@ -1044,8 +1061,8 @@ public final class BossFight {
 
     private void updateBar() {
         bar.setProgress(healthFraction());
-        // an event fight's bar shows only near it: a raid has many fights side by side
-        Set<Player> viewers = new HashSet<>(playersInRadius(spec.arenaRadius() + (event ? 2 : 16)));
+        // an event fight's bar shows only to players near its creatures: a raid has many fights over one arena
+        Set<Player> viewers = event ? playersNearBosses(20) : new HashSet<>(playersInRadius(spec.arenaRadius() + 16));
         for (Player player : new ArrayList<>(bar.getPlayers())) {
             if (!viewers.contains(player)) {
                 bar.removePlayer(player);
@@ -1109,6 +1126,19 @@ public final class BossFight {
     /** Heals a boss entity by a fraction of its maximum health. */
     public void healBoss(LivingEntity boss, double fraction) {
         heal(boss, fraction);
+    }
+
+    private Set<Player> playersNearBosses(double reach) {
+        Set<Player> out = new HashSet<>();
+        for (Player player : players()) {
+            for (LivingEntity boss : bosses) {
+                if (boss.getWorld() == player.getWorld() && boss.getLocation().distanceSquared(player.getLocation()) <= reach * reach) {
+                    out.add(player);
+                    break;
+                }
+            }
+        }
+        return out;
     }
 
     private List<Player> playersInRadius(double radius) {

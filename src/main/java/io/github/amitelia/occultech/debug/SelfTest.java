@@ -260,6 +260,12 @@ final class SelfTest {
         then(400, this::toolkitRan);
         then(0, () -> plugin.raids().stopDemo());
         then(30, this::raidCleanedUp);
+        then(0, this::councilStart);
+        then(5, this::councilShares);
+        then(200, this::councilRan);
+        then(0, this::councilFalls);
+        then(20, this::councilWon);
+        then(30, this::raidCleanedUp);
         next();
     }
 
@@ -2068,7 +2074,7 @@ final class SelfTest {
         List<String> missing = new java.util.ArrayList<>();
         List<String> ids = new java.util.ArrayList<>(List.of("RAID_DEV", "RAID_ABUSING", "RAID_FM", "RAID_BUILDER",
             "RAID_S4MURAI", "RAID_CHARLES", "RAID_PYR0", "RAID_PAIR", "RAID_DWARF", "RAID_BEE", "RAID_BAT", "RAID_JENN", "RAID_GRIFFON",
-            "RAID_RAVEN", "RAID_JOLLY", "RAID_TOOLKIT"));
+            "RAID_RAVEN", "RAID_JOLLY", "RAID_TOOLKIT", "RAID_COUNCIL"));
         for (io.github.amitelia.occultech.event.Archetype archetype : io.github.amitelia.occultech.event.Archetype.values()) {
             ids.add("RAID_" + archetype.name());
         }
@@ -2132,9 +2138,61 @@ final class SelfTest {
         boolean mounted = signatureStaff.entrySet().stream().anyMatch(e -> e.getValue().members().get(0).name().equals("Griffon_Master")
             && e.getKey().bosses().get(0).getVehicle() instanceof org.bukkit.entity.Horse);
         check("Griffon starts on horseback", mounted, "not mounted");
+        boolean safeHorse = signatureStaff.keySet().stream().flatMap(f -> f.bosses().stream())
+            .filter(b -> b.getVehicle() instanceof org.bukkit.entity.Horse).allMatch(b -> Keys.isUnhittable(b.getVehicle()));
+        check("Griffon's horse can't be hurt (hit the rider)", mounted && safeHorse, "the horse can be hit");
         BossFight pair = made.stream().filter(f -> f.bosses().size() == 2).findFirst().orElse(null);
         double earlScale = pair == null ? -1 : pair.bosses().get(0).getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue();
         check("Earl and Sam share one slot, Earl small", pair != null && Math.abs(earlScale - 0.7) < 1e-6, "scale " + earlScale);
+    }
+
+    /** Session E7: the Council. */
+    private BossFight council;
+
+    private void councilStart() {
+        List<String> problems = plugin.raids().begin(raidArena, 2, 9);
+        plugin.raids().skip();   // straight to Act 2
+        council = plugin.raids().council();
+        boolean three = council != null && council.bosses().size() == 3
+            && council.bosses().stream().allMatch(b -> b instanceof org.bukkit.entity.Mannequin);
+        check("skipping Act 1 brings the Council: three skinned bodies in one fight", problems.isEmpty() && three,
+            String.join("; ", problems) + (council == null ? " no council" : " " + council.bosses().size() + " bodies"));
+        if (council != null) {
+            double scale = council.bosses().get(0).getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue();
+            check("X is a giant", scale >= 5, "scale " + scale);
+        }
+    }
+
+    private void councilShares() {
+        if (council == null || !(council.behavior() instanceof io.github.amitelia.occultech.event.CouncilBehavior behavior)) {
+            check("the Council shares one health pool", false, "no council");
+            return;
+        }
+        LivingEntity x = council.bosses().get(0);
+        // a quarter of the pool, all on X
+        behavior.strike(x, behavior.poolSize() * 0.25);
+        List<Double> shares = council.bosses().stream()
+            .map(b -> b.getHealth() / b.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue()).toList();
+        boolean even = shares.stream().allMatch(s -> Math.abs(s - 0.75) < 0.01);
+        check("a hit on one Council member comes off everyone's shared bar", even && Math.abs(behavior.poolFraction() - 0.75) < 0.01, shares.toString());
+    }
+
+    private void councilRan() {
+        boolean running = council != null && !council.isOver();
+        int majors = running && council.behavior() instanceof io.github.amitelia.occultech.event.CouncilBehavior b ? b.majorsLaunched() : 0;
+        check("the Council fights for 10 s and runs its raid mechanics", running && majors >= 1,
+            (council == null ? "no council" : council.result() + ", " + majors + " mechanics"));
+    }
+
+    private void councilFalls() {
+        if (council != null && council.behavior() instanceof io.github.amitelia.occultech.event.CouncilBehavior behavior) {
+            behavior.strike(council.bosses().get(1), behavior.poolSize());
+        }
+    }
+
+    private void councilWon() {
+        check("emptying the bar fells all three at once and wins the raid", council != null && council.result() == BossFight.Result.VICTORY
+            && !plugin.raids().running(), (council == null ? "no council" : council.result() + ", raid running " + plugin.raids().running()));
     }
 
     /** Session E6: Act 2's toolkit, on its own. */
@@ -2152,6 +2210,13 @@ final class SelfTest {
 
     private void signaturesRan() {
         ranFor10s("every signature runs for 10 s without failing");
+        boolean stillMounted = signatureStaff.entrySet().stream().anyMatch(e -> e.getValue().members().get(0).name().equals("Griffon_Master")
+            && e.getKey().bosses().get(0).getVehicle() instanceof org.bukkit.entity.Horse);
+        check("Griffon is still in the saddle after 10 s", stillMounted, "dismounted");
+        List<String> problems = plugin.raids().spawnTest("Kon", raidArena.center(), 3);
+        int cleared = plugin.raids().clearTests();
+        check("/occultech event spawn <name> spawns one staff member by display name, and spawn clear removes them",
+            problems.isEmpty() && cleared == 1, String.join("; ", problems) + ", cleared " + cleared);
     }
 
     private void archetypesRan() {

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -32,12 +33,22 @@ public final class StaffBehavior extends BossBehavior {
 
     private final List<StaffMember> members;
     private final List<StaffKit> kits = new ArrayList<>();
+    @Nullable private final Location start;
     private RaidScaling.Body scale;
 
     /** {@code effective}: the health the slot should have for its group (before the pair split). */
     public StaffBehavior(BossFight fight, List<StaffMember> members, double effective) {
+        this(fight, members, effective, null);
+    }
+
+    /**
+     * As above, starting at {@code start} rather than the fight's middle: in a raid every staff fight spans the whole
+     * arena (they roam it, and anyone in it can hit them), but each starts at its own spot.
+     */
+    public StaffBehavior(BossFight fight, List<StaffMember> members, double effective, @Nullable Location start) {
         super(fight);
         this.members = List.copyOf(members);
+        this.start = start == null ? null : start.clone();
         setEffective(effective);
     }
 
@@ -51,7 +62,13 @@ public final class StaffBehavior extends BossBehavior {
     /** A blueprint that puts {@code members} on the floor with {@code effective} health. */
     @Nonnull
     public static BossBlueprint blueprint(List<StaffMember> members, double effective) {
-        return new BossBlueprint(ID, StaffBehavior.class, fight -> new StaffBehavior(fight, members, effective));
+        return blueprint(members, effective, null);
+    }
+
+    /** A blueprint that puts {@code members} on the floor at {@code start} (null: the fight's middle). */
+    @Nonnull
+    public static BossBlueprint blueprint(List<StaffMember> members, double effective, @Nullable Location start) {
+        return new BossBlueprint(ID, StaffBehavior.class, fight -> new StaffBehavior(fight, members, effective, start));
     }
 
     private void setEffective(double effective) {
@@ -59,7 +76,8 @@ public final class StaffBehavior extends BossBehavior {
     }
 
     @Override
-    public void spawn(Location at) {
+    public void spawn(Location middle) {
+        Location at = start != null ? start : middle;
         for (int i = 0; i < members.size(); i++) {
             StaffMember member = members.get(i);
             Location spot = at.clone().add(members.size() > 1 ? (i == 0 ? -1.5 : 1.5) : 0, 0.2, 0);

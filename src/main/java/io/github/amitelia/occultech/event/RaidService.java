@@ -35,10 +35,12 @@ public final class RaidService implements Listener {
     /** Loads the raid's attack classes, so the balance report sees their mechanics (ids starting {@code RAID_}). */
     public static void loadMechanics() {
         StaffKit.loadAll();
-        try {
-            Class.forName(ToolkitDemo.class.getName(), true, ToolkitDemo.class.getClassLoader());
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException(e);
+        for (Class<?> type : java.util.List.of(ToolkitDemo.class, Founder.class, Archer.class, Brewer.class)) {
+            try {
+                Class.forName(type.getName(), true, type.getClassLoader());
+            } catch (ClassNotFoundException e) {
+                throw new IllegalStateException(e);
+            }
         }
     }
 
@@ -84,7 +86,17 @@ public final class RaidService implements Listener {
         RaidScaling scaling = new RaidScaling(config.getDouble("players-per-target", 2.5), config.getInt("max-targets", 10),
             config.getDouble("health-exponent", 0.9));
         settings = new StaffRaid.Settings(config.getDouble("staff-health", 600), config.getInt("act1-minutes", 8) * 60,
-            Math.max(1, config.getInt("kills-per-target", 2)), scaling, Math.max(0.05, config.getDouble("health-multiplier", 1.0)));
+            Math.max(1, config.getInt("kills-per-target", 2)), scaling, Math.max(0.05, config.getDouble("health-multiplier", 1.0)),
+            config.getDouble("council-health", 6000), new CouncilBehavior.Cast(seat(config, "founder", "XmpriX", "X", "Community Founder"),
+                seat(config, "archer", "Leyfr", "Chlo", "Partnered Owner"), seat(config, "brewer", "PancakeAcoustics", "Pancake", "Staff COO")));
+    }
+
+    private static CouncilBehavior.Seat seat(ConfigurationSection config, String role, String name, String display, String title) {
+        ConfigurationSection seat = config.getConfigurationSection("council." + role);
+        if (seat == null) {
+            return new CouncilBehavior.Seat(name, display, title);
+        }
+        return new CouncilBehavior.Seat(seat.getString("name", name), seat.getString("display", display), seat.getString("title", title));
     }
 
     public void shutdown() {
@@ -178,6 +190,12 @@ public final class RaidService implements Listener {
         return raid != null;
     }
 
+    /** The Council's fight while Act 2 runs (self-test), or null. */
+    @Nullable
+    public io.github.amitelia.occultech.boss.BossFight council() {
+        return raid == null ? null : raid.council();
+    }
+
     /** Staff beaten so far in the running raid. */
     public int kills() {
         return raid == null ? 0 : raid.kills();
@@ -201,6 +219,66 @@ public final class RaidService implements Listener {
         if (raid != null) {
             raid.setHealthMultiplier(multiplier);
         }
+    }
+
+    // ------------------------------------------------------------------ testing one staff member or one act
+
+    /** Staff spawned on their own with {@code event spawn}. */
+    private final List<io.github.amitelia.occultech.boss.BossFight> tests = new java.util.ArrayList<>();
+
+    /**
+     * Spawns one staff member (or their pair) by username or display name at {@code at}, outside any raid, with health
+     * for {@code players}. Their fight spans the arena when {@code at} is in it, else 20 blocks around.
+     */
+    @Nonnull
+    public List<String> spawnTest(String name, org.bukkit.Location at, int players) {
+        java.util.List<StaffMember> slot = null;
+        for (java.util.List<StaffMember> each : roster.slots()) {
+            for (StaffMember member : each) {
+                if (member.name().equalsIgnoreCase(name) || member.display().equalsIgnoreCase(name)) {
+                    slot = each;
+                }
+            }
+        }
+        if (slot == null) {
+            return List.of("nobody called " + name + " on the roster");
+        }
+        org.bukkit.block.Block middle;
+        double radius;
+        if (arena != null && arena.contains(at)) {
+            middle = arena.floor(0, 0);
+            radius = arena.radius();
+        } else {
+            middle = at.getBlock().getRelative(0, -1, 0);
+            radius = 20;
+        }
+        double effective = settings.miniHealth() * settings.healthMultiplier() * settings.scaling().factor(players);
+        tests.removeIf(io.github.amitelia.occultech.boss.BossFight::isOver);
+        tests.add(bosses.startEvent(StaffBehavior.blueprint(slot, effective, at), StaffBehavior.spec(slot, radius), middle));
+        return List.of();
+    }
+
+    /** Removes everyone spawned with {@code event spawn}. */
+    public int clearTests() {
+        int cleared = 0;
+        for (io.github.amitelia.occultech.boss.BossFight fight : tests) {
+            if (!fight.isOver()) {
+                bosses.abort(fight, io.github.amitelia.occultech.boss.BossFight.Result.DISMISSED);
+                cleared++;
+            }
+        }
+        tests.clear();
+        return cleared;
+    }
+
+    /** Starts a raid straight at Act 2, the Council. */
+    @Nonnull
+    public List<String> beginCouncil(@Nullable Integer players) {
+        List<String> problems = begin(1, players);
+        if (problems.isEmpty() && raid != null) {
+            raid.skip();
+        }
+        return problems;
     }
 
     /**
@@ -293,6 +371,42 @@ public final class RaidService implements Listener {
     public void onTrickArrow(org.bukkit.event.entity.EntityDamageByEntityEvent e) {
         if (e.getEntity() instanceof Player player) {
             JollySignatures.applyTrick(player, e.getDamager());
+        }
+    }
+
+    /** A kidnapped player can't get off Chlo's seat until they're dropped; a staff rider never leaves their mount. */
+    @EventHandler(ignoreCancelled = true)
+    public void onDismount(org.bukkit.event.entity.EntityDismountEvent e) {
+        if (e.getEntity() instanceof Player && Archer.isSeat(e.getDismounted())) {
+            e.setCancelled(true);
+        } else if (e.getDismounted().getPersistentDataContainer().has(CreatureSignatures.MOUNT) && e.getDismounted().isValid()
+            && !e.getEntity().isDead() && e.getEntity().isValid()) {
+            e.setCancelled(true);
+        }
+    }
+
+    /** ...nor pearl or chorus out of it. */
+    @EventHandler(ignoreCancelled = true)
+    public void onEscape(org.bukkit.event.player.PlayerTeleportEvent e) {
+        org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause = e.getCause();
+        if ((cause == org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.ENDER_PEARL
+            || cause == org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.CONSUMABLE_EFFECT) && Archer.isSeat(e.getPlayer().getVehicle())) {
+            e.setCancelled(true);
+        }
+    }
+
+    /** Quitting mid-carry: off the seat, and back on the ground where they were. */
+    @EventHandler
+    public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
+        Player player = e.getPlayer();
+        org.bukkit.entity.Entity seat = player.getVehicle();
+        if (Archer.isSeat(seat)) {
+            seat.getPersistentDataContainer().remove(Archer.SEAT);
+            seat.eject();
+            org.bukkit.Location at = player.getLocation();
+            at.setY(at.getWorld().getHighestBlockYAt(at) + 1);
+            player.teleport(at);
+            player.setFallDistance(0);
         }
     }
 

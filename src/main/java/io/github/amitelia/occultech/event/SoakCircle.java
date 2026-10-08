@@ -66,14 +66,19 @@ final class SoakCircle implements RaidHazard {
     private List<Player> inside() {
         List<Player> out = new java.util.ArrayList<>();
         for (Player player : fight.players()) {
-            Location at = player.getLocation();
-            double dx = at.getX() - center.getX();
-            double dz = at.getZ() - center.getZ();
-            if (dx * dx + dz * dz <= radius * radius && Math.abs(at.getY() - center.getY()) < 2.5) {
+            if (holds(player)) {
                 out.add(player);
             }
         }
         return out;
+    }
+
+    /** Whether {@code player} stands in this circle now (Pancake aims updrafts at them). */
+    boolean holds(Player player) {
+        Location at = player.getLocation();
+        double dx = at.getX() - center.getX();
+        double dz = at.getZ() - center.getZ();
+        return dx * dx + dz * dz <= radius * radius && Math.abs(at.getY() - center.getY()) < 2.5;
     }
 
     @Override

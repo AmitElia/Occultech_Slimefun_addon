@@ -34,10 +34,11 @@ import io.github.amitelia.occultech.boss.tier2.Abyss;
  * can't be ridden, leashed, tamed or kept.
  * <ul>
  * <li><b>bees</b> (bee_grand): a few angry bees at a time; vanilla bees sting with poison and die after stinging.</li>
- * <li><b>bats</b> (Bat): a swarm circles him and hides him (he takes half damage meanwhile), then a player is marked and
+ * <li><b>bats</b> (Bat): a swarm circles and hides Bat (half damage meanwhile), then a player is marked and
  * the swarm dives on the spot.</li>
  * <li><b>foxes</b> (Jenn): a couple of foxes dart in, bite, and dart out again.</li>
- * <li><b>mount</b> (Griffon): he fights from horseback and charges down warned lanes; kill the horse and he's on foot.</li>
+ * <li><b>mount</b> (Griffon): fights from horseback, all fight long, and charges down warned lanes. The horse can't be
+ * hurt: hit the rider.</li>
  * </ul>
  */
 final class CreatureSignatures {
@@ -57,6 +58,11 @@ final class CreatureSignatures {
 
         Bees(StaffKit kit) {
             super(kit, 60);
+        }
+
+        @Override
+        boolean replacesHelpers() {
+            return true;
         }
 
         @Override
@@ -89,7 +95,7 @@ final class CreatureSignatures {
         }
     }
 
-    /** Bat's swarm: hides him, then dives on a marked spot. */
+    /** Bat's swarm: hides Bat, then dives on a marked spot. */
     static final class Bats extends Signature {
 
         private static final int COUNT = 6;
@@ -105,6 +111,11 @@ final class CreatureSignatures {
 
         Bats(StaffKit kit) {
             super(kit, 100);
+        }
+
+        @Override
+        boolean replacesHelpers() {
+            return true;
         }
 
         @Override
@@ -201,6 +212,11 @@ final class CreatureSignatures {
         }
 
         @Override
+        boolean replacesHelpers() {
+            return true;
+        }
+
+        @Override
         boolean cast(int now) {
             foxes.keySet().removeIf(f -> !f.isValid() || f.isDead());
             if (kit.target == null || foxes.size() >= MAX) {
@@ -255,6 +271,9 @@ final class CreatureSignatures {
         }
     }
 
+    /** Entity data on a staff member's mount. */
+    static final org.bukkit.NamespacedKey MOUNT = new org.bukkit.NamespacedKey("occultech", "raid_mount");
+
     /** Griffon on horseback. */
     static final class Mount extends Signature {
 
@@ -281,6 +300,9 @@ final class CreatureSignatures {
                 Abyss.puppet(horse);
                 horse.setGravity(true);
                 horse.addPassenger(kit.body);
+                // hit the rider, not the horse; and the rider never gets off (RaidService stops dismounts)
+                io.github.amitelia.occultech.core.Keys.setUnhittable(horse, true);
+                horse.getPersistentDataContainer().set(MOUNT, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
             }
         }
 
@@ -332,7 +354,7 @@ final class CreatureSignatures {
                 }
                 return;
             }
-            // the horse carries him: toward his target, or home when too far out
+            // the horse carries the rider: toward the target, or home when too far out
             Location center = kit.fight.center();
             boolean far = horse.getLocation().distanceSquared(center) > Math.pow(kit.fight.radius() - 1, 2);
             Player target = kit.target;

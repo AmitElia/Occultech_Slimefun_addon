@@ -25,7 +25,7 @@ import io.github.amitelia.occultech.boss.Mechanic;
  * <ul>
  * <li>Egg sacs: two sacs that hatch two cave spiders each after 6 s unless smashed (3 hits).</li>
  * <li>Web zone: a player's spot warns for 1.5 s, then slows anyone inside for 8 s.</li>
- * <li>Pounce: a ring warns under a distant player while he hisses, then he leaps onto it.</li>
+ * <li>Pounce: a ring warns under a distant player while Raven hisses, then Raven leaps onto it.</li>
  * </ul>
  */
 final class SpiderSignature extends Signature {
@@ -48,6 +48,11 @@ final class SpiderSignature extends Signature {
 
     SpiderSignature(StaffKit kit) {
         super(kit, 60);
+    }
+
+    @Override
+    boolean replacesHelpers() {
+        return true;
     }
 
     @Override

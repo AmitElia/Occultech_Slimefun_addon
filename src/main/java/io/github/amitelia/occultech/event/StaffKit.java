@@ -238,7 +238,7 @@ abstract class StaffKit {
     }
 
     void move() {
-        if (!alive() || steered()) {
+        if (!alive() || steered() || body.isInsideVehicle()) {   // a rider goes where the mount takes them
             return;
         }
         if (fighting(target)) {

@@ -785,6 +785,16 @@ public final class BossService implements Listener {
                 label = kind + " (" + source.getType().name().toLowerCase() + ")";
             }
         }
+        if (fight == null && e.getCause() == DamageCause.FALL) {
+            for (BossFight candidate : fights.values()) {
+                String thrown = candidate.takeFall(player.getUniqueId());
+                if (thrown != null) {
+                    fight = candidate;
+                    label = thrown + " (fall)";
+                    break;
+                }
+            }
+        }
         if (fight == null) {
             for (BossFight candidate : fights.values()) {
                 if (candidate.inArena(player)) {

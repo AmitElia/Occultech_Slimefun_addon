@@ -105,6 +105,11 @@ abstract class Signature {
         return 0;
     }
 
+    /** True if this signature brings its own creatures, so a Summoner calls no zombie helpers. */
+    boolean replacesHelpers() {
+        return false;
+    }
+
     /** Below 1: the body moves and swings faster. */
     double pace() {
         return 1;

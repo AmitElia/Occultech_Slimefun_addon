@@ -29,7 +29,7 @@ import io.papermc.paper.datacomponent.item.ResolvableProfile;
 /**
  * Signatures that trick rather than hurt (Session E5).
  * <ul>
- * <li><b>decoys</b> (Kon, the Jester): three copies of him wander the floor. The real one gives off a faint sparkle.
+ * <li><b>decoys</b> (Kon, the Jester): three copies of Kon wander the floor. The real one gives off a faint sparkle.
  * Hitting a decoy pops it, makes you glow for 3 s and lets Kon slip away to a new spot.</li>
  * <li><b>denied</b> (Nick, Spleen): the Hexer's mark shows a red DENIED over the marked player, stamped on the floor when
  * it bursts.</li>
@@ -137,7 +137,7 @@ final class TricksterSignatures {
             if (age - bornAt > LIFE) {
                 clear();
             }
-            // the decoys act like him, but never attack
+            // the decoys act like Kon, but never attack
             for (Mannequin decoy : decoys) {
                 Player near = kit.fight.nearestPlayer(decoy.getLocation());
                 if (near != null) {

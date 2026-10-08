@@ -18,6 +18,9 @@ import org.bukkit.entity.Player;
  * <li>{@code skip}: on to the next act; {@code stop}: ends the raid</li>
  * <li>{@code hp <multiplier>}: staff health, live</li>
  * <li>{@code status}: the raid's state, slot by slot</li>
+ * <li>{@code spawn <name> [players]}: one staff member (or their pair) by username or display name where you stand, to
+ * try them; {@code spawn clear} removes them</li>
+ * <li>{@code stage <1|2> [players]}: starts the raid at the Staff Floor, or straight at the Council</li>
  * <li>{@code demo [soak|marker|barrier|laser|ring|all] [band 1-3]}, {@code demo stop}: Act 2's toolkit on its own, at the
  * arena's middle (or where you stand without an arena), at a pace band</li>
  * </ul>
@@ -55,6 +58,32 @@ public final class RaidCommand {
                         : "&7No raid is running; set raid.health-multiplier in config.yml for the next one.");
                 }
                 case "status" -> raids.status().forEach(line -> tell(sender, "&7" + line));
+                case "spawn" -> {
+                    if (args.length > 2 && args[2].equalsIgnoreCase("clear")) {
+                        tell(sender, "&7Cleared " + raids.clearTests() + " test staff.");
+                        return;
+                    }
+                    if (!(sender instanceof Player player) || args.length < 3) {
+                        tell(sender, "&cIn game: /occultech event spawn <name> [players], or /occultech event spawn clear");
+                        return;
+                    }
+                    int players = args.length > 3 ? Integer.parseInt(args[3]) : 1;
+                    List<String> problems = raids.spawnTest(args[2], player.getLocation(), players);
+                    if (problems.isEmpty()) {
+                        tell(sender, "&aSpawned &f" + args[2] + " &afor " + players + " player(s). &7/occultech event spawn clear removes them.");
+                    } else {
+                        problems.forEach(p -> tell(sender, "&c" + p));
+                    }
+                }
+                case "stage" -> {
+                    String stage = args.length > 2 ? args[2] : "1";
+                    Integer players = args.length > 3 ? Integer.valueOf(args[3]) : null;
+                    List<String> problems = stage.equals("2") ? raids.beginCouncil(players) : raids.begin(null, players);
+                    if (!problems.isEmpty()) {
+                        tell(sender, "&cThe raid can't start:");
+                        problems.forEach(p -> tell(sender, "&c - " + p));
+                    }
+                }
                 case "demo" -> {
                     if (args.length > 2 && args[2].equalsIgnoreCase("stop")) {
                         raids.stopDemo();
@@ -111,17 +140,26 @@ public final class RaidCommand {
 
     private static void usage(CommandSender sender) {
         tell(sender, "&7Usage: /occultech event <arena [set <radius>] | start [targets] [players] | skip | stop | hp <multiplier> | status"
-            + " | demo [hazard|all] [band] | demo stop>");
+            + " | spawn <name> [players] | spawn clear | stage <1|2> [players] | demo [hazard|all] [band] | demo stop>");
     }
 
-    /** Tab completion after "event". */
+    /** Tab completion after "event"; {@code roster} names the staff for {@code spawn}. */
     @Nonnull
-    public static List<String> complete(@Nonnull String[] args) {
+    public static List<String> complete(@Nonnull String[] args, @javax.annotation.Nullable StaffRoster roster) {
         if (args.length == 2) {
-            return List.of("arena", "start", "skip", "stop", "hp", "status", "demo");
+            return List.of("arena", "start", "skip", "stop", "hp", "status", "spawn", "stage", "demo");
         }
         if (args.length == 3 && args[1].equalsIgnoreCase("arena")) {
             return List.of("set");
+        }
+        if (args.length == 3 && args[1].equalsIgnoreCase("stage")) {
+            return List.of("1", "2");
+        }
+        if (args.length == 3 && args[1].equalsIgnoreCase("spawn") && roster != null) {
+            List<String> names = new java.util.ArrayList<>(List.of("clear"));
+            roster.members().values().forEach(member -> names.add(member.display()));
+            String typed = args[2].toLowerCase(java.util.Locale.ROOT);
+            return names.stream().filter(n -> n.toLowerCase(java.util.Locale.ROOT).startsWith(typed)).toList();
         }
         if (args.length == 3 && args[1].equalsIgnoreCase("demo")) {
             return List.of("all", "soak", "marker", "barrier", "laser", "ring", "stop");

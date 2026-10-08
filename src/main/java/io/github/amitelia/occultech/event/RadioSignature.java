@@ -12,7 +12,7 @@ import org.bukkit.Sound;
 import io.github.amitelia.occultech.boss.Mechanic;
 
 /**
- * FM's radio waves (Session E3): rings of sound spread out from him, and their pitch says what they are. A high
+ * FM's radio waves (Session E3): rings of sound spread out from FM, and their pitch says what they are. A high
  * chime: three fast, low rings - jump each one. A deep bass note: one slow ring too tall to jump, with a gap - walk
  * through the gap.
  */

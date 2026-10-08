@@ -271,7 +271,7 @@ public final class OccultechCommand implements TabExecutor {
             return List.of("selftest", "showcase", "studio", "restock", "inspect", "unlockhalos", "iteminfo", "setslot", "fights", "begin", "kit", "balance", "event");
         }
         if (args.length >= 2 && args[0].equalsIgnoreCase("event")) {
-            return io.github.amitelia.occultech.event.RaidCommand.complete(args);
+            return io.github.amitelia.occultech.event.RaidCommand.complete(args, plugin.raids().roster());
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("showcase")) {
             return List.of("clear");

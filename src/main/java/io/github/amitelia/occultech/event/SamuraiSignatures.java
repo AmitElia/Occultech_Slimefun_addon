@@ -24,12 +24,12 @@ import io.github.amitelia.occultech.boss.tier2.Abyss;
 /**
  * S4MURAI's signatures (Session E4).
  * <ul>
- * <li><b>enderstep</b>: arrows and other projectiles never land - he steps away like an enderman, 8-16 blocks, staying in
- * his fight. Close in instead.</li>
- * <li><b>swap</b>: hit him in melee and he trades places with you (once every 4 s, only between two safe spots).</li>
+ * <li><b>enderstep</b>: arrows and other projectiles never land - S4MURAI steps away like an enderman, 8-16 blocks,
+ * staying in the fight. Close in instead.</li>
+ * <li><b>swap</b>: a melee hit on S4MURAI trades your places (once every 4 s, only between two safe spots).</li>
  * <li><b>katana</b>: a red and black katana (boss-only; its model comes in the art pass, a netherite sword until then).
- * Takes turns between an iai slash - a red line warns, then he flashes to its end and cuts everyone on it - and a
- * crescent sweep in front of him.</li>
+ * Takes turns between an iai slash - a red line warns, then S4MURAI flashes to its end and cuts everyone on
+ * it - and a crescent sweep in front.</li>
  * </ul>
  */
 final class SamuraiSignatures {
@@ -41,7 +41,7 @@ final class SamuraiSignatures {
 
     private SamuraiSignatures() {}
 
-    /** Projectiles pass; he steps away. */
+    /** Projectiles pass; S4MURAI steps away. */
     static final class Enderstep extends Signature {
 
         Enderstep(StaffKit kit) {
@@ -105,23 +105,23 @@ final class SamuraiSignatures {
             if (player == null || !kit.alive() || !kit.fighting(player)) {
                 return;
             }
-            Location his = kit.body.getLocation();
+            Location own = kit.body.getLocation();
             Location theirs = player.getLocation();
-            if (!standable(his) || !standable(theirs)) {
+            if (!standable(own) || !standable(theirs)) {
                 return;
             }
             ready = kit.fight.elapsed() + COOLDOWN;
-            Location playerTo = his.clone();
+            Location playerTo = own.clone();
             playerTo.setYaw(theirs.getYaw());
             playerTo.setPitch(theirs.getPitch());
             Location bodyTo = theirs.clone();
-            bodyTo.setDirection(his.toVector().subtract(theirs.toVector()));
+            bodyTo.setDirection(own.toVector().subtract(theirs.toVector()));
             player.teleport(playerTo);
             kit.body.teleport(bodyTo);
-            for (Location at : new Location[] { his, theirs }) {
+            for (Location at : new Location[] { own, theirs }) {
                 at.getWorld().spawnParticle(Particle.REVERSE_PORTAL, at.clone().add(0, 1, 0), 25, 0.3, 0.7, 0.3, 0.05);
             }
-            his.getWorld().playSound(his, Sound.ENTITY_ENDERMAN_TELEPORT, 1F, 1.5F);
+            own.getWorld().playSound(own, Sound.ENTITY_ENDERMAN_TELEPORT, 1F, 1.5F);
             player.sendActionBar(Component.text("Swapped!", NamedTextColor.RED));
         }
 
@@ -186,7 +186,7 @@ final class SamuraiSignatures {
                 for (Player player : kit.playersAlong(from, to, 1.3)) {
                     kit.fight.hit(player, IAI, kit.body);
                 }
-                // the flash: he's at the far end of the cut
+                // the flash: S4MURAI ends up at the far end of the cut
                 Block feet = to.getBlock();
                 if (feet.isPassable() && feet.getRelative(0, 1, 0).isPassable()) {
                     Location end = to.clone();

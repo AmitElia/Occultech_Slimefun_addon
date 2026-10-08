@@ -31,6 +31,13 @@ raid:
   # Act 1 ends after kills-per-target x (staff on the floor) staff are beaten, or after act1-minutes
   kills-per-target: 2
   act1-minutes: 8
+  # Act 2: the Council's shared health for one player, before raid scaling (x players^health-exponent x health-multiplier)
+  council-health: 6000
+  # Who sits on the Council. name = Minecraft username (their skin), display = the name shown, title = the line under it
+  council:
+    founder: {name: XmpriX, display: X, title: Community Founder}
+    archer: {name: Leyfr, display: Chlo, title: Partnered Owner}
+    brewer: {name: PancakeAcoustics, display: Pancake, title: Staff COO}
   # Who can appear. name = Minecraft username (their skin unless skin: is set), display = the name shown, title = the
   # line under it. archetype: bruiser, controller, skirmisher, summoner, gadgeteer or hexer. signatures: their own
   # abilities. with: a partner who fights in the same slot (the partner isn't picked on their own). scale: body size.

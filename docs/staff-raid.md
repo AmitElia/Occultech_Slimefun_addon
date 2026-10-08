@@ -20,6 +20,9 @@ Staff have agreed to the idea. Rewards are not designed yet.
 ## Arena and commands
 - `/occultech event arena set <radius>` saves the arena center and radius (about 45). Setup refuses a roofed arena:
   the sky has to be open 30 blocks above the floor, because players get thrown up.
+- `/occultech event spawn <name> [players]` spawns one staff member (or their pair) by username or display name where you
+  stand, outside any raid, to try them; `event spawn clear` removes them. `event stage <1|2> [players]` starts the raid at
+  the Staff Floor or straight at the Council.
 - `/occultech event start [targets] [players]` starts Act 1 (the numbers override the staff on the floor and the player count it scales for), `event skip` goes on to Act 2, and `event stop` ends the event
   and cleans up. `event hp <multiplier>` changes boss health during the event, for tuning live on the first runs.
 - Participants are everyone inside the arena, and players can join mid-event. A player who dies respawns at the arena
@@ -27,8 +30,9 @@ Staff have agreed to the idea. Rewards are not designed yet.
 
 ## Act 1 - the Staff Floor
 - **Number of targets:** `N = clamp(round(players / 2.5), 2, 10)`, or the `[targets]` given in the command. Each
-  target stands in its own part of the arena with a small leash (about 10 blocks), so the crowd splits up into
-  groups of about 2-3.
+  starts at its own spot spread over the arena, so the crowd splits up into groups of about 2-3. Every staff fight
+  spans the whole arena: staff roam it, anyone in the arena can hit them, and each one's bar shows to players within
+  20 blocks of them.
 - **Who appears is random each run,** with no repeats until the roster runs out. Earl + Sam take up one target
   between the two of them.
 - **Refill:** when a target dies, a new random staff member spawns in its spot. Act 1 ends after `2 × N` kills, or
@@ -43,7 +47,7 @@ Each one sets the base movement and melee and one generic move. The signature ab
 | Bruiser | slow (0.22), can't be knocked back | Heavy blow, every 1.5 s (15%) | **Ground slam**: a 4-block ring warns for 1.5 s, then hits and throws back (24%) |
 | Controller | medium (0.24), keeps 6 blocks off | Shove that pushes you back (11%) | **Zone denial**: patches under up to 2 players warn for 1.5 s, then hurt every second for 5 s (4%/s) |
 | Skirmisher | fast (0.34), backs off 1 s after each hit | Quick cut, every 0.75 s (9%) | **Dash**: a red lane warns for 1.25 s, then it dashes 10 blocks down it (19%) |
-| Summoner | slow (0.22), keeps 8 blocks off | Swipe (9%) | **Helpers**: 2 weak zombies at a time, at most 3 (6% a hit) |
+| Summoner | slow (0.22), keeps 8 blocks off; a ranged **bolt** every 2 s at whoever is 4-20 blocks off (9%) | Swipe (9%) | **Helpers**: 2 weak zombies at a time, at most 3 (6% a hit). Not for summoners who bring their own creatures (bees, bats, foxes, spiders) |
 | Gadgeteer | medium (0.24), keeps 7 blocks off | Wrench (11%) | Takes turns: **Beam** (the lane warns for 1.5 s and fires where aimed, 18%, ignores armor), **Trap** (a marked circle that snaps on the first player in, 17% + slowness; up to 3) |
 | Hexer | medium (0.26), keeps 7 blocks off | Hex touch (9%) | **Mark**: a player glows for 3 s, then the mark bursts on everyone within 3 blocks of them (16%, ignores armor) |
 
@@ -56,21 +60,21 @@ A staff member's moves take turns: while a warned move is under way, nothing els
 |---|---|---|
 | MrTroxy, Dj | Gadgeteer | **hotfix** takes turns between three moves. **Beam**: a lane warns for 1.5 s, then the word HOTFIX fires down it (18%, ignores armor). **Stamp**: HOTFIX appears on the floor inside a ring, then lands (19%). **Sweep**: a 150° fan warns, then a beam of HOTFIX words swings through it (16%, ignores armor). **system_bug**: glowing endermites and silverfish named `SYSTEM BUG`, 2 per call, at most 4, 6 health each (5% a bite). They can't burrow into blocks. **rollback**: the spot each nearby player stood on 4 s ago is marked ROLLBACK, then it breaks (14%, ignores armor) |
 | Abusing | Bruiser | His skin is a creeper. **replicas**: half-size Mannequins of his skin, 2 per call and at most 6, that run at players. Next to one, a replica stops, swells and hisses inside a 3-block ring for 1.5 s, then bursts (17%). One hit kills a replica. **big_fuse**: he swells inside a 5-block ring for 2 s, then blasts everyone near him away (26%) |
-| S4MURAI | Skirmisher | **enderstep**: projectiles never land; he steps 8-16 blocks away like an enderman, staying in his fight. **swap**: a melee hit trades places with the attacker (once every 4 s, only between two safe spots, never with someone in the air). **katana**: a red and black katana (boss-only; a netherite sword until the art pass). Takes turns between an **iai slash** (a red line warns, then he flashes to its end and cuts everyone on it, 24%) and a **crescent sweep** (a half ring in front of him, 21%) |
+| S4MURAI | Skirmisher | **enderstep**: projectiles never land; S4MURAI steps 8-16 blocks away like an enderman, staying in the fight. **swap**: a melee hit trades places with the attacker (once every 4 s, only between two safe spots, never with someone in the air). **katana**: a red and black katana (boss-only; a netherite sword until the art pass). Takes turns between an **iai slash** (a red line warns, then S4MURAI flashes to its end and cuts everyone on it, 24%) and a **crescent sweep** (a half ring in front, 21%) |
 | Charles | Controller | Space theme. **meteors**: shadows grow under up to 3 players and 2 nearby spots, then magma meteors fall into them (19%). **moons**: 3 moons orbit him for 10 s and hurt on contact (13%, once a second). **black_hole**: it grows over him for 2 s, pulls everyone within 9 blocks in for 2 s (a sprint beats the pull), then collapses on whoever is within 3 (18%, ignores armor). **low_gravity**: a 7-block field of slow falling and high jumps for 6 s, now and then and whenever the black hole charges (potion effects only) |
 | pyr0 | Bruiser | Cow theme. **stampede**: a wide lane warns, then he and 3 cows charge 12 blocks down it (21%). **moo**: a deep moo knocks back everyone in a 70° cone in front of him (15%). **milk**: below 75% health he stops to drink milk for 2 s and heals 12% unless 8% of his health in damage interrupts him ("spilled the milk!"). **hay**: shadows under up to 3 players, then hay bales drop (17%, slows) |
 | Earl + Sam | Bruiser + Skirmisher (one slot) | A couple who fight together. **bond**: a tether between them hurts anyone crossing it (13%, ignores armor) and sweeps as they move. **together**: each takes half damage within 6 blocks of the other, so split them. When one falls the other is furious: 30% faster for the rest of the fight. **rescue**: once a fight, when one drops below 30% the healthier one dashes over and their health evens out. Earl is small (`scale: 0.7`) and slams. Sam's **daggers** poison for 3 s |
 | mrlonelydwarf | Skirmisher | Mining theme with a diamond pickaxe. **burrow**: he digs down into the floor and comes up behind the most isolated player (the one farthest from any teammate). No blocks are broken. He sinks over 1 s with digging particles and the floor's own break sound, stays under for 2 s, then rises the same way behind his target. A ring marks the spot and his rise is the warning; then comes a pickaxe strike (26%). From the first dig until he's out, nothing hurts, knocks back or stops him, and arrows pass through. His name tag hides while he's underground |
-| FM | Controller | **radio**: rings spread from him, and the pitch tells you which kind. **High chime**: three fast low rings; jump each one (15%). **Deep bass**: one slow ring too tall to jump, with a 3-block gap to walk through (19%) |
+| FM | Controller | **radio**: rings spread from FM, and the pitch tells you which kind. **High chime**: three fast low rings; jump each one (15%). **Deep bass**: one slow ring too tall to jump, with a 3-block gap to walk through (19%) |
 | Proxy, Atlas | Controller | Same kit. **walls**: two crossing walls rise through the group for 8 s (a line warns first). Touching one pushes you back to your side and shocks you (4%, at most once a second). **tnt**: takes turns between throwing TNT at up to 3 players and laying a line of 5 TNT down a lane that goes off one after another. Each TNT flashes for 2 s inside its ring (21%). The walls and TNT are displays; no real blocks |
-| Kon | Hexer | **decoys**: 3 copies of him (same skin and name) wander the floor without attacking. Only the real Kon gives off a faint sparkle. Hitting a decoy pops it: you glow for 3 s and Kon slips to a new spot, often trading places with a decoy |
+| Kon | Hexer | **decoys**: 3 copies of Kon (same skin and name) wander the floor without attacking. Only the real Kon gives off a faint sparkle. Hitting a decoy pops it: you glow for 3 s and Kon slips to a new spot, often trading places with a decoy |
 | bee_grand | Summoner | **bees**: 3 angry bees per call, at most 5 (4% a sting plus vanilla poison); vanilla bees die after stinging |
-| Bat | Summoner | **bats**: 6 bats circle him for 2 s while he takes half damage, then a player's spot is marked for 1.5 s and the swarm dives on it (17%) |
-| Griffon | Skirmisher | **mount**: he starts on a white horse (40 health, can't be ridden or kept) and charges down warned lanes (19%) instead of dashing. Kill the horse and he's on foot |
+| Bat | Summoner | **bats**: 6 bats circle Bat for 2 s while Bat takes half damage, then a player's spot is marked for 1.5 s and the swarm dives on it (17%) |
+| Griffon | Skirmisher | **mount**: Griffon fights the whole time on a white horse that can't be hurt, ridden or kept (hit the rider), and charges down warned lanes (19%) instead of dashing |
 | Jenn | Summoner | **foxes**: 2 per call, at most 3. They dart in, bite (5%) and dart away for 1.5 s, then come back |
 | Nick, Spleen | Hexer | **denied**: their hex mark shows a red DENIED over the marked player, stamped on the floor when it bursts |
 | Jolly | Skirmisher | A funny, very fast archer (30% faster than a skirmisher, and he holds a bow). He keeps 9 blocks off and shoots instead of swinging: no melee and no dash. **trick_arrows**: an arrow every 1.5 s (11%), each carrying a random short annoying effect, its colour on the arrow and a line in your action bar: nausea, wither, slowness, blindness, hunger, a little levitation hop or glowing. **fart_jump**: when someone gets within 4 blocks (and now and then anyway), a loud fart and a brown-green cloud launch him 9-13 blocks to the spot farthest from everyone. Where he lands, a stink cloud gives nausea for 3 s (no damage). **whoopee_cushions**: 3 pink cushions dropped 2-4 blocks from players (never under them), at most 6, each lasting 15 s. Stepping on one gives a fart, a pop up of about 2.5 blocks and nausea. The fart is a vanilla stand-in (didgeridoo + slime) until the art pass adds a real sound to the pack |
-| Raven | Summoner | **spiders**, the Brood Mother's (tier 0) abilities tuned for netherite and taken in turn. **Egg sacs**: 2 sacs that hatch 2 cave spiders each after 6 s unless smashed (3 hits; 5% a bite). **Web zone**: a player's spot warns for 1.5 s, then slows anyone inside for 8 s. **Pounce**: a ring warns under the nearest player more than 5 blocks off while he hisses, then he leaps onto it (19%) |
+| Raven | Summoner | **spiders**, the Brood Mother's (tier 0) abilities tuned for netherite and taken in turn. **Egg sacs**: 2 sacs that hatch 2 cave spiders each after 6 s unless smashed (3 hits; 5% a bite). **Web zone**: a player's spot warns for 1.5 s, then slows anyone inside for 8 s. **Pounce**: a ring warns under the nearest player more than 5 blocks off while Raven hisses, then Raven leaps onto it (19%) |
 | goob, Amya, maka, OldeGrumpy, SuckedBean, YahooFlop, justafable | by role | Archetype only. A signature can be added later in config once one is written |
 
 ## Act 2 - The Council
@@ -108,35 +112,44 @@ runs them on their own around an invulnerable dummy at the arena's middle (or wh
 | 33-0% | 3 | x0.65 | 4 | 2 | yes |
 | soft enrage (15 min) | the last band whatever the health, plus 5% more damage every 30 s | | | | |
 
+### How the Council fights (Session E7)
+One event fight with three Mannequin bodies (`CouncilBehavior`). The pool is `council-health x players^0.9 x health-multiplier`
+(config `raid.council-health`, 6000 to start; tune from the combat logs). Every hit comes off the pool; each body's health
+attribute only shows the pool's share, so all three always read the same and fall together. Who sits on the Council is config
+(`raid.council.founder/archer/brewer`). A conductor sets off one raid mechanic every 8 s (shorter as the pace rises), as many at
+once as the band allows. Each member's own attacks run on their own cooldowns, scaled by the pace. Arena players see the
+Council's bar; everyone else sees the raid bar with the share and pace band. `event skip` in Act 2 ends the raid.
+
 ### X - the Founder (giant)
-A Mannequin scaled to about ×8.
-- **Stomp**: rings spread out from his feet and you jump over them.
-- **Founder's Sweep**: spinning lasers around him.
-- **Foundation Stones**: he marks soak circles.
-- **Kick**: a cone of forward knockback.
-- **Stagger**: enough damage on his ankles and he kneels for a few seconds, and hits on his head do bonus damage.
+A Mannequin at scale 6 (about 11 blocks tall) that can't be knocked back. X walks slowly and stays near the middle.
+- **Crush**: whoever stands at X's feet, every 2 s (15%).
+- **Stomp** (raid mechanic): a ring warns at X's feet for 1.5 s, then rings spread over the floor to jump (15%). There are two waves from the middle band on.
+- **Founder's Sweep** (raid mechanic): spinning lasers around X, alternating low beams and full-height beams with gaps (16%, ignores armor).
+- **Foundation Stones** (raid mechanic): soak circles (13% a share when soaked exactly, 24% to everyone if a circle is left empty).
+- **Kick**: a 60° cone in front of X warns for 1.25 s, then everyone in it flies (19%).
+- **Stagger**: 1.5% of the pool in damage at X's feet within 8 s and X drops to a knee for 4 s, taking 50% more damage. It can't happen again for 20 s after that.
 
 ### Chlo - aerial archer
-Glides above the arena (the Abyss / Night Matriarch movement).
-- **Arrow rain**: AoE markers on players.
-- **Arrow wall**: a moving barrier with a gap.
-- **Kidnap**: the full design is below.
-- **Grounded windows**: after a kidnap or a dive she lands for a few seconds and takes bonus damage.
+Circles the arena 8 blocks up with a bow, out of melee reach.
+- **Arrows** at a random player in sight, every 2 s (11%).
+- **Arrow rain** (raid mechanic): markers on players (16%, ignores armor). Spread out.
+- **Arrow wall** (raid mechanic): a barrier sweeps the floor (15%). Find its gap.
+- **Kidnap**: about every 20 s, shorter as the pace rises.
+  1. A player on the ground (never the last one taken, never one already in the air) is marked for 2 s.
+  2. Chlo swoops in. The player rides an invisible seat under Chlo and can't dismount, pearl or chorus out.
+  3. Chlo climbs about 13 blocks with 3 talon strikes (about 9% each).
+  4. Chlo drops them: ordinary fall damage, about 18% from the top in the benchmark kit, and the combat log records it under the kidnap. Damage worth 1% of the pool on Chlo during the carry makes the drop come early, from lower.
+  5. **Grounded window**: Chlo then lands for 4 s and takes 50% more damage.
 
-**Kidnap:**
-1. She marks a player (2 s telegraph) and swoops in.
-2. The player rides an invisible seat under her, and sneaking can't dismount it.
-3. She climbs to about 15 blocks and lands 2-3 melee hits, each about 7% HP.
-4. Then she drops them. Enough damage on her during the carry makes her drop them early, from lower.
+  Quitting mid-carry puts the player back on the ground at the same x/z.
 
 ### Pancake - the COO (brewer)
-- **Splash potions**: they land on marked circles.
-- **Syrup**: lingering puddles that slow and cover more of the floor as the fight goes on.
-- **Taste test**: she brews a big potion and soak circles appear; if they aren't covered, it bursts.
-- **Updraft**: she interrupts players. A marked player (2 s of swirling bubbles) is sent straight up about 12
-  blocks and takes the fall. She aims at players standing in soak circles or attacking her, so others have to cover.
-- **Drink**: she drinks for 3 s (loud sound + particles) and heals the shared bar unless enough damage on her
-  interrupts it.
+Keeps about 9 blocks from the crowd.
+- **Splash potions**: bottles arc onto marked circles under up to 3 players for 1.5 s (16%, ignores armor; slowness and weakness).
+- **Syrup**: sticky puddles that slow, 1 / 2 / 3 at a time by pace band, lasting 15 s.
+- **Taste test** (raid mechanic): soak circles (same numbers as the Foundation Stones).
+- **Updraft**: Pancake's way of interrupting players. A marked player (2 s of swirling bubbles) is launched straight up about 12 blocks and takes ordinary fall damage, which the combat log records. The pick goes first to a player holding a soak circle, then to someone who hit Pancake in the last 5 s, so others have to cover. It's never the last one launched and never someone already in the air.
+- **Drink**: below 90% of the bar, Pancake drinks for 3 s (loud, with particles) and heals 4% of the pool, unless 1.5% of the pool in damage on Pancake interrupts it.
 
 ### Pace
 The pace rises with the shared bar, not with separate phases.
@@ -175,11 +188,11 @@ The pace rises with the shared bar, not with separate phases.
 - `event start <targets> <players>` with a fake player count shows how dense the mechanics get at 25 on the test server.
 - `/occultech balance` grades every mechanic against `TIER_2`.
 - Health can't be tested without a real crowd. Run the first live event with `event hp` at hand, then tune
-  `staff-health` / `council-hp` from the combat logs (`tools/balance.py`).
+  `staff-health` / `council-health` from the combat logs (`tools/balance.py`).
 
 ## Decided
 - Act 1 has nothing to do with Act 2's bar: Act 1 kills don't change the council's health, so it's tuned on its own.
-- Pancake's updraft is her way of interrupting players: she aims at players in soak circles or attacking her.
+- Pancake's updraft is Pancake's way of interrupting players: it goes for players in soak circles or hitting Pancake.
 - **Art comes last, as its own pass:** the katana (boss-only held model) and the new ground and visual effects (HOTFIX
   beams and stamps, soak circles, markers, rings, walls, meteors, the DENIED stamp) go through the art pipeline
   (`docs/art/STYLE.md`, `REFERENCES.md`) after everything else works. Until then everything uses placeholders
@@ -197,6 +210,6 @@ Each session ends with a build, the unit tests and a self-test run.
 | E4 - Signatures II | S4MURAI (enderstep, swap, katana moves), Charles (meteors, moons, black hole, low gravity), pyr0 (stampede, MOO, milk, hay), Earl + Sam (bond, together, rescue, enrage), mrlonelydwarf (lonely) |
 | E5 - Signatures III | Kon (decoys), bee_grand (bees), Bat (bats), Griffon (mount), Jenn (foxes), Nick/Spleen (DENIED), Jolly (config reload), Raven (spiders: egg sacs, web zone, pounce, from the Brood Mother). mrlonelydwarf's rework: *lonely* becomes **burrow** (mining, pickaxe, can't be interrupted). Act 1 polish Then Jolly's rework (done): config_reload became trick arrows, fart jumps and whoopee cushions, with him as a very fast archer |
 | E6 - Raid toolkit | Act 2 building blocks: soak circles, player markers, moving barriers, spinning lasers, expanding rings, the pace bands |
-| E7 - The Council | X, Chlo (flight, kidnap), Pancake (potions, syrup, taste test, updraft, drink), the shared bar, pace and soft enrage, the rules for moving players |
+| **E7 - The Council** (done) | X, Chlo (flight, kidnap), Pancake (potions, syrup, taste test, updraft, drink), the shared bar, pace and soft enrage, the rules for moving players. Act 2 follows Act 1; the raid is won when the bar runs out |
 | E8 - Test and tune | Self-test for every signature and the council, mechanic density with a fake count of 25 players, balance report, performance budget, fall damage in the combat log |
 | E9 - Art pass | Katana model and the new ground and visual effects through the art pipeline |

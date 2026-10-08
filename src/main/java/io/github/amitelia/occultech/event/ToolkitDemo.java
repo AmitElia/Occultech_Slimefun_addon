@@ -165,7 +165,7 @@ public final class ToolkitDemo extends BossBehavior {
             case RING -> {
                 for (int i = 0; i < pace.ringWaves(); i++) {
                     int delay = i * 15;
-                    live.add(new DelayedRing(delay, new RaidRing(fight, dummy.getLocation(), 0.35, radius - 1, RaidRing.LOW, Double.NaN,
+                    live.add(new DelayedHazard(delay, new RaidRing(fight, dummy.getLocation(), 0.35, radius - 1, RaidRing.LOW, Double.NaN,
                         Color.fromRGB(230, 120, 40), RING, dummy)));
                 }
                 return true;
@@ -173,23 +173,6 @@ public final class ToolkitDemo extends BossBehavior {
             default -> {
                 return false;
             }
-        }
-    }
-
-    /** A ring that starts a few ticks late (the second wave of a stomp). */
-    private record DelayedRing(int[] left, RaidRing ring) implements RaidHazard {
-
-        DelayedRing(int delay, RaidRing ring) {
-            this(new int[] { delay }, ring);
-        }
-
-        @Override
-        public boolean step() {
-            if (left[0] > 0) {
-                left[0]--;
-                return true;
-            }
-            return ring.step();
         }
     }
 }

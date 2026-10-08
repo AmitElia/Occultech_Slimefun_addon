@@ -36,16 +36,18 @@ import io.github.amitelia.occultech.boss.BossSpec;
  * event fight of its own. When one is beaten, a new random staff member steps into that slot a few seconds later. The
  * act ends after {@code killsPerTarget x N} kills, or when its time runs out. Act 1 has nothing to do with Act 2's bar.
  * <p>
- * <b>Act 2, the Council</b>, comes in Session E7; until then the raid ends with Act 1.
+ * <b>Act 2, the Council</b> ({@link CouncilBehavior}): X, Chlo and Pancake at the arena's middle with one shared health
+ * pool sized for the players there. The raid is won when it runs out.
  */
 final class StaffRaid {
 
     enum Act { STAFF_FLOOR, COUNCIL, OVER }
 
     /** Settings from config {@code raid.*}. */
-    record Settings(double miniHealth, int act1Seconds, int killsPerTarget, RaidScaling scaling, double healthMultiplier) {}
+    record Settings(double miniHealth, int act1Seconds, int killsPerTarget, RaidScaling scaling, double healthMultiplier,
+        double councilHealth, CouncilBehavior.Cast council) {}
 
-    /** How far a staff member's fight reaches around their spot. */
+    /** How much room each staff member's starting spot has (the spots are spread so these don't overlap much). */
     static final double SLOT_RADIUS = 12;
     private static final int REFILL_TICKS = 60;
 
@@ -73,6 +75,7 @@ final class StaffRaid {
     private Act act = Act.STAFF_FLOOR;
     private int ticks;
     private int kills;
+    @Nullable private BossFight council;
 
     /**
      * @param targets      staff on the floor at once, or null to work it out from the players in the arena
@@ -143,6 +146,16 @@ final class StaffRaid {
             if (kills >= goal() || ticks >= settings.act1Seconds() * 20) {
                 endStaffFloor();
             }
+        } else if (act == Act.COUNCIL && council != null && council.isOver()) {
+            if (council.result() == BossFight.Result.VICTORY) {
+                announce("&6&lThe Council has fallen! &eThe Staff Raid is won - GG everyone!");
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1F, 1F);
+                }
+            }
+            council = null;
+            finish();
+            return;
         }
         updateBar();
     }
@@ -165,13 +178,15 @@ final class StaffRaid {
             return;
         }
         double effective = settings.miniHealth() * healthMultiplier * settings.scaling().factor(players() / (double) targets);
-        BossSpec spec = StaffBehavior.spec(members, SLOT_RADIUS);
+        // the fight spans the whole arena (staff roam it, anyone in it can hit them); the body starts at the slot
+        BossSpec spec = StaffBehavior.spec(members, arena.radius());
+        Location start = slot.floor.getLocation().add(0.5, 1, 0.5);
         StaffBehavior[] made = new StaffBehavior[1];
         BossBlueprint blueprint = new BossBlueprint(StaffBehavior.ID, StaffBehavior.class, fight -> {
-            made[0] = new StaffBehavior(fight, members, effective);
+            made[0] = new StaffBehavior(fight, members, effective, start);
             return made[0];
         });
-        slot.fight = bosses.startEvent(blueprint, spec, slot.floor);
+        slot.fight = bosses.startEvent(blueprint, spec, arena.floor(0, 0));
         slot.staff = made[0];
         slot.refillAt = -1;
     }
@@ -179,16 +194,32 @@ final class StaffRaid {
     private void endStaffFloor() {
         dismissAll();
         act = Act.COUNCIL;
-        announce("&b&lThe staff floor is cleared! &7(" + kills + " staff beaten)");
-        // Act 2, the Council, arrives in Session E7: until then the raid ends here
-        finish();
+        announce("&b&lThe staff floor is cleared! &7(" + kills + " staff beaten) &6&lThe Council arrives at the middle of the arena...");
+        council = bosses.startEvent(CouncilBehavior.blueprint(settings.council(), councilPool()), CouncilBehavior.spec(arena.radius()),
+            arena.floor(0, 0));
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.6F, 0.8F);
+        }
     }
 
-    /** Admin: straight on to the next act. */
+    /** The Council's shared pool for the players now: council-health x players^0.9 x the health multiplier. */
+    private double councilPool() {
+        return settings.councilHealth() * healthMultiplier * settings.scaling().factor(players());
+    }
+
+    /** Admin: straight on to the next act (in Act 2: ends the raid). */
     void skip() {
         if (act == Act.STAFF_FLOOR) {
             endStaffFloor();
+        } else if (act == Act.COUNCIL) {
+            stop();
         }
+    }
+
+    /** The Council's fight in Act 2 (self-test), or null. */
+    @Nullable
+    BossFight council() {
+        return council != null && !council.isOver() ? council : null;
     }
 
     /** Admin: ends the raid now. */
@@ -207,6 +238,9 @@ final class StaffRaid {
     }
 
     private void dismissAll() {
+        if (council != null && !council.isOver()) {
+            bosses.abort(council, BossFight.Result.DISMISSED);
+        }
         for (Slot slot : slots) {
             if (slot.fight != null && !slot.fight.isOver()) {
                 bosses.abort(slot.fight, BossFight.Result.DISMISSED);
@@ -224,6 +258,9 @@ final class StaffRaid {
             if (slot.staff != null && slot.fight != null && !slot.fight.isOver()) {
                 slot.staff.rescale(effective);
             }
+        }
+        if (council != null && !council.isOver() && council.behavior() instanceof CouncilBehavior behavior) {
+            behavior.rescale(councilPool());
         }
     }
 
@@ -294,11 +331,21 @@ final class StaffRaid {
             bar.setTitle(ChatColor.translateAlternateColorCodes('&', "&bStaff Raid &7- Act 1: the Staff Floor &f" + kills + "/" + goal()
                 + " &7- " + left / 60 + ":" + String.format("%02d", left % 60)));
             bar.setProgress(Math.max(0, Math.min(1, kills / (double) goal())));
+        } else if (act == Act.COUNCIL && council != null && council.behavior() instanceof CouncilBehavior behavior) {
+            double share = behavior.poolFraction();
+            RaidPace pace = RaidPace.of(share, council.elapsed());
+            bar.setColor(BarColor.YELLOW);
+            bar.setTitle(ChatColor.translateAlternateColorCodes('&', "&6Staff Raid &7- Act 2: &6The Council &f" + Math.round(share * 100)
+                + "% &7- pace " + (pace.band() + 1) + "/3" + (pace.damageFactor() > 1 ? " &c(enraged)" : "")));
+            bar.setProgress(Math.max(0, Math.min(1, share)));
         }
-        // a server-wide event: everyone online sees how it goes
+        // a server-wide event: everyone online sees how it goes (in Act 2, those in the arena see the Council's own bar)
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!bar.getPlayers().contains(player)) {
+            boolean show = act != Act.COUNCIL || !arena.contains(player.getLocation());
+            if (show && !bar.getPlayers().contains(player)) {
                 bar.addPlayer(player);
+            } else if (!show && bar.getPlayers().contains(player)) {
+                bar.removePlayer(player);
             }
         }
     }
