@@ -69,6 +69,8 @@ public final class Doppelganger extends BossBehavior {
     private static final int ECHO_WARNING = 30;
     private static final double ECHO_REACH = 1.6;
     private static final double ECHO_SPEED = 0.45;
+    /** The dark copy skips ahead to a point it hasn't reached in this many ticks (blocked, or a point taken mid-jump). */
+    private static final int ECHO_POINT_TICKS = 20;
 
     private enum Stance { MELEE, RANGED, FIRE }
 
@@ -81,6 +83,9 @@ public final class Doppelganger extends BossBehavior {
     private final Deque<Location> trail = new ArrayDeque<>();
     private List<Location> echo = List.of();
     private int echoIndex = -1;
+    /** Ticks the dark copy has spent heading for its current point, and the tick its run must be over by. */
+    private int shadeStepTicks;
+    private int shadeDeadline;
     private int echoStart = -1;
     @javax.annotation.Nullable private Mannequin shade;
     private final Set<UUID> echoHit = new HashSet<>();
@@ -283,7 +288,21 @@ public final class Doppelganger extends BossBehavior {
             shadeTeam().addEntity(m);
         });
         echoIndex = 1;
+        shadeStepTicks = 0;
+        shadeDeadline = fight.elapsed() + echo.size() * ECHO_POINT_TICKS + 40;   // it never outstays its path
         start.getWorld().playSound(start, Sound.ENTITY_WARDEN_SONIC_CHARGE, 1.5F, 1.6F);
+    }
+
+    /** Self-test: the dark copy runs this path now. */
+    public void echoForTest(List<Location> path) {
+        echo = new ArrayList<>(path);
+        echoHit.clear();
+        summonShade(null);
+    }
+
+    /** Self-test: whether the dark copy is out. */
+    public boolean shadeActive() {
+        return shade != null;
     }
 
     /** Every tick: the dark copy runs the path, striking whoever it passes (once each). */
@@ -291,7 +310,7 @@ public final class Doppelganger extends BossBehavior {
         if (shade == null) {
             return;
         }
-        if (!shade.isValid() || echoIndex < 0 || echoIndex >= echo.size()) {
+        if (!shade.isValid() || echoIndex < 0 || echoIndex >= echo.size() || fight.elapsed() > shadeDeadline) {
             if (shade.isValid()) {
                 shade.getWorld().spawnParticle(Particle.LARGE_SMOKE, shade.getLocation().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.02);
                 shade.remove();
@@ -301,8 +320,17 @@ public final class Doppelganger extends BossBehavior {
             return;
         }
         Location next = echo.get(echoIndex);
-        if (shade.getLocation().distanceSquared(next) < 0.8) {
+        Location here = shade.getLocation();
+        double dx = next.getX() - here.getX();
+        double dz = next.getZ() - here.getZ();
+        if (dx * dx + dz * dz < 0.8) {   // reached, by its feet on the floor: the point may be from mid-jump, or a step up
             echoIndex++;
+            shadeStepTicks = 0;
+        } else if (++shadeStepTicks > ECHO_POINT_TICKS) {
+            // stuck on the way (a wall, a ledge): on to the point, so the run always finishes
+            shade.teleport(next);
+            echoIndex++;
+            shadeStepTicks = 0;
         } else {
             Abyss.walk(shade, next, ECHO_SPEED, 0);
         }

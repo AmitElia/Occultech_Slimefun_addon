@@ -220,6 +220,10 @@ final class SelfTest {
             then(0, () -> summonTier1(bossId));
             then(60, () -> checkFightRunning(bossId));
             then(0, () -> checkMovement(bossId));
+            if (bossId.equals("DOPPELGANGER")) {
+                then(0, this::stuckEcho);
+                then(180, this::stuckEchoFinished);
+            }
             then(0, this::killCurrentFight);
             then(30, () -> checkFightEndedCleanly(ContentRegistrar.title(bossId)));
         }
@@ -1168,6 +1172,23 @@ final class SelfTest {
             }
             default -> { }
         }
+    }
+
+    /** An echo path the dark copy can't walk all of: a point recorded mid-jump, 3 blocks up (it used to stop there for good). */
+    private void stuckEcho() {
+        if (currentFight == null || !(currentFight.behavior() instanceof io.github.amitelia.occultech.boss.tier3.Doppelganger doppelganger)) {
+            check("the Doppelganger fight is running for the echo test", false, "no fight");
+            return;
+        }
+        org.bukkit.Location c = currentFight.center().clone().add(0.5, 0, 0.5);
+        doppelganger.echoForTest(List.of(c.clone().add(4, 0, 0), c.clone().add(5, 0, 1), c.clone().add(6, 3, 2), c.clone().add(7, 0, 3),
+            c.clone().add(7, 0, 5), c.clone().add(6, 0, 6)));
+        check("the dark copy appears on its path", doppelganger.shadeActive(), "no shade");
+    }
+
+    private void stuckEchoFinished() {
+        boolean gone = currentFight != null && currentFight.behavior() instanceof io.github.amitelia.occultech.boss.tier3.Doppelganger d && !d.shadeActive();
+        check("the dark copy finishes a path with an unreachable point and goes", gone, "still out (stuck)");
     }
 
     private void buildShrine() {
