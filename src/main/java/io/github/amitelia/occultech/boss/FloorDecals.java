@@ -97,6 +97,50 @@ public final class FloorDecals {
         aimed(fight, origin, direction, range, range, ticks, color, "floor_warning_wedge");
     }
 
+    /** The sector warnings the pack has (degrees): a fan uses the smallest that covers it. */
+    private static final int[] SECTOR_ARCS = { 60, 70, 90, 120, 150, 180 };
+
+    /**
+     * A fan-shaped warning that traces a hit exactly: centred on {@code origin}, {@code reach} blocks out, {@code arc}
+     * degrees wide, centred on {@code direction}. Its outline snaps out, its fill grows from the centre to the rim as the
+     * hit lands. (A {@link #wedge} is a fixed 90-degree cleave from a point; this is the true sector.)
+     */
+    public static void sector(@Nonnull BossFight fight, @Nonnull Location origin, @Nonnull Vector direction, double reach, double arc,
+        int ticks, @Nonnull Color color) {
+        if (!enabled()) {
+            return;
+        }
+        Vector dir = direction.clone().setY(0);
+        if (dir.lengthSquared() < 1e-6) {
+            return;
+        }
+        dir.normalize();
+        int model = SECTOR_ARCS[SECTOR_ARCS.length - 1];
+        for (int candidate : SECTOR_ARCS) {
+            if (candidate >= arc - 0.5) {
+                model = candidate;
+                break;
+            }
+        }
+        float yaw = (float) Math.atan2(-dir.getX(), -dir.getZ());   // the models open toward north
+        float across = (float) (reach * 2);
+        Color tint = visible(color);
+        Location floor = floor(origin);
+        ItemDisplay outline = decal(fight, floor.clone().add(0, WARNING_HEIGHT + 0.01, 0), "floor_warning_sector" + model, tint, true, 0.01F);
+        ItemDisplay fill = decal(fight, floor.clone().add(0, WARNING_HEIGHT, 0), "floor_warning_sector" + model + "_fill", tint, true, 0.01F);
+        outline.setTransformation(turned(yaw, 0.01F));
+        fill.setTransformation(turned(yaw, 0.01F));
+        later(2, () -> {
+            animate(outline, turned(yaw, across), UNFOLD);
+            animate(fill, turned(yaw, across), Math.max(1, ticks - 2));
+        });
+        later(ticks + 2, () -> remove(outline, fill));
+    }
+
+    private static Transformation turned(float yaw, float size) {
+        return new Transformation(new Vector3f(), new AxisAngle4f(yaw, 0F, 1F, 0F), new Vector3f(size, 1F, size), new AxisAngle4f());
+    }
+
     /** A lane from {@code origin} along {@code direction}, {@code length} long and {@code width} wide (a charge). */
     public static void lane(@Nonnull BossFight fight, @Nonnull Location origin, @Nonnull Vector direction, double length, double width,
         int ticks, @Nonnull Color color) {

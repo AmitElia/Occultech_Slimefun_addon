@@ -156,7 +156,7 @@ final class AbusingSignatures {
                 if (!kit.alive()) {
                     return;
                 }
-                Location center = kit.body.getLocation();
+                Location center = at;   // where the ring warned
                 center.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, center, 1, 0, 0, 0, 0);
                 center.getWorld().playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1.5F, 0.6F);
                 for (Player player : kit.playersNear(center, RADIUS)) {

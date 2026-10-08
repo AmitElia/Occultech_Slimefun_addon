@@ -68,7 +68,7 @@ final class BruiserKit extends StaffKit {
             if (!alive()) {
                 return;
             }
-            Location center = body.getLocation();
+            Location center = at;   // where the ring warned, wherever the body walked meanwhile
             center.getWorld().spawnParticle(Particle.EXPLOSION, center, 3, 1.5, 0.2, 1.5, 0);
             center.getWorld().spawnParticle(Particle.BLOCK, center, 60, SLAM_RADIUS / 2, 0.1, SLAM_RADIUS / 2, Material.STONE.createBlockData());
             center.getWorld().playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1F, 0.7F);

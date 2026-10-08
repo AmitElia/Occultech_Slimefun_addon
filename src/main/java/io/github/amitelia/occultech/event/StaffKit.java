@@ -324,20 +324,32 @@ abstract class StaffKit {
 
     /**
      * Warns of a fan on the floor from {@code origin}, centred on {@code aim} (radians, atan2 of z and x),
-     * {@code arc} wide (radians), {@code range} long: the pack's wedges side by side. False without the pack (the caller
-     * draws its particles).
+     * {@code arc} wide (radians), {@code range} long: the pack's true sector, which traces the hit exactly. False without
+     * the pack (the caller draws its particles).
      */
     protected boolean warnFan(Location origin, double aim, double arc, double range, int ticks, Color color) {
         if (!io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
             return false;
         }
-        int wedges = Math.max(1, (int) Math.ceil(arc / (Math.PI / 2)));
-        double step = wedges == 1 ? 0 : (arc - Math.PI / 2) / (wedges - 1);
-        for (int i = 0; i < wedges; i++) {
-            double a = aim - (arc - Math.PI / 2) / 2 + step * i;
-            io.github.amitelia.occultech.boss.FloorDecals.wedge(fight, origin, new org.bukkit.util.Vector(Math.cos(a), 0, Math.sin(a)), range, ticks, color);
-        }
+        io.github.amitelia.occultech.boss.FloorDecals.sector(fight, origin, new org.bukkit.util.Vector(Math.cos(aim), 0, Math.sin(aim)), range, Math.toDegrees(arc), ticks, color);
         return true;
+    }
+
+    /**
+     * Players standing in a floor lane from {@code from} to {@code to}, {@code halfWidth} either side of its line, measured
+     * across the ground (within 2.5 blocks up or down) - exactly what {@link #warnLane} draws.
+     */
+    @Nonnull
+    protected List<Player> playersInLane(Location from, Location to, double halfWidth) {
+        List<Player> out = new ArrayList<>();
+        for (Player player : fight.players()) {
+            Location at = player.getLocation();
+            double[] off = RaidGeometry.fromWall(at.getX(), at.getZ(), from.getX(), from.getZ(), to.getX(), to.getZ());
+            if (off[0] <= halfWidth && Math.abs(at.getY() - from.getY()) < 2.5) {
+                out.add(player);
+            }
+        }
+        return out;
     }
 
     /** A dotted warning line on the floor from {@code from} to {@code to}. */

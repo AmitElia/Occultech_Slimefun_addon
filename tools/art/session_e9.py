@@ -57,6 +57,33 @@ def blade_shape(r):
     return spine, spine + width
 
 
+BLADE_HALF_THICK = 0.3
+
+
+def blade_columns(r):
+    """The first and one-past-the-last filled column of row r (as the texture draws it)."""
+    spine, edge = blade_shape(r)
+    cols = [c for c in range(BLADE_W) if spine <= c + 0.5 < edge]
+    return (cols[0], cols[-1] + 1) if cols else (int(spine), int(spine) + 1)
+
+
+def edge_side_frames(n=8):
+    """The edge's own wall (the blade's thickness on its cutting side): glowing crimson, with the same white-hot glint
+    as the faces' edge sweeping from the habaki (v 16) to the tip (v 0) in step with them."""
+    out = []
+    for fr in range(n):
+        img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+        glint = fr * BLADE_ROWS / n
+        for y in range(16):
+            r = (15.5 - y) * BLADE_ROWS / 16
+            near = abs(((r - glint + BLADE_ROWS / 2) % BLADE_ROWS) - BLADE_ROWS / 2)
+            base = 5 if near < 2.5 else 4 if near < 6 else 3
+            for x in range(16):
+                img.putpixel((x, y), CRIMSON[base])
+        out.append(img)
+    return out
+
+
 def hamon(r):
     """The temper line's place across the blade (0 = spine, 1 = edge): wavy, like a gunome hamon."""
     return 0.6 + 0.07 * math.sin(r * 0.22)
@@ -158,12 +185,44 @@ def katana_held():
     width, length = BLADE_W * TEXEL, BLADE_ROWS * TEXEL
     x0, y0 = 8 - 4.5 * TEXEL, 2.9                                    # the base's middle over the habaki
     front, back = [0, 0, 2, 16], [2, 0, 0, 16]
-    m.box((x0, y0, 8.15), (x0 + width, y0 + length, 8.15), {"south": (t_blade, front)})
-    m.box((x0, y0, 7.85), (x0 + width, y0 + length, 7.85), {"north": (t_blade, back)})
-    m.box((x0, y0, 8.17), (x0 + width, y0 + length, 8.17), {"south": (t_glow, front)}, shade=False, light=15)
-    m.box((x0, y0, 7.83), (x0 + width, y0 + length, 7.83), {"north": (t_glow, back)}, shade=False, light=15)
-    m.display = g.HANDHELD_DISPLAY
-    return g.diagonal(m)
+    zf, zb = 8 + BLADE_HALF_THICK, 8 - BLADE_HALF_THICK
+    m.box((x0, y0, zf), (x0 + width, y0 + length, zf), {"south": (t_blade, front)})
+    m.box((x0, y0, zb), (x0 + width, y0 + length, zb), {"north": (t_blade, back)})
+    m.box((x0, y0, zf + 0.02), (x0 + width, y0 + length, zf + 0.02), {"south": (t_glow, front)}, shade=False, light=15)
+    m.box((x0, y0, zb - 0.02), (x0 + width, y0 + length, zb - 0.02), {"north": (t_glow, back)}, shade=False, light=15)
+    # the blade's thickness: the spine and the edge as walls between the two faces, one long strip per run of rows where
+    # the silhouette's side stays in the same column (a handful, following the curve), and the ledges where it steps
+    t_side = m.texture("edge_side", edge_side_frames())
+    m.mcmeta["edge_side"] = {"animation": {"frametime": 2, "interpolate": True}}
+    rows = [blade_columns(r) for r in range(BLADE_ROWS)]
+    def ry(r):
+        return y0 + r * TEXEL
+    def v(r):                                                        # the side texture runs tip (v 0) to base (v 16)
+        return 16 - r * 16 / BLADE_ROWS
+    for side, (face, tex, glow) in ((0, ("west", t_black, False)), (1, ("east", t_side, True))):
+        r = 0
+        while r < BLADE_ROWS:
+            col = rows[r][side]
+            r1 = r
+            while r1 + 1 < BLADE_ROWS and rows[r1 + 1][side] == col:
+                r1 += 1
+            x = x0 + col * TEXEL
+            uv = [0, v(r1 + 1), 16, v(r)] if glow else [0, 0, 1, max(1, round((r1 - r + 1) * TEXEL))]
+            m.box((x, ry(r), zb), (x, ry(r1 + 1), zf), {face: (tex, uv)}, shade=not glow, light=15 if glow else 0)
+            if r1 + 1 < BLADE_ROWS:                                  # the ledge where the side steps to its next column
+                nxt = rows[r1 + 1][side]
+                a, b = sorted((x, x0 + nxt * TEXEL))
+                m.box((a, ry(r1 + 1), zb), (b, ry(r1 + 1), zf), {"up": (tex, [0, v(r1 + 1), 16, v(r1 + 1) + 0.25] if glow else [0, 0, 1, 1]),
+                      "down": (tex, [0, v(r1 + 1), 16, v(r1 + 1) + 0.25] if glow else [0, 0, 1, 1])}, shade=not glow, light=15 if glow else 0)
+            r = r1 + 1
+    top = rows[BLADE_ROWS - 1]                                       # the very point
+    m.box((x0 + top[0] * TEXEL, ry(BLADE_ROWS), zb), (x0 + top[1] * TEXEL, ry(BLADE_ROWS), zf), {"up": (t_side, [0, 0, 16, 0.25])},
+          shade=False, light=15)
+    # its own hold (not a sword sprite's diagonal): in the hand's frame +y runs ahead, -z down the arm and +x toward the
+    # body, so turning 90 about y puts the edge (+x) downward and a slight tilt about x drops the point a little ahead.
+    # Grip: the middle of the wrapped handle. 1.15x, larger than vanilla's 0.85 sword.
+    m.display = g.grip_display((-12, 90, 0), (8, -1.3, 8), 1.15)
+    return m
 
 
 SOAK = [   # three figures gathered round: stand in it together
@@ -381,10 +440,49 @@ def ring_models():
     return [low] + [ring_shell(f"raid_ring_tall_gap{n}", tall, n) for n in range(1, 17)]
 
 
+SECTOR_ARCS = (60, 70, 90, 120, 150, 180)
+
+
+def sector(arc, filled):
+    """A warning sector of {@code arc} degrees, its point at the centre, opening toward the top (north), its rim at the
+    edge of the square: so scaled to twice the reach it covers exactly the hit (inside the reach, within half the arc of
+    the aim). Outline: a bright rim and both sides, dark lines just outside them; fill: see-through, brighter at the rim."""
+    img = o4.blank()
+    half = arc / 2
+    for y in range(32):
+        for x in range(32):
+            dx, dy = x + 0.5 - 16, 16 - (y + 0.5)
+            r = math.hypot(dx, dy)
+            if r > 15.9 or r < 0.3:
+                continue
+            ang = abs(math.degrees(math.atan2(dx, dy)))
+            if ang > half:
+                side_out = (ang - half) * math.pi / 180 * r
+                if not filled and side_out < 0.9 and r < 15.9:
+                    img.putpixel((x, y), o4.rgba(o4.GREY[1]))
+                continue
+            edge_d = min(15.9 - r, (half - ang) * math.pi / 180 * r if half < 180 else 99)
+            if filled:
+                img.putpixel((x, y), o4.rgba(o4.GREY[4], 150 if edge_d < 1.0 else 95 if int(r) % 4 == 0 else 70))
+            elif edge_d < 1.2:
+                img.putpixel((x, y), o4.rgba(o4.GREY[4] if (x + y) < 32 else o4.GREY[3]))
+            elif edge_d < 1.9:
+                img.putpixel((x, y), o4.rgba(o4.GREY[1]))
+    return img
+
+
+def sector_models():
+    out = []
+    for arc in SECTOR_ARCS:
+        out.append(o4.plane(f"floor_warning_sector{arc}", sector(arc, False), tint=True, light=15))
+        out.append(o4.plane(f"floor_warning_sector{arc}_fill", sector(arc, True), tint=True, light=15))
+    return out
+
+
 def models():
     return ([katana_held(), o4.plane("floor_mark_soak", o4.symbol(SOAK), tint=True, light=15),
              o4.plane("floor_mark_target", o4.symbol(TARGET), tint=True, light=15), raid_wall(), raid_wall_post(),
-             raid_laser(), laser_wall()] + ring_models())
+             raid_laser(), laser_wall()] + ring_models() + sector_models())
 
 
 def _tinted(img, tint):
@@ -408,9 +506,9 @@ def _tinted_model(m, tint):
 def review(ms):
     by = {m.key: m for m in ms}
     katana = by["s4murai_katana"]
-    sheet = Image.new("RGBA", (1600, 1170), (40, 38, 46, 255))
-    for i, (yaw, pitch, f) in enumerate(((0, 0, 0), (30, 25, 2), (330, 20, 5))):
-        sheet.alpha_composite(render3d.render(katana, frame=f, yaw=yaw, pitch=pitch, s=18, size=(520, 520), center=(8, 9, 8)), (10 + i * 530, 10))
+    sheet = Image.new("RGBA", (1600, 1180), (40, 38, 46, 255))
+    for i, (yaw, pitch, f) in enumerate(((0, 0, 0), (35, 20, 2), (90, 10, 5))):
+        sheet.alpha_composite(render3d.render(katana, frame=f, yaw=yaw, pitch=pitch, s=17, size=(520, 520), center=(8, 9, 8)), (10 + i * 530, 10))
     x = 10
     for key, tint in (("floor_mark_soak", (80, 220, 110)), ("floor_mark_soak", (240, 170, 40)), ("floor_mark_target", (200, 60, 230)),
                       ("floor_mark_target", (255, 60, 60))):
@@ -423,11 +521,14 @@ def review(ms):
     for i, (key, tint, yaw, pitch) in enumerate(shots):
         view = render3d.render(_tinted_model(by[key], tint), frame=i, yaw=yaw, pitch=pitch, s=11, size=(300, 300), center=(8, 8, 8),
                                bg=(30, 30, 36, 255), blend=True)
-        pos = (680 + (i % 3) * 305, 540 + (i // 3) * 305) if i < 6 else (10, 860)
+        pos = (680 + (i % 3) * 305, 540 + (i // 3) * 305) if i < 6 else (350, 700)
         sheet.alpha_composite(view, pos)
+    for i, arc in enumerate((60, 70, 150, 180)):
+        sheet.alpha_composite(_tinted(by[f"floor_warning_sector{arc}"].textures["face"], (255, 90, 60)).resize((150, 150), Image.NEAREST),
+                              (10 + i * 165, 1010))
     path = os.path.join(REVIEW, "review-e9.png")
     sheet.save(path)
-    frames = [render3d.render(katana, frame=f, yaw=30, pitch=25, s=18, size=(420, 420), center=(8, 9, 8)).convert("RGB") for f in range(8)]
+    frames = [render3d.render(katana, frame=f, yaw=35, pitch=20, s=17, size=(420, 420), center=(8, 9, 8)).convert("RGB") for f in range(8)]
     frames[0].save(os.path.join(REVIEW, "preview-katana.gif"), save_all=True, append_images=frames[1:], duration=100, loop=0)
     ring = _tinted_model(by["raid_ring_tall_gap4"], (150, 80, 255))
     rf = [render3d.render(ring, frame=f, yaw=30, pitch=25, s=11, size=(320, 320), center=(8, 8, 8), blend=True).convert("RGB") for f in range(8)]

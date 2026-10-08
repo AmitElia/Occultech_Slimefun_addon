@@ -139,7 +139,8 @@ final class Founder extends CouncilMember {
         Abyss.face(body, toward.getLocation());
         Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(230, 80, 40), 1.5F);
         if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
-            io.github.amitelia.occultech.boss.FloorDecals.wedge(fight, at, aimAt, KICK_REACH, 25, Color.fromRGB(230, 80, 40));
+            io.github.amitelia.occultech.boss.FloorDecals.sector(fight, at, aimAt, KICK_REACH, Math.toDegrees(KICK_HALF_ANGLE * 2), 25,
+                Color.fromRGB(230, 80, 40));
         }
         for (int t = 0; t < 25 && !io.github.amitelia.occultech.boss.FloorDecals.enabled(); t += 5) {
             council.later(t, () -> {
@@ -156,7 +157,7 @@ final class Founder extends CouncilMember {
                 return;
             }
             body.swingMainHand();
-            Location now = body.getLocation();
+            Location now = at;   // where the cone warned
             now.getWorld().playSound(now, Sound.ENTITY_IRON_GOLEM_ATTACK, 2F, 0.5F);
             for (Player player : fight.players()) {
                 Vector to = player.getLocation().toVector().subtract(now.toVector());

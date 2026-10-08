@@ -79,7 +79,7 @@ final class CowSignatures {
             Vector along = to.toVector().subtract(from.toVector()).setY(0).normalize();
             Vector side = new Vector(-along.getZ(), 0, along.getX());
             if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
-                kit.warnLane(from, to, WIDTH * 2 + 1.4, WARNING, DUST);   // one wide lane for the whole herd
+                kit.warnLane(from, to, (WIDTH + 1.4) * 2, WARNING, DUST);   // the herd's whole width: its flanks and the reach of a hit
             } else {
                 for (int t = 0; t < WARNING; t += 5) {
                     kit.later(t, () -> {
@@ -182,7 +182,7 @@ final class CowSignatures {
             at.getWorld().playSound(at, Sound.ENTITY_COW_HURT, 2F, 0.5F);
             Particle.DustOptions dust = new Particle.DustOptions(DUST, 1.3F);
             if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
-                io.github.amitelia.occultech.boss.FloorDecals.wedge(kit.fight, at, toTarget, REACH, WARNING, DUST);
+                io.github.amitelia.occultech.boss.FloorDecals.sector(kit.fight, at, toTarget, REACH, Math.toDegrees(HALF_ANGLE * 2), WARNING, DUST);
             }
             for (int t = 0; t < WARNING && !io.github.amitelia.occultech.boss.FloorDecals.enabled(); t += 5) {
                 kit.later(t, () -> {
@@ -198,7 +198,7 @@ final class CowSignatures {
                 if (!kit.alive()) {
                     return;
                 }
-                Location here = kit.body.getLocation();
+                Location here = at;   // where the cone warned
                 here.getWorld().playSound(here, Sound.ENTITY_COW_AMBIENT, 3F, 0.4F);
                 here.getWorld().spawnParticle(Particle.SONIC_BOOM, here.clone().add(Math.cos(aim) * 2, 1, Math.sin(aim) * 2), 1, 0, 0, 0, 0);
                 for (Player player : kit.playersNear(here, REACH)) {

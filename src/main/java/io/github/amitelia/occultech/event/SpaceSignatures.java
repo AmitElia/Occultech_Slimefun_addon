@@ -256,6 +256,7 @@ final class SpaceSignatures {
         private static final double RADIUS = 7;
         private int left;
         private int age;
+        @javax.annotation.Nullable private org.bukkit.entity.ItemDisplay edge;
 
         LowGravity(StaffKit kit) {
             super(kit, 200);
@@ -283,14 +284,31 @@ final class SpaceSignatures {
         @Override
         void move() {
             if (left <= 0) {
+                if (edge != null) {
+                    edge.remove();
+                    edge = null;
+                }
                 return;
             }
             left--;
+            Location center = kit.body.getLocation();
+            if (io.github.amitelia.occultech.boss.FloorDecals.enabled() && kit.alive()) {
+                // the field's edge: a pale ring on the floor that follows him
+                if (edge == null || !edge.isValid()) {
+                    edge = io.github.amitelia.occultech.boss.FloorDecals.flat(kit.fight, center, "floor_warning_ring", org.bukkit.Color.fromRGB(170, 210, 255), RADIUS * 2);
+                    edge.setTeleportDuration(1);
+                } else {
+                    Location floor = center.clone();
+                    floor.setY(edge.getLocation().getY());
+                    floor.setYaw(0F);
+                    floor.setPitch(0F);
+                    edge.teleport(floor);
+                }
+            }
             if (age++ % 5 != 0 || !kit.alive()) {
                 return;
             }
-            Location center = kit.body.getLocation();
-            for (int i = 0; i < 24; i++) {
+            for (int i = 0; i < 24 && !io.github.amitelia.occultech.boss.FloorDecals.enabled(); i++) {
                 double a = Math.PI * 2 * i / 24 + age * 0.02;
                 center.getWorld().spawnParticle(Particle.END_ROD, center.clone().add(Math.cos(a) * RADIUS, 0.2, Math.sin(a) * RADIUS), 1, 0, 0.1, 0, 0);
             }

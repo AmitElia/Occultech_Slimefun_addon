@@ -184,7 +184,7 @@ final class SamuraiSignatures {
                 for (int i = 0; i <= 8; i++) {
                     from.getWorld().spawnParticle(Particle.SWEEP_ATTACK, from.clone().add(step.clone().multiply(i)).add(0, 1, 0), 1, 0, 0, 0, 0);
                 }
-                for (Player player : kit.playersAlong(from, to, 1.3)) {
+                for (Player player : kit.playersInLane(from, to, 1.3)) {   // the lane's full width on the ground
                     kit.fight.hit(player, IAI, kit.body);
                 }
                 // the flash: S4MURAI ends up at the far end of the cut
@@ -225,7 +225,7 @@ final class SamuraiSignatures {
                     return;
                 }
                 kit.body.swingMainHand();
-                Location now = kit.body.getLocation();
+                Location now = at;   // where the crescent warned
                 now.getWorld().playSound(now, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5F, 0.6F);
                 for (double a = aim - Math.PI / 2; a <= aim + Math.PI / 2; a += 0.4) {
                     now.getWorld().spawnParticle(Particle.SWEEP_ATTACK, now.clone().add(Math.cos(a) * 3, 1, Math.sin(a) * 3), 1, 0, 0, 0, 0);

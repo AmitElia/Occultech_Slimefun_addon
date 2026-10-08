@@ -1201,4 +1201,26 @@ borrowed O4/O5 models for its beams and rings. New parts, all in O4's greys and 
   floor wedges, the Controller's zone on O4's frost surface, Pancake's syrup on yolk, Jolly's stink cloud on poison.
 - `render3d.render(..., blend=True)` draws see-through texels with their alpha, so glowing fields can be reviewed.
 
+### Round 3 - warnings that trace the hits, and the katana held right (user review)
+- **The katana** was held like a sword sprite (on the diagonal, vanilla's handheld: the blade pointing up). It now has
+  its own hold (`grip_display((-12, 90, 0), grip at the middle of the handle, 1.15x)`): built upright and not laid on the
+  diagonal; in the hand's frame +y runs ahead, so the blade points forward with a slight drop; turned 90 degrees about y,
+  so its edge (+x) faces down. It is also bigger: 1.15x against vanilla's 0.85.
+- **The blade has thickness:** the painted faces sit 0.6 apart, joined by the spine and the edge as walls - one long
+  strip per run of rows where the silhouette keeps its column (a handful, following the curve), plus the ledges where it
+  steps. The edge wall glows with the faces' glint, in step with them (`edge_side`).
+- **Fan warnings trace the hits:** O4's wedge is a 90-degree cone from a point, clipped by its square (a cone turning
+  into a box), and two of them side by side made the katana's crescent a jagged shape that didn't match its half
+  circle. New `floor_warning_sector{60,70,90,120,150,180}` (+ fills): a true sector, its point at the centre and its rim
+  at the square's edge, so scaled to twice the reach it covers exactly the hit. `FloorDecals.sector` picks the smallest
+  that covers the arc; the crescent, the HOTFIX sweep, MOO and X's kick use it.
+- **Hits land where they warned:** warned melee moves (the crescent, the Bruiser slam, MOO, X's kick, Abusing's big
+  fuse) used to hit around wherever the body had walked by then; they now hit at the warned spot. The iai slash's floor
+  lane is tested across the ground (`playersInLane`), its full drawn width (before, chest height against a floor line made
+  it narrower), and the stampede lane is drawn at the herd's real width.
+- **No tracing particles with the pack:** the gadgeteer's beam is only the laser; soak circles keep their floor marking
+  (the count turns green); Charles's low-gravity field shows its edge as a floor ring that follows him.
+- Checked in the 26.2 client (`CuboidRotation$SingleAxisRotation`): an element's y rotation is JOML's right-handed
+  `rotation(angle, +y)`, so the tall rings' gaps (made round +x and turned to face the gap) point the right way.
+
 

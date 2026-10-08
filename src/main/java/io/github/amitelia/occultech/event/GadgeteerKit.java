@@ -107,12 +107,12 @@ final class GadgeteerKit extends StaffKit {
             body.swingMainHand();
             from.getWorld().playSound(from, Sound.ENTITY_GUARDIAN_ATTACK, 1F, 1.5F);
             if (aimLine != null) {
-                aimLine.fire(from, to);   // the thin aiming line flashes into the beam
+                aimLine.fire(from, to);   // the thin aiming line flashes into the beam (the pack's laser: no particle line)
             }
             Particle.DustOptions dust = new Particle.DustOptions(BEAM_COLOR, 2F);
             org.bukkit.util.Vector step = to.toVector().subtract(from.toVector()).normalize().multiply(0.3);
             Location at = from.clone();
-            for (double d = 0; d < BEAM_LENGTH; d += 0.3) {
+            for (double d = 0; d < BEAM_LENGTH && aimLine == null; d += 0.3) {
                 at.add(step);
                 at.getWorld().spawnParticle(Particle.DUST, at, 2, 0.05, 0.05, 0.05, 0, dust);
             }

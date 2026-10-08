@@ -91,8 +91,8 @@ final class SoakCircle implements RaidHazard {
             count.text(Component.text(inside.size() + "/" + needed, enough ? NamedTextColor.GREEN : NamedTextColor.GOLD)
                 .decorate(TextDecoration.BOLD).append(Component.text("  " + seconds + "s", NamedTextColor.GRAY)));
         }
-        // with the pack, the floor marking shows the circle; the particle ring is its stand-in (and turns green when held)
-        if (age % 4 == 1 && (enough || !io.github.amitelia.occultech.boss.FloorDecals.enabled())) {
+        // with the pack, the floor marking shows the circle (the count turns green when it's held); particles only without it
+        if (age % 4 == 1 && !io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
             Particle.DustOptions dust = new Particle.DustOptions(enough ? ENOUGH : SHORT, 1.5F);
             int points = (int) Math.ceil(Math.PI * 2 * radius / 0.5);
             for (int i = 0; i < points; i++) {
