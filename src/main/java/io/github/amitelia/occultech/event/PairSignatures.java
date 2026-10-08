@@ -44,6 +44,7 @@ final class PairSignatures {
 
         private final Map<UUID, Integer> touched = new HashMap<>();
         private int age;
+        @javax.annotation.Nullable private io.github.amitelia.occultech.boss.AirEffects.Streak chain;
 
         Bond(StaffKit kit) {
             super(kit, 0);
@@ -59,11 +60,21 @@ final class PairSignatures {
         void move() {
             age++;
             if (kit.member.partner() == null || !bothAlive(kit)) {
+                if (chain != null) {
+                    chain.snap();
+                    chain = null;
+                }
                 return;
             }
             Location a = kit.body.getLocation().add(0, 1, 0);
             Location b = kit.partner.body.getLocation().add(0, 1, 0);
-            if (age % 3 == 0) {
+            if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+                if (chain == null || !chain.valid()) {
+                    chain = io.github.amitelia.occultech.boss.AirEffects.Streak.create(kit.fight, "air_chain", a, b, BOND_COLOR, 0.35F);
+                } else if (age % 5 == 0) {
+                    chain.aim(a, b, 0.35F, 5);
+                }
+            } else if (age % 3 == 0) {
                 kit.drawLine(a, b, BOND_COLOR, 0.4);
             }
             for (Player player : kit.playersAlong(a, b, 0.8)) {

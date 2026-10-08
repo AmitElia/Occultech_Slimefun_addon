@@ -59,7 +59,7 @@ final class SoakCircle implements RaidHazard {
             t.setBackgroundColor(Color.fromARGB(90, 0, 0, 0));
             t.setBrightness(new Display.Brightness(15, 15));
         });
-        fight.telegraph(center, radius, warnTicks, SHORT);
+        fight.telegraph(center, radius, warnTicks, SHORT, io.github.amitelia.occultech.boss.FloorDecals.Mark.SOAK);
         center.getWorld().playSound(center, Sound.BLOCK_BELL_USE, 1.5F, 0.8F);
     }
 
@@ -90,6 +90,9 @@ final class SoakCircle implements RaidHazard {
             int seconds = Math.max(0, (warnTicks - age) / 20 + 1);
             count.text(Component.text(inside.size() + "/" + needed, enough ? NamedTextColor.GREEN : NamedTextColor.GOLD)
                 .decorate(TextDecoration.BOLD).append(Component.text("  " + seconds + "s", NamedTextColor.GRAY)));
+        }
+        // with the pack, the floor marking shows the circle; the particle ring is its stand-in (and turns green when held)
+        if (age % 4 == 1 && (enough || !io.github.amitelia.occultech.boss.FloorDecals.enabled())) {
             Particle.DustOptions dust = new Particle.DustOptions(enough ? ENOUGH : SHORT, 1.5F);
             int points = (int) Math.ceil(Math.PI * 2 * radius / 0.5);
             for (int i = 0; i < points; i++) {

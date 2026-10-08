@@ -18,6 +18,7 @@ Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.m
 | **O2** | Art retouch: the tier sigils and pentagrams crisp and finished; the armor inventory icons professional and symmetric | **Done** |
 | **O3** | Trophy Board as a real pedestal with bosses shown at one size; the Arcane Altar reworked with the Session B pentagram | **Done** |
 | **O4** | Floor markings for boss fights: attack warnings and ground zones (the user's picks) | **Done** |
+| **E9** | Staff Raid art: S4MURAI's katana (held), the soak and target floor marks, the energy wall; the raid's lanes, cones, rings, lasers and tether moved onto O4/O5 models | **Done** - awaiting in-game review |
 | - | Pack pipeline (assets in the jar -> Nexo external pack or Occultech's own pack) | before D (so C can be seen in game) |
 
 ## Session A - style and toolkit (2026-10-01)
@@ -1149,3 +1150,35 @@ fittings, sea glow; fire blocks in ember.
   round the fins and in front of the face, each showing a bubble's life now and then - a single bubble that swells,
   catches a glint and bursts, or a trail of three tiny ones. Every pixel solid or clear. Approved first round (v2).
 - Full set in game: bubbles breathed out underwater, a bubble popping now and then at the mouth or a fin in air.
+
+## Session E9 - the Staff Raid's art (2026-10-07)
+Script `tools/art/session_e9.py`; parts in `session-g/` (`s4murai_katana`, `floor_mark_soak`, `floor_mark_target`,
+`raid_wall`); review sheet and an animated preview in `session-e9/` (`review-e9.png`, `preview-katana.gif`).
+- **S4MURAI's katana** (boss-only, held with vanilla's handheld transforms, laid on the sword diagonal):
+  - **Handle:** a black kashira, then a grip wrapped crimson-on-black in diamonds.
+  - **Guard:** a black octagonal tsuba (two crossed plates) with a crimson rim, then a crimson habaki.
+  - **Blade:** painted, not built (the user's review: no stepped boxes, a continuous blade). Two planes 0.3 apart share
+    one 64 px texture whose 8 x 64 strip (0.3 units a texel) holds the silhouette: a sori bowing toward the spine, a
+    slight taper, and a kissaki where the edge sweeps up to the point. Clean bands: a dark spine, one line of light on
+    the shinogi, the black flat, a long slow dark-crimson hamon, hardened steel a step brighter.
+  - **Edge:** an emissive overlay plane over each face carries just the edge and the tip, crimson and hottest at the
+    point, with the white-hot glint the user liked sweeping from the habaki to the tip (8 frames, interpolated).
+  - Rounds: the first blade was 10, then 16 stepped boxes (a curve, but its seams read as serrations); the painted
+    blade replaced them.
+- **Floor marks** in O4's tinted greys: `soak` (three figures gathered, read at 1x) and `target` (a ring, four ticks
+  pointing in, a dot; the first version's wheel-like interior outlines were thinned).
+- **Energy wall** (`raid_wall`): an upright pane drawn in greys and tinted per wall. Bright rails top and bottom, a
+  mostly see-through field that glows more toward the rails, faint drifting streaks, and a band of light rising
+  through it (6 frames). The first version's hex cells read as bricks and were replaced.
+- **What the raid uses them for** (only where the pack is in use; particles stay as the stand-in without it):
+  - lanes (dashes, beam and HOTFIX lanes, the iai slash, the stampede, the mount charge) -> O4 `lane`;
+  - MOO and X's kick -> O4 `wedge`;
+  - expanding rings -> O4 `floor_wave` (tall rings keep their particle curtain, which shows the gap);
+  - spinning lasers and the gadgeteer's beam -> O5 `air_beam` streaks;
+  - Earl and Sam's bond -> O5 `air_chain`;
+  - soak circles -> O4 warning with the soak mark;
+  - player markers -> a ring and reticle that follow the player and turn red when they lock;
+  - walls and sweeping barriers -> `raid_wall`.
+- Self-critique: silhouettes read (the katana at hand scale, both marks at 1x), one accent each, emissive parts
+  animated. Still to check in game: the katana's size in the Mannequin's hand, and how the wall looks against the sky.
+

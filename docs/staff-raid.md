@@ -230,4 +230,4 @@ Each session ends with a build, the unit tests and a self-test run.
 | E6 - Raid toolkit | Act 2 building blocks: soak circles, player markers, moving barriers, spinning lasers, expanding rings, the pace bands |
 | **E7 - The Council** (done) | X, Chlo (flight, kidnap), Pancake (potions, syrup, taste test, updraft, drink), the shared bar, pace and soft enrage, the rules for moving players. Act 2 follows Act 1; the raid is won when the bar runs out |
 | **E8 - Test and tune** (tools done; tuning needs a real run) | Self-test for every signature and the council, mechanic density with a fake count of 25 players, balance report, performance budget, fall damage in the combat log |
-| E9 - Art pass | Katana model and the new ground and visual effects through the art pipeline |
+| **E9 - Art pass** (done, fart sound skipped) | Katana model; soak and target marks; the energy wall; lanes, cones, rings, lasers and the bond tether on the pack's models (docs/art/SESSIONS.md, Session E9) |

@@ -37,7 +37,7 @@ import java.util.Locale;
 public final class FloorDecals {
 
     /** The symbol in the middle of an attack warning. */
-    public enum Mark { SLAM, DIVE, WEB, FLAME, STORM, SPIKES, WIND, ROOTS, SWEEP, CURSE, DANGER }
+    public enum Mark { SLAM, DIVE, WEB, FLAME, STORM, SPIKES, WIND, ROOTS, SWEEP, CURSE, DANGER, SOAK, TARGET }
 
     /** A ground zone's surface. Acid and fire glow. */
     public enum Zone {
@@ -156,6 +156,30 @@ public final class FloorDecals {
             (float) Math.max(0.01, fromRadius * 2));
         later(2, () -> grow(wave, (float) (toRadius * 2), Math.max(1, ticks - 2)));
         later(ticks + 2L + hold, wave::remove);
+    }
+
+    /**
+     * A glowing display of the pack's {@code model} at {@code at}, tinted (or not), at its model's own size: the caller
+     * shapes and moves it (the Staff Raid's walls, a marker that follows a player). Removed with the fight.
+     */
+    @Nonnull
+    public static ItemDisplay model(@Nonnull BossFight fight, @Nonnull Location at, @Nonnull String model, @Nullable Color tint) {
+        return decal(fight, at, model, tint == null ? null : visible(tint), true, 1F);
+    }
+
+    /** A floor decal of {@code model} at {@code at}, {@code size} across, glowing and tinted (a marker's ring). */
+    @Nonnull
+    public static ItemDisplay flat(@Nonnull BossFight fight, @Nonnull Location at, @Nonnull String model, @Nonnull Color tint, double size) {
+        return decal(fight, floor(at).add(0, WARNING_HEIGHT, 0), model, visible(tint), true, (float) size);
+    }
+
+    /** Re-tints a display made here (a marker that locks turns red). */
+    public static void tint(@Nonnull ItemDisplay display, @Nonnull Color tint) {
+        if (display.isValid()) {
+            ItemStack stack = display.getItemStack();
+            stack.setData(DataComponentTypes.DYED_COLOR, DyedItemColor.dyedItemColor(visible(tint)));
+            display.setItemStack(stack);
+        }
     }
 
     /** A splat where something burst ({@code radius} blocks): it pops out and fades away within a second. */

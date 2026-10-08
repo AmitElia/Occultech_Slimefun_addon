@@ -94,9 +94,7 @@ final class SkirmisherKit extends StaffKit {
         Location to = lane(from, target.getLocation(), DASH_LENGTH);
         Vector direction = to.toVector().subtract(from.toVector()).setY(0).normalize();
         body.getWorld().playSound(from, Sound.ITEM_TRIDENT_RIPTIDE_1, 1F, 1.4F);
-        for (int t = 0; t <= DASH_WARNING; t += 5) {
-            later(t, () -> drawLine(from.clone().add(0, 0.15, 0), to.clone().add(0, 0.15, 0), LANE, 0.4));
-        }
+        warnLane(from, to, DASH_WIDTH * 2, DASH_WARNING, LANE);
         later(DASH_WARNING, () -> {
             if (!alive()) {
                 return;

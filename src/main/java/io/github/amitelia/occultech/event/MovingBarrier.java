@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -45,6 +46,7 @@ final class MovingBarrier implements RaidHazard {
     private final Mechanic mechanic;
     private final LivingEntity source;
     private final List<BlockDisplay> pieces = new ArrayList<>();
+    private final List<org.bukkit.entity.ItemDisplay> panes = new ArrayList<>();
     private final Set<UUID> hit = new HashSet<>();
     private double travelled;
     private int age;
@@ -70,6 +72,21 @@ final class MovingBarrier implements RaidHazard {
         // two slabs, one each side of the gap
         piece(look, -halfLength, gapCenter - gapHalfWidth);
         piece(look, gapCenter + gapHalfWidth, halfLength);
+        if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+            // the pack's energy panes instead of stretched glass
+            pieces.forEach(BlockDisplay::remove);
+            pieces.clear();
+            Color tint = RaidWall.tintOf(look);
+            for (double[] span : new double[][] { { -halfLength, gapCenter - gapHalfWidth }, { gapCenter + gapHalfWidth, halfLength } }) {
+                if (span[1] - span[0] > 0.1) {
+                    Location from = line().add(across.clone().multiply(span[0]));
+                    Location to = line().add(across.clone().multiply(span[1]));
+                    org.bukkit.entity.ItemDisplay pane = RaidWall.pane(fight, from, to, HEIGHT, 1F, tint);
+                    pane.setTeleportDuration(1);
+                    panes.add(pane);
+                }
+            }
+        }
         middle.getWorld().playSound(line(), Sound.BLOCK_BEACON_ACTIVATE, 2F, 0.6F);
     }
 
@@ -106,11 +123,15 @@ final class MovingBarrier implements RaidHazard {
         travelled += speed;
         if (travelled > halfLength * 2) {
             pieces.forEach(BlockDisplay::remove);
+            panes.forEach(org.bukkit.entity.ItemDisplay::remove);
             return false;
         }
         Vector move = dir.clone().multiply(speed);
         for (BlockDisplay piece : pieces) {
             piece.teleport(piece.getLocation().add(move));
+        }
+        for (org.bukkit.entity.ItemDisplay pane : panes) {
+            pane.teleport(pane.getLocation().add(move));
         }
         Location line = line();
         for (Player player : fight.players()) {

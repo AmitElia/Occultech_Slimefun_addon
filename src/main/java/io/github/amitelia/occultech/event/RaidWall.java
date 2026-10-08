@@ -44,6 +44,8 @@ final class RaidWall implements RaidHazard {
     @Nullable private final LivingEntity source;
     private final Map<UUID, Integer> shocked = new HashMap<>();
     @Nullable private BlockDisplay display;
+    @Nullable private org.bukkit.entity.ItemDisplay pane;
+    private final Color tint;
     private int age;
 
     RaidWall(BossFight fight, Location a, Location b, double height, Material look, int warnTicks, int lifeTicks, Mechanic mechanic,
@@ -58,6 +60,36 @@ final class RaidWall implements RaidHazard {
         this.lifeTicks = lifeTicks;
         this.mechanic = mechanic;
         this.source = source;
+        this.tint = tintOf(look);
+    }
+
+    /** The energy pane's colour for a wall drawn in {@code look} without the pack. */
+    static Color tintOf(Material look) {
+        return switch (look) {
+            case RED_STAINED_GLASS -> Color.fromRGB(255, 70, 60);
+            case BROWN_STAINED_GLASS -> Color.fromRGB(230, 150, 70);
+            default -> Color.fromRGB(110, 200, 255);
+        };
+    }
+
+    /** An energy pane between {@code a} and {@code b}, {@code height} tall: placed at the middle, turned along the wall. */
+    static org.bukkit.entity.ItemDisplay pane(BossFight fight, Location a, Location b, double height, float rise, Color tint) {
+        double dx = b.getX() - a.getX();
+        double dz = b.getZ() - a.getZ();
+        Location middle = a.clone().add(dx / 2, 0, dz / 2);
+        middle.setYaw(0F);
+        middle.setPitch(0F);
+        org.bukkit.entity.ItemDisplay pane = io.github.amitelia.occultech.boss.FloorDecals.model(fight, middle, "raid_wall", tint);
+        pane.setTransformation(paneShape(dx, dz, height * rise));
+        return pane;
+    }
+
+    /** The pane's shape: its +x along the wall, {@code height} tall standing on the floor. */
+    static Transformation paneShape(double dx, double dz, double height) {
+        float length = (float) Math.hypot(dx, dz);
+        float theta = (float) Math.atan2(-dz, dx);
+        return new Transformation(new Vector3f(0, (float) height / 2, 0), new AxisAngle4f(theta, 0, 1, 0),
+            new Vector3f(length, (float) Math.max(0.01, height), 1), new AxisAngle4f());
     }
 
     /** One tick. False once the wall is gone. */
@@ -72,6 +104,10 @@ final class RaidWall implements RaidHazard {
         }
         if (age == warnTicks) {
             rise();
+        } else if (age == warnTicks + 1 && pane != null && pane.isValid()) {
+            pane.setInterpolationDelay(0);
+            pane.setInterpolationDuration(RISE_TICKS);
+            pane.setTransformation(paneShape(b.getX() - a.getX(), b.getZ() - a.getZ(), height));
         } else if (age == warnTicks + 1 && display != null && display.isValid()) {
             // a tick after it appears: grow to full height, smoothly
             Transformation flat = display.getTransformation();
@@ -84,6 +120,9 @@ final class RaidWall implements RaidHazard {
             if (display != null) {
                 display.remove();
             }
+            if (pane != null) {
+                pane.remove();
+            }
             return false;
         }
         if (age >= warnTicks + RISE_TICKS / 2) {
@@ -94,10 +133,18 @@ final class RaidWall implements RaidHazard {
 
     /** Whether the wall stands now (risen, not yet gone). */
     boolean standing() {
-        return display != null && display.isValid();
+        return display != null && display.isValid() || pane != null && pane.isValid();
     }
 
     private void warn() {
+        if (io.github.amitelia.occultech.boss.FloorDecals.enabled() && age == 1) {
+            org.bukkit.util.Vector dir = b.toVector().subtract(a.toVector()).setY(0);
+            io.github.amitelia.occultech.boss.FloorDecals.lane(fight, a, dir, dir.length(), 0.8, warnTicks, tint);
+            return;
+        }
+        if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+            return;
+        }
         Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(120, 200, 255), 1.3F);
         Vector ab = b.toVector().subtract(a.toVector());
         double length = ab.length();
@@ -108,6 +155,11 @@ final class RaidWall implements RaidHazard {
     }
 
     private void rise() {
+        if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+            pane = pane(fight, a, b, height, 0.01F, tint);
+            a.getWorld().playSound(a.clone().add((b.getX() - a.getX()) / 2, 0, (b.getZ() - a.getZ()) / 2), Sound.BLOCK_BEACON_ACTIVATE, 1F, 1.4F);
+            return;
+        }
         double dx = b.getX() - a.getX();
         double dz = b.getZ() - a.getZ();
         float length = (float) Math.hypot(dx, dz);

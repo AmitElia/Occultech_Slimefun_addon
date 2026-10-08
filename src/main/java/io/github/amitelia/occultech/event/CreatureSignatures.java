@@ -322,9 +322,7 @@ final class CreatureSignatures {
             Location to = StaffKit.lane(from, kit.target.getLocation(), LENGTH);
             Vector along = to.toVector().subtract(from.toVector()).setY(0).normalize();
             Color red = Color.fromRGB(230, 60, 40);
-            for (int t = 0; t < WARNING; t += 5) {
-                kit.later(t, () -> kit.drawLine(from.clone().add(0, 0.15, 0), to.clone().add(0, 0.15, 0), red, 0.4));
-            }
+            kit.warnLane(from, to, 3.4, WARNING, red);
             horse.getWorld().playSound(from, Sound.ENTITY_HORSE_ANGRY, 1.5F, 1F);
             kit.later(WARNING, () -> {
                 if (riding() && kit.alive()) {

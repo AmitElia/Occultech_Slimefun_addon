@@ -55,6 +55,10 @@ final class RaidRing implements RaidHazard {
         this.color = color;
         this.mechanic = mechanic;
         this.source = source;
+        if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+            // the pack's travelling wave, timed to this ring (a tall ring keeps its particle curtain, which shows the gap)
+            io.github.amitelia.occultech.boss.FloorDecals.wave(fight, this.center, radius, maxRadius, (int) Math.ceil((maxRadius - radius) / speed), color);
+        }
     }
 
     /** One tick: grows, draws (every other tick), hits. False once it's past its reach. */
@@ -64,7 +68,7 @@ final class RaidRing implements RaidHazard {
         if (radius > maxRadius) {
             return false;
         }
-        if (age++ % 2 == 0) {
+        if (age++ % 2 == 0 && (height > LOW || !io.github.amitelia.occultech.boss.FloorDecals.enabled())) {
             draw();
         }
         double band = Math.max(0.6, speed);

@@ -97,15 +97,18 @@ final class GadgeteerKit extends StaffKit {
         Location aim = target.getLocation().add(0, 1, 0);
         Location to = from.clone().add(aim.toVector().subtract(from.toVector()).normalize().multiply(BEAM_LENGTH));
         body.getWorld().playSound(from, Sound.BLOCK_BEACON_ACTIVATE, 1F, 1.8F);
-        for (int t = 0; t < BEAM_WARNING; t += 5) {
-            later(t, () -> drawLine(from, to, BEAM_COLOR, 0.6));
-        }
+        warnLane(body.getLocation(), StaffKit.lane(body.getLocation(), to, BEAM_LENGTH), BEAM_WIDTH * 2, BEAM_WARNING, BEAM_COLOR);
+        io.github.amitelia.occultech.boss.AirEffects.Streak aimLine = io.github.amitelia.occultech.boss.FloorDecals.enabled()
+            ? io.github.amitelia.occultech.boss.AirEffects.Streak.create(fight, "air_beam", from, to, BEAM_COLOR, 0.08F) : null;
         later(BEAM_WARNING, () -> {
             if (!alive()) {
                 return;
             }
             body.swingMainHand();
             from.getWorld().playSound(from, Sound.ENTITY_GUARDIAN_ATTACK, 1F, 1.5F);
+            if (aimLine != null) {
+                aimLine.fire(from, to);   // the thin aiming line flashes into the beam
+            }
             Particle.DustOptions dust = new Particle.DustOptions(BEAM_COLOR, 2F);
             org.bukkit.util.Vector step = to.toVector().subtract(from.toVector()).normalize().multiply(0.3);
             Location at = from.clone();

@@ -138,7 +138,10 @@ final class Founder extends CouncilMember {
         double aim = Math.atan2(aimAt.getZ(), aimAt.getX());
         Abyss.face(body, toward.getLocation());
         Particle.DustOptions dust = new Particle.DustOptions(Color.fromRGB(230, 80, 40), 1.5F);
-        for (int t = 0; t < 25; t += 5) {
+        if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+            io.github.amitelia.occultech.boss.FloorDecals.wedge(fight, at, aimAt, KICK_REACH, 25, Color.fromRGB(230, 80, 40));
+        }
+        for (int t = 0; t < 25 && !io.github.amitelia.occultech.boss.FloorDecals.enabled(); t += 5) {
             council.later(t, () -> {
                 for (double a = aim - KICK_HALF_ANGLE; a <= aim + KICK_HALF_ANGLE; a += 0.08) {
                     for (double r = 2; r <= KICK_REACH; r += 1.5) {

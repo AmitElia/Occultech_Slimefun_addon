@@ -95,9 +95,7 @@ final class DevSignatures {
             Location to = from.clone().add(target.getLocation().add(0, 1.1, 0).toVector().subtract(from.toVector()).normalize().multiply(LANE_LENGTH));
             kit.claim(WARNING + 5);
             kit.body.getWorld().playSound(from, Sound.BLOCK_NOTE_BLOCK_BIT, 1.5F, 0.6F);
-            for (int t = 0; t < WARNING; t += 5) {
-                kit.later(t, () -> kit.drawLine(from, to, HOTFIX, 0.5));
-            }
+            kit.warnLane(kit.body.getLocation(), StaffKit.lane(kit.body.getLocation(), to, LANE_LENGTH), 2.4, WARNING, HOTFIX);
             kit.later(WARNING, () -> {
                 if (!kit.alive()) {
                     return;

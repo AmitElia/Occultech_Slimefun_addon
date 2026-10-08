@@ -146,6 +146,9 @@ final class SamuraiSignatures {
             ItemStack katana = new ItemStack(Material.NETHERITE_SWORD);
             ItemMeta meta = katana.getItemMeta();
             meta.setDisplayName(ChatColor.DARK_RED + kit.member.display() + "'s Katana");
+            if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+                meta.setItemModel(new org.bukkit.NamespacedKey("occultech", "s4murai_katana"));   // the red and black katana (E9)
+            }
             katana.setItemMeta(meta);
             kit.body.getEquipment().setItemInMainHand(katana);
         }
@@ -172,9 +175,7 @@ final class SamuraiSignatures {
             Location to = StaffKit.lane(from, target.getLocation(), IAI_LENGTH);
             kit.claim(IAI_WARNING + 5);
             from.getWorld().playSound(from, Sound.ITEM_ARMOR_EQUIP_NETHERITE, 1.5F, 0.6F);
-            for (int t = 0; t < IAI_WARNING; t += 5) {
-                kit.later(t, () -> kit.drawLine(from.clone().add(0, 0.15, 0), to.clone().add(0, 0.15, 0), RED, 0.35));
-            }
+            kit.warnLane(from, to, 2.6, IAI_WARNING, RED);
             kit.later(IAI_WARNING, () -> {
                 if (!kit.alive()) {
                     return;

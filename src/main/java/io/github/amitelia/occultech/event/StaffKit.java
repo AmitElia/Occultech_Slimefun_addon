@@ -305,6 +305,23 @@ abstract class StaffKit {
         return out;
     }
 
+    /**
+     * Warns of a lane on the floor from {@code from} to {@code to}, {@code width} wide, for {@code ticks}: the pack's lane
+     * marking (its fill reaches the end as the hit lands), or, without the pack, a dotted line redrawn meanwhile.
+     */
+    protected void warnLane(Location from, Location to, double width, int ticks, Color color) {
+        if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+            org.bukkit.util.Vector dir = to.toVector().subtract(from.toVector()).setY(0);
+            if (dir.lengthSquared() > 0.01) {
+                io.github.amitelia.occultech.boss.FloorDecals.lane(fight, from, dir, dir.length(), width, ticks, color);
+            }
+            return;
+        }
+        for (int t = 0; t < ticks; t += 5) {
+            later(t, () -> drawLine(from.clone().add(0, 0.15, 0), to.clone().add(0, 0.15, 0), color, 0.4));
+        }
+    }
+
     /** A dotted warning line on the floor from {@code from} to {@code to}. */
     protected void drawLine(Location from, Location to, Color color, double step) {
         Particle.DustOptions dust = new Particle.DustOptions(color, 1.3F);

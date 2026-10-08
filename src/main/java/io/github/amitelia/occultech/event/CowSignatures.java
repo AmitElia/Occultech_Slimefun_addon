@@ -78,13 +78,17 @@ final class CowSignatures {
             Location to = StaffKit.lane(from, kit.target.getLocation(), LENGTH);
             Vector along = to.toVector().subtract(from.toVector()).setY(0).normalize();
             Vector side = new Vector(-along.getZ(), 0, along.getX());
-            for (int t = 0; t < WARNING; t += 5) {
-                kit.later(t, () -> {
-                    for (double offset : new double[] { -WIDTH, 0, WIDTH }) {
-                        Vector shift = side.clone().multiply(offset);
-                        kit.drawLine(from.clone().add(shift).add(0, 0.15, 0), to.clone().add(shift).add(0, 0.15, 0), DUST, 0.5);
-                    }
-                });
+            if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+                kit.warnLane(from, to, WIDTH * 2 + 1.4, WARNING, DUST);   // one wide lane for the whole herd
+            } else {
+                for (int t = 0; t < WARNING; t += 5) {
+                    kit.later(t, () -> {
+                        for (double offset : new double[] { -WIDTH, 0, WIDTH }) {
+                            Vector shift = side.clone().multiply(offset);
+                            kit.drawLine(from.clone().add(shift).add(0, 0.15, 0), to.clone().add(shift).add(0, 0.15, 0), DUST, 0.5);
+                        }
+                    });
+                }
             }
             for (double offset : new double[] { -1.6, 1.6, 0 }) {
                 Location at = from.clone().add(side.clone().multiply(offset)).subtract(along.clone().multiply(offset == 0 ? 1.8 : 0.8));
@@ -177,7 +181,10 @@ final class CowSignatures {
             double aim = Math.atan2(toTarget.getZ(), toTarget.getX());
             at.getWorld().playSound(at, Sound.ENTITY_COW_HURT, 2F, 0.5F);
             Particle.DustOptions dust = new Particle.DustOptions(DUST, 1.3F);
-            for (int t = 0; t < WARNING; t += 5) {
+            if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+                io.github.amitelia.occultech.boss.FloorDecals.wedge(kit.fight, at, toTarget, REACH, WARNING, DUST);
+            }
+            for (int t = 0; t < WARNING && !io.github.amitelia.occultech.boss.FloorDecals.enabled(); t += 5) {
                 kit.later(t, () -> {
                     for (double edge : new double[] { aim - HALF_ANGLE, aim + HALF_ANGLE }) {
                         kit.drawLine(at.clone().add(0, 0.15, 0), at.clone().add(Math.cos(edge) * REACH, 0.15, Math.sin(edge) * REACH), DUST, 0.5);

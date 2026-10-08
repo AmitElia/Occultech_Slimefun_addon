@@ -42,6 +42,8 @@ final class SpinningLaser implements RaidHazard {
     private double angle;
     private double spin;
     private int age;
+    /** With the pack: a beam streak per beam, row and section (a full-height beam with a gap has two sections). */
+    private final java.util.List<io.github.amitelia.occultech.boss.AirEffects.Streak> streaks = new java.util.ArrayList<>();
 
     /**
      * @param spin     radians per tick (negative: the other way)
@@ -71,6 +73,7 @@ final class SpinningLaser implements RaidHazard {
     public boolean step() {
         age++;
         if (age > warnTicks + lifeTicks || !pivot.isValid() || pivot.isDead()) {
+            streaks.forEach(io.github.amitelia.occultech.boss.AirEffects.Streak::snap);
             return false;
         }
         boolean live = age > warnTicks;
@@ -82,7 +85,9 @@ final class SpinningLaser implements RaidHazard {
             angle += spin;
         }
         Location center = pivot.getLocation();
-        if (live || age % 3 == 0) {
+        if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+            beams(center, live);
+        } else if (live || age % 3 == 0) {
             draw(center, live);
         }
         if (!live) {
@@ -105,6 +110,31 @@ final class SpinningLaser implements RaidHazard {
             }
         }
         return true;
+    }
+
+    /** The pack's beams: thin while they warn, full width once they turn; re-aimed every tick as they spin. */
+    private void beams(Location center, boolean live) {
+        double[] rows = height > LOW ? new double[] { 0.4, 1.4, 2.4 } : new double[] { 0.4 };
+        double[][] sections = Double.isNaN(gapFrom) ? new double[][] { { 0.8, length } } : new double[][] { { 0.8, gapFrom }, { gapTo, length } };
+        float width = live ? 0.55F : 0.12F;
+        int i = 0;
+        for (int b = 0; b < beams; b++) {
+            double beam = angle + Math.PI * 2 * b / beams;
+            double cos = Math.cos(beam);
+            double sin = Math.sin(beam);
+            for (double row : rows) {
+                for (double[] section : sections) {
+                    Location from = center.clone().add(cos * section[0], row, sin * section[0]);
+                    Location to = center.clone().add(cos * section[1], row, sin * section[1]);
+                    if (i >= streaks.size()) {
+                        streaks.add(io.github.amitelia.occultech.boss.AirEffects.Streak.create(fight, "air_beam", from, to, color, width));
+                    } else {
+                        streaks.get(i).aim(from, to, width, 1);
+                    }
+                    i++;
+                }
+            }
+        }
     }
 
     private void draw(Location center, boolean live) {
