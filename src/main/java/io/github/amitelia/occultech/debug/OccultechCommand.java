@@ -25,6 +25,7 @@ import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
  * <li>{@code restock <x> <y> <z> <BOSS_ID>}: refill a circle's altar and bowls for a boss (showcase buttons)</li>
  * <li>{@code inspect <x> <y> <z>}: print a Slimefun block's id and menu contents (debugging)</li>
  * <li>{@code unlockhalos <player>}: unlock every Hollow Halo style for a player (operators always have them)</li>
+ * <li>{@code event ...}: the Staff Raid (see {@link io.github.amitelia.occultech.event.RaidCommand})</li>
  * </ul>
  */
 public final class OccultechCommand implements TabExecutor {
@@ -79,6 +80,10 @@ public final class OccultechCommand implements TabExecutor {
                     sender.sendMessage("Usage: /occultech kit <0-3>");
                 }
             }
+            return true;
+        }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("event")) {
+            io.github.amitelia.occultech.event.RaidCommand.run(plugin.raids(), sender, args);
             return true;
         }
         if (args.length >= 1 && args[0].equalsIgnoreCase("fights")) {
@@ -263,7 +268,10 @@ public final class OccultechCommand implements TabExecutor {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            return List.of("selftest", "showcase", "studio", "restock", "inspect", "unlockhalos", "iteminfo", "setslot", "fights", "begin", "kit", "balance");
+            return List.of("selftest", "showcase", "studio", "restock", "inspect", "unlockhalos", "iteminfo", "setslot", "fights", "begin", "kit", "balance", "event");
+        }
+        if (args.length >= 2 && args[0].equalsIgnoreCase("event")) {
+            return io.github.amitelia.occultech.event.RaidCommand.complete(args);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("showcase")) {
             return List.of("clear");

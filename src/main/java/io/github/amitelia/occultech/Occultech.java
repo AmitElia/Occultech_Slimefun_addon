@@ -33,6 +33,7 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
 
     private ItemCatalog catalog;
     private BossService bosses;
+    private io.github.amitelia.occultech.event.RaidService raids;
     private RitualService rituals;
     private ServitorService servitors;
     private MinionService minions;
@@ -88,6 +89,8 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
         registrar.problems().forEach(problem -> getLogger().warning("Content problem: " + problem));
 
         bosses.start();
+        raids = new io.github.amitelia.occultech.event.RaidService(this, bosses);
+        raids.start();
         resourcePack.start();
         skins = new io.github.amitelia.occultech.items.BlockSkinService(this, resourcePack, customBlocks);
         skins.start();
@@ -109,6 +112,9 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     public void onDisable() {
         if (rituals != null) {
             rituals.shutdown();
+        }
+        if (raids != null) {
+            raids.shutdown();   // before the bosses: its fights end as dismissed, not as a shutdown to resume
         }
         if (bosses != null) {
             bosses.shutdown();
@@ -152,6 +158,11 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
     @Nonnull
     public RitualService rituals() {
         return rituals;
+    }
+
+    /** The Staff Raid (server-wide event). */
+    public io.github.amitelia.occultech.event.RaidService raids() {
+        return raids;
     }
 
     @Nonnull

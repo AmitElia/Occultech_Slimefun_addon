@@ -1,0 +1,303 @@
+package io.github.amitelia.occultech.event;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.entity.BlockDisplay;
+import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Transformation;
+import org.bukkit.util.Vector;
+import org.joml.AxisAngle4f;
+import org.joml.Vector3f;
+
+import io.github.amitelia.occultech.boss.Mechanic;
+
+/**
+ * Charles's signatures: space, space travel, astronomy (Session E4).
+ * <ul>
+ * <li><b>meteors</b>: shadows grow on the floor (under players and around them), then meteors fall into them.</li>
+ * <li><b>moons</b>: three moons orbit him for 10 s; touching one hurts. Time your way in between them.</li>
+ * <li><b>black_hole</b>: a black hole grows over him for 2 s, then pulls everyone near toward him (sprint to get away)
+ * and collapses on whoever is still close.</li>
+ * <li><b>low_gravity</b>: a low-gravity field around him (slow falling, high jumps) - every so often, and always while the
+ * black hole charges, so dodging gets floaty. Potion effects only: nothing is left on a player afterwards.</li>
+ * </ul>
+ */
+final class SpaceSignatures {
+
+    static final String ID = "RAID_CHARLES";
+    private static final Mechanic METEOR = Mechanic.of(ID, "Meteor", 26, Mechanic.Kind.AREA, true);
+    private static final Mechanic MOON = Mechanic.of(ID, "Moon", 20, Mechanic.Kind.AREA, true);
+    private static final Mechanic BLACK_HOLE = Mechanic.of(ID, "Black hole", 10, Mechanic.Kind.MAGIC, true);
+    private static final Color SHADOW = Color.fromRGB(60, 40, 90);
+
+    private SpaceSignatures() {}
+
+    /** A block display centred on its location (blocks draw from their corner). */
+    private static BlockDisplay rock(StaffKit kit, Location at, Material look, float size) {
+        return kit.fight.spawnExtra(BlockDisplay.class, at, d -> {
+            d.setBlock(look.createBlockData());
+            d.setTransformation(new Transformation(new Vector3f(-size / 2, -size / 2, -size / 2), new AxisAngle4f(),
+                new Vector3f(size, size, size), new AxisAngle4f()));
+            d.setBrightness(new org.bukkit.entity.Display.Brightness(15, 15));
+        });
+    }
+
+    /** Meteors fall into growing shadows. */
+    static final class Meteors extends Signature {
+
+        private static final int WARNING = 40;
+        private static final int FALL = 15;
+        private static final double RADIUS = 2.2;
+
+        Meteors(StaffKit kit) {
+            super(kit, 60);
+        }
+
+        @Override
+        boolean cast(int now) {
+            if (kit.target == null) {
+                next = now + 20;
+                return false;
+            }
+            next = now + 180;
+            kit.claim(20);
+            kit.body.swingMainHand();
+            List<Location> spots = new ArrayList<>();
+            List<Player> players = new ArrayList<>(kit.fight.players());
+            java.util.Collections.shuffle(players);
+            for (Player player : players.subList(0, Math.min(3, players.size()))) {
+                spots.add(player.getLocation());
+            }
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+            for (int i = 0; i < 2; i++) {
+                spots.add(kit.target.getLocation().add(random.nextDouble(-4, 4), 0, random.nextDouble(-4, 4)));
+            }
+            kit.body.getWorld().playSound(kit.body.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.5F, 0.5F);
+            for (Location spot : spots) {
+                kit.fight.telegraph(spot, RADIUS, WARNING, SHADOW);
+                kit.later(WARNING - FALL, () -> {
+                    BlockDisplay meteor = rock(kit, spot.clone().add(0, 18, 0), Material.MAGMA_BLOCK, 1.3F);
+                    meteor.setTeleportDuration(FALL);
+                    meteor.teleport(spot.clone().add(0, 0.6, 0));
+                    spot.getWorld().playSound(spot, Sound.ENTITY_BLAZE_SHOOT, 1F, 0.5F);
+                    kit.later(FALL, () -> {
+                        meteor.remove();
+                        spot.getWorld().spawnParticle(Particle.EXPLOSION, spot.clone().add(0, 0.5, 0), 2, 0.6, 0.2, 0.6, 0);
+                        spot.getWorld().spawnParticle(Particle.FLAME, spot.clone().add(0, 0.3, 0), 30, RADIUS / 2, 0.2, RADIUS / 2, 0.05);
+                        spot.getWorld().playSound(spot, Sound.ENTITY_GENERIC_EXPLODE, 1F, 0.8F);
+                        if (kit.alive()) {
+                            for (Player player : kit.playersNear(spot, RADIUS)) {
+                                kit.fight.hit(player, METEOR, kit.body);
+                            }
+                        }
+                    });
+                });
+            }
+            return true;
+        }
+    }
+
+    /** Three moons in orbit. */
+    static final class Moons extends Signature {
+
+        private static final int LIFE = 200;
+        private static final double ORBIT = 3.5;
+        private static final double SPIN = 0.07;
+        private static final double TOUCH = 1.1;
+        private final List<BlockDisplay> moons = new ArrayList<>();
+        private final Map<UUID, Integer> touched = new HashMap<>();
+        private double angle;
+        private int age = -1;
+
+        Moons(StaffKit kit) {
+            super(kit, 100);
+        }
+
+        @Override
+        boolean cast(int now) {
+            if (kit.target == null || age >= 0) {
+                next = now + 20;
+                return false;
+            }
+            next = now + 280;
+            kit.claim(10);
+            age = 0;
+            touched.clear();
+            for (int i = 0; i < 3; i++) {
+                BlockDisplay moon = rock(kit, kit.body.getLocation().add(0, 1, 0), Material.END_STONE, 0.9F);
+                moon.setTeleportDuration(1);
+                moons.add(moon);
+            }
+            kit.body.getWorld().playSound(kit.body.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 2F, 0.5F);
+            return true;
+        }
+
+        @Override
+        void move() {
+            if (age < 0) {
+                return;
+            }
+            if (++age > LIFE || !kit.alive()) {
+                moons.forEach(BlockDisplay::remove);
+                moons.clear();
+                age = -1;
+                return;
+            }
+            angle += SPIN;
+            Location center = kit.body.getLocation().add(0, 1, 0);
+            for (int i = 0; i < moons.size(); i++) {
+                double a = angle + Math.PI * 2 * i / moons.size();
+                Location at = center.clone().add(Math.cos(a) * ORBIT, 0, Math.sin(a) * ORBIT);
+                moons.get(i).teleport(at);
+                for (Player player : kit.playersNear(at, TOUCH)) {
+                    Integer last = touched.get(player.getUniqueId());
+                    if (last == null || age - last >= 20) {
+                        touched.put(player.getUniqueId(), age);
+                        kit.fight.hit(player, MOON, kit.body);
+                        StaffKit.knock(player, at, 0.7, 0.3);
+                    }
+                }
+            }
+        }
+    }
+
+    /** A black hole: grows, pulls, collapses. */
+    static final class BlackHole extends Signature {
+
+        private static final int WARNING = 40;
+        private static final int PULL = 40;
+        private static final double REACH = 9;
+        private static final double COLLAPSE = 3;
+        private static final double PULL_STRENGTH = 0.15;
+        private BlockDisplay hole;
+        private int pulling = -1;
+
+        BlackHole(StaffKit kit) {
+            super(kit, 160);
+        }
+
+        @Override
+        boolean cast(int now) {
+            if (kit.target == null || !kit.within(kit.target, REACH) || pulling >= 0) {
+                next = now + 20;
+                return false;
+            }
+            next = now + 260;
+            kit.claim(WARNING + PULL);
+            Location at = kit.body.getLocation().add(0, 2.6, 0);
+            hole = rock(kit, at, Material.BLACK_CONCRETE, 0.2F);
+            hole.setInterpolationDelay(0);
+            hole.setInterpolationDuration(WARNING);
+            hole.setTransformation(new Transformation(new Vector3f(-0.8F, -0.8F, -0.8F), new AxisAngle4f(), new Vector3f(1.6F, 1.6F, 1.6F),
+                new AxisAngle4f()));
+            at.getWorld().playSound(at, Sound.BLOCK_PORTAL_TRIGGER, 1.5F, 0.6F);
+            for (Signature signature : kit.signatures()) {
+                if (signature instanceof LowGravity field) {
+                    field.open(WARNING + PULL);
+                }
+            }
+            kit.later(WARNING, () -> pulling = 0);
+            return true;
+        }
+
+        @Override
+        void move() {
+            if (hole == null) {
+                return;
+            }
+            Location center = hole.getLocation();
+            if (pulling < 0) {
+                center.getWorld().spawnParticle(Particle.REVERSE_PORTAL, center, 6, 0.6, 0.6, 0.6, 0.02);
+                return;
+            }
+            pulling++;
+            center.getWorld().spawnParticle(Particle.REVERSE_PORTAL, center, 20, 2, 1, 2, 0.15);
+            if (pulling % 3 == 0) {
+                // weaker than a sprint: running away works, standing around doesn't
+                for (Player player : kit.playersNear(kit.body.getLocation(), REACH)) {
+                    Vector in = center.toVector().subtract(player.getLocation().toVector()).setY(0);
+                    if (in.lengthSquared() > 0.25) {
+                        player.setVelocity(player.getVelocity().add(in.normalize().multiply(PULL_STRENGTH)));
+                    }
+                }
+            }
+            if (pulling >= PULL || !kit.alive()) {
+                Location ground = kit.body.getLocation();
+                hole.remove();
+                hole = null;
+                pulling = -1;
+                center.getWorld().spawnParticle(Particle.SQUID_INK, center, 60, 1.5, 1, 1.5, 0.2);
+                center.getWorld().playSound(center, Sound.ENTITY_WARDEN_SONIC_BOOM, 1F, 1.4F);
+                if (kit.alive()) {
+                    for (Player player : kit.playersNear(ground, COLLAPSE)) {
+                        kit.fight.hit(player, BLACK_HOLE, kit.body);
+                    }
+                }
+            }
+        }
+    }
+
+    /** A low-gravity field around him. */
+    static final class LowGravity extends Signature {
+
+        private static final int LIFE = 120;
+        private static final double RADIUS = 7;
+        private int left;
+        private int age;
+
+        LowGravity(StaffKit kit) {
+            super(kit, 200);
+        }
+
+        @Override
+        boolean cast(int now) {
+            if (kit.target == null) {
+                next = now + 20;
+                return false;
+            }
+            next = now + 320;
+            open(LIFE);
+            return true;
+        }
+
+        /** Opens (or keeps open) the field for {@code ticks}. */
+        void open(int ticks) {
+            if (left <= 0) {
+                kit.body.getWorld().playSound(kit.body.getLocation(), Sound.BLOCK_BEACON_AMBIENT, 2F, 1.6F);
+            }
+            left = Math.max(left, ticks);
+        }
+
+        @Override
+        void move() {
+            if (left <= 0) {
+                return;
+            }
+            left--;
+            if (age++ % 5 != 0 || !kit.alive()) {
+                return;
+            }
+            Location center = kit.body.getLocation();
+            for (int i = 0; i < 24; i++) {
+                double a = Math.PI * 2 * i / 24 + age * 0.02;
+                center.getWorld().spawnParticle(Particle.END_ROD, center.clone().add(Math.cos(a) * RADIUS, 0.2, Math.sin(a) * RADIUS), 1, 0, 0.1, 0, 0);
+            }
+            for (Player player : kit.playersNear(center, RADIUS)) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 15, 0, false, false));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 15, 2, false, false));
+            }
+        }
+    }
+}

@@ -62,7 +62,7 @@ public final class BossFight {
      */
     private static final double HELD_WEAPON_BONUS = 2.5;
 
-    public enum Result { VICTORY, ABANDONED, BANISHED, TIMEOUT, UNLOADED, SHUTDOWN, ERROR }
+    public enum Result { VICTORY, ABANDONED, BANISHED, TIMEOUT, UNLOADED, SHUTDOWN, ERROR, DISMISSED }
 
     /** Share of a boss's max health it regains per second while everyone has walked out of the arena. */
     private static final double AWAY_REGEN_PER_SECOND = 0.02;
@@ -232,6 +232,11 @@ public final class BossFight {
     private final Block altar;
     private final Location center;
     private final ItemStack refund;
+    /**
+     * An event fight (the Staff Raid): started by admins at an arena, not by a ritual. No altar, catalyst, loot or saved
+     * state; its health is set by its behavior; with nobody near, it just waits.
+     */
+    private final boolean event;
     private final BossBehavior behavior;
     private final BossBar bar;
     private int playersAtStart;
@@ -259,7 +264,12 @@ public final class BossFight {
     private Result result;
 
     BossFight(BossService service, BossSpec spec, BossBlueprint blueprint, Block altar, @Nullable ItemStack refund) {
+        this(service, spec, blueprint, altar, refund, false);
+    }
+
+    BossFight(BossService service, BossSpec spec, BossBlueprint blueprint, Block altar, @Nullable ItemStack refund, boolean event) {
         this.service = service;
+        this.event = event;
         this.spec = spec;
         this.altar = altar;
         this.center = altar.getLocation().add(0.5, 1, 0.5);
@@ -273,6 +283,10 @@ public final class BossFight {
         // keep the whole arena loaded, not just the altar's chunk, so nothing in the fight unloads mid-fight
         service.holdChunks(arenaChunks());
         behavior.spawn(center.clone());
+        if (event) {
+            center.getWorld().playSound(center, Sound.ENTITY_PLAYER_LEVELUP, 1F, 0.6F);
+            return;
+        }
         broadcast("&5The circle flares - &c" + spec.name() + " &5answers the summons!");
         center.getWorld().playSound(center, Sound.ENTITY_WITHER_SPAWN, 0.6F, 1.4F);
     }
@@ -525,9 +539,23 @@ public final class BossFight {
         return max <= 0 ? 0 : Math.max(0, Math.min(1, health / max));
     }
 
-    /** Health multiplier: the configured base, plus a configured share per extra player present when summoned. */
+    /**
+     * Health multiplier: the configured base, plus a configured share per extra player present when summoned. An event
+     * fight's behavior sets its own health (raid scaling), so its multiplier is 1.
+     */
     public double healthMultiplier() {
-        return service.healthMultiplier() * service.groupScaling().factor(playersAtStart);
+        return event ? 1 : service.healthMultiplier() * service.groupScaling().factor(playersAtStart);
+    }
+
+    /** This fight's behavior (the raid's tools look at their own). */
+    @Nonnull
+    public BossBehavior behavior() {
+        return behavior;
+    }
+
+    /** Whether this is an event fight (the Staff Raid), not a summoned one. */
+    public boolean isEvent() {
+        return event;
     }
 
     public int playersAtStart() {
@@ -596,6 +624,16 @@ public final class BossFight {
         return entity instanceof LivingEntity living && bosses.contains(living);
     }
 
+    /** Whether a player's projectile about to hit {@code boss} should pass harmlessly instead (the behavior decides). */
+    boolean deflects(LivingEntity boss, org.bukkit.entity.Projectile projectile) {
+        try {
+            return !ended && behavior.deflectProjectile(boss, projectile);
+        } catch (RuntimeException e) {
+            service.plugin().getLogger().severe("Boss " + spec.id() + " deflection failed: " + e);
+            return false;
+        }
+    }
+
     @Nullable
     FightObject objectFor(Entity hitbox) {
         return objects.get(hitbox.getUniqueId());
@@ -650,7 +688,7 @@ public final class BossFight {
         if (ended) {
             return;
         }
-        if (++saveCounter % 20 == 0) {   // every 5 s: a crash loses at most that much of the fight
+        if (!event && ++saveCounter % 20 == 0) {   // every 5 s: a crash loses at most that much of the fight
             service.hooks().saveState(altar, state().format());
         }
 
@@ -670,6 +708,15 @@ public final class BossFight {
         for (Player player : inArena) {
             presence.merge(player.getUniqueId(), BossService.STEP, Integer::sum);
             excused.remove(player.getUniqueId());
+        }
+        if (inArena.isEmpty() && event && service.awayRules()) {
+            // an event fight waits for players to come over: no clock, no attacks, no recovery, no end
+            // (the self-test turns the away rules off, and then it runs unattended like any fight)
+            leash();
+            leashAdds();
+            extras.removeIf(e -> !e.isValid());
+            updateBar();
+            return;
         }
         if (inArena.isEmpty() && service.awayRules()) {
             away();
@@ -801,16 +848,21 @@ public final class BossFight {
             case VICTORY -> {
                 broadcast("&a" + spec.name() + " has been defeated!");
                 center.getWorld().playSound(center, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1F, 1F);
-                distributeLoot();
+                if (!event) {
+                    distributeLoot();
+                }
             }
             case ABANDONED -> broadcast("&7The circle falls quiet. " + spec.name() + " fades away, and the catalyst with it.");
             case BANISHED -> center.getWorld().playSound(center, Sound.BLOCK_BEACON_DEACTIVATE, 1F, 0.6F);
             case TIMEOUT -> broadcast("&7" + spec.name() + " grows bored of you and fades away.");
             case SHUTDOWN -> {
-                // the fight is kept: saved here, it resumes when the altar loads again (Session P3)
-                service.hooks().saveState(altar, state().format());
-                broadcast("&7The circle holds its breath - " + spec.name() + " will return when the world wakes.");
+                if (!event) {
+                    // the fight is kept: saved here, it resumes when the altar loads again (Session P3)
+                    service.hooks().saveState(altar, state().format());
+                    broadcast("&7The circle holds its breath - " + spec.name() + " will return when the world wakes.");
+                }
             }
+            case DISMISSED -> center.getWorld().spawnParticle(Particle.CLOUD, center, 30, 0.6, 1, 0.6, 0.02);
             case UNLOADED, ERROR -> {
                 broadcast("&7The ritual was interrupted. The catalyst returns to the altar.");
                 if (refund != null) {
@@ -834,7 +886,7 @@ public final class BossFight {
         if (log != null) {
             log.write(new java.io.File(service.plugin().getDataFolder(), "combat-log"), how.name(), elapsed, playersAtStart, healthMultiplier());
         }
-        if (how != Result.SHUTDOWN) {
+        if (how != Result.SHUTDOWN && !event) {
             service.hooks().clearActive(altar);
         }
         service.onFightEnded(this);
@@ -844,7 +896,9 @@ public final class BossFight {
 
     private void prepare(LivingEntity entity) {
         tag(entity);
-        entity.setPersistent(true);
+        // an event fight never resumes after a restart, so its creatures aren't saved with the world (the fight holds
+        // their chunks loaded); a summoned fight's are, so it can resume (Session P3)
+        entity.setPersistent(!event);
         entity.setRemoveWhenFarAway(false);
         entity.setCanPickupItems(false);
         EntityEquipment equipment = entity.getEquipment();
@@ -990,7 +1044,8 @@ public final class BossFight {
 
     private void updateBar() {
         bar.setProgress(healthFraction());
-        Set<Player> viewers = new HashSet<>(playersInRadius(spec.arenaRadius() + 16));
+        // an event fight's bar shows only near it: a raid has many fights side by side
+        Set<Player> viewers = new HashSet<>(playersInRadius(spec.arenaRadius() + (event ? 2 : 16)));
         for (Player player : new ArrayList<>(bar.getPlayers())) {
             if (!viewers.contains(player)) {
                 bar.removePlayer(player);

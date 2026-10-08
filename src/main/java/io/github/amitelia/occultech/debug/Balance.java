@@ -43,14 +43,20 @@ final class Balance {
     static List<Grade> grades(Occultech plugin, double difficulty) {
         var bosses = plugin.rituals().bosses();
         bosses.blueprints().forEach(BossBlueprint::load);
+        io.github.amitelia.occultech.event.RaidService.loadMechanics();
         List<Grade> out = new ArrayList<>();
         for (Mechanic mechanic : Mechanic.all()) {
             BossSpec spec = plugin.rituals().spec(mechanic.bossId()).orElse(null);
-            if (spec == null) {
+            int tier;
+            if (spec != null) {
+                tier = spec.tier();
+            } else if (io.github.amitelia.occultech.event.RaidService.isRaid(mechanic.bossId())) {
+                tier = io.github.amitelia.occultech.event.RaidService.BENCHMARK_TIER;   // the Staff Raid: max-enchanted netherite
+            } else {
                 continue;
             }
-            ArmorModel.Kit kit = ArmorModel.kit(spec.tier());
-            out.add(new Grade(mechanic, spec.tier(), ArmorModel.share(mechanic, kit, difficulty), ArmorModel.band(mechanic, spec.tier())));
+            ArmorModel.Kit kit = ArmorModel.kit(tier);
+            out.add(new Grade(mechanic, tier, ArmorModel.share(mechanic, kit, difficulty), ArmorModel.band(mechanic, tier)));
         }
         out.sort((a, b) -> a.tier() != b.tier() ? Integer.compare(a.tier(), b.tier()) : a.mechanic().bossId().compareTo(b.mechanic().bossId()));
         return out;

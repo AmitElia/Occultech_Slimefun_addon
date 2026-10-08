@@ -17,6 +17,53 @@ bosses:
   # walked off, the boss recovers; after a death or disconnect it waits as it is
   away-seconds: 180
 
+raid:
+  # The Staff Raid (docs/staff-raid.md): a server-wide event admins run at a preset arena with /occultech event.
+  # Set the arena by standing in its middle: /occultech event arena set <radius>. It's saved in raid-arena.yml.
+  # Act 1: one staff member per this many players is on the floor at once (2 to max-targets)
+  players-per-target: 2.5
+  max-targets: 10
+  # A staff member's health for one player, before raid scaling. Health grows as (players per staff member)^health-exponent
+  staff-health: 600
+  health-exponent: 0.9
+  # Multiplies all raid health (also live with /occultech event hp <multiplier>)
+  health-multiplier: 1.0
+  # Act 1 ends after kills-per-target x (staff on the floor) staff are beaten, or after act1-minutes
+  kills-per-target: 2
+  act1-minutes: 8
+  # Who can appear. name = Minecraft username (their skin unless skin: is set), display = the name shown, title = the
+  # line under it. archetype: bruiser, controller, skirmisher, summoner, gadgeteer or hexer. signatures: their own
+  # abilities. with: a partner who fights in the same slot (the partner isn't picked on their own). scale: body size.
+  roster:
+    - {name: MrTroxy, display: MrTroxy, title: Lead Dev, archetype: gadgeteer, signatures: [hotfix, system_bug, rollback]}
+    - {name: Djtmk, display: Dj, title: Java Dev, archetype: gadgeteer, signatures: [hotfix, system_bug, rollback]}
+    - {name: AbusingYTRank, display: Abusing, title: Head Admin, archetype: bruiser, signatures: [replicas, big_fuse]}
+    - {name: jollydiger, display: Jolly, title: Moderator, archetype: skirmisher, signatures: [trick_arrows, fart_jump, whoopee_cushions]}
+    - {name: S4MURAI, display: S4MURAI, title: SF Creative Director, archetype: skirmisher, signatures: [enderstep, swap, katana]}
+    - {name: justafable, display: justafable, title: Head Admin, archetype: bruiser}
+    - {name: charlesfinley, display: Charles, title: Head Admin, archetype: controller, signatures: [meteors, moons, black_hole, low_gravity]}
+    - {name: pyr0xite, display: pyr0, title: Head Admin, archetype: bruiser, signatures: [stampede, moo, milk, hay]}
+    - {name: mrlonelydwarf, display: mrlonelydwarf, title: Head Admin, archetype: skirmisher, signatures: [burrow]}
+    - {name: EarlTheDwarf, display: Earl, title: Moderator, archetype: bruiser, signatures: [bond, together, rescue], with: SneakySamInc, scale: 0.7}
+    - {name: SneakySamInc, display: Sam, title: Head Admin, archetype: skirmisher, signatures: [bond, together, rescue, daggers]}
+    - {name: goobtbh, display: goob, title: Admin, archetype: controller}
+    - {name: Griffon_Master, display: Griffon, title: Admin, archetype: skirmisher, signatures: [mount]}
+    - {name: bee_grand, display: bee_grand, title: Moderator, archetype: summoner, signatures: [bees]}
+    - {name: KAWI1PROXI3, display: Proxy, title: Moderator, archetype: controller, signatures: [walls, tnt]}
+    - {name: FM_radio416, display: FM, title: Moderator, archetype: controller, signatures: [radio]}
+    - {name: KonTheJester, display: Kon, title: Moderator, archetype: hexer, signatures: [decoys]}
+    - {name: Amya_03, display: Amya, title: Trustee, archetype: summoner}
+    - {name: Nasty_Bat, display: Bat, title: Trustee, archetype: summoner, signatures: [bats]}
+    - {name: Jenn_Vixen, display: Jenn, title: Trustee, archetype: summoner, signatures: [foxes]}
+    - {name: makahaun, display: maka, title: Trustee, archetype: summoner}
+    - {name: OldeGrumpy, display: OldeGrumpy, title: Trustee, archetype: summoner}
+    - {name: serapph, display: Raven, title: Trustee, archetype: summoner, signatures: [spiders]}
+    - {name: SuckedBean, display: SuckedBean, title: Trustee, archetype: summoner}
+    - {name: YahooFlop, display: YahooFlop, title: Trustee, archetype: summoner}
+    - {name: iamniixx, display: Nick, title: Community Apps, archetype: hexer, signatures: [denied]}
+    - {name: OMGMYSPLEEN08, display: Spleen, title: Community Apps, archetype: hexer, signatures: [denied]}
+    - {name: AtlasLeft, display: Atlas, title: Build Team, archetype: controller, signatures: [walls, tnt]}
+
 brood-egg:
   # Seconds between strings. Only counts while the chunk is loaded; no catch-up for offline time.
   seconds-per-string: 20

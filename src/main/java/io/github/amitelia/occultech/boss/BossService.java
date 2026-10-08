@@ -249,6 +249,18 @@ public final class BossService implements Listener {
     }
 
     /**
+     * Starts an event fight (the Staff Raid) with {@code blueprint}, centred one block above {@code floor}: no altar,
+     * catalyst, loot or saved state. The blueprint needn't be registered: a raid builds one per staff member.
+     */
+    @Nonnull
+    public BossFight startEvent(@Nonnull BossBlueprint blueprint, @Nonnull BossSpec spec, @Nonnull Block floor) {
+        BossFight fight = new BossFight(this, spec, blueprint, floor, null, true);
+        fights.put(fight.id(), fight);
+        fight.start();
+        return fight;
+    }
+
+    /**
      * Brings back a fight saved by a restart or crash (Session P3): a fresh spawn for the same group size, then the saved
      * clock, health and fighters. Null if the boss no longer exists.
      */
@@ -439,6 +451,19 @@ public final class BossService implements Listener {
             if (damage != null && Keys.isSummoned(e.getDamager())) {
                 e.setDamage(damage);
             }
+        }
+    }
+
+    /** A boss may sidestep a player's projectile (S4MURAI's enderstep): the hit is cancelled and the projectile removed. */
+    @EventHandler(ignoreCancelled = true)
+    public void onProjectileAtBoss(org.bukkit.event.entity.ProjectileHitEvent e) {
+        if (!(e.getHitEntity() instanceof LivingEntity boss) || !(e.getEntity().getShooter() instanceof Player)) {
+            return;
+        }
+        BossFight fight = fightOf(boss);
+        if (fight != null && fight.isBoss(boss) && fight.deflects(boss, e.getEntity())) {
+            e.setCancelled(true);
+            e.getEntity().remove();
         }
     }
 

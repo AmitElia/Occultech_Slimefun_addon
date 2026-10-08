@@ -34,6 +34,14 @@ public abstract class BossBehavior {
     /** A player's hit landed on a boss entity (after {@link #modifyIncomingDamage}); e.g. to reflect damage. */
     public void onDamagedBy(LivingEntity boss, Player player, double damage) {}
 
+    /**
+     * A player's projectile is about to hit a boss entity: true makes it pass harmlessly (it's removed), e.g. a boss that
+     * steps away from arrows like an enderman.
+     */
+    public boolean deflectProjectile(LivingEntity boss, org.bukkit.entity.Projectile projectile) {
+        return false;
+    }
+
     /** Adjust damage a boss entity takes from a player (e.g. shields). */
     public double modifyIncomingDamage(LivingEntity boss, double damage) {
         return damage;

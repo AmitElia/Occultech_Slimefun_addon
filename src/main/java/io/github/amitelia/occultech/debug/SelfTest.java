@@ -239,6 +239,27 @@ final class SelfTest {
         then(0, this::placeNexus);
         then(80, this::nexusLinked);
         then(70, this::nexusGathered);
+
+        // ---- the Staff Raid (Session E1): an event at its own arena, away from the circles
+        then(0, this::raidStart);
+        then(40, this::raidRunning);
+        then(0, this::raidKillOne);
+        then(90, this::raidRefilled);
+        then(0, this::raidStop);
+        then(30, this::raidCleanedUp);
+        then(0, this::archetypesGraded);
+        then(0, this::archetypesSpawn);
+        then(200, this::archetypesRan);
+        then(0, () -> raidFights.forEach(f -> List.copyOf(f.bosses()).forEach(b -> b.setHealth(0))));
+        then(30, this::archetypesEnded);
+        then(0, this::signaturesSpawn);
+        then(200, this::signaturesRan);
+        then(0, () -> raidFights.forEach(f -> List.copyOf(f.bosses()).forEach(b -> b.setHealth(0))));
+        then(30, this::archetypesEnded);
+        then(0, this::toolkitStart);
+        then(400, this::toolkitRan);
+        then(0, () -> plugin.raids().stopDemo());
+        then(30, this::raidCleanedUp);
         next();
     }
 
@@ -966,7 +987,8 @@ final class SelfTest {
         int offered = bowlTotal();
         RitualService.Outcome began = rituals.begin(null, altar);
         check("a ritual for the crash test starts", began == RitualService.Outcome.STARTED && bowlsEmpty(), began + ", bowls "
-            + (bowlsEmpty() ? "empty" : "not empty") + ", altar menu " + (BlockStorage.getInventory(altar) == null ? "missing" : "there"));
+            + (bowlsEmpty() ? "empty" : "not empty") + ", altar menu " + (BlockStorage.getInventory(altar) == null ? "missing" : "there")
+            + ", center " + idIn(RitualAltar.CENTER_SLOT) + " (want " + recipe.center() + "), bowls " + bowlIds() + " (want " + recipe.offerings() + ")");
         rituals.crashSessionsForTest();   // the server dies mid-ritual
         rituals.recoverAltar(altar);      // ...and the altar loads again
         check("a crash mid-ritual gives every offering back", bowlTotal() == offered, offered + " offered, " + bowlTotal() + " back");
@@ -974,6 +996,22 @@ final class SelfTest {
             || altarHolds(recipe.center()), "center item lost");
         rituals.recoverAltar(altar);      // a second load returns nothing more
         check("crash returns happen only once", bowlTotal() == offered, bowlTotal() + " after a second load");
+    }
+
+    private List<String> bowlIds() {
+        List<String> ids = new java.util.ArrayList<>();
+        RitualService.CircleCheck check = rituals.checkCircle(altar).orElseThrow();
+        for (int[] offset : check.pattern().positionsOf(Circles.OFFERING_BOWL, check.rotation())) {
+            BlockMenu menu = BlockStorage.getInventory(altar.getRelative(offset[0], 0, offset[1]));
+            ItemStack item = menu == null ? null : menu.getItemInSlot(OfferingBowl.SLOT);
+            if (menu == null) {
+                ids.add("no menu");
+            } else if (item != null && !item.getType().isAir()) {
+                SlimefunItem sf = SlimefunItem.getByItem(item);
+                ids.add((sf != null ? sf.getId() : item.getType().name()) + " x" + item.getAmount());
+            }
+        }
+        return ids;
     }
 
     private boolean altarHolds(String key) {
@@ -1956,6 +1994,180 @@ final class SelfTest {
     private List<Entity> nearby() {
         Block center = testAltar == null ? altar : testAltar;
         return List.copyOf(center.getWorld().getNearbyEntities(center.getLocation(), 30, 24, 30));
+    }
+
+    // ------------------------------------------------------------------ Staff Raid
+
+    private io.github.amitelia.occultech.event.RaidArena raidArena;
+    private List<BossFight> raidFights = List.of();
+
+    private void raidStart() {
+        World world = altar.getWorld();
+        int x = altar.getX() + 220;
+        int z = altar.getZ();
+        raidArena = new io.github.amitelia.occultech.event.RaidArena(world.getName(), x, world.getHighestBlockYAt(x, z) + 1, z, 30);
+        List<String> problems = plugin.raids().begin(raidArena, 3, 9);
+        check("a Staff Raid starts at an open-sky arena", problems.isEmpty(), String.join("; ", problems));
+        raidFights = plugin.raids().fights();
+        check("3 staff slots are filled (targets set by the command)", raidFights.size() == 3, raidFights.size() + " fights");
+        check("a second raid can't start alongside", !plugin.raids().begin(raidArena, 3, 9).isEmpty(), "it started");
+    }
+
+    private void raidRunning() {
+        boolean ok = !raidFights.isEmpty();
+        String detail = "";
+        for (BossFight fight : raidFights) {
+            for (LivingEntity body : fight.bosses()) {
+                boolean skinned = body instanceof org.bukkit.entity.Mannequin m && m.getProfile().name() != null;
+                double max = body.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue();
+                if (!fight.isEvent() || fight.isOver() || !skinned || max > io.github.amitelia.occultech.event.RaidScaling.MAX_BODY_HEALTH) {
+                    ok = false;
+                    detail = fight.spec().name() + ": event " + fight.isEvent() + ", over " + fight.isOver() + ", skinned " + skinned + ", health " + max;
+                }
+            }
+        }
+        check("staff stand as skinned Mannequins in event fights, under the health cap", ok, detail);
+        // 9 players over 3 slots: 600 x 3^0.9 = 1615 effective, over the cap, so each body takes a share of each hit
+        BossFight solo = raidFights.stream().filter(f -> f.bosses().size() == 1).findFirst().orElse(null);
+        check("raid scaling: a body past the cap takes a share of each hit", solo == null
+            || Math.abs(solo.bosses().get(0).getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue() - 1000) < 1e-6,
+            solo == null ? "-" : String.valueOf(solo.bosses().get(0).getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue()));
+    }
+
+    private void raidKillOne() {
+        if (!raidFights.isEmpty()) {
+            for (LivingEntity body : List.copyOf(raidFights.get(0).bosses())) {
+                body.setHealth(0);
+            }
+        }
+    }
+
+    private void raidRefilled() {
+        List<BossFight> now = plugin.raids().fights();
+        check("a beaten staff member counts as a kill", plugin.raids().kills() == 1, plugin.raids().kills() + " kills");
+        check("their slot is filled again by someone new", now.size() == 3 && !now.contains(raidFights.isEmpty() ? null : raidFights.get(0)),
+            now.size() + " fights");
+        raidFights = now;
+    }
+
+    private void raidStop() {
+        plugin.raids().stop();
+        check("stopping the raid dismisses everyone on the floor", raidFights.stream().allMatch(f -> f.isOver()
+            && f.result() == BossFight.Result.DISMISSED) && !plugin.raids().running(), "still running");
+    }
+
+    private void raidCleanedUp() {
+        org.bukkit.Location center = raidArena.center();
+        long left = center.getWorld().getNearbyEntities(center, 40, 20, 40).stream().filter(Keys::isSummoned).count();
+        check("nothing of the raid is left in its arena", left == 0, left + " entities");
+    }
+
+    /** Session E2: the six archetypes. */
+    private void archetypesGraded() {
+        List<Balance.Grade> grades = Balance.grades(plugin, 1);
+        List<String> missing = new java.util.ArrayList<>();
+        List<String> ids = new java.util.ArrayList<>(List.of("RAID_DEV", "RAID_ABUSING", "RAID_FM", "RAID_BUILDER",
+            "RAID_S4MURAI", "RAID_CHARLES", "RAID_PYR0", "RAID_PAIR", "RAID_DWARF", "RAID_BEE", "RAID_BAT", "RAID_JENN", "RAID_GRIFFON",
+            "RAID_RAVEN", "RAID_JOLLY", "RAID_TOOLKIT"));
+        for (io.github.amitelia.occultech.event.Archetype archetype : io.github.amitelia.occultech.event.Archetype.values()) {
+            ids.add("RAID_" + archetype.name());
+        }
+        for (String id : ids) {
+            if (grades.stream().noneMatch(g -> g.mechanic().bossId().equals(id) && g.tier() == io.github.amitelia.occultech.event.RaidService.BENCHMARK_TIER)) {
+                missing.add(id);
+            }
+        }
+        check("every raid archetype's and signature's attacks are graded against netherite", missing.isEmpty(), "none for " + missing);
+    }
+
+    private void archetypesSpawn() {
+        io.github.amitelia.occultech.event.Archetype[] all = io.github.amitelia.occultech.event.Archetype.values();
+        List<double[]> spots = io.github.amitelia.occultech.event.RaidScaling.spots(all.length, raidArena.radius());
+        List<BossFight> made = new java.util.ArrayList<>();
+        for (int i = 0; i < all.length; i++) {
+            var member = new io.github.amitelia.occultech.event.StaffMember("Test" + i, all[i].name().toLowerCase(), "Test", "S4MURAI", all[i],
+                List.of(), null, 1);
+            List<io.github.amitelia.occultech.event.StaffMember> slot = List.of(member);
+            made.add(bosses.startEvent(io.github.amitelia.occultech.event.StaffBehavior.blueprint(slot, 600),
+                io.github.amitelia.occultech.event.StaffBehavior.spec(slot, 12), raidArena.floor(spots.get(i)[0], spots.get(i)[1])));
+        }
+        raidFights = made;
+        check("one staff member of each archetype steps onto the floor", made.size() == all.length && made.stream().allMatch(f -> f.bosses().size() == 1),
+            made.size() + " fights");
+    }
+
+    /** Session E3: the first signatures, on the real roster entries. */
+    private final Map<BossFight, io.github.amitelia.occultech.event.StaffBehavior> signatureStaff = new LinkedHashMap<>();
+
+    private void signaturesSpawn() {
+        List<String> names = List.of("mrtroxy", "abusingytrank", "fm_radio416", "atlasleft", "s4murai", "charlesfinley", "pyr0xite",
+            "mrlonelydwarf", "earlthedwarf", "konthejester", "bee_grand", "nasty_bat", "griffon_master", "jenn_vixen", "iamniixx",
+            "jollydiger", "serapph");
+        List<double[]> spots = io.github.amitelia.occultech.event.RaidScaling.spots(names.size(), raidArena.radius());
+        List<BossFight> made = new java.util.ArrayList<>();
+        signatureStaff.clear();
+        for (int i = 0; i < names.size(); i++) {
+            var member = plugin.raids().roster().members().get(names.get(i));
+            if (member == null) {
+                check("roster has " + names.get(i), false, "missing from config raid.roster");
+                continue;
+            }
+            List<io.github.amitelia.occultech.event.StaffMember> slot = member.partner() == null ? List.of(member)
+                : List.of(member, plugin.raids().roster().members().get(member.partner().toLowerCase()));
+            io.github.amitelia.occultech.event.StaffBehavior[] staff = new io.github.amitelia.occultech.event.StaffBehavior[1];
+            io.github.amitelia.occultech.boss.BossBlueprint blueprint = new io.github.amitelia.occultech.boss.BossBlueprint(
+                io.github.amitelia.occultech.event.StaffBehavior.ID, io.github.amitelia.occultech.event.StaffBehavior.class,
+                f -> staff[0] = new io.github.amitelia.occultech.event.StaffBehavior(f, slot, 600));
+            BossFight fight = bosses.startEvent(blueprint, io.github.amitelia.occultech.event.StaffBehavior.spec(slot, 12),
+                raidArena.floor(spots.get(i)[0], spots.get(i)[1]));
+            made.add(fight);
+            signatureStaff.put(fight, staff[0]);
+        }
+        raidFights = made;
+        List<String> carried = signatureStaff.values().stream().map(s -> s.members().get(0).display() + " " + s.signatureIds()).toList();
+        long built = signatureStaff.values().stream().mapToLong(s -> s.signatureIds().size()).sum();
+        // E3: MrTroxy 3, Abusing 2, FM 1, Atlas 2; E4: S4MURAI 3, Charles 4, pyr0 4, mrlonelydwarf 1, Earl 3 + Sam 4;
+        // E5: Kon, bee_grand, Bat, Griffon, Jenn, Nick, Raven 1 each, Jolly 3
+        check("every signature staff member carries their signatures", built == 37, built + ": " + String.join("; ", carried));
+        boolean mounted = signatureStaff.entrySet().stream().anyMatch(e -> e.getValue().members().get(0).name().equals("Griffon_Master")
+            && e.getKey().bosses().get(0).getVehicle() instanceof org.bukkit.entity.Horse);
+        check("Griffon starts on horseback", mounted, "not mounted");
+        BossFight pair = made.stream().filter(f -> f.bosses().size() == 2).findFirst().orElse(null);
+        double earlScale = pair == null ? -1 : pair.bosses().get(0).getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue();
+        check("Earl and Sam share one slot, Earl small", pair != null && Math.abs(earlScale - 0.7) < 1e-6, "scale " + earlScale);
+    }
+
+    /** Session E6: Act 2's toolkit, on its own. */
+    private void toolkitStart() {
+        List<String> problems = plugin.raids().startDemo(raidArena, null, "all", 3);
+        check("the raid toolkit demo starts at the arena", problems.isEmpty() && plugin.raids().demo() != null, String.join("; ", problems));
+    }
+
+    private void toolkitRan() {
+        BossFight demo = plugin.raids().demo();
+        // nobody to mark here, so markers skip; soak circles, barriers, lasers and rings go off
+        check("the toolkit sets off its hazards and keeps running", demo != null && !demo.isOver() && plugin.raids().demoLaunched() >= 3,
+            (demo == null ? "no demo" : demo.result() + ", " + plugin.raids().demoLaunched() + " launched"));
+    }
+
+    private void signaturesRan() {
+        ranFor10s("every signature runs for 10 s without failing");
+    }
+
+    private void archetypesRan() {
+        ranFor10s("every archetype runs its kit for 10 s without failing");
+    }
+
+    private void ranFor10s(String name) {
+        List<String> broken = raidFights.stream().filter(f -> f.isOver() || f.elapsed() < 100)
+            .map(f -> f.spec().name() + " " + f.result() + " at " + f.elapsed()).toList();
+        check(name, broken.isEmpty(), String.join("; ", broken));
+    }
+
+    private void archetypesEnded() {
+        check("every archetype can be beaten", raidFights.stream().allMatch(f -> f.result() == BossFight.Result.VICTORY),
+            raidFights.stream().map(f -> String.valueOf(f.result())).toList().toString());
+        raidCleanedUp();
     }
 
     private void finish() {
