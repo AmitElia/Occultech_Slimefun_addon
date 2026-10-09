@@ -78,6 +78,7 @@ abstract class Signature {
             case "lawn" -> new GrumpySignature(kit);
             case "hammer" -> new LeapSignatures.Hammer(kit);
             case "flop" -> new LeapSignatures.Flop(kit);
+            case "mines" -> new LeapSignatures.Mines(kit);
             default -> null;
         };
     }

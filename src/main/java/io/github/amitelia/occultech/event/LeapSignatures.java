@@ -17,32 +17,90 @@ import io.github.amitelia.occultech.boss.Mechanic;
 import io.github.amitelia.occultech.boss.tier2.Abyss;
 
 /**
- * Staff who leap (Session E10). The big landings hit the warned circle, wherever the body comes down.
+ * Staff who leap (Session E10). Leaps are scripted arcs (no physics, no waiting for the ground): they land exactly where
+ * they warned, every time.
  * <ul>
- * <li><b>hammer</b> (Amya): a hammer drop - a ring warns at a player, Amya leaps onto it and brings the hammer down;
- * the impact hits the ring and sends a shockwave ring out across the floor.</li>
- * <li><b>flop</b> (YahooFlop): doesn't walk - hops around, high, toward the fight ("Yahoo!"). Sometimes a huge jump onto
- * a big warned circle: a heavy landing and a shockwave, then YahooFlop lies flat as if in bed for a while, taking
- * extra damage. And now and then YahooFlop retreats - hops away from the crowd, taunting - and when someone gives
- * chase, flicks a pressure-plate mine down right in front of them at the last second: visible, armed a moment later, it
- * goes off when stepped on.</li>
+ * <li><b>hammer</b> (Amya): a hammer drop - a ring warns at a player, Amya leaps onto its centre and brings the hammer
+ * down; the impact hits the ring and sends a shockwave ring out across the floor.</li>
+ * <li><b>flop</b> (SuckedBean): never walks - hops all the time, high, toward the fight, with a small stomp where each hop
+ * lands. Now and then a huge jump onto the centre of a big warned circle: a belly flop and a shockwave, then a nap flat
+ * on the floor (as if in bed), taking extra damage.</li>
+ * <li><b>mines</b> (YahooFlop): retreats often - runs away from the crowd, taunting - and whoever gives chase gets a
+ * pressure-plate mine flicked down a few steps ahead of them, right where they're running: visible at once, armed a
+ * moment later, it goes off when stepped on.</li>
  * </ul>
  */
 final class LeapSignatures {
 
     private static final Mechanic HAMMER = Mechanic.of("RAID_AMYA", "Hammer drop", 32, Mechanic.Kind.AREA, true);
     private static final Mechanic HAMMER_WAVE = Mechanic.of("RAID_AMYA", "Hammer shockwave", 20, Mechanic.Kind.AREA, true);
-    private static final Mechanic STOMP = Mechanic.of("RAID_YAHOO", "Flop stomp", 18, Mechanic.Kind.AREA, false);
-    private static final Mechanic BELLY_FLOP = Mechanic.of("RAID_YAHOO", "Belly flop", 32, Mechanic.Kind.AREA, true);
-    private static final Mechanic FLOP_WAVE = Mechanic.of("RAID_YAHOO", "Flop shockwave", 20, Mechanic.Kind.AREA, true);
+    private static final Mechanic STOMP = Mechanic.of("RAID_SUCKEDBEAN", "Flop stomp", 18, Mechanic.Kind.AREA, false);
+    private static final Mechanic BELLY_FLOP = Mechanic.of("RAID_SUCKEDBEAN", "Belly flop", 32, Mechanic.Kind.AREA, true);
+    private static final Mechanic FLOP_WAVE = Mechanic.of("RAID_SUCKEDBEAN", "Flop shockwave", 20, Mechanic.Kind.AREA, true);
     private static final Mechanic MINE = Mechanic.of("RAID_YAHOO", "Pressure mine", 24, Mechanic.Kind.AREA, true);
 
     private LeapSignatures() {}
 
-    /** A leap that lands on {@code spot} in about {@code ticks} (the body falls under gravity). */
-    static Vector leap(Location from, Location spot, double up, int ticks) {
-        Vector flat = spot.toVector().subtract(from.toVector()).setY(0);
-        return flat.multiply(1.0 / Math.max(1, ticks)).setY(up);
+    /** The floor at {@code at}'s column, kept inside the arena (a leap never leaves it). */
+    static Location floorSpot(StaffKit kit, Location at) {
+        Location spot = at.clone();
+        Location center = kit.fight.center();
+        double reach = kit.fight.radius() - 2;
+        double dx = spot.getX() - center.getX();
+        double dz = spot.getZ() - center.getZ();
+        double d = Math.hypot(dx, dz);
+        if (d > reach) {
+            spot.setX(center.getX() + dx / d * reach);
+            spot.setZ(center.getZ() + dz / d * reach);
+        }
+        spot.setY(spot.getWorld().getHighestBlockYAt(spot) + 1);
+        return spot;
+    }
+
+    /** A scripted jump: from where the body is to {@code to}, {@code ticks} long, {@code height} over the straight line. */
+    static final class Arc {
+
+        private final StaffKit kit;
+        private final Location from;
+        private final Location to;
+        private final int ticks;
+        private final double height;
+        private int t;
+
+        Arc(StaffKit kit, Location to, int ticks, double height) {
+            this.kit = kit;
+            this.from = kit.body.getLocation();
+            this.to = to.clone();
+            this.ticks = Math.max(2, ticks);
+            this.height = height;
+            Abyss.face(kit.body, to);
+            kit.body.setGravity(false);
+            kit.body.setVelocity(new Vector());
+        }
+
+        /** One tick of flight; true once it has landed (on {@code to} exactly). */
+        boolean step() {
+            t++;
+            double f = Math.min(1, (double) t / ticks);
+            Location at = from.clone().add(to.clone().subtract(from).toVector().multiply(f));
+            at.setY(from.getY() + (to.getY() - from.getY()) * f + 4 * height * f * (1 - f));
+            at.setYaw(kit.body.getLocation().getYaw());
+            at.setPitch(0F);
+            if (kit.alive()) {
+                kit.body.teleport(at);
+                kit.body.setVelocity(new Vector());
+            }
+            if (t >= ticks) {
+                kit.body.setGravity(true);
+                return true;
+            }
+            return false;
+        }
+
+        /** Stops mid-air (the body fell, or a bigger leap takes over): it comes down under gravity. */
+        void cancel() {
+            kit.body.setGravity(true);
+        }
     }
 
     /** A heavy landing on {@code spot}: everyone within {@code radius} is hit and thrown; a shockwave ring goes out. */
@@ -65,7 +123,7 @@ final class LeapSignatures {
         private static final Color COLOR = Color.fromRGB(240, 170, 60);
         private final java.util.List<RaidRing> rings = new java.util.ArrayList<>();
         @Nullable private Location spot;
-        private int air = -1;
+        @Nullable private Arc arc;
 
         Hammer(StaffKit kit) {
             super(kit, 60);
@@ -75,72 +133,59 @@ final class LeapSignatures {
         @Override
         boolean cast(int now) {
             Player target = kit.target;
-            if (target == null || air >= 0 || !kit.within(target, 16) || !kit.body.isOnGround()) {
+            if (target == null || arc != null || !kit.within(target, 16)) {
                 next = now + 20;
                 return false;
             }
             next = now + 160;
             kit.claim(WARNING + 10);
-            spot = target.getLocation();
-            spot.setY(spot.getWorld().getHighestBlockYAt(spot) + 1);
+            spot = floorSpot(kit, target.getLocation());
             kit.fight.telegraph(spot, RADIUS, WARNING, COLOR, FloorDecals.Mark.SLAM);
             kit.body.getWorld().playSound(kit.body.getLocation(), Sound.ITEM_MACE_SMASH_AIR, 2F, 0.6F);
-            Abyss.face(kit.body, spot);
-            kit.body.setVelocity(leap(kit.body.getLocation(), spot, 1.0, WARNING - 4));
-            air = 0;
+            arc = new Arc(kit, spot, WARNING, 5);
             return true;
         }
 
         @Override
         boolean steering() {
-            return air >= 0;
+            return arc != null;
         }
 
         @Override
         void move() {
             rings.removeIf(ring -> !ring.step());
-            if (air < 0) {
+            if (arc == null) {
                 return;
             }
-            air++;
-            if (air >= WARNING) {
-                air = -1;
-                if (kit.alive()) {
-                    kit.body.swingMainHand();
-                    kit.body.getWorld().playSound(spot, Sound.ITEM_MACE_SMASH_GROUND_HEAVY, 2F, 0.8F);
-                    land(kit, spot, RADIUS, HAMMER, HAMMER_WAVE, COLOR, rings);
-                }
+            if (!kit.alive()) {
+                arc.cancel();
+                arc = null;
+                return;
+            }
+            if (arc.step()) {
+                arc = null;
+                kit.body.swingMainHand();
+                kit.body.getWorld().playSound(spot, Sound.ITEM_MACE_SMASH_GROUND_HEAVY, 2F, 0.8F);
+                land(kit, spot, RADIUS, HAMMER, HAMMER_WAVE, COLOR, rings);
             }
         }
     }
 
-    /** YahooFlop: hops everywhere, belly-flops, naps. */
+    /** SuckedBean: hops everywhere, belly-flops onto the centre of the circle, naps. */
     static final class Flop extends Signature {
 
         private static final int BIG_WARNING = 40;
         private static final double BIG_RADIUS = 6;
         private static final int NAP = 50;
+        private static final int HOP_TICKS = 14;
+        private static final int HOP_REST = 5;
         private static final Color COLOR = Color.fromRGB(255, 140, 200);
         private final java.util.List<RaidRing> rings = new java.util.ArrayList<>();
         @Nullable private Location spot;
-        private int air = -1;
+        @Nullable private Arc arc;
+        private boolean big;
         private int nap = -1;
-        private int nextHop;
-        private int age;
-        private boolean hopping;
-        // the retreat, and the mines it leaves for whoever gives chase
-        private static final int RETREAT = 100;
-        private static final int MAX_MINES = 6;
-        private static final int MINE_LIFE = 160;
-        private static final int MINE_ARM = 6;
-        private static final double MINE_RADIUS = 2.2;
-
-        private record Mine(org.bukkit.entity.BlockDisplay plate, Location at, int armedAt, int until) {}
-
-        private final java.util.List<Mine> mines = new java.util.ArrayList<>();
-        private int retreating = -1;
-        private int nextRetreat = 200;
-        private int nextMine;
+        private int rest;
 
         Flop(StaffKit kit) {
             super(kit, 100);
@@ -148,7 +193,7 @@ final class LeapSignatures {
 
         @Override
         boolean steering() {
-            return true;   // YahooFlop never walks: hops, flops and naps
+            return true;   // SuckedBean never walks: hops, flops and naps
         }
 
         @Override
@@ -159,46 +204,133 @@ final class LeapSignatures {
         @Override
         boolean cast(int now) {
             Player target = kit.target;
-            if (target == null || air >= 0 || nap >= 0 || retreating >= 0 || !kit.body.isOnGround()) {
+            if (target == null || big || nap >= 0) {
                 next = now + 20;
                 return false;
             }
-            if (now >= nextRetreat) {
-                nextRetreat = now + 300;
-                next = now + RETREAT + 20;
-                retreating = 0;
-                kit.fight.broadcast("&d" + kit.member.display() + ": &fCatch me if you can!");
-                kit.body.getWorld().playSound(kit.body.getLocation(), Sound.ENTITY_VILLAGER_TRADE, 2F, 1.6F);
-                return true;
-            }
-            next = now + 220;
+            next = now + 200;
             kit.claim(BIG_WARNING + NAP + 10);
-            spot = target.getLocation();
-            spot.setY(spot.getWorld().getHighestBlockYAt(spot) + 1);
+            spot = floorSpot(kit, target.getLocation());
             kit.fight.telegraph(spot, BIG_RADIUS, BIG_WARNING, COLOR, FloorDecals.Mark.SLAM);
             kit.body.getWorld().playSound(kit.body.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE, 2F, 1.6F);
             kit.fight.broadcast("&d" + kit.member.display() + ": &fYAHOOOOO!");
-            kit.body.setVelocity(leap(kit.body.getLocation(), spot, 1.5, BIG_WARNING - 2));
-            air = 0;
+            if (arc != null) {
+                arc.cancel();
+            }
+            arc = new Arc(kit, spot, BIG_WARNING, 9);   // up high, and down on the circle's centre as it fills
+            big = true;
+            return true;
+        }
+
+        @Override
+        void move() {
+            rings.removeIf(ring -> !ring.step());
+            if (!kit.alive()) {
+                if (arc != null) {
+                    arc.cancel();
+                    arc = null;
+                }
+                return;
+            }
+            if (nap >= 0) {
+                kit.body.setVelocity(new Vector(0, Math.min(0, kit.body.getVelocity().getY()), 0));
+                if (++nap >= NAP) {
+                    nap = -1;
+                    kit.body.setPose(Pose.STANDING, false);
+                    kit.body.getWorld().playSound(kit.body.getLocation(), Sound.ENTITY_PLAYER_BURP, 1F, 1.2F);
+                }
+                return;
+            }
+            if (arc != null) {
+                if (!arc.step()) {
+                    return;
+                }
+                arc = null;
+                if (big) {
+                    big = false;
+                    land(kit, spot, BIG_RADIUS, BELLY_FLOP, FLOP_WAVE, COLOR, rings);
+                    nap = 0;
+                    kit.body.setPose(Pose.SLEEPING, true);               // flat on the floor, as if in bed
+                    kit.fight.broadcast("&d" + kit.member.display() + " &7is taking a nap - &fhit now!");
+                } else {
+                    Location at = kit.body.getLocation();                // a small stomp where each hop lands
+                    at.getWorld().spawnParticle(Particle.BLOCK, at, 12, 0.6, 0.05, 0.6, Material.DIRT.createBlockData());
+                    for (Player player : kit.playersNear(at, 1.8)) {
+                        kit.fight.hit(player, STOMP, kit.body);
+                    }
+                    rest = HOP_REST;
+                }
+                return;
+            }
+            if (rest-- > 0) {
+                return;
+            }
+            // the next hop: high, up to 4 blocks toward the fight
+            Location toward = kit.target != null && kit.fighting(kit.target) ? kit.target.getLocation() : kit.home;
+            Vector flat = toward.toVector().subtract(kit.body.getLocation().toVector()).setY(0);
+            double step = Math.min(4, Math.max(0, flat.length() - 1));
+            Location to = kit.body.getLocation().add(flat.lengthSquared() > 0.01 ? flat.normalize().multiply(step) : new Vector());
+            arc = new Arc(kit, floorSpot(kit, to), HOP_TICKS, 2.6);
+            kit.body.getWorld().playSound(kit.body.getLocation(), Sound.ENTITY_SLIME_JUMP, 1F, 1.4F);
+        }
+    }
+
+    /** YahooFlop: retreats, baiting a chase, and mines the path of whoever follows. */
+    static final class Mines extends Signature {
+
+        private static final int RETREAT = 120;
+        private static final int MAX_MINES = 8;
+        private static final int MINE_LIFE = 200;
+        private static final int MINE_ARM = 4;
+        private static final double MINE_RADIUS = 2.2;
+        private static final double TRIGGER = 0.85;
+
+        private record Mine(org.bukkit.entity.BlockDisplay plate, Location at, int armedAt, int until) {}
+
+        private final java.util.List<Mine> mines = new java.util.ArrayList<>();
+        /** Where each player was last tick: their running direction and speed. */
+        private final java.util.Map<java.util.UUID, Location> last = new java.util.HashMap<>();
+        private int retreating = -1;
+        private int nextMine;
+
+        Mines(StaffKit kit) {
+            super(kit, 80);
+        }
+
+        @Override
+        boolean steering() {
+            return retreating >= 0;   // running away: the kit neither walks toward anyone nor swings
+        }
+
+        @Override
+        boolean cast(int now) {
+            if (kit.target == null || retreating >= 0) {
+                next = now + 20;
+                return false;
+            }
+            next = now + RETREAT + 80;   // back at it about 4 s after a retreat ends
+            retreating = 0;
+            kit.fight.broadcast("&d" + kit.member.display() + ": &fCatch me if you can!");
+            kit.body.getWorld().playSound(kit.body.getLocation(), Sound.ENTITY_VILLAGER_TRADE, 2F, 1.6F);
             return true;
         }
 
         /** A pressure-plate mine at {@code at}: visible at once, armed a moment later, it goes off when stepped on. */
         private void layMine(Location at) {
-            Location spot = at.clone();
-            spot.setY(spot.getWorld().getHighestBlockYAt(spot) + 1);
+            Location spot = floorSpot(kit, at);
             spot.setYaw(0F);
             spot.setPitch(0F);
             org.bukkit.entity.BlockDisplay plate = kit.fight.spawnExtra(org.bukkit.entity.BlockDisplay.class, spot, d -> {
                 d.setBlock(Material.HEAVY_WEIGHTED_PRESSURE_PLATE.createBlockData());
-                d.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(-0.5F, 0.01F, -0.5F), new org.joml.AxisAngle4f(),
-                    new org.joml.Vector3f(1, 1, 1), new org.joml.AxisAngle4f()));
+                d.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(-0.6F, 0.01F, -0.6F), new org.joml.AxisAngle4f(),
+                    new org.joml.Vector3f(1.2F, 1, 1.2F), new org.joml.AxisAngle4f()));
                 d.setGlowing(true);
                 d.setGlowColorOverride(Color.fromRGB(255, 40, 40));
             });
             int now = kit.fight.elapsed();
             mines.add(new Mine(plate, spot, now + MINE_ARM, now + MINE_LIFE));
             spot.getWorld().playSound(spot, Sound.BLOCK_STONE_PRESSURE_PLATE_CLICK_ON, 1.5F, 0.6F);
+            kit.body.swingMainHand();
         }
 
         /** Every tick: a mine someone steps on (once armed) goes off; old ones fade. */
@@ -219,7 +351,7 @@ final class LeapSignatures {
                     Location p = player.getLocation();
                     double dx = p.getX() - mine.at().getX();
                     double dz = p.getZ() - mine.at().getZ();
-                    if (dx * dx + dz * dz < 0.55 && Math.abs(p.getY() - mine.at().getY()) < 1) {
+                    if (dx * dx + dz * dz < TRIGGER * TRIGGER && Math.abs(p.getY() - mine.at().getY()) < 1) {
                         stepped = true;
                         break;
                     }
@@ -240,82 +372,59 @@ final class LeapSignatures {
 
         @Override
         void move() {
-            age++;
-            rings.removeIf(ring -> !ring.step());
             mines();
-            if (!kit.alive()) {
+            // each player's motion since last tick: where they're running, and how fast
+            java.util.Map<java.util.UUID, Vector> motion = new java.util.HashMap<>();
+            for (Player player : kit.fight.players()) {
+                Location before = last.put(player.getUniqueId(), player.getLocation());
+                if (before != null && before.getWorld() == player.getWorld()) {
+                    motion.put(player.getUniqueId(), player.getLocation().toVector().subtract(before.toVector()).setY(0));
+                }
+            }
+            if (retreating < 0 || !kit.alive()) {
                 return;
             }
-            if (retreating >= 0) {
-                retreating++;
-                // whoever gives chase gets a mine flicked down right in front of them, at the last second
-                int now = kit.fight.elapsed();
-                if (now >= nextMine && mines.size() < MAX_MINES) {
-                    for (Player player : kit.fight.players()) {
-                        double d = player.getLocation().distance(kit.body.getLocation());
-                        if (d >= 3 && d <= 7) {
-                            Vector toward = kit.body.getLocation().toVector().subtract(player.getLocation().toVector()).setY(0).normalize();
-                            layMine(player.getLocation().add(toward.multiply(1.3)));
-                            nextMine = now + 15;
-                            break;
-                        }
-                    }
+            retreating++;
+            Location me = kit.body.getLocation();
+            // run away from the crowd, staying in the arena: bait them into following
+            if (kit.target != null) {
+                Vector away = me.toVector().subtract(kit.target.getLocation().toVector()).setY(0);
+                if (away.lengthSquared() < 0.01) {
+                    away = new Vector(1, 0, 0);
                 }
-                if (retreating >= RETREAT) {
-                    retreating = -1;
+                away.normalize();
+                Location flee = me.clone().add(away.clone().multiply(5));
+                Location center = kit.fight.center();
+                double reach = kit.fight.radius() - 4;
+                if (flee.distanceSquared(center) > reach * reach) {   // cornered: slip round along the edge
+                    Vector side = new Vector(-away.getZ(), 0, away.getX());
+                    Vector in = center.toVector().subtract(me.toVector()).setY(0);
+                    flee = me.clone().add(side.multiply(5)).add(in.lengthSquared() > 0.01 ? in.normalize().multiply(2) : new Vector());
                 }
+                Abyss.walk(kit.body, flee, 0.36, 0);
             }
-            if (nap >= 0) {
-                if (++nap >= NAP) {
-                    nap = -1;
-                    kit.body.setPose(Pose.STANDING, false);
-                    kit.body.getWorld().playSound(kit.body.getLocation(), Sound.ENTITY_PLAYER_BURP, 1F, 1.2F);
-                }
-                return;
-            }
-            if (air >= 0) {
-                air++;
-                if (air >= BIG_WARNING) {
-                    air = -1;
-                    land(kit, spot, BIG_RADIUS, BELLY_FLOP, FLOP_WAVE, COLOR, rings);
-                    nap = 0;
-                    kit.body.setVelocity(new Vector());
-                    kit.body.setPose(Pose.SLEEPING, true);               // flat on the floor, as if in bed
-                    kit.fight.broadcast("&d" + kit.member.display() + " &7is taking a nap - &fhit now!");
-                }
-                return;
-            }
-            // ordinary hops: high, toward the fight; a small stomp where they land
-            if (hopping && kit.body.isOnGround() && age > 4) {
-                hopping = false;
-                for (Player player : kit.playersNear(kit.body.getLocation(), 1.8)) {
-                    kit.fight.hit(player, STOMP, kit.body);
-                }
-            }
+            // whoever chases gets a mine a few steps ahead of where they're running (armed before they get there)
             int now = kit.fight.elapsed();
-            if (!hopping && kit.body.isOnGround() && now >= nextHop) {
-                nextHop = now + 15;
-                Location toward = kit.target != null && kit.fighting(kit.target) ? kit.target.getLocation() : kit.home;
-                if (retreating >= 0 && kit.target != null) {
-                    // hop away from the crowd (but stay in the fight): bait them into following
-                    Vector away = kit.body.getLocation().toVector().subtract(kit.target.getLocation().toVector()).setY(0);
-                    if (away.lengthSquared() < 0.01) {
-                        away = new Vector(1, 0, 0);
+            if (now >= nextMine && mines.size() < MAX_MINES) {
+                for (Player player : kit.fight.players()) {
+                    double d = player.getLocation().distance(me);
+                    Vector run = motion.get(player.getUniqueId());
+                    if (d < 2.5 || d > 10 || run == null) {
+                        continue;
                     }
-                    Location flee = kit.body.getLocation().add(away.normalize().multiply(6));
-                    Location center = kit.fight.center();
-                    double reach = kit.fight.radius() - 4;
-                    toward = flee.distanceSquared(center) > reach * reach ? center : flee;
+                    double speed = run.length();
+                    Vector toMe = me.toVector().subtract(player.getLocation().toVector()).setY(0).normalize();
+                    if (speed < 0.08 || run.clone().normalize().dot(toMe) < 0.3) {
+                        continue;   // standing still, or not coming this way
+                    }
+                    double ahead = Math.min(d - 1, 1.6 + speed * (MINE_ARM + 3));
+                    layMine(player.getLocation().add(run.clone().normalize().multiply(ahead)));
+                    nextMine = now + 12;
+                    break;
                 }
-                Vector flat = toward.toVector().subtract(kit.body.getLocation().toVector()).setY(0);
-                double distance = flat.length();
-                if (distance > 0.5) {
-                    Abyss.face(kit.body, toward);
-                    kit.body.setVelocity(flat.normalize().multiply(Math.min(0.45, distance / 12)).setY(0.95));
-                    kit.body.getWorld().playSound(kit.body.getLocation(), Sound.ENTITY_SLIME_JUMP, 1F, 1.4F);
-                    hopping = true;
-                    age = 0;
-                }
+            }
+            if (retreating >= RETREAT) {
+                retreating = -1;
             }
         }
     }

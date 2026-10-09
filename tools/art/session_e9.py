@@ -484,7 +484,7 @@ def models():
              o4.plane("floor_mark_target", o4.symbol(TARGET), tint=True, light=15), raid_wall(), raid_wall_post(),
              raid_laser(), laser_wall()] + ring_models() + sector_models()
             + [o4.plane("floor_lawn", lawn(), light=0), raid_black_hole(), raid_cigarette(),
-               raid_beer_mug(), raid_beer_keg()])
+               raid_beer_mug(), raid_beer_keg(), floor_beer_puddle()])
 
 
 # ---------------------------------------------------------------- round 4: OldeGrumpy's lawn, Charles's black hole
@@ -618,51 +618,128 @@ def raid_cigarette():
 # ---------------------------------------------------------------- round 6: X's beer (Act 2)
 
 def raid_beer_mug():
-    """X's thrown beer mug (shown by the plugin, flying and spinning): a thick glass stein of amber beer - darker at the
-    bottom, rising bubbles - with a white foam head that spills over the rim, a glass handle on one side."""
+    """X's beer mug (shown by the plugin, thrown, then standing where it lands): a dimpled glass stein - its thick
+    see-through walls show the amber beer inside (deeper at the bottom, bubbles rising), a heavy glass foot, a white foam
+    head domed over the rim with drips running down the glass, and a D-shaped glass handle."""
     import random
     rnd = random.Random(31)
     m = g.Model("raid_beer_mug")
     m.part = True
-    beer_ramp = [(122, 58, 8), (170, 92, 14), (212, 132, 24), (240, 170, 44), (255, 214, 110)]
+    beer_ramp = [(110, 50, 6), (158, 82, 12), (204, 124, 22), (234, 164, 40), (255, 210, 104), (255, 236, 170)]
     frames = []
-    for f in range(6):                                  # bubbles rise through the beer
+    for f in range(8):                                  # the beer behind the glass: deeper below, bubbles rising
         img = Image.new("RGBA", (16, 16))
         for y in range(16):
             for x in range(16):
-                tone = 1 + (y < 9) + (y < 4) - (1 if x in (11, 12) else 0)
-                img.putpixel((x, y), beer_ramp[max(0, min(4, tone))] + (255,))
-        for bx in (2, 6, 9, 13):
-            by = (bx * 5 - f * 2) % 16
-            img.putpixel((bx, by), beer_ramp[4] + (255,))
-        for x in (1, 2):                                # the glass's lit edge
-            for y in range(16):
-                img.putpixel((x, y), (255, 236, 180, 255))
+                tone = 1 + (y < 12) + (y < 6) - (1 if x in (13, 14, 15) else 0)
+                c = beer_ramp[max(0, min(4, tone))]
+                if (x % 4 == 2 and y % 4 == 1) or (x % 4 in (1, 3) and y % 4 in (0, 2)):
+                    c = tuple(min(255, v + 34) for v in c)          # the dimples' rims catch the light
+                if x in (2, 3):
+                    c = tuple(min(255, int(v * 0.45 + 255 * 0.55)) for v in c)   # the glass's lit streak
+                if x == 0 or x == 15 or y == 15:
+                    c = tuple(int(v * 0.5 + 236 * 0.5) for v in c)           # the glass edge, pale
+                img.putpixel((x, y), c + (255,))
+        for i, bx in enumerate((5, 8, 10, 12)):
+            by = (i * 7 + 15 - f * 2) % 15
+            img.putpixel((bx, by), beer_ramp[5] + (255,))
         frames.append(img)
+    glass = Image.new("RGBA", (16, 16))                 # see-through, with a lattice of dimples and a lit streak
+    for y in range(16):
+        for x in range(16):
+            a, c = 255, (214, 228, 226)
+            if x in (2, 3):
+                c = (255, 255, 255)                      # the lit streak
+            glass.putpixel((x, y), c + (a,))
+    foot = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            foot.putpixel((x, y), ((236, 244, 242, 215) if (x + y) % 5 else (255, 255, 255, 235)))
     foam = Image.new("RGBA", (16, 16))
     for y in range(16):
         for x in range(16):
-            v = 250 - (14 if rnd.random() < 0.3 else 0) - (10 if y > 11 else 0)
-            foam.putpixel((x, y), (v, v - 4, v - 16, 255))
-    glass = Image.new("RGBA", (16, 16))
-    for y in range(16):
-        for x in range(16):
-            glass.putpixel((x, y), ((214, 228, 226) if x % 5 else (246, 252, 250)) + (255,))
-    bottom = Image.new("RGBA", (16, 16), (140, 104, 50, 255))
+            v = 252 - (16 if rnd.random() < 0.28 else 0) - (8 if y > 10 else 0)
+            foam.putpixel((x, y), (v, v - 3, v - 14, 255))
     t_beer = m.texture("beer", frames)
     m.mcmeta["beer"] = {"animation": {"frametime": 3, "interpolate": True}}
-    t_foam = m.texture("foam", foam)
     t_glass = m.texture("glass", glass)
-    t_bottom = m.texture("bottom", bottom)
-    g.prism(m, 8.6, 0, 1.2, t_glass, cx=7)              # the thick glass base
-    g.prism(m, 8.0, 1.2, 10.5, t_beer, cx=7)            # the beer
-    g.prism(m, 6.4, 1.2, 10.5, t_beer, cx=7, d=9.0)     # rounded a little
-    g.prism(m, 9.0, 10.5, 12.5, t_foam, cx=7)           # the foam head, spilling over the rim
-    g.prism(m, 6.0, 12.5, 13.6, t_foam, cx=7.4, d=6.6)  # a mound on top
-    g.prism(m, 1.6, 3.0, 9.0, t_glass, cx=13.2, d=1.8)  # the handle: an upright bar...
-    g.prism(m, 2.4, 8.0, 9.4, t_glass, cx=12.0, d=1.8)  # ...joined at the top
-    g.prism(m, 2.4, 2.6, 4.0, t_glass, cx=12.0, d=1.8)  # ...and the bottom
-    g.prism(m, 8.0, 0, 0.2, t_bottom, cx=7)
+    t_foot = m.texture("foot", foot)
+    t_foam = m.texture("foam", foam)
+
+    def rod(w, y0, y1, tex, cx=7.0, cz=8.0, light=0):
+        """A round section: an octagon of two crossed boxes."""
+        g.prism(m, w, y0, y1, tex, d=w * 0.6, cx=cx, cz=cz, light=light)
+        g.prism(m, w * 0.6, y0, y1, tex, d=w, cx=cx, cz=cz, light=light)
+    rod(9.4, 0, 1.4, t_foot)                            # the heavy foot
+    rod(9.0, 10.2, 10.8, t_glass)                       # the glass rim above the beer
+    rod(8.8, 1.4, 10.6, t_beer)                         # the beer in its dimpled glass
+    rod(9.2, 10.6, 12.0, t_foam)                        # the head, domed over the rim
+    rod(7.2, 12.0, 13.0, t_foam)
+    rod(4.6, 13.0, 13.6, t_foam)
+    for x, z, low in ((3.0, 4.6, 8.6), (10.2, 11.0, 9.2), (7.6, 3.4, 9.6), (4.4, 11.6, 8.2)):   # drips down the glass
+        g.prism(m, 1.0, low, 10.8, t_foam, cx=x, cz=z, d=1.0)
+    # the handle: a D of thick glass, its corners rounded off
+    g.prism(m, 3.4, 8.6, 10.0, t_foot, cx=13.0, d=2.0)          # top arm
+    g.prism(m, 3.4, 2.8, 4.2, t_foot, cx=13.0, d=2.0)           # bottom arm
+    g.prism(m, 1.6, 3.6, 9.2, t_foot, cx=15.2, d=2.0)           # the grip
+    g.prism(m, 1.0, 9.2, 9.6, t_foot, cx=14.6, d=2.0)           # rounded corners
+    g.prism(m, 1.0, 3.2, 3.6, t_foot, cx=14.6, d=2.0)
+    return m
+
+
+def beer_puddle_frames(n=8):
+    """Spilled beer on the floor: an amber pool with lobed edges, deeper in the middle, a darker wet rim, and foam
+    bubbles drifting and popping on it."""
+    import random
+    rnd = random.Random(9)
+    size = 32
+    lobes = [(rnd.uniform(0, math.pi * 2), rnd.uniform(0.02, 0.05), rnd.randint(3, 7)) for _ in range(4)]
+    bubbles = [(rnd.uniform(6, 26), rnd.uniform(6, 26), rnd.uniform(0, math.pi * 2), rnd.choice((1, 1, 2))) for _ in range(18)]
+    out = []
+    for f in range(n):
+        img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        for y in range(size):
+            for x in range(size):
+                dx, dy = x + 0.5 - 16, y + 0.5 - 16
+                r = math.hypot(dx, dy) / 15.5
+                a = math.atan2(dy, dx)
+                edge = 0.88 + sum(amp * math.sin(k * a + ph) for ph, amp, k in lobes)
+                if r > edge:
+                    continue
+                depth = r / edge
+                if depth > 0.9:
+                    c, alpha = (120, 66, 10), 230                  # the wet rim
+                elif depth > 0.6:
+                    c, alpha = (196, 120, 22), 215
+                else:
+                    c, alpha = (232, 158, 40), 205
+                shimmer = 0.5 + 0.5 * math.sin(f * math.pi * 2 / n + x * 0.4 - y * 0.3)
+                if depth < 0.85 and shimmer > 0.93:
+                    c = (255, 214, 120)                            # light running over the surface
+                img.putpixel((x, y), c + (alpha,))
+        for bx, by, ph, rad in bubbles:
+            life = (f / n + ph / (math.pi * 2)) % 1.0
+            if life > 0.8:
+                continue                                           # popped, for a moment
+            x0 = int(bx + math.sin(ph + f * 0.5))
+            y0 = int(by + math.cos(ph + f * 0.4))
+            if img.getpixel((x0 % size, y0 % size))[3] == 0:
+                continue
+            for ddx in range(-rad + 1, rad):
+                for ddy in range(-rad + 1, rad):
+                    xx, yy = x0 + ddx, y0 + ddy
+                    if 0 <= xx < size and 0 <= yy < size and img.getpixel((xx, yy))[3]:
+                        img.putpixel((xx, yy), (255, 250, 236, 245))
+        out.append(img)
+    return out
+
+
+def floor_beer_puddle():
+    m = g.Model("floor_beer_puddle")
+    m.part = True
+    t = m.texture("face", beer_puddle_frames())
+    m.mcmeta["face"] = {"animation": {"frametime": 3, "interpolate": True}}
+    m.box((0, 8, 0), (16, 8, 16), {"up": (t, [0, 0, 16, 16]), "down": (t, [0, 16, 16, 0])}, shade=False, light=8)
     return m
 
 
@@ -762,7 +839,9 @@ def review(ms):
     sheet.alpha_composite(render3d.render(by["raid_cigarette"], frame=1, yaw=30, pitch=20, s=9, size=(160, 300), center=(8, 8, 8),
                                           bg=(30, 30, 36, 255)), (175, 860))
     sheet.alpha_composite(render3d.render(by["raid_beer_mug"], frame=1, yaw=30, pitch=20, s=12, size=(220, 240), center=(8, 7, 8),
-                                          bg=(30, 30, 36, 255)), (345, 860))
+                                          bg=(30, 30, 36, 255), blend=True), (345, 860))
+    sheet.alpha_composite(render3d.render(by["floor_beer_puddle"], frame=2, yaw=20, pitch=60, s=9, size=(220, 200), center=(8, 8, 8),
+                                          bg=(30, 30, 36, 255), blend=True), (830, 900))
     sheet.alpha_composite(render3d.render(by["raid_beer_keg"], frame=0, yaw=30, pitch=25, s=11, size=(240, 260), center=(8, 8, 8),
                                           bg=(30, 30, 36, 255)), (575, 860))
     path = os.path.join(REVIEW, "review-e9.png")

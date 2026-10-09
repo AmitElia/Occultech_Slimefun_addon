@@ -1254,3 +1254,15 @@ borrowed O4/O5 models for its beams and rings. New parts, all in O4's greys and 
   (`StaffKit.hold`), the HOTFIX sweep turns the dev with its beam, X plants his feet for the kick. Before, they kept
   walking and turning while the warning stayed put, so it ended up beside or behind them and beams fired from where
   they no longer stood.
+
+### Round 9 - X's beer, polished (user: "make the beer mug nicer", "not the chicken egg effect", bigger mugs and barrels)
+- `raid_beer_mug` remade: a round (octagonal) dimpled glass stein - the amber beer painted behind the glass (a lit
+  streak, dimple rims catching the light, pale glass edges, bubbles rising), a heavy glass foot and rim, a foam head
+  domed over the rim in three tiers with drips running down the glass, and a D-shaped handle with rounded corners.
+  See-through glass round the beer was tried and dropped: translucent faces inside each other don't sort, the beer
+  went grey.
+- `floor_beer_puddle`: spilled beer for the pools mugs and kegs leave (in place of the yolk surface) - an amber pool
+  with a gently lobed edge, deeper in the middle, a darker wet rim, light running over it and foam bubbles drifting and
+  popping (8 frames).
+- In game: mugs are shown 3.2x (about 2.7 blocks tall) and land upright to stand in their pool; kegs 4x (about 3 blocks
+  across), rolling in Last Round and heaved in the new keg toss.

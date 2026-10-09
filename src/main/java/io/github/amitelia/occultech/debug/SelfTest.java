@@ -2107,7 +2107,7 @@ final class SelfTest {
         List<String> missing = new java.util.ArrayList<>();
         List<String> ids = new java.util.ArrayList<>(List.of("RAID_DEV", "RAID_ABUSING", "RAID_FM", "RAID_BUILDER",
             "RAID_S4MURAI", "RAID_CHARLES", "RAID_PYR0", "RAID_PAIR", "RAID_DWARF", "RAID_BEE", "RAID_BAT", "RAID_JENN", "RAID_GRIFFON",
-            "RAID_RAVEN", "RAID_JOLLY", "RAID_TOOLKIT", "RAID_COUNCIL", "RAID_GOOB", "RAID_GRUMPY", "RAID_AMYA", "RAID_YAHOO"));
+            "RAID_RAVEN", "RAID_JOLLY", "RAID_TOOLKIT", "RAID_COUNCIL", "RAID_GOOB", "RAID_GRUMPY", "RAID_AMYA", "RAID_YAHOO", "RAID_SUCKEDBEAN"));
         for (io.github.amitelia.occultech.event.Archetype archetype : io.github.amitelia.occultech.event.Archetype.values()) {
             ids.add("RAID_" + archetype.name());
         }
@@ -2141,7 +2141,7 @@ final class SelfTest {
     private void signaturesSpawn() {
         List<String> names = List.of("mrtroxy", "abusingytrank", "fm_radio416", "atlasleft", "s4murai", "charlesfinley", "pyr0xite",
             "mrlonelydwarf", "earlthedwarf", "konthejester", "bee_grand", "nasty_bat", "griffon_master", "jenn_vixen", "iamniixx",
-            "jollydiger", "serapph", "goobtbh", "oldegrumpy", "amya_03", "yahooflop");
+            "jollydiger", "serapph", "goobtbh", "oldegrumpy", "amya_03", "yahooflop", "suckedbean");
         List<double[]> spots = io.github.amitelia.occultech.event.RaidScaling.spots(names.size(), raidArena.radius());
         List<BossFight> made = new java.util.ArrayList<>();
         signatureStaff.clear();
@@ -2166,8 +2166,8 @@ final class SelfTest {
         List<String> carried = signatureStaff.values().stream().map(s -> s.members().get(0).display() + " " + s.signatureIds()).toList();
         long built = signatureStaff.values().stream().mapToLong(s -> s.signatureIds().size()).sum();
         // E3: MrTroxy 3, Abusing 2, FM 1, Atlas 2; E4: S4MURAI 3, Charles 4, pyr0 4, mrlonelydwarf 1, Earl 3 + Sam 4;
-        // E5: Kon, bee_grand, Bat, Griffon, Jenn, Nick, Raven 1 each, Jolly 3; E10: goob, OldeGrumpy, Amya, YahooFlop 1 each
-        check("every signature staff member carries their signatures", built == 41, built + ": " + String.join("; ", carried));
+        // E5: Kon, bee_grand, Bat, Griffon, Jenn, Nick, Raven 1 each, Jolly 3; E10: goob, OldeGrumpy, Amya, YahooFlop, SuckedBean 1 each
+        check("every signature staff member carries their signatures", built == 42, built + ": " + String.join("; ", carried));
         boolean mounted = signatureStaff.entrySet().stream().anyMatch(e -> e.getValue().members().get(0).name().equals("Griffon_Master")
             && e.getKey().bosses().get(0).getVehicle() instanceof org.bukkit.entity.Horse);
         check("Griffon starts on horseback", mounted, "not mounted");

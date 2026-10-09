@@ -38,10 +38,13 @@ import io.github.amitelia.occultech.boss.tier2.Abyss;
  * <li><b>Foundation Stones</b> (raid mechanic): soak circles.</li>
  * <li><b>Kick</b>: a cone in front of him warns, then everyone in it flies.</li>
  * <li><b>Stagger</b>: enough damage at his feet in a short time and he drops to a knee for 4 s, taking half again as much.</li>
- * <li><b>Beer mugs</b>: he lobs foaming mugs at a few players; each lands on a warned circle, splashes, and leaves a
- * sticky beer puddle that slows whoever wades through it.</li>
- * <li><b>Last Round</b> (raid mechanic): "Last round!" - he bowls beer kegs out from where he stands along warned lanes,
- * spread round him; a keg rolls over whoever is still in its lane. Stand between the lanes.</li>
+ * <li><b>Beer mugs</b>: he lobs big foaming mugs at a few players; each lands upright on a warned circle with a splash
+ * and stands there a while in a pool of spilled beer that slows and stings whoever wades through it.</li>
+ * <li><b>Keg toss</b>: he heaves a huge keg onto a warned circle under a player; it smashes there and leaves a wide pool
+ * of spilled beer.</li>
+ * <li><b>Last Round</b> (raid mechanic): "Last round!" - he bowls huge beer kegs out from where he stands along warned
+ * lanes, spread round him; a keg rolls over whoever is still in its lane and bursts into a pool at the arena's edge.
+ * Stand between the lanes.</li>
  * </ul>
  */
 final class Founder extends CouncilMember {
@@ -54,13 +57,21 @@ final class Founder extends CouncilMember {
     private static final Mechanic KICK = Mechanic.of(CouncilBehavior.ID, "Kick (Founder)", 26, Mechanic.Kind.AREA, true);
     private static final Mechanic MUG = Mechanic.of(CouncilBehavior.ID, "Beer mug (Founder)", 22, Mechanic.Kind.AREA, true);
     private static final Mechanic KEG = Mechanic.of(CouncilBehavior.ID, "Rolling keg (Founder)", 24, Mechanic.Kind.AREA, true);
+    private static final Mechanic KEG_SMASH = Mechanic.of(CouncilBehavior.ID, "Keg toss (Founder)", 26, Mechanic.Kind.AREA, true);
+    private static final Mechanic SPILL = Mechanic.of(CouncilBehavior.ID, "Spilled beer (Founder)", 6, Mechanic.Kind.ZONE, true);
     private static final Color BEER = Color.fromRGB(230, 160, 40);
     private static final int MUG_FLIGHT = 30;
-    private static final double MUG_RADIUS = 2;
-    private static final int PUDDLE = 100;
+    private static final double MUG_RADIUS = 2.8;
+    private static final float MUG_SCALE = 3.2F;
+    /** How long a landed mug stands in its pool. */
+    private static final int PUDDLE = 140;
     private static final int KEG_WARNING = 35;
-    private static final double KEG_WIDTH = 2.4;
-    private static final float KEG_SCALE = 1.6F;
+    private static final float KEG_SCALE = 4F;
+    /** A keg's radius on its side (the model's belly is 12.4 of 16 across). */
+    private static final double KEG_RADIUS = KEG_SCALE * 0.39;
+    private static final double KEG_WIDTH = KEG_RADIUS * 2 + 0.8;
+    private static final int TOSS_FLIGHT = 35;
+    private static final double TOSS_RADIUS = 3.5;
     static final double SCALE = 6;
     private static final double REACH = 5;
     private static final double KICK_REACH = 8;
@@ -73,6 +84,7 @@ final class Founder extends CouncilMember {
     private int nextCrush;
     private int nextKick = 120;
     private int nextMugs = 80;
+    private int nextToss = 200;
     /** The kick winding up: he stands still facing it. */
     private int kickUntil = -1;
     @javax.annotation.Nullable private Location kickFacing;
@@ -143,6 +155,10 @@ final class Founder extends CouncilMember {
         if (close != null && now >= nextKick && within(close, KICK_REACH)) {
             nextKick = now + council.pace().cooldown(220);
             kick(close);
+        } else if (now >= nextToss && !fight.players().isEmpty()) {
+            nextToss = now + council.pace().cooldown(240);
+            nextMugs = Math.max(nextMugs, now + 40);
+            tossKeg();
         } else if (now >= nextMugs && !fight.players().isEmpty()) {
             nextMugs = now + council.pace().cooldown(160);
             throwMugs();
@@ -162,76 +178,154 @@ final class Founder extends CouncilMember {
         return stack;
     }
 
-    /** Mugs lobbed at a few players: each lands on a warned circle, splashes, and leaves a slowing puddle. */
+    /** {@code look} at {@code scale}, upright (turned {@code yaw} about the vertical) or tumbled {@code turn} about a tilted axis. */
+    private static Transformation shaped(float scale, float turn, float yaw) {
+        org.joml.Quaternionf q = new org.joml.Quaternionf().rotateY(yaw).rotateAxis(turn, 1F, 0F, 0.3F);
+        return new Transformation(new Vector3f(), q, new Vector3f(scale, scale, scale), new org.joml.Quaternionf());
+    }
+
+    /**
+     * Throws {@code look} from his hand onto {@code spot} in a high arc over {@code ticks}, tumbling, and lands it upright
+     * (its base on the floor); then runs {@code landed} with the display, still standing there.
+     */
+    private void lob(ItemStack look, float scale, Location spot, int ticks, double peak, java.util.function.Consumer<ItemDisplay> landed) {
+        Location hand = body.getLocation().add(0, SCALE * 1.15, 0);
+        hand.setYaw(0F);
+        hand.setPitch(0F);
+        float yaw = (float) ThreadLocalRandom.current().nextDouble(Math.PI * 2);
+        ItemDisplay thrown = fight.spawnExtra(ItemDisplay.class, hand, d -> {
+            d.setItemStack(look);
+            d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+            d.setTransformation(shaped(scale, 0F, yaw));
+        });
+        Location rest = spot.clone().add(0, scale / 2, 0);   // the model is a cube centred on the display: its base on the floor
+        Vector across = rest.toVector().subtract(hand.toVector());
+        for (int t = 3; t <= ticks; t += 3) {
+            double f = Math.min(1, (double) t / ticks);
+            Location point = hand.clone().add(across.clone().multiply(f)).add(0, 4 * peak * f * (1 - f), 0);
+            float turn = t + 3 > ticks ? (float) (Math.PI * 4) : (float) (f * Math.PI * 4);   // whole turns: lands upright
+            council.later(t - 2, () -> {
+                if (thrown.isValid()) {
+                    thrown.setTeleportDuration(3);
+                    thrown.teleport(point);
+                    thrown.setInterpolationDelay(0);
+                    thrown.setInterpolationDuration(3);
+                    thrown.setTransformation(shaped(scale, turn, yaw));
+                }
+            });
+        }
+        council.later(ticks + 1, () -> {
+            if (thrown.isValid()) {
+                thrown.setTeleportDuration(0);
+                thrown.teleport(rest);
+                thrown.setInterpolationDuration(0);
+                thrown.setTransformation(shaped(scale, 0F, yaw));
+                landed.accept(thrown);
+            }
+        });
+    }
+
+    /** Big mugs lobbed at a few players: each lands upright on a warned circle and stands in its pool of beer a while. */
     private void throwMugs() {
         List<Player> players = shuffledPlayers();
         int count = Math.min(players.size(), 2 + council.pace().overlap());
         body.swingMainHand();
         body.getWorld().playSound(body.getLocation(), Sound.ENTITY_PLAYER_BURP, 2F, 0.5F);
         for (Player player : players.subList(0, count)) {
-            Location spot = player.getLocation();
-            spot.setY(spot.getWorld().getHighestBlockYAt(spot) + 1);
-            spot.setYaw(0F);
-            spot.setPitch(0F);
+            Location spot = floorAt(player.getLocation());
             fight.telegraph(spot, MUG_RADIUS, MUG_FLIGHT, BEER);
-            Location hand = body.getLocation().add(0, SCALE * 1.15, 0);
-            hand.setYaw(0F);
-            hand.setPitch(0F);
-            ItemDisplay mug = fight.spawnExtra(ItemDisplay.class, hand, d -> {
-                d.setItemStack(beer("raid_beer_mug", Material.HONEY_BOTTLE));
-                d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-                d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(1.3F, 1.3F, 1.3F), new AxisAngle4f()));
-            });
-            // an arc: a teleport every 3 ticks along it, smoothed by the client; the mug turns over as it flies
-            Vector across = spot.toVector().subtract(hand.toVector());
-            for (int t = 3; t <= MUG_FLIGHT; t += 3) {
-                double f = (double) t / MUG_FLIGHT;
-                Location point = hand.clone().add(across.clone().multiply(f)).add(0, 6 * f * (1 - f) + 0.3, 0);
-                float turn = (float) (f * Math.PI * 3);
-                council.later(t - 2, () -> {
-                    if (mug.isValid()) {
-                        mug.setTeleportDuration(3);
-                        mug.teleport(point);
-                        mug.setInterpolationDelay(0);
-                        mug.setInterpolationDuration(3);
-                        mug.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(turn, 1F, 0F, 0.3F),
-                            new Vector3f(1.3F, 1.3F, 1.3F), new AxisAngle4f()));
+            lob(beer("raid_beer_mug", Material.HONEY_BOTTLE), MUG_SCALE, spot, MUG_FLIGHT, 6, mug -> {
+                spot.getWorld().playSound(spot, Sound.BLOCK_GLASS_HIT, 2F, 0.6F);
+                spot.getWorld().playSound(spot, Sound.ENTITY_GENERIC_SPLASH, 1.2F, 1.3F);
+                spot.getWorld().spawnParticle(Particle.DUST, spot.clone().add(0, 0.5, 0), 30, 1.2, 0.4, 1.2, 0,
+                    new Particle.DustOptions(BEER, 1.4F));
+                io.github.amitelia.occultech.boss.FloorDecals.splash(fight, spot, MUG_RADIUS, BEER);
+                if (alive()) {
+                    for (Player hit : fight.players()) {
+                        if (hit.getLocation().distanceSquared(spot) <= MUG_RADIUS * MUG_RADIUS) {
+                            council.hit(hit, MUG, body);
+                        }
                     }
-                });
-            }
-            council.later(MUG_FLIGHT + 1, () -> {
-                mug.remove();
-                splashMug(spot);
+                }
+                spill(spot, MUG_RADIUS, PUDDLE, mug);
             });
         }
     }
 
-    private void splashMug(Location spot) {
-        spot.getWorld().playSound(spot, Sound.BLOCK_GLASS_BREAK, 1.5F, 0.8F);
-        spot.getWorld().playSound(spot, Sound.ENTITY_GENERIC_SPLASH, 1.2F, 1.3F);
-        spot.getWorld().spawnParticle(Particle.DUST, spot.clone().add(0, 0.4, 0), 30, 1, 0.3, 1, 0, new Particle.DustOptions(BEER, 1.4F));
-        io.github.amitelia.occultech.boss.FloorDecals.splash(fight, spot, MUG_RADIUS, BEER);
-        if (alive()) {
-            for (Player player : fight.players()) {
-                if (player.getLocation().distanceSquared(spot) <= MUG_RADIUS * MUG_RADIUS) {
-                    council.hit(player, MUG, body);
+    /** Keg toss: a huge keg heaved onto a warned circle under a player; it smashes there and spills a wide pool. */
+    private void tossKeg() {
+        List<Player> players = shuffledPlayers();
+        if (players.isEmpty()) {
+            return;
+        }
+        Location spot = floorAt(players.get(0).getLocation());
+        fight.telegraph(spot, TOSS_RADIUS, TOSS_FLIGHT, BEER, io.github.amitelia.occultech.boss.FloorDecals.Mark.SLAM);
+        body.swingMainHand();
+        body.getWorld().playSound(body.getLocation(), Sound.BLOCK_BARREL_OPEN, 2F, 0.4F);
+        fight.broadcast("&6" + seat.display() + " &eheaves a keg!");
+        lob(beer("raid_beer_keg", Material.BARREL), KEG_SCALE, spot, TOSS_FLIGHT, 9, keg -> {
+            keg.remove();
+            spot.getWorld().playSound(spot, Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 2F, 0.6F);
+            spot.getWorld().playSound(spot, Sound.ENTITY_GENERIC_SPLASH, 2F, 0.8F);
+            spot.getWorld().spawnParticle(Particle.BLOCK, spot.clone().add(0, 0.6, 0), 60, 1.5, 0.6, 1.5, Material.SPRUCE_PLANKS.createBlockData());
+            spot.getWorld().spawnParticle(Particle.DUST, spot.clone().add(0, 0.6, 0), 40, 2, 0.5, 2, 0, new Particle.DustOptions(BEER, 1.6F));
+            io.github.amitelia.occultech.boss.FloorDecals.splash(fight, spot, TOSS_RADIUS, BEER);
+            if (alive()) {
+                for (Player hit : fight.players()) {
+                    if (hit.getLocation().distanceSquared(spot) <= TOSS_RADIUS * TOSS_RADIUS) {
+                        council.hit(hit, KEG_SMASH, body);
+                        StaffKit.knock(hit, spot, 0.9, 0.5);
+                    }
                 }
             }
-        }
-        // the puddle: sticky, it slows whoever wades through (no damage)
-        io.github.amitelia.occultech.boss.FloorDecals.patch(fight, spot, MUG_RADIUS, PUDDLE, io.github.amitelia.occultech.boss.FloorDecals.Zone.YOLK);
-        for (int t = 0; t < PUDDLE; t += 10) {
+            spill(spot, TOSS_RADIUS, PUDDLE, null);
+        });
+    }
+
+    private static Location floorAt(Location at) {
+        Location spot = at.clone();
+        spot.setY(spot.getWorld().getHighestBlockYAt(spot) + 1);
+        spot.setYaw(0F);
+        spot.setPitch(0F);
+        return spot;
+    }
+
+    /**
+     * A pool of spilled beer, {@code radius} blocks, for {@code ticks}: it slows whoever wades through and stings them once
+     * a second. {@code prop} (a landed mug) stands in it and goes with it.
+     */
+    private void spill(Location spot, double radius, int ticks, @javax.annotation.Nullable ItemDisplay prop) {
+        boolean pack = io.github.amitelia.occultech.boss.FloorDecals.enabled();
+        ItemDisplay pool = pack ? io.github.amitelia.occultech.boss.FloorDecals.flat(fight, spot, "floor_beer_puddle", Color.WHITE, radius * 2) : null;
+        for (int t = 0; t < ticks; t += 10) {
+            boolean sting = t % 20 == 10;
             council.later(t, () -> {
-                if (!io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
-                    spot.getWorld().spawnParticle(Particle.DUST, spot.clone().add(0, 0.1, 0), 8, 1, 0, 1, 0, new Particle.DustOptions(BEER, 1.2F));
+                if (!pack) {
+                    spot.getWorld().spawnParticle(Particle.DUST, spot.clone().add(0, 0.1, 0), 10, radius / 2, 0, radius / 2, 0,
+                        new Particle.DustOptions(BEER, 1.2F));
                 }
                 for (Player player : fight.players()) {
-                    if (player.getLocation().distanceSquared(spot) <= MUG_RADIUS * MUG_RADIUS) {
+                    Location p = player.getLocation();
+                    double dx = p.getX() - spot.getX();
+                    double dz = p.getZ() - spot.getZ();
+                    if (dx * dx + dz * dz <= radius * radius && Math.abs(p.getY() - spot.getY()) < 1.5) {
                         player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 25, 1, false, false, true));
+                        if (sting && alive()) {
+                            council.hit(player, SPILL, body);
+                        }
                     }
                 }
             });
         }
+        council.later(ticks, () -> {
+            if (pool != null) {
+                pool.remove();
+            }
+            if (prop != null && prop.isValid()) {
+                prop.getWorld().playSound(prop.getLocation(), Sound.BLOCK_GLASS_BREAK, 1F, 1.2F);
+                prop.remove();
+            }
+        });
     }
 
     /** Last Round: kegs bowled out from him along warned lanes, spread round him with gaps between. */
@@ -241,7 +335,7 @@ final class Founder extends CouncilMember {
         }
         Location from = body.getLocation();
         from.setY(from.getWorld().getHighestBlockYAt(from) + 1);
-        int kegs = 3 + council.pace().overlap();
+        int kegs = 4 + council.pace().overlap();
         double start = ThreadLocalRandom.current().nextDouble(Math.PI * 2);
         double length = fight.radius() + 2;
         Particle.DustOptions dust = new Particle.DustOptions(BEER, 1.3F);
@@ -277,7 +371,7 @@ final class Founder extends CouncilMember {
         private final double length;
         private final java.util.Set<java.util.UUID> struck = new java.util.HashSet<>();
         private ItemDisplay keg;
-        private double travelled = 1.5;
+        private double travelled = 3;   // out from his feet
         private int ticks;
 
         KegRoll(Location from, Vector dir, double length) {
@@ -287,7 +381,7 @@ final class Founder extends CouncilMember {
         }
 
         private Location at() {
-            Location at = from.clone().add(dir.clone().multiply(travelled)).add(0, KEG_SCALE * 0.39, 0);
+            Location at = from.clone().add(dir.clone().multiply(travelled)).add(0, KEG_RADIUS, 0);
             at.setDirection(dir);
             at.setPitch(0F);
             return at;
@@ -317,7 +411,7 @@ final class Founder extends CouncilMember {
                 keg.teleport(at());
                 keg.setInterpolationDelay(0);
                 keg.setInterpolationDuration(2);
-                keg.setTransformation(rolled((float) (travelled / (KEG_SCALE * 0.39))));
+                keg.setTransformation(rolled((float) (travelled / KEG_RADIUS)));
             }
             if (ticks % 6 == 0) {
                 from.getWorld().playSound(at(), Sound.BLOCK_WOOD_STEP, 1F, 0.6F);
@@ -328,7 +422,8 @@ final class Founder extends CouncilMember {
                     Location p = player.getLocation();
                     double dx = p.getX() - here.getX();
                     double dz = p.getZ() - here.getZ();
-                    if (dx * dx + dz * dz <= 1.6 * 1.6 && Math.abs(p.getY() - here.getY()) < 2 && struck.add(player.getUniqueId())) {
+                    if (dx * dx + dz * dz <= (KEG_RADIUS + 0.6) * (KEG_RADIUS + 0.6) && Math.abs(p.getY() - here.getY()) < KEG_RADIUS * 2
+                        && struck.add(player.getUniqueId())) {
                         council.hit(player, KEG, body);
                         player.setVelocity(dir.clone().multiply(0.9).setY(0.5));
                     }
@@ -340,7 +435,8 @@ final class Founder extends CouncilMember {
                 end.getWorld().playSound(end, Sound.BLOCK_WOOD_BREAK, 1.5F, 0.6F);
                 end.getWorld().playSound(end, Sound.ENTITY_GENERIC_SPLASH, 1F, 1F);
                 end.getWorld().spawnParticle(Particle.DUST, end, 25, 0.8, 0.5, 0.8, 0, new Particle.DustOptions(BEER, 1.4F));
-                io.github.amitelia.occultech.boss.FloorDecals.splash(fight, end, 1.8, BEER);
+                io.github.amitelia.occultech.boss.FloorDecals.splash(fight, end, 2.5, BEER);
+                spill(floorAt(end), 2.5, 80, null);
                 return false;
             }
             return true;
