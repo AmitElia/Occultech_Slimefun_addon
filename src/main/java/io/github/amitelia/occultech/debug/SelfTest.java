@@ -1832,6 +1832,7 @@ final class SelfTest {
         check("Occult Forge keeps 4 input slots", forgeSlots == 4, forgeSlots + " slots");
         ItemStack censer = SlimefunItem.getById(ItemKeys.slimefunId("SOULFIRE_CENSER")).getItem();
         check("Soulfire Censer is holdable", censer.hasData(io.papermc.paper.datacomponent.DataComponentTypes.CONSUMABLE), "no data");
+        wishboneSizes();
         for (String id : List.of("HOLLOW_HALO", "WISHBONE_TALISMAN", "AURA_TALISMAN", "GALLUS_EGG", "STORMSTRING_BOW", "DREADLANCE",
             "SERVITOR_NEXUS", "WATCHFUL_EYEBLOSSOM", "RESIN_TILE", "HOLLOW_GLYPH")) {
             check(ContentRegistrar.title(id) + " registered", SlimefunItem.getById(ItemKeys.slimefunId(id)) != null, "missing");
@@ -1840,6 +1841,30 @@ final class SelfTest {
             !(SlimefunItem.getById(ItemKeys.slimefunId("ABYSSAL_GLYPH")) instanceof io.github.thebusybiscuit.slimefun4.core.attributes.NotPlaceable)
                 && !(SlimefunItem.getById(ItemKeys.slimefunId("HOLLOW_GLYPH")) instanceof io.github.thebusybiscuit.slimefun4.core.attributes.NotPlaceable),
             "not placeable");
+    }
+
+    /** The Wishbone Talisman's sizes: what each does, how a talisman keeps its choice, and older talismans. */
+    private void wishboneSizes() {
+        var giant = io.github.amitelia.occultech.items.TalismanService.perks(3.0);
+        check("a 3x giant is three times the size and reach, no faster", Math.abs(giant.scale() - 2) < 1e-9
+            && Math.abs(giant.reach() - 2) < 1e-9 && giant.speed() == 0, giant.toString());
+        var tiny = io.github.amitelia.occultech.items.TalismanService.perks(0.25);
+        check("a quarter-size carrier runs 45% faster, reach unchanged", Math.abs(tiny.speed() - 0.45) < 1e-9 && tiny.reach() == 0
+            && Math.abs(tiny.scale() + 0.75) < 1e-9, tiny.toString());
+        ItemStack talisman = SlimefunItem.getById(ItemKeys.slimefunId("WISHBONE_TALISMAN")).getItem().clone();
+        check("a new Wishbone Talisman is half size and on, as before",
+            io.github.amitelia.occultech.items.TalismanService.sizeOf(talisman) == 0.5 && io.github.amitelia.occultech.items.TalismanService.isOn(talisman),
+            io.github.amitelia.occultech.items.TalismanService.sizeOf(talisman) + "");
+        io.github.amitelia.occultech.items.TalismanService.setWishbone(talisman, 9, false);
+        check("a chosen size is kept on the talisman, within a quarter to 3x",
+            io.github.amitelia.occultech.items.TalismanService.sizeOf(talisman) == 3.0 && !io.github.amitelia.occultech.items.TalismanService.isOn(talisman),
+            io.github.amitelia.occultech.items.TalismanService.sizeOf(talisman) + "");
+        var old = talisman.getItemMeta();
+        old.getPersistentDataContainer().remove(io.github.amitelia.occultech.items.TalismanService.WISHBONE_SIZE);
+        old.getPersistentDataContainer().remove(io.github.amitelia.occultech.items.TalismanService.WISHBONE_ON);
+        old.getPersistentDataContainer().set(io.github.amitelia.occultech.items.TalismanService.STYLE, org.bukkit.persistence.PersistentDataType.INTEGER, 1);
+        talisman.setItemMeta(old);
+        check("an older talisman switched off stays off", !io.github.amitelia.occultech.items.TalismanService.isOn(talisman), "on");
     }
 
     private void startHollowUpgrade() {

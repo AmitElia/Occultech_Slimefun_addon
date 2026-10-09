@@ -36,6 +36,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.AxisAngle4f;
@@ -53,7 +54,10 @@ import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
  * <li>Hollow Halo: a crown or halo of display entities circling above the head (smooth, client-animated). Right-click
  * opens the style menu: the plain Halo is always available, each other style unlocks after defeating its boss 5 times
  * (see {@link HaloStyle}). A locked style never shows, even on a traded talisman.</li>
- * <li>Wishbone Talisman: half size (on/off). A transient modifier, never saved onto the player.</li>
+ * <li>Wishbone Talisman: any size from a quarter to three times normal, chosen in its menu (right-click; sneak +
+ * right-click turns it on or off). Size is otherwise cosmetic, with two perks: giants reach further (block and entity
+ * reach grow with size), tiny carriers run faster. Step height follows size. The size eases in, never grows into a
+ * ceiling, and is back to normal inside a boss fight's arena. Transient modifiers, never saved onto the player.</li>
  * <li>Aura Talisman: a light trail (prismatic sparks, petals, soul wisps) or footprints (ember, frost, rune, ink,
  * blossom) that fade away, or off. Right-click cycles.</li>
  * </ul>
@@ -83,6 +87,24 @@ public final class TalismanService implements Listener {
     public static final NamespacedKey STYLE = new NamespacedKey("occultech", "talisman_style");
     public static final NamespacedKey HALO_STYLE = new NamespacedKey("occultech", "halo_style");
     private static final NamespacedKey WISHBONE = new NamespacedKey("occultech", "wishbone");
+    private static final NamespacedKey WISHBONE_STEP = new NamespacedKey("occultech", "wishbone_step");
+    private static final NamespacedKey WISHBONE_BLOCK_REACH = new NamespacedKey("occultech", "wishbone_block_reach");
+    private static final NamespacedKey WISHBONE_ENTITY_REACH = new NamespacedKey("occultech", "wishbone_entity_reach");
+    private static final NamespacedKey WISHBONE_SPEED = new NamespacedKey("occultech", "wishbone_speed");
+    /** On the talisman: the chosen size, and whether it's on. */
+    public static final NamespacedKey WISHBONE_SIZE = new NamespacedKey("occultech", "wishbone_size");
+    public static final NamespacedKey WISHBONE_ON = new NamespacedKey("occultech", "wishbone_on");
+    public static final double MIN_SIZE = 0.25;
+    public static final double MAX_SIZE = 3.0;
+    /** The menu's sizes, tiny to colossal, and their names. */
+    static final double[] SIZES = { 0.25, 0.33, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0 };
+    private static final String[] SIZE_NAMES = { "Tiny", "Wee", "Half", "Small", "Normal", "Tall", "Big", "Giant", "Colossal" };
+    private static final double SIZE_STEP = 0.05;
+    /** Speed bonus per unit of size below normal: a quarter-size carrier runs 45% faster. */
+    private static final double TINY_SPEED = 0.6;
+    /** The talisman of a new or older (on/off) Wishbone: half size, as it always was. */
+    private static final double DEFAULT_SIZE = 0.5;
+    private static TalismanService instance;
     private static final int FIRST_FOOTPRINT = 3;
     private static final int FOOTPRINT_LIFE = 60;
 
@@ -98,9 +120,13 @@ public final class TalismanService implements Listener {
     private final Map<UUID, Location> lastStep = new HashMap<>();
     private final Map<UUID, Boolean> leftFoot = new HashMap<>();
     private final Map<UUID, Deque<Footprint>> footprints = new HashMap<>();
+    /** Wishbone: each carrier's size now and the size it's easing towards. */
+    private final Map<UUID, Double> sizeNow = new HashMap<>();
+    private final Map<UUID, Double> sizeWanted = new HashMap<>();
     private long ticks;
 
     public TalismanService(Plugin plugin) {
+        instance = this;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         Bukkit.getScheduler().runTaskTimer(plugin, this::scan, 20L, 20L);
         Bukkit.getScheduler().runTaskTimer(plugin, this::draw, 2L, 2L);
@@ -160,6 +186,128 @@ public final class TalismanService implements Listener {
         menu.open(player);
     }
 
+    // ------------------------------------------------------------------ wishbone size menu
+
+    /** What a size does: ADD_SCALAR amounts for scale, step height, reach (giants only) and speed (tiny only). */
+    public record SizePerks(double scale, double step, double reach, double speed) {}
+
+    public static SizePerks perks(double size) {
+        return new SizePerks(size - 1, size - 1, Math.max(0, size - 1), size < 1 ? (1 - size) * TINY_SPEED : 0);
+    }
+
+    /** A Wishbone Talisman's chosen size (half, for a new one or one from before the menu). */
+    public static double sizeOf(ItemStack item) {
+        Double size = item.hasItemMeta() ? item.getItemMeta().getPersistentDataContainer().get(WISHBONE_SIZE, PersistentDataType.DOUBLE) : null;
+        return size == null ? DEFAULT_SIZE : Math.max(MIN_SIZE, Math.min(MAX_SIZE, size));
+    }
+
+    /** Whether a Wishbone Talisman is on (an older one: unless its on/off style was off). */
+    public static boolean isOn(ItemStack item) {
+        Byte on = item.hasItemMeta() ? item.getItemMeta().getPersistentDataContainer().get(WISHBONE_ON, PersistentDataType.BYTE) : null;
+        return on == null ? !Kind.WISHBONE.isOff(styleOf(item)) : on == 1;
+    }
+
+    /** Stores a size and on/off on a Wishbone Talisman. */
+    public static void setWishbone(ItemStack item, double size, boolean on) {
+        var meta = item.getItemMeta();
+        meta.getPersistentDataContainer().set(WISHBONE_SIZE, PersistentDataType.DOUBLE, Math.round(Math.max(MIN_SIZE, Math.min(MAX_SIZE, size)) * 100) / 100.0);
+        meta.getPersistentDataContainer().set(WISHBONE_ON, PersistentDataType.BYTE, (byte) (on ? 1 : 0));
+        item.setItemMeta(meta);
+    }
+
+    private static String sizeLabel(double size) {
+        for (int i = 0; i < SIZES.length; i++) {
+            if (Math.abs(SIZES[i] - size) < 0.005) {
+                return SIZE_NAMES[i] + " (" + trim(size) + "x)";
+            }
+        }
+        return trim(size) + "x";
+    }
+
+    private static String trim(double size) {
+        return size == Math.rint(size) ? String.valueOf((int) size) : String.valueOf(Math.round(size * 100) / 100.0);
+    }
+
+    /** The first Wishbone Talisman in a player's inventory (the one that works), or null. */
+    @Nullable
+    private static ItemStack wishboneOf(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            SlimefunItem sf = item == null || item.getType().isAir() ? null : SlimefunItem.getByItem(item);
+            if (sf != null && sf.getId().equals(Kind.WISHBONE.id)) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    /** Sneak + right-click: on or off, keeping the chosen size. */
+    static String toggleWishbone(Player player) {
+        ItemStack talisman = wishboneOf(player);
+        if (talisman == null) {
+            return "&8no talisman";
+        }
+        boolean on = !isOn(talisman);
+        setWishbone(talisman, sizeOf(talisman), on);
+        refresh(player);
+        return on ? "&a" + sizeLabel(sizeOf(talisman)) : "&8Off";
+    }
+
+    /** The size menu: the sizes tiny to colossal (you, at each), fine steps, normal, on/off. */
+    static void openWishboneMenu(Player player) {
+        ItemStack talisman = wishboneOf(player);
+        if (talisman == null) {
+            return;
+        }
+        double size = sizeOf(talisman);
+        boolean on = isOn(talisman);
+        ChestMenu menu = new ChestMenu(MenuUtils.color("&aWishbone Talisman &8- " + (on ? sizeLabel(size) : "off")));
+        menu.setEmptySlotsClickable(false);
+        menu.setPlayerInventoryClickable(true);
+        for (int i = 0; i < SIZES.length; i++) {
+            double choice = SIZES[i];
+            boolean current = on && Math.abs(choice - size) < 0.005;
+            ItemStack icon = new ItemStack(Material.PLAYER_HEAD, Math.max(1, Math.min(9, i + 1)));
+            if (icon.getItemMeta() instanceof SkullMeta skull) {
+                skull.setOwningPlayer(player);
+                skull.setDisplayName(MenuUtils.color((current ? "&a" : "&f") + sizeLabel(choice)));
+                skull.setLore(java.util.List.of(MenuUtils.color(current ? "&aYour size" : "&eClick to become this size"),
+                    MenuUtils.color(choice > 1 ? "&7Reach x" + trim(choice) : choice < 1 ? "&7Runs " + Math.round(perks(choice).speed() * 100) + "% faster" : "&7As you are")));
+                skull.setEnchantmentGlintOverride(current);
+                icon.setItemMeta(skull);
+            }
+            menu.addItem(9 + i, icon, (p, slot, item, action) -> choose(p, choice, true));
+        }
+        menu.addItem(20, MenuUtils.icon(Material.RED_STAINED_GLASS_PANE, "&cSmaller", "&7-" + trim(SIZE_STEP) + "x"),
+            (p, slot, item, action) -> choose(p, size - SIZE_STEP, true));
+        menu.addItem(22, MenuUtils.icon(Material.RABBIT_FOOT, "&f" + (on ? sizeLabel(size) : "Off"),
+            "&7Quarter size to three times normal.", "&7Giants reach further; tiny runs faster.", "&7Normal size inside boss fights.",
+            "&8Sneak + right-click the talisman: on/off"), (p, slot, item, action) -> false);
+        menu.addItem(24, MenuUtils.icon(Material.LIME_STAINED_GLASS_PANE, "&aBigger", "&7+" + trim(SIZE_STEP) + "x"),
+            (p, slot, item, action) -> choose(p, size + SIZE_STEP, true));
+        menu.addItem(26, MenuUtils.icon(on ? Material.LEVER : Material.BARRIER, on ? "&aOn" : "&8Off", "&7Click to turn " + (on ? "off" : "on")),
+            (p, slot, item, action) -> choose(p, size, !on));
+        menu.open(player);
+    }
+
+    private static boolean choose(Player player, double size, boolean on) {
+        ItemStack talisman = wishboneOf(player);
+        if (talisman != null) {
+            setWishbone(talisman, size, on);
+            refresh(player);
+            player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8F, (float) Math.max(0.5, Math.min(2.0, 1.4 / Math.sqrt(sizeOf(talisman)))));
+            // redraw with the new choice, a tick later (opening a menu from inside a click confuses the client)
+            Bukkit.getScheduler().runTask(io.github.amitelia.occultech.Occultech.instance(), () -> openWishboneMenu(player));
+        }
+        return false;
+    }
+
+    /** Takes a menu choice now, not at the next scan. */
+    private static void refresh(Player player) {
+        if (instance != null) {
+            instance.wantSize(player);
+        }
+    }
+
     /** Stores the chosen style on the carrier's Hollow Halo. */
     private static void setHalo(Player player, String style) {
         for (ItemStack item : player.getInventory().getContents()) {
@@ -209,7 +357,7 @@ public final class TalismanService implements Listener {
             } else {
                 haloOf.put(player.getUniqueId(), halo);
             }
-            setSmall(player, styles[Kind.WISHBONE.ordinal()] >= 0);
+            wantSize(player);
         }
     }
 
@@ -217,6 +365,7 @@ public final class TalismanService implements Listener {
 
     private void draw() {
         ticks += 2;
+        easeSizes();
         for (Player player : Bukkit.getOnlinePlayers()) {
             UUID id = player.getUniqueId();
             HaloStyle halo = player.isDead() || player.getGameMode() == org.bukkit.GameMode.SPECTATOR ? null : haloOf.get(id);
@@ -439,16 +588,90 @@ public final class TalismanService implements Listener {
 
     // ------------------------------------------------------------------ size
 
-    private static void setSmall(Player player, boolean small) {
-        AttributeInstance scale = player.getAttribute(Attribute.SCALE);
-        if (scale == null) {
+    /** The size a player should be: their talisman's, if it's on - normal inside a boss fight's arena. */
+    private void wantSize(Player player) {
+        ItemStack talisman = wishboneOf(player);
+        double wanted = talisman == null || !isOn(talisman) || inFight(player) ? 1.0 : sizeOf(talisman);
+        Double before = sizeWanted.put(player.getUniqueId(), wanted);
+        if (before != null && Math.abs(before - wanted) > 0.005 && !player.isDead()) {
+            // a change begins: a snap, and a puff of sparkles
+            player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ALLAY_ITEM_TAKEN, 0.7F, wanted < before ? 1.6F : 0.7F);
+            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, player.getHeight() / 2, 0), 12,
+                0.3 * player.getWidth() / 0.6, player.getHeight() / 3, 0.3 * player.getWidth() / 0.6, 0.02);
+        }
+    }
+
+    /** A size or reach advantage would bend a boss fight's balance: everyone fights at their own size. */
+    private static boolean inFight(Player player) {
+        var plugin = io.github.amitelia.occultech.Occultech.instance();
+        if (plugin == null || plugin.rituals() == null) {
+            return false;
+        }
+        for (var fight : plugin.rituals().bosses().fights()) {
+            if (!fight.isOver() && fight.inArena(player)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Every 2 ticks: each carrier's size eases a step towards the wanted one (growing only where there's room). */
+    private void easeSizes() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            UUID id = player.getUniqueId();
+            double wanted = sizeWanted.getOrDefault(id, 1.0);
+            double now = sizeNow.getOrDefault(id, 1.0);
+            double next = now;
+            if (Math.abs(wanted - now) > 0.005) {
+                double step = (wanted - now) * 0.3;
+                next = Math.abs(step) < 0.02 ? (Math.abs(wanted - now) < 0.02 ? wanted : now + Math.signum(step) * 0.02) : now + step;
+                if (next > now && !roomFor(player, next)) {
+                    next = now;   // a ceiling or wall in the way: stay this size until there's room
+                }
+            }
+            applySize(player, next);
+            if (Math.abs(next - 1.0) < 0.005 && Math.abs(wanted - 1.0) < 0.005) {
+                sizeNow.remove(id);
+                sizeWanted.remove(id);
+            } else {
+                sizeNow.put(id, next);
+            }
+        }
+    }
+
+    /** Whether a player of this size fits where they stand. */
+    private static boolean roomFor(Player player, double size) {
+        Location at = player.getLocation();
+        double half = 0.3 * size;
+        double height = (player.isSneaking() ? 1.5 : 1.8) * size;
+        return !player.getWorld().hasCollisionsIn(new BoundingBox(at.getX() - half, at.getY() + 0.01, at.getZ() - half,
+            at.getX() + half, at.getY() + height, at.getZ() + half));
+    }
+
+    private static void applySize(Player player, double size) {
+        SizePerks perks = perks(size);
+        setModifier(player, Attribute.SCALE, WISHBONE, perks.scale());
+        setModifier(player, Attribute.STEP_HEIGHT, WISHBONE_STEP, perks.step());
+        setModifier(player, Attribute.BLOCK_INTERACTION_RANGE, WISHBONE_BLOCK_REACH, perks.reach());
+        setModifier(player, Attribute.ENTITY_INTERACTION_RANGE, WISHBONE_ENTITY_REACH, perks.reach());
+        setModifier(player, Attribute.MOVEMENT_SPEED, WISHBONE_SPEED, perks.speed());
+    }
+
+    /** Keeps one transient ADD_SCALAR modifier on an attribute at {@code amount} (none at 0). */
+    private static void setModifier(Player player, Attribute attribute, NamespacedKey key, double amount) {
+        AttributeInstance instance = player.getAttribute(attribute);
+        if (instance == null) {
             return;
         }
-        boolean has = scale.getModifier(WISHBONE) != null;
-        if (small && !has) {
-            scale.addTransientModifier(new AttributeModifier(WISHBONE, -0.5, AttributeModifier.Operation.ADD_SCALAR, EquipmentSlotGroup.ANY));
-        } else if (!small && has) {
-            scale.removeModifier(WISHBONE);
+        AttributeModifier current = instance.getModifier(key);
+        if (current != null && Math.abs(current.getAmount() - amount) < 1e-4) {
+            return;
+        }
+        if (current != null) {
+            instance.removeModifier(key);
+        }
+        if (Math.abs(amount) >= 1e-4) {
+            instance.addTransientModifier(new AttributeModifier(key, amount, AttributeModifier.Operation.ADD_SCALAR, EquipmentSlotGroup.ANY));
         }
     }
 
@@ -457,7 +680,9 @@ public final class TalismanService implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         UUID id = e.getPlayer().getUniqueId();
-        setSmall(e.getPlayer(), false);
+        applySize(e.getPlayer(), 1.0);
+        sizeNow.remove(id);
+        sizeWanted.remove(id);
         removeRig(id);
         active.remove(id);
         haloOf.remove(id);
@@ -481,7 +706,7 @@ public final class TalismanService implements Listener {
 
     /** Plugin disable: nobody stays small, no displays left behind. */
     public void shutdown() {
-        Bukkit.getOnlinePlayers().forEach(player -> setSmall(player, false));
+        Bukkit.getOnlinePlayers().forEach(player -> applySize(player, 1.0));
         new ArrayList<>(rigs.keySet()).forEach(this::removeRig);
         footprints.values().forEach(prints -> prints.forEach(p -> p.display().remove()));
         footprints.clear();

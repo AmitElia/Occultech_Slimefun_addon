@@ -8,7 +8,7 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.handlers.ItemUseHandler;
 
-/** A final talisman (see {@link TalismanService}): right-click cycles its style or turns it off. */
+/** A final talisman (see {@link TalismanService}): right-click opens its menu (Halo, Wishbone) or cycles its style (Aura). */
 public class Talisman extends OccultItem {
 
     public Talisman(ItemGroup group, SlimefunItemStack item, RecipeType type, ItemStack[] recipe, ItemStack output, TalismanService.Kind kind) {
@@ -20,6 +20,14 @@ public class Talisman extends OccultItem {
             ItemStack held = e.getPlayer().getInventory().getItem(hand);
             if (kind == TalismanService.Kind.HALO) {
                 TalismanService.openHaloMenu(e.getPlayer(), held);
+                return;
+            }
+            if (kind == TalismanService.Kind.WISHBONE) {
+                if (e.getPlayer().isSneaking()) {
+                    e.getPlayer().sendActionBar(MenuUtils.color("&d" + getItemName() + "&7: " + TalismanService.toggleWishbone(e.getPlayer())));
+                } else {
+                    TalismanService.openWishboneMenu(e.getPlayer());
+                }
                 return;
             }
             String style = TalismanService.cycle(held, kind);
