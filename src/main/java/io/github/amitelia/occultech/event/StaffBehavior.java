@@ -180,6 +180,6 @@ public final class StaffBehavior extends BossBehavior {
 
     @Override
     public double verticalLeash() {
-        return 6;
+        return 20;   // flyers circle above and leapers jump high (goob, Amya, YahooFlop)
     }
 }

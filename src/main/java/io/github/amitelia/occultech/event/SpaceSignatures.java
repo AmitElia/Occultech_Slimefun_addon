@@ -177,12 +177,19 @@ final class SpaceSignatures {
     static final class BlackHole extends Signature {
 
         private static final int WARNING = 40;
-        private static final int PULL = 40;
+        private static final int PULL = 50;
         private static final double REACH = 9;
         private static final double COLLAPSE = 3;
-        private static final double PULL_STRENGTH = 0.15;
-        private BlockDisplay hole;
+        /** A nudge toward the hole every tick: far weaker than a sprint, so running away works. */
+        private static final double PULL_STRENGTH = 0.07;
+        private static final double MAX_PULLED_SPEED = 0.45;
+        private static final Color PULL_COLOR = Color.fromRGB(150, 90, 230);
+        private static final Color COLLAPSE_COLOR = Color.fromRGB(230, 60, 90);
+        @javax.annotation.Nullable private org.bukkit.entity.Display hole;
+        @javax.annotation.Nullable private org.bukkit.entity.ItemDisplay pullRing;
+        private Location ground;
         private int pulling = -1;
+        private float spin;
 
         BlackHole(StaffKit kit) {
             super(kit, 160);
@@ -190,26 +197,53 @@ final class SpaceSignatures {
 
         @Override
         boolean cast(int now) {
-            if (kit.target == null || !kit.within(kit.target, REACH) || pulling >= 0) {
+            if (kit.target == null || !kit.within(kit.target, REACH) || hole != null) {
                 next = now + 20;
                 return false;
             }
             next = now + 260;
             kit.claim(WARNING + PULL);
-            Location at = kit.body.getLocation().add(0, 2.6, 0);
-            hole = rock(kit, at, Material.BLACK_CONCRETE, 0.2F);
-            hole.setInterpolationDelay(0);
-            hole.setInterpolationDuration(WARNING);
-            hole.setTransformation(new Transformation(new Vector3f(-0.8F, -0.8F, -0.8F), new AxisAngle4f(), new Vector3f(1.6F, 1.6F, 1.6F),
-                new AxisAngle4f()));
+            ground = kit.body.getLocation();
+            ground.setY(ground.getWorld().getHighestBlockYAt(ground) + 1);
+            Location at = ground.clone().add(0, 2.6, 0);
+            at.setYaw(0F);
+            at.setPitch(0F);
+            if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+                hole = io.github.amitelia.occultech.boss.FloorDecals.model(kit.fight, at, "raid_black_hole", null);
+                hole.setTransformation(holeShape(0.05F, 0F));
+                pullRing = io.github.amitelia.occultech.boss.FloorDecals.flat(kit.fight, ground, "floor_warning_ring", PULL_COLOR, REACH * 2);
+            } else {
+                hole = rock(kit, at, Material.BLACK_CONCRETE, 0.2F);
+            }
+            org.bukkit.entity.Display grown = hole;
+            kit.later(1, () -> {
+                if (grown.isValid()) {
+                    grown.setInterpolationDelay(0);
+                    grown.setInterpolationDuration(WARNING);
+                    grown.setTransformation(holeShape(io.github.amitelia.occultech.boss.FloorDecals.enabled() ? 2.6F : 1.6F, 0F));
+                }
+            });
             at.getWorld().playSound(at, Sound.BLOCK_PORTAL_TRIGGER, 1.5F, 0.6F);
             for (Signature signature : kit.signatures()) {
                 if (signature instanceof LowGravity field) {
-                    field.open(WARNING + PULL);
+                    field.open(WARNING);   // floaty while it charges, not during the pull
                 }
             }
-            kit.later(WARNING, () -> pulling = 0);
+            kit.later(WARNING, () -> {
+                pulling = 0;
+                kit.fight.telegraph(ground, COLLAPSE, PULL, COLLAPSE_COLOR, io.github.amitelia.occultech.boss.FloorDecals.Mark.DANGER);
+            });
             return true;
+        }
+
+        /** The hole's look: {@code size} across, turned {@code turn} about the vertical (the disk swirls round). */
+        private static Transformation holeShape(float size, float turn) {
+            return new Transformation(new Vector3f(), new AxisAngle4f(turn, 0, 1, 0), new Vector3f(size, size, size), new AxisAngle4f());
+        }
+
+        @Override
+        boolean steering() {
+            return hole != null;   // Charles holds still while the black hole charges and pulls
         }
 
         @Override
@@ -217,26 +251,35 @@ final class SpaceSignatures {
             if (hole == null) {
                 return;
             }
-            Location center = hole.getLocation();
             if (pulling < 0) {
-                center.getWorld().spawnParticle(Particle.REVERSE_PORTAL, center, 6, 0.6, 0.6, 0.6, 0.02);
                 return;
             }
             pulling++;
-            center.getWorld().spawnParticle(Particle.REVERSE_PORTAL, center, 20, 2, 1, 2, 0.15);
-            if (pulling % 3 == 0) {
-                // weaker than a sprint: running away works, standing around doesn't
-                for (Player player : kit.playersNear(kit.body.getLocation(), REACH)) {
-                    Vector in = center.toVector().subtract(player.getLocation().toVector()).setY(0);
-                    if (in.lengthSquared() > 0.25) {
-                        player.setVelocity(player.getVelocity().add(in.normalize().multiply(PULL_STRENGTH)));
+            if (pulling % 5 == 0 && hole.isValid() && io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
+                spin += 0.6F;
+                hole.setInterpolationDelay(0);
+                hole.setInterpolationDuration(5);
+                hole.setTransformation(holeShape(2.6F, spin));
+            }
+            for (Player player : kit.playersNear(ground, REACH)) {
+                Vector in = ground.toVector().subtract(player.getLocation().toVector()).setY(0);
+                if (in.lengthSquared() > 0.36) {
+                    Vector v = player.getVelocity().add(in.normalize().multiply(PULL_STRENGTH));
+                    Vector flat = v.clone().setY(0);
+                    if (flat.length() > MAX_PULLED_SPEED) {
+                        flat.normalize().multiply(MAX_PULLED_SPEED);
                     }
+                    player.setVelocity(flat.setY(v.getY()));
                 }
             }
             if (pulling >= PULL || !kit.alive()) {
-                Location ground = kit.body.getLocation();
+                Location center = hole.getLocation();
                 hole.remove();
                 hole = null;
+                if (pullRing != null) {
+                    pullRing.remove();
+                    pullRing = null;
+                }
                 pulling = -1;
                 center.getWorld().spawnParticle(Particle.SQUID_INK, center, 60, 1.5, 1, 1.5, 0.2);
                 center.getWorld().playSound(center, Sound.ENTITY_WARDEN_SONIC_BOOM, 1F, 1.4F);

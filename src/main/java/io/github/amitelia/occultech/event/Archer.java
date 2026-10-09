@@ -75,6 +75,7 @@ final class Archer extends CouncilMember {
     Archer(CouncilBehavior council, Location at, CouncilBehavior.Seat seat) {
         super(council, at.clone().add(0, HOVER, 0), seat);
         body.setGravity(false);
+        body.setPose(org.bukkit.entity.Pose.SWIMMING, true);   // flying lies flat, like a swimmer
         body.getEquipment().setItemInMainHand(new ItemStack(Material.BOW));
     }
 
@@ -131,6 +132,10 @@ final class Archer extends CouncilMember {
 
     @Override
     void move() {
+        org.bukkit.entity.Pose pose = grounded() ? org.bukkit.entity.Pose.STANDING : org.bukkit.entity.Pose.SWIMMING;
+        if (body.getPose() != pose) {
+            body.setPose(pose, true);
+        }
         switch (kidnap) {
             case MARKING, NONE -> {
                 if (grounded()) {

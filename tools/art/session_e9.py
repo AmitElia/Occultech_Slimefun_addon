@@ -482,7 +482,81 @@ def sector_models():
 def models():
     return ([katana_held(), o4.plane("floor_mark_soak", o4.symbol(SOAK), tint=True, light=15),
              o4.plane("floor_mark_target", o4.symbol(TARGET), tint=True, light=15), raid_wall(), raid_wall_post(),
-             raid_laser(), laser_wall()] + ring_models() + sector_models())
+             raid_laser(), laser_wall()] + ring_models() + sector_models()
+            + [o4.plane("floor_lawn", lawn(), light=0), raid_black_hole()])
+
+
+# ---------------------------------------------------------------- round 4: OldeGrumpy's lawn, Charles's black hole
+
+GRASS = hexes("#1f3a1c", "#2c5426", "#3c6f31", "#4e8a3b", "#67a64a", "#8cc66a")
+
+
+def lawn():
+    """OldeGrumpy's lawn (a floor decal ~10 blocks across): a round, well-kept lawn mowed in light and dark stripes, a
+    few dandelions and poppies, and a darker trimmed edge. Lit from the top-left like everything else."""
+    import random
+    rnd = random.Random(31)
+    img = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    for y in range(32):
+        for x in range(32):
+            d = math.hypot(x + 0.5 - 16, y + 0.5 - 16)
+            if d > 15.6:
+                continue
+            stripe = (x // 4) % 2                                           # the mower's stripes
+            tone = 3 if stripe else 4
+            if d > 14.6:
+                tone = 1                                                    # the trimmed edge
+            elif d > 13.8:
+                tone = 2
+            elif (x + y) < 20 and rnd.random() < 0.15:
+                tone = min(5, tone + 1)                                     # catching the light
+            elif rnd.random() < 0.12:
+                tone = max(1, tone - 1)                                     # tufts
+            img.putpixel((x, y), GRASS[tone] + (255,) if len(GRASS[tone]) == 3 else GRASS[tone])
+    for (x, y, c) in ((9, 11, (240, 210, 60)), (21, 8, (240, 210, 60)), (12, 22, (200, 40, 40)), (23, 19, (240, 210, 60)),
+                      (17, 26, (200, 40, 40)), (6, 18, (245, 245, 240)), (25, 13, (245, 245, 240))):
+        img.putpixel((x, y), c + (255,))                                    # dandelions, poppies, daisies
+    return img
+
+
+def black_hole_frames(n=8):
+    """The accretion disk seen from above (u, v across it): a glowing ring of matter swirling round a black centre -
+    violet at its outer edge, hot orange-white near the event horizon - turning over the frames."""
+    out = []
+    ramp = [(40, 10, 70), (90, 30, 150), (160, 70, 220), (230, 120, 90), (255, 190, 120), (255, 240, 210)]
+    for f in range(n):
+        img = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+        for y in range(32):
+            for x in range(32):
+                dx, dy = x + 0.5 - 16, y + 0.5 - 16
+                d = math.hypot(dx, dy)
+                if d < 5.5 or d > 15.5:
+                    continue
+                a = math.atan2(dy, dx) + d * 0.35 - f * math.pi / 4 * 0.5    # spiral arms, turning
+                swirl = 0.5 + 0.5 * math.sin(a * 3)
+                heat = 1 - (d - 5.5) / 10                                     # hotter toward the centre
+                tone = max(0, min(5, int(heat * 4 + swirl * 1.8)))
+                alpha = int(255 * min(1, 0.35 + heat * 0.5 + swirl * 0.3)) if d > 6.2 else 255
+                img.putpixel((x, y), ramp[tone] + (alpha,))
+        out.append(img)
+    return out
+
+
+def raid_black_hole():
+    """Charles's black hole (shown by the plugin, grown from nothing): a black sphere (an octagonal ball of crossed
+    boxes) inside a glowing, swirling accretion disk, tilted a little so it reads in three dimensions."""
+    m = g.Model("raid_black_hole")
+    m.part = True
+    core = Image.new("RGBA", (16, 16), (6, 3, 10, 255))
+    t_core = m.texture("core", core)
+    t_disk = m.texture("disk", black_hole_frames())
+    m.mcmeta["disk"] = {"animation": {"frametime": 2, "interpolate": True}}
+    for w, h in ((5.0, 3.0), (3.0, 5.0), (4.2, 4.2)):                        # the ball: three boxes crossed
+        g.prism(m, w, 8 - h / 2, 8 + h / 2, t_core, d=w)
+        g.prism(m, w * 0.62, 8 - h / 2 - 0.4, 8 + h / 2 + 0.4, t_core, d=w * 0.62)
+    e = m.box((0, 8, 0), (16, 8, 16), {"up": (t_disk, [0, 0, 16, 16]), "down": (t_disk, [0, 16, 16, 0])}, shade=False, light=15)
+    e["rotation"] = {"origin": [8, 8, 8], "axis": "x", "angle": 18}
+    return m
 
 
 def _tinted(img, tint):
@@ -526,6 +600,9 @@ def review(ms):
     for i, arc in enumerate((60, 70, 150, 180)):
         sheet.alpha_composite(_tinted(by[f"floor_warning_sector{arc}"].textures["face"], (255, 90, 60)).resize((150, 150), Image.NEAREST),
                               (10 + i * 165, 1010))
+    sheet.alpha_composite(by["floor_lawn"].textures["face"].resize((160, 160), Image.NEAREST), (10, 700))
+    sheet.alpha_composite(render3d.render(by["raid_black_hole"], frame=2, yaw=30, pitch=25, s=8, size=(160, 160), center=(8, 8, 8),
+                                          bg=(30, 30, 36, 255), blend=True), (175, 700))
     path = os.path.join(REVIEW, "review-e9.png")
     sheet.save(path)
     frames = [render3d.render(katana, frame=f, yaw=35, pitch=20, s=17, size=(420, 420), center=(8, 9, 8)).convert("RGB") for f in range(8)]

@@ -74,6 +74,10 @@ abstract class Signature {
             case "foxes" -> new CreatureSignatures.Foxes(kit);
             case "mount" -> new CreatureSignatures.Mount(kit);
             case "spiders" -> new SpiderSignature(kit);
+            case "flight" -> new OwlSignature(kit);
+            case "lawn" -> new GrumpySignature(kit);
+            case "hammer" -> new LeapSignatures.Hammer(kit);
+            case "flop" -> new LeapSignatures.Flop(kit);
             default -> null;
         };
     }

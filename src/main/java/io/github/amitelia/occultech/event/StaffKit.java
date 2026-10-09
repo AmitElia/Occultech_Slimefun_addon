@@ -74,7 +74,8 @@ abstract class StaffKit {
         for (Class<?> kit : List.of(BruiserKit.class, ControllerKit.class, SkirmisherKit.class, SummonerKit.class, GadgeteerKit.class,
             HexerKit.class, DevSignatures.class, AbusingSignatures.class, RadioSignature.class, BuilderSignatures.class,
             SamuraiSignatures.class, SpaceSignatures.class, CowSignatures.class, PairSignatures.class, BurrowSignature.class,
-            TricksterSignatures.class, CreatureSignatures.class, SpiderSignature.class, JollySignatures.class)) {
+            TricksterSignatures.class, CreatureSignatures.class, SpiderSignature.class, JollySignatures.class,
+            OwlSignature.class, GrumpySignature.class, LeapSignatures.class)) {
             try {
                 Class.forName(kit.getName(), true, kit.getClassLoader());
             } catch (ClassNotFoundException e) {
