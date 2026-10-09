@@ -24,7 +24,6 @@ import org.bukkit.potion.PotionEffectType;
 
 import io.github.amitelia.occultech.boss.BossFight;
 import io.github.amitelia.occultech.boss.tier2.Abyss;
-import io.papermc.paper.datacomponent.item.ResolvableProfile;
 
 /**
  * Signatures that trick rather than hurt (Session E5).
@@ -69,7 +68,7 @@ final class TricksterSignatures {
                     continue;
                 }
                 Mannequin decoy = kit.fight.spawnAdd(Mannequin.class, at, m -> {
-                    m.setProfile(ResolvableProfile.resolvableProfile().name(kit.member.skin()).build());
+                    m.setProfile(RaidSkins.profile(kit.member.skin()));
                     m.setCustomName(kit.body.getCustomName());
                     m.setCustomNameVisible(true);
                     m.setDescription(kit.body.getDescription());

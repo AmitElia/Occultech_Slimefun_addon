@@ -14,7 +14,6 @@ import org.bukkit.entity.Player;
 
 import io.github.amitelia.occultech.boss.BossFight;
 import io.github.amitelia.occultech.boss.tier2.Abyss;
-import io.papermc.paper.datacomponent.item.ResolvableProfile;
 
 /** One seat on the Council: a skinned body, its own attacks, and the raid mechanics it brings to the rotation. */
 abstract class CouncilMember {
@@ -32,7 +31,7 @@ abstract class CouncilMember {
             m.setCustomName(ChatColor.GOLD + "" + ChatColor.BOLD + seat.display());
             m.setCustomNameVisible(true);
             m.setDescription(net.kyori.adventure.text.Component.text(seat.title(), net.kyori.adventure.text.format.NamedTextColor.YELLOW));
-            m.setProfile(ResolvableProfile.resolvableProfile().name(seat.name()).build());
+            m.setProfile(RaidSkins.profile(seat.name()));
             CouncilBehavior.prepare(m);
         });
     }

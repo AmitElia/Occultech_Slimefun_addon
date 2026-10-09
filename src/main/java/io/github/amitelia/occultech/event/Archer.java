@@ -145,7 +145,7 @@ final class Archer extends CouncilMember {
                     orbit += 0.006;
                     Location center = fight.center();
                     double radius = fight.radius() * 0.5;
-                    Abyss.glide(body, center.clone().add(Math.cos(orbit) * radius, 0, Math.sin(orbit) * radius), 0.22, HOVER, 0.5);
+                    Abyss.glide(body, center.clone().add(Math.cos(orbit) * radius, 0, Math.sin(orbit) * radius), 0.22, hover(HOVER), 0.5);
                     Player close = nearest();
                     if (close != null) {
                         Abyss.face(body, close.getLocation());
@@ -158,6 +158,25 @@ final class Archer extends CouncilMember {
             case SWOOPING -> swooping();
             case CARRYING -> carrying();
         }
+    }
+
+    /**
+     * The hover to pass {@link Abyss#glide} for flying {@code height} over the arena floor. Glide measures from the ground
+     * it finds within 8 blocks below; at 8 up and more it finds none, takes her own height for the ground and climbs on
+     * and on, until the fight's leash teleports her back (she kept "teleporting back").
+     */
+    private double hover(double height) {
+        Location at = body.getLocation();
+        double floor = fight.center().getY();
+        org.bukkit.block.Block block = at.getBlock();
+        for (int i = 0; i < 40 && block.getY() > at.getWorld().getMinHeight(); i++) {
+            if (!block.isPassable()) {
+                floor = block.getY() + 1;
+                break;
+            }
+            block = block.getRelative(0, -1, 0);
+        }
+        return floor + height - Abyss.groundY(at);
     }
 
     // ------------------------------------------------------------------ kidnap

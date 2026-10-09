@@ -483,7 +483,8 @@ def models():
     return ([katana_held(), o4.plane("floor_mark_soak", o4.symbol(SOAK), tint=True, light=15),
              o4.plane("floor_mark_target", o4.symbol(TARGET), tint=True, light=15), raid_wall(), raid_wall_post(),
              raid_laser(), laser_wall()] + ring_models() + sector_models()
-            + [o4.plane("floor_lawn", lawn(), light=0), raid_black_hole()])
+            + [o4.plane("floor_lawn", lawn(), light=0), raid_black_hole(), raid_cigarette(),
+               raid_beer_mug(), raid_beer_keg()])
 
 
 # ---------------------------------------------------------------- round 4: OldeGrumpy's lawn, Charles's black hole
@@ -559,6 +560,161 @@ def raid_black_hole():
     return m
 
 
+# ---------------------------------------------------------------- round 5: goob's cigarette tower
+
+def raid_cigarette():
+    """goob's cigarette tower (shown by the plugin, stood on the floor about 2 blocks tall): a round cigarette - an
+    orange cork-pattern filter with a thin gold band, a white paper body with a faint seam, a black ash ring, and a
+    glowing ember tip that flickers (red to orange-white)."""
+    import random
+    rnd = random.Random(77)
+    m = g.Model("raid_cigarette")
+    m.part = True
+    cork_ramp = [(110, 50, 14), (160, 80, 24), (205, 115, 40), (235, 150, 60), (250, 185, 95)]
+    cork = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            tone = 2 + (1 if x % 5 == 0 else 0) - (1 if rnd.random() < 0.25 else 0) + (1 if rnd.random() < 0.08 else 0)
+            cork.putpixel((x, y), cork_ramp[max(0, min(4, tone))] + (255,))
+    paper = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            c = (236, 234, 228) if x % 8 else (214, 212, 206)                  # a faint seam down the paper
+            if x in (1, 2):
+                c = (250, 250, 247)                                             # the lit side
+            paper.putpixel((x, y), c + (255,))
+    band = Image.new("RGBA", (16, 16), (214, 178, 80, 255))
+    ash = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            ash.putpixel((x, y), ((30, 28, 30) if rnd.random() < 0.6 else (70, 66, 64)) + (255,))
+    embers = []
+    ember_ramp = [(110, 10, 8), (180, 24, 10), (230, 60, 20), (255, 120, 40), (255, 200, 120)]
+    for f in range(6):
+        img = Image.new("RGBA", (16, 16))
+        for y in range(16):
+            for x in range(16):
+                heat = rnd.random() * 0.6 + 0.4 * (0.5 + 0.5 * math.sin(f * 1.1 + x * 0.7 + y * 0.9))
+                img.putpixel((x, y), ember_ramp[min(4, int(heat * 5))] + (255,))
+        embers.append(img)
+    t_cork = m.texture("filter", cork)
+    t_paper = m.texture("paper", paper)
+    t_band = m.texture("band", band)
+    t_ash = m.texture("ash", ash)
+    t_ember = m.texture("ember", embers)
+    m.mcmeta["ember"] = {"animation": {"frametime": 3, "interpolate": True}}
+    def rod(w, y0, y1, tex, light=0):
+        """A round section: an octagon of two crossed boxes."""
+        g.prism(m, w, y0, y1, tex, d=w * 0.58, light=light)
+        g.prism(m, w * 0.58, y0, y1, tex, d=w, light=light)
+    rod(3.2, 0, 5.0, t_cork)                 # the filter
+    rod(3.25, 5.0, 5.4, t_band)              # a thin gold band
+    rod(3.2, 5.4, 14.6, t_paper)             # the paper
+    rod(3.22, 14.6, 15.3, t_ash)             # the ash ring
+    rod(2.9, 15.3, 16.0, t_ember, light=15)  # the lit tip
+    return m
+
+
+# ---------------------------------------------------------------- round 6: X's beer (Act 2)
+
+def raid_beer_mug():
+    """X's thrown beer mug (shown by the plugin, flying and spinning): a thick glass stein of amber beer - darker at the
+    bottom, rising bubbles - with a white foam head that spills over the rim, a glass handle on one side."""
+    import random
+    rnd = random.Random(31)
+    m = g.Model("raid_beer_mug")
+    m.part = True
+    beer_ramp = [(122, 58, 8), (170, 92, 14), (212, 132, 24), (240, 170, 44), (255, 214, 110)]
+    frames = []
+    for f in range(6):                                  # bubbles rise through the beer
+        img = Image.new("RGBA", (16, 16))
+        for y in range(16):
+            for x in range(16):
+                tone = 1 + (y < 9) + (y < 4) - (1 if x in (11, 12) else 0)
+                img.putpixel((x, y), beer_ramp[max(0, min(4, tone))] + (255,))
+        for bx in (2, 6, 9, 13):
+            by = (bx * 5 - f * 2) % 16
+            img.putpixel((bx, by), beer_ramp[4] + (255,))
+        for x in (1, 2):                                # the glass's lit edge
+            for y in range(16):
+                img.putpixel((x, y), (255, 236, 180, 255))
+        frames.append(img)
+    foam = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            v = 250 - (14 if rnd.random() < 0.3 else 0) - (10 if y > 11 else 0)
+            foam.putpixel((x, y), (v, v - 4, v - 16, 255))
+    glass = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            glass.putpixel((x, y), ((214, 228, 226) if x % 5 else (246, 252, 250)) + (255,))
+    bottom = Image.new("RGBA", (16, 16), (140, 104, 50, 255))
+    t_beer = m.texture("beer", frames)
+    m.mcmeta["beer"] = {"animation": {"frametime": 3, "interpolate": True}}
+    t_foam = m.texture("foam", foam)
+    t_glass = m.texture("glass", glass)
+    t_bottom = m.texture("bottom", bottom)
+    g.prism(m, 8.6, 0, 1.2, t_glass, cx=7)              # the thick glass base
+    g.prism(m, 8.0, 1.2, 10.5, t_beer, cx=7)            # the beer
+    g.prism(m, 6.4, 1.2, 10.5, t_beer, cx=7, d=9.0)     # rounded a little
+    g.prism(m, 9.0, 10.5, 12.5, t_foam, cx=7)           # the foam head, spilling over the rim
+    g.prism(m, 6.0, 12.5, 13.6, t_foam, cx=7.4, d=6.6)  # a mound on top
+    g.prism(m, 1.6, 3.0, 9.0, t_glass, cx=13.2, d=1.8)  # the handle: an upright bar...
+    g.prism(m, 2.4, 8.0, 9.4, t_glass, cx=12.0, d=1.8)  # ...joined at the top
+    g.prism(m, 2.4, 2.6, 4.0, t_glass, cx=12.0, d=1.8)  # ...and the bottom
+    g.prism(m, 8.0, 0, 0.2, t_bottom, cx=7)
+    return m
+
+
+def raid_beer_keg():
+    """X's rolling beer keg (shown by the plugin, laid on its side and rolling): an oak barrel of bowed staves with
+    dark iron hoops near each end and round the belly, a lid with rings of grain and a brass tap."""
+    import random
+    rnd = random.Random(53)
+    m = g.Model("raid_beer_keg")
+    m.part = True
+    oak = [(74, 44, 22), (104, 64, 32), (136, 88, 46), (166, 112, 62), (196, 142, 86)]
+    staves = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            tone = 2 + (1 if x % 4 == 1 else 0) - (2 if x % 4 == 0 else 0) - (1 if rnd.random() < 0.12 else 0)
+            staves.putpixel((x, y), oak[max(0, min(4, tone))] + (255,))
+    iron = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            v = 52 + (26 if y % 4 == 1 else 0) + (10 if rnd.random() < 0.15 else 0)
+            iron.putpixel((x, y), (v, v, v + 6, 255))
+    lid = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            r = math.hypot(x - 7.5, y - 7.5)
+            tone = 3 if int(r) % 3 else 1
+            lid.putpixel((x, y), (oak[0] if r > 7 else oak[tone]) + (255,))
+    brass = Image.new("RGBA", (16, 16))
+    for y in range(16):
+        for x in range(16):
+            brass.putpixel((x, y), ((232, 190, 80) if x < 2 else (184, 140, 48)) + (255,))
+    t_staves = m.texture("staves", staves)
+    t_iron = m.texture("iron", iron)
+    t_lid = m.texture("lid", lid)
+    t_brass = m.texture("brass", brass)
+    def rod(w, y0, y1, tex, top=None):
+        g.prism(m, w, y0, y1, tex, d=w * 0.58, top=top)
+        g.prism(m, w * 0.58, y0, y1, tex, d=w, top=top)
+    lid_cap = (t_lid, [0, 0, 16, 16])
+    rod(11.0, 0, 3.0, t_staves, top=lid_cap)            # the barrel bows out toward its belly
+    rod(12.4, 3.0, 13.0, t_staves, top=lid_cap)
+    rod(11.0, 13.0, 16.0, t_staves, top=lid_cap)
+    rod(11.4, 1.0, 2.2, t_iron)                         # the hoops
+    rod(12.8, 5.4, 6.4, t_iron)
+    rod(12.8, 9.6, 10.6, t_iron)
+    rod(11.4, 13.8, 15.0, t_iron)
+    g.prism(m, 1.6, 16.0, 17.2, t_brass, cx=8, cz=10.5)  # the tap on the lid
+    g.prism(m, 1.2, 16.8, 17.6, t_brass, cx=8, cz=11.8, d=2.0)
+    return m
+
+
+
 def _tinted(img, tint):
     out = img.copy()
     px = out.load()
@@ -603,6 +759,12 @@ def review(ms):
     sheet.alpha_composite(by["floor_lawn"].textures["face"].resize((160, 160), Image.NEAREST), (10, 700))
     sheet.alpha_composite(render3d.render(by["raid_black_hole"], frame=2, yaw=30, pitch=25, s=8, size=(160, 160), center=(8, 8, 8),
                                           bg=(30, 30, 36, 255), blend=True), (175, 700))
+    sheet.alpha_composite(render3d.render(by["raid_cigarette"], frame=1, yaw=30, pitch=20, s=9, size=(160, 300), center=(8, 8, 8),
+                                          bg=(30, 30, 36, 255)), (175, 860))
+    sheet.alpha_composite(render3d.render(by["raid_beer_mug"], frame=1, yaw=30, pitch=20, s=12, size=(220, 240), center=(8, 7, 8),
+                                          bg=(30, 30, 36, 255)), (345, 860))
+    sheet.alpha_composite(render3d.render(by["raid_beer_keg"], frame=0, yaw=30, pitch=25, s=11, size=(240, 260), center=(8, 8, 8),
+                                          bg=(30, 30, 36, 255)), (575, 860))
     path = os.path.join(REVIEW, "review-e9.png")
     sheet.save(path)
     frames = [render3d.render(katana, frame=f, yaw=35, pitch=20, s=17, size=(420, 420), center=(8, 9, 8)).convert("RGB") for f in range(8)]

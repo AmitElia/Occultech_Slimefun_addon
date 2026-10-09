@@ -1224,3 +1224,33 @@ borrowed O4/O5 models for its beams and rings. New parts, all in O4's greys and 
   `rotation(angle, +y)`, so the tall rings' gaps (made round +x and turned to face the gap) point the right way.
 
 
+
+### Round 4 - new staff signatures (user review)
+- `floor_lawn`: OldeGrumpy's lawn, a flat grass square with mown stripes (birch fence displays round it, a "KEEP OFF
+  THE GRASS!" sign).
+- `raid_black_hole`: Charles's rewritten black hole, a dark core with a swirling purple accretion disk that grows over
+  the warning and turns while it pulls; its reach is a `floor_warning_ring`.
+
+### Round 5 - goob's cigarette towers (user: "orange base, white body, and black red tip that is lit with smoke")
+- `raid_cigarette`: a round cigarette (octagon sections) stood on end, shown 2.2x (about 2 blocks tall): an orange
+  cork-pattern filter, a thin gold band, a white paper body with a faint seam, a black ash ring and a glowing ember tip
+  (emissive, 6 animated frames from deep red to orange-white). Campfire smoke rises from the tip; the second-hand smoke
+  on the floor uses `floor_zone_shadow`.
+
+### Round 6 - X's beer (Act 2)
+- `raid_beer_mug`: the mug X lobs (flying, turning over): a thick glass stein of amber beer, darker at the bottom, with
+  bubbles rising (animated), a white foam head spilling over the rim and a glass handle. Its puddle uses the yolk floor
+  surface.
+- `raid_beer_keg`: the keg X bowls in Last Round (laid on its side by the plugin, rolling): an oak barrel bowing out at
+  the belly, four dark iron hoops, a lid with rings of grain and a brass tap.
+
+### Round 7 - aimed warnings faced backwards (user: "the wedges appear behind them")
+- The 26.2 client draws an item display's model turned half round (`DisplayRenderer$ItemDisplayRenderer` applies
+  `Axis.YP.rotation(PI)` after the transformation). Aimed floor models were turned for the model's own north, so every
+  fan (`floor_warning_sector*`, the O4 wedge) opened behind its caster, lanes ran their texture backwards, and the tall
+  rings drew their gap on the far side from the real one. `FloorDecals.ITEM_FLIP` (pi) is now added to those turns
+  (sector, wedge, lane, the rings' gap). Symmetric models (walls, the laser streak, rings without a gap) don't care.
+- Wind-ups hold the body: a staff member stands still facing a warned fan or a lane cast from them until it fires
+  (`StaffKit.hold`), the HOTFIX sweep turns the dev with its beam, X plants his feet for the kick. Before, they kept
+  walking and turning while the warning stayed put, so it ended up beside or behind them and beams fired from where
+  they no longer stood.

@@ -18,7 +18,6 @@ import io.github.amitelia.occultech.boss.BossBehavior;
 import io.github.amitelia.occultech.boss.BossBlueprint;
 import io.github.amitelia.occultech.boss.BossFight;
 import io.github.amitelia.occultech.boss.BossSpec;
-import io.papermc.paper.datacomponent.item.ResolvableProfile;
 
 /**
  * A staff member on the raid floor (Act 1): a Mannequin wearing their skin, with their name and role above it, fighting
@@ -86,7 +85,7 @@ public final class StaffBehavior extends BossBehavior {
                 m.setCustomNameVisible(true);
                 m.setDescription(net.kyori.adventure.text.Component.text(member.title(), net.kyori.adventure.text.format.NamedTextColor.AQUA));
                 // their skin, looked up by name (the game fetches it from Mojang, as for player heads)
-                m.setProfile(ResolvableProfile.resolvableProfile().name(member.skin()).build());
+                m.setProfile(RaidSkins.profile(member.skin()));
                 BossFight.setAttribute(m, Attribute.MAX_HEALTH, scale.maxHealth());
             });
             if (member.scale() != 1) {

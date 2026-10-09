@@ -79,7 +79,7 @@ final class RaidRing implements RaidHazard {
 
     /** The shell's shape: the ring's radius and height, standing on the floor, its gap (made round +x) turned to face it. */
     private org.bukkit.util.Transformation shape() {
-        float turn = Double.isNaN(gapAngle) ? 0F : (float) -gapAngle;
+        float turn = Double.isNaN(gapAngle) ? 0F : (float) -gapAngle + io.github.amitelia.occultech.boss.FloorDecals.ITEM_FLIP;
         float across = (float) (radius * 2);
         return new org.bukkit.util.Transformation(new org.joml.Vector3f(0, (float) height / 2, 0), new org.joml.AxisAngle4f(turn, 0, 1, 0),
             new org.joml.Vector3f(across, (float) height, across), new org.joml.AxisAngle4f());

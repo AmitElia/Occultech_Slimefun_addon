@@ -15,7 +15,6 @@ import org.bukkit.entity.Player;
 import io.github.amitelia.occultech.boss.BossFight;
 import io.github.amitelia.occultech.boss.Mechanic;
 import io.github.amitelia.occultech.boss.tier2.Abyss;
-import io.papermc.paper.datacomponent.item.ResolvableProfile;
 
 /**
  * Abusing's signatures (his skin is a creeper - Session E3).
@@ -64,7 +63,7 @@ final class AbusingSignatures {
             for (int i = 0; i < 2 && replicas.size() < MAX; i++) {
                 Location at = kit.body.getLocation().add(i == 0 ? 1 : -1, 0.1, 0.6);
                 Mannequin replica = kit.fight.spawnAdd(Mannequin.class, at, m -> {
-                    m.setProfile(ResolvableProfile.resolvableProfile().name(kit.member.skin()).build());
+                    m.setProfile(RaidSkins.profile(kit.member.skin()));
                     m.setDescription(net.kyori.adventure.text.Component.empty());
                     BossFight.setAttribute(m, Attribute.SCALE, SCALE);
                     BossFight.setAttribute(m, Attribute.MAX_HEALTH, 1);

@@ -179,6 +179,7 @@ final class CowSignatures {
             Abyss.face(kit.body, kit.target.getLocation());
             Vector toTarget = kit.target.getLocation().toVector().subtract(at.toVector());
             double aim = Math.atan2(toTarget.getZ(), toTarget.getX());
+            kit.hold(WARNING, aim);
             at.getWorld().playSound(at, Sound.ENTITY_COW_HURT, 2F, 0.5F);
             Particle.DustOptions dust = new Particle.DustOptions(DUST, 1.3F);
             if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {

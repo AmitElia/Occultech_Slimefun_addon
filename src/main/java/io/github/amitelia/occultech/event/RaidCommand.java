@@ -108,6 +108,22 @@ public final class RaidCommand {
                     }
                 }
                 case "perf" -> raids.perf().forEach(line -> tell(sender, "&7" + line));
+                case "skin" -> {
+                    // copy the skin a player wears in game (a skin plugin's, not just their Mojang one) onto a staff body
+                    String skin = raids.skinOf(args[2]);
+                    if (args.length > 3 && args[3].equalsIgnoreCase("reset")) {
+                        tell(sender, RaidSkins.reset(skin) ? "&7" + skin + " is looked up by name again." : "&7No saved skin for " + skin + ".");
+                        return;
+                    }
+                    Player from = org.bukkit.Bukkit.getPlayerExact(args.length > 3 ? args[3] : skin);
+                    if (from == null) {
+                        tell(sender, "&cThat player isn't online: /occultech event skin <staff> [online player | reset]");
+                    } else if (RaidSkins.copy(skin, from)) {
+                        tell(sender, "&aSaved: " + skin + " now wears the skin " + from.getName() + " has on (new bodies show it).");
+                    } else {
+                        tell(sender, "&c" + from.getName() + " has no skin data (offline-mode server?).");
+                    }
+                }
                 case "demo" -> {
                     if (args.length > 2 && args[2].equalsIgnoreCase("stop")) {
                         raids.stopDemo();
@@ -165,14 +181,14 @@ public final class RaidCommand {
     private static void usage(CommandSender sender) {
         tell(sender, "&7Usage: /occultech event <arena [set <radius>] | start [targets] [players] | skip | stop | hp <multiplier> | status"
             + " | spawn <name> [players] | spawn clear | stage 1 [targets] [players] | stage 1 with <names> [players]"
-            + " | stage 2 [players] [band] | demo [hazard|all] [band] | demo stop | perf>");
+            + " | stage 2 [players] [band] | demo [hazard|all] [band] | demo stop | perf | skin <staff> [player|reset]>");
     }
 
     /** Tab completion after "event"; {@code roster} names the staff for {@code spawn}. */
     @Nonnull
     public static List<String> complete(@Nonnull String[] args, @javax.annotation.Nullable StaffRoster roster) {
         if (args.length == 2) {
-            return List.of("arena", "start", "skip", "stop", "hp", "status", "spawn", "stage", "demo", "perf");
+            return List.of("arena", "start", "skip", "stop", "hp", "status", "spawn", "stage", "demo", "perf", "skin");
         }
         if (args.length == 3 && args[1].equalsIgnoreCase("arena")) {
             return List.of("set");
@@ -189,6 +205,17 @@ public final class RaidCommand {
             String part = typed.substring(done.length()).toLowerCase(java.util.Locale.ROOT);
             return roster.members().values().stream().map(StaffMember::display)
                 .filter(n -> n.toLowerCase(java.util.Locale.ROOT).startsWith(part)).map(n -> done + n).toList();
+        }
+        if (args.length == 3 && args[1].equalsIgnoreCase("skin") && roster != null) {
+            List<String> names = new java.util.ArrayList<>(List.of("X", "Chlo", "Pancake"));
+            roster.members().values().forEach(member -> names.add(member.display()));
+            String typed = args[2].toLowerCase(java.util.Locale.ROOT);
+            return names.stream().filter(n -> n.toLowerCase(java.util.Locale.ROOT).startsWith(typed)).toList();
+        }
+        if (args.length == 4 && args[1].equalsIgnoreCase("skin")) {
+            List<String> names = new java.util.ArrayList<>(List.of("reset"));
+            org.bukkit.Bukkit.getOnlinePlayers().forEach(player -> names.add(player.getName()));
+            return names;
         }
         if (args.length == 3 && args[1].equalsIgnoreCase("spawn") && roster != null) {
             List<String> names = new java.util.ArrayList<>(List.of("clear"));

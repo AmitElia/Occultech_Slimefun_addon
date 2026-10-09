@@ -9,8 +9,10 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Pose;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
+import io.github.amitelia.occultech.boss.BossFight;
 import io.github.amitelia.occultech.boss.FloorDecals;
 import io.github.amitelia.occultech.boss.Mechanic;
 import io.github.amitelia.occultech.boss.tier2.Abyss;
@@ -19,7 +21,9 @@ import io.github.amitelia.occultech.boss.tier2.Abyss;
  * goob's signature, <b>flight</b> (goob's skin is the Duolingo owl - Session E10): goob flies like a bird, lying flat in
  * the swimming pose, circling above the fight out of melee reach. Now and then a landing circle warns under a player,
  * goob dives on it like a bird of prey and strikes there, then stays low for a moment - the window to hit back - before
- * climbing again.
+ * climbing again. In between, goob drops <b>cigarette towers</b>: one falls onto a warned spot under a player and
+ * stands there, lit and smoking, wrapping the floor around it in second-hand smoke that hurts every second. A tower
+ * goes out by itself after a while, or players stub it out (a few hits). At most 3 at once.
  */
 final class OwlSignature extends Signature {
 
@@ -32,6 +36,33 @@ final class OwlSignature extends Signature {
     private static final int PERCH = 40;
     private static final double RADIUS = 2.5;
     private static final Color WARNING = Color.fromRGB(120, 200, 70);
+    private static final Mechanic SMOKE = Mechanic.of(ID, "Second-hand smoke", 8, Mechanic.Kind.ZONE, true);
+    private static final int CIG_FALL = 15;
+    private static final int CIG_LIFE = 240;
+    private static final double SMOKE_RADIUS = 3.5;
+    private static final float CIG_SCALE = 2.2F;
+    private static final int MAX_TOWERS = 3;
+    private static final Color SMOKE_COLOR = Color.fromRGB(150, 150, 150);
+
+    /** A standing tower, its smoke on the floor, and when it goes out. */
+    private static final class Tower {
+        final BossFight.FightObject object;
+        final org.bukkit.entity.ItemDisplay haze;
+        final Location at;
+        final int until;
+        boolean out;
+
+        Tower(BossFight.FightObject object, org.bukkit.entity.ItemDisplay haze, Location at, int until) {
+            this.object = object;
+            this.haze = haze;
+            this.at = at;
+            this.until = until;
+        }
+    }
+
+    private final java.util.List<Tower> towers = new java.util.ArrayList<>();
+    private int nextCig = 100;
+    private int nextDive;
 
     private enum Phase { CIRCLE, MARK, DIVE, PERCH }
 
@@ -58,7 +89,19 @@ final class OwlSignature extends Signature {
             next = now + 20;
             return false;
         }
-        next = now + 130;
+        towers.removeIf(t -> t.out);
+        if (now >= nextCig && towers.size() < MAX_TOWERS) {
+            nextCig = now + 260;
+            next = now + 60;
+            dropCigarette(target);
+            return true;
+        }
+        if (now < nextDive) {
+            next = now + 20;
+            return false;
+        }
+        nextDive = now + 130;
+        next = now + 60;
         kit.claim(MARK + DIVE_TICKS + PERCH);
         spot = target.getLocation();
         spot.setY(spot.getWorld().getHighestBlockYAt(spot) + 1);
@@ -71,10 +114,11 @@ final class OwlSignature extends Signature {
 
     @Override
     void move() {
+        ticks++;
+        smoke();
         if (!kit.alive()) {
             return;
         }
-        ticks++;
         switch (phase) {
             case CIRCLE, MARK -> {
                 // circle above whoever it hunts (or its spot), lying flat, facing where it flies
@@ -104,6 +148,87 @@ final class OwlSignature extends Signature {
                 if (ticks >= PERCH) {
                     phase = Phase.CIRCLE;
                     ticks = 0;
+                }
+            }
+        }
+    }
+
+    /** A lit cigarette falls from goob onto a warned spot under {@code target} and stands there, smoking. */
+    private void dropCigarette(Player target) {
+        Location spot = target.getLocation();
+        spot.setY(spot.getWorld().getHighestBlockYAt(spot) + 1);
+        spot.setYaw(0F);
+        spot.setPitch(0F);
+        kit.fight.telegraph(spot, 1.2, CIG_FALL, SMOKE_COLOR);
+        ItemStack look = cigarette();
+        Location from = kit.body.getLocation();
+        from.setYaw(0F);
+        from.setPitch(0F);
+        org.bukkit.entity.ItemDisplay falling = kit.fight.spawnExtra(org.bukkit.entity.ItemDisplay.class, from, d -> {
+            d.setItemStack(look);
+            d.setItemDisplayTransform(org.bukkit.entity.ItemDisplay.ItemDisplayTransform.NONE);
+            d.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(), new org.joml.AxisAngle4f(),
+                new org.joml.Vector3f(CIG_SCALE, CIG_SCALE, CIG_SCALE), new org.joml.AxisAngle4f()));
+            d.setTeleportDuration(CIG_FALL);
+        });
+        kit.later(1, () -> falling.teleport(spot.clone().add(0, CIG_SCALE / 2, 0)));
+        kit.body.getWorld().playSound(from, Sound.ITEM_FLINTANDSTEEL_USE, 1.5F, 0.8F);
+        kit.later(CIG_FALL, () -> {
+            falling.remove();
+            spot.getWorld().playSound(spot, Sound.BLOCK_WOOD_PLACE, 1.5F, 0.6F);
+            org.bukkit.entity.ItemDisplay haze = FloorDecals.enabled()
+                ? FloorDecals.flat(kit.fight, spot, "floor_zone_shadow", Color.WHITE, SMOKE_RADIUS * 2) : null;
+            Tower[] made = new Tower[1];
+            BossFight.FightObject object = kit.fight.spawnObject(spot, look, CIG_SCALE, 0.6F, CIG_SCALE, 4, () -> {
+                if (made[0] != null) {
+                    putOut(made[0]);
+                    kit.fight.broadcast("&7Someone stubbed out " + kit.member.display() + "'s cigarette.");
+                }
+            });
+            made[0] = new Tower(object, haze, spot, kit.fight.elapsed() + CIG_LIFE);
+            towers.add(made[0]);
+        });
+    }
+
+    private static ItemStack cigarette() {
+        ItemStack stack = new ItemStack(FloorDecals.enabled() ? Material.PAPER : Material.END_ROD);
+        if (FloorDecals.enabled()) {
+            org.bukkit.inventory.meta.ItemMeta meta = stack.getItemMeta();
+            meta.setItemModel(new org.bukkit.NamespacedKey("occultech", "raid_cigarette"));
+            stack.setItemMeta(meta);
+        }
+        return stack;
+    }
+
+    private void putOut(Tower tower) {
+        tower.out = true;
+        if (tower.haze != null) {
+            tower.haze.remove();
+        }
+        if (tower.object.isAlive()) {
+            tower.object.remove();
+        }
+        tower.at.getWorld().spawnParticle(Particle.LARGE_SMOKE, tower.at.clone().add(0, 1, 0), 15, 0.3, 0.6, 0.3, 0.02);
+    }
+
+    /** Every tick: the towers smoke, their haze hurts once a second, and they burn down. */
+    private void smoke() {
+        int now = kit.fight.elapsed();
+        for (Tower tower : towers) {
+            if (tower.out) {
+                continue;
+            }
+            if (now >= tower.until || !tower.object.isAlive()) {
+                putOut(tower);
+                continue;
+            }
+            Location tip = tower.at.clone().add(0, CIG_SCALE - 0.05, 0);
+            if (ticks % 3 == 0) {
+                tip.getWorld().spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, tip, 1, 0.05, 0.05, 0.05, 0.01);
+            }
+            if (ticks % 20 == 0 && kit.alive()) {
+                for (Player player : kit.playersNear(tower.at, SMOKE_RADIUS)) {
+                    kit.fight.hit(player, SMOKE, kit.body);
                 }
             }
         }

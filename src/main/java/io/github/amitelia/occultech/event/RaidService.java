@@ -82,6 +82,7 @@ public final class RaidService implements Listener {
             config = plugin.getConfig().createSection("raid");
         }
         roster = StaffRoster.parse(config.getMapList("roster"));
+        RaidSkins.load(new File(plugin.getDataFolder(), "raid-skins.yml"), plugin.getLogger());
         roster.problems().forEach(problem -> plugin.getLogger().warning("Raid roster: " + problem));
         RaidScaling scaling = new RaidScaling(config.getDouble("players-per-target", 2.5), config.getInt("max-targets", 10),
             config.getDouble("health-exponent", 0.9));
@@ -153,6 +154,22 @@ public final class RaidService implements Listener {
     }
 
     @Nonnull
+    /** The skin (username) of the staff member or council seat named {@code who} (username or shown name); else {@code who}. */
+    public String skinOf(String who) {
+        for (StaffMember member : roster.members().values()) {
+            if (member.name().equalsIgnoreCase(who) || member.display().equalsIgnoreCase(who)) {
+                return member.skin();
+            }
+        }
+        CouncilBehavior.Cast cast = settings.council();
+        for (CouncilBehavior.Seat seat : List.of(cast.founder(), cast.archer(), cast.brewer())) {
+            if (seat.name().equalsIgnoreCase(who) || seat.display().equalsIgnoreCase(who)) {
+                return seat.name();
+            }
+        }
+        return who;
+    }
+
     public StaffRoster roster() {
         return roster;
     }

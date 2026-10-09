@@ -351,6 +351,28 @@ public final class BossFight {
     }
 
     /**
+     * A hittable object shown as {@code look} (an item with its own model): {@code scale} its size, a hitbox
+     * {@code width} x {@code height} blocks standing on {@code at}; {@code hits} player hits break it and run
+     * {@code onBreak}. The display stands centred over {@code at}, its model's bottom on the floor.
+     */
+    @Nonnull
+    public FightObject spawnObject(Location at, ItemStack look, float scale, float width, float height, int hits, Runnable onBreak) {
+        ItemDisplay display = spawnExtra(ItemDisplay.class, at.clone().add(0, 0.5 * scale, 0), d -> {
+            d.setItemStack(look);
+            d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+            d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(scale, scale, scale), new AxisAngle4f()));
+        });
+        Interaction hitbox = spawnExtra(Interaction.class, at, i -> {
+            i.setInteractionWidth(width);
+            i.setInteractionHeight(height);
+            i.setResponsive(true);
+        });
+        FightObject object = new FightObject(display, hitbox, hits, onBreak);
+        objects.put(hitbox.getUniqueId(), object);
+        return object;
+    }
+
+    /**
      * A ground hazard: a colored circle that applies {@code effect} to players inside once per second.
      * Uses a lingering-potion cloud for the visual, never the dragon-breath particle (bottles could collect it).
      */

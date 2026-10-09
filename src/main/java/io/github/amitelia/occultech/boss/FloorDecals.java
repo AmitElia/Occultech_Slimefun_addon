@@ -51,6 +51,12 @@ public final class FloorDecals {
     }
 
     private static final double WARNING_HEIGHT = 0.03;
+    /**
+     * The client draws an item display's model turned half round (26.2 {@code DisplayRenderer$ItemDisplayRenderer}:
+     * {@code Axis.YP.rotation(PI)}, after the transformation). A model aimed by a turn about y gets this much more, or
+     * it faces the other way: fans opened behind the boss that cast them.
+     */
+    public static final float ITEM_FLIP = (float) Math.PI;
     private static final double ZONE_HEIGHT = 0.02;
     private static final int UNFOLD = 6;
     @Nullable private static Plugin plugin;
@@ -122,7 +128,7 @@ public final class FloorDecals {
                 break;
             }
         }
-        float yaw = (float) Math.atan2(-dir.getX(), -dir.getZ());   // the models open toward north
+        float yaw = (float) Math.atan2(-dir.getX(), -dir.getZ()) + ITEM_FLIP;   // the models open toward north
         float across = (float) (reach * 2);
         Color tint = visible(color);
         Location floor = floor(origin);
@@ -161,7 +167,7 @@ public final class FloorDecals {
             return;
         }
         dir.normalize();
-        float yaw = (float) Math.atan2(-dir.getX(), -dir.getZ());
+        float yaw = (float) Math.atan2(-dir.getX(), -dir.getZ()) + ITEM_FLIP;
         Color tint = visible(color);
         Location floor = floor(origin);
         ItemDisplay outline = decal(fight, floor.clone().add(0, WARNING_HEIGHT + 0.01, 0), model, tint, true, 0.01F);

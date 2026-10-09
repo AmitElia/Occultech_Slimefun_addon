@@ -57,9 +57,12 @@ final class SpaceSignatures {
     /** Meteors fall into growing shadows. */
     static final class Meteors extends Signature {
 
-        private static final int WARNING = 40;
-        private static final int FALL = 15;
+        private static final int WARNING = 50;
+        private static final int FALL = 24;
         private static final double RADIUS = 2.2;
+        /** How high (and how far off to one side) a meteor starts: it comes in at a slant, out of the sky. */
+        private static final double HEIGHT = 30;
+        private static final double SLANT = 12;
 
         Meteors(StaffKit kit) {
             super(kit, 60);
@@ -85,14 +88,40 @@ final class SpaceSignatures {
                 spots.add(kit.target.getLocation().add(random.nextDouble(-4, 4), 0, random.nextDouble(-4, 4)));
             }
             kit.body.getWorld().playSound(kit.body.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.5F, 0.5F);
+            double from = random.nextDouble(Math.PI * 2);   // they all come in from one side of the sky, like a shower
             for (Location spot : spots) {
+                spot.setY(spot.getWorld().getHighestBlockYAt(spot) + 1);
+                spot.setYaw(0F);
+                spot.setPitch(0F);
                 kit.fight.telegraph(spot, RADIUS, WARNING, SHADOW);
-                kit.later(WARNING - FALL, () -> {
-                    BlockDisplay meteor = rock(kit, spot.clone().add(0, 18, 0), Material.MAGMA_BLOCK, 1.3F);
-                    meteor.setTeleportDuration(FALL);
-                    meteor.teleport(spot.clone().add(0, 0.6, 0));
-                    spot.getWorld().playSound(spot, Sound.ENTITY_BLAZE_SHOOT, 1F, 0.5F);
-                    kit.later(FALL, () -> {
+                kit.later(WARNING - FALL - 1 - random.nextInt(4), () -> {
+                    Location start = spot.clone().add(Math.cos(from) * SLANT, HEIGHT, Math.sin(from) * SLANT);
+                    Location end = spot.clone().add(0, 0.6, 0);
+                    BlockDisplay meteor = rock(kit, start, Material.MAGMA_BLOCK, 1.6F);
+                    spot.getWorld().playSound(spot, Sound.ENTITY_BLAZE_SHOOT, 1.5F, 0.4F);
+                    // a display moved the tick it spawns just appears there: start the fall a tick later, tumbling
+                    kit.later(1, () -> {
+                        if (!meteor.isValid()) {
+                            return;
+                        }
+                        meteor.setTeleportDuration(FALL);
+                        meteor.teleport(end);
+                        meteor.setInterpolationDelay(0);
+                        meteor.setInterpolationDuration(FALL);
+                        // tumbling about its middle: the shift keeps the turned cube centred
+                        AxisAngle4f turn = new AxisAngle4f((float) Math.PI * 0.9F, 0.8F, 0.45F, 0.4F);
+                        Vector3f middle = new org.joml.Quaternionf(turn).transform(new Vector3f(0.8F, 0.8F, 0.8F)).negate();
+                        meteor.setTransformation(new Transformation(middle, turn, new Vector3f(1.6F, 1.6F, 1.6F), new AxisAngle4f()));
+                    });
+                    for (int t = 1; t < FALL; t += 2) {   // a burning tail where it is now
+                        double f = (double) t / FALL;
+                        Location trail = start.clone().add(end.clone().subtract(start).toVector().multiply(f));
+                        kit.later(1 + t, () -> {
+                            trail.getWorld().spawnParticle(Particle.FLAME, trail, 4, 0.25, 0.25, 0.25, 0.01);
+                            trail.getWorld().spawnParticle(Particle.LARGE_SMOKE, trail, 2, 0.2, 0.2, 0.2, 0.01);
+                        });
+                    }
+                    kit.later(FALL + 1, () -> {
                         meteor.remove();
                         spot.getWorld().spawnParticle(Particle.EXPLOSION, spot.clone().add(0, 0.5, 0), 2, 0.6, 0.2, 0.6, 0);
                         spot.getWorld().spawnParticle(Particle.FLAME, spot.clone().add(0, 0.3, 0), 30, RADIUS / 2, 0.2, RADIUS / 2, 0.05);

@@ -172,6 +172,10 @@ final class GrumpySignature extends Signature {
                 intruder = player;
             }
         }
+        if (kit.holding()) {
+            kit.stayHeld();   // the whack winds up where it warned
+            return;
+        }
         // hobble to the nearest trespasser, or back to the middle of the lawn
         double speed = 0.2 / pace();
         Abyss.walk(kit.body, intruder != null ? intruder.getLocation() : lawn, speed, intruder != null ? 2 : 0.5);

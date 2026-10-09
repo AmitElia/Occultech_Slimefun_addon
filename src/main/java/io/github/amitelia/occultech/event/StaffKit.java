@@ -40,6 +40,9 @@ abstract class StaffKit {
     protected int nextSpecial;
     /** Until this fight tick the body is busy with a warned move: nothing else starts (so moves take turns). */
     protected int busyUntil;
+    /** A warned attack winding up: until then the body stands still, facing {@link #holdYaw} (Minecraft degrees). */
+    private int holdUntil = -1;
+    private float holdYaw;
     /** The other body of a pair (Earl + Sam), or null. */
     @Nullable StaffKit partner;
     private final List<Pending> pending = new ArrayList<>();
@@ -120,6 +123,36 @@ abstract class StaffKit {
     /** Marks the body busy for {@code ticks} (a warned move is under way). */
     void claim(int ticks) {
         busyUntil = Math.max(busyUntil, fight.elapsed() + ticks);
+    }
+
+    /**
+     * Plants the body for {@code ticks}, facing {@code aim} (radians, atan2 of z and x): a warned attack's wind-up. The
+     * warning stays where it was cast, so a body that kept walking and turning ended up with it behind it.
+     */
+    void hold(int ticks, double aim) {
+        holdUntil = Math.max(holdUntil, fight.elapsed() + ticks);
+        face(aim);
+    }
+
+    /** Turns a held body to {@code aim} (a sweep turning with its beam). */
+    void face(double aim) {
+        holdYaw = (float) Math.toDegrees(Math.atan2(-Math.cos(aim), Math.sin(aim)));
+        if (alive()) {
+            body.setRotation(holdYaw, 0F);
+            body.setBodyYaw(holdYaw);
+        }
+    }
+
+    /** Whether a wind-up holds the body still. */
+    boolean holding() {
+        return fight.elapsed() < holdUntil;
+    }
+
+    /** Keeps a held body planted and facing its attack (every tick, for signatures that steer the body themselves). */
+    void stayHeld() {
+        body.setVelocity(new Vector(0, Math.min(0, body.getVelocity().getY()), 0));
+        body.setRotation(holdYaw, 0F);
+        body.setBodyYaw(holdYaw);
     }
 
     /** Whether a signature is steering the body now (a vanish, a rescue dash): the kit doesn't walk or swing. */
@@ -211,7 +244,7 @@ abstract class StaffKit {
         }
 
         target = chooseTarget();
-        if (!steered() && range() == 0 && target != null && now >= nextMelee && within(target, 3)) {
+        if (!steered() && !holding() && range() == 0 && target != null && now >= nextMelee && within(target, 3)) {
             nextMelee = now + (int) Math.round(meleeCooldown() * paceFactor());
             body.swingMainHand();
             fight.hit(target, melee(), body);
@@ -240,6 +273,10 @@ abstract class StaffKit {
 
     void move() {
         if (!alive() || steered() || body.isInsideVehicle()) {   // a rider goes where the mount takes them
+            return;
+        }
+        if (holding()) {
+            stayHeld();
             return;
         }
         if (fighting(target)) {
@@ -311,6 +348,11 @@ abstract class StaffKit {
      * marking (its fill reaches the end as the hit lands), or, without the pack, a dotted line redrawn meanwhile.
      */
     protected void warnLane(Location from, Location to, double width, int ticks, Color color) {
+        Location me = body.getLocation();
+        if (from.getWorld() == me.getWorld() && Math.hypot(from.getX() - me.getX(), from.getZ() - me.getZ()) < 1.5
+            && Math.hypot(to.getX() - from.getX(), to.getZ() - from.getZ()) > 0.1) {
+            hold(ticks, Math.atan2(to.getZ() - from.getZ(), to.getX() - from.getX()));   // a lane from the body: it aims down it
+        }
         if (io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
             org.bukkit.util.Vector dir = to.toVector().subtract(from.toVector()).setY(0);
             if (dir.lengthSquared() > 0.01) {
@@ -329,6 +371,7 @@ abstract class StaffKit {
      * the pack (the caller draws its particles).
      */
     protected boolean warnFan(Location origin, double aim, double arc, double range, int ticks, Color color) {
+        hold(ticks, aim);
         if (!io.github.amitelia.occultech.boss.FloorDecals.enabled()) {
             return false;
         }

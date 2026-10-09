@@ -140,6 +140,7 @@ final class DevSignatures {
             double aim = Math.atan2(toTarget.getZ(), toTarget.getX());
             sweepFrom = aim - SWEEP_ARC / 2;
             kit.claim(WARNING + SWEEP_TICKS);
+            kit.hold(WARNING + SWEEP_TICKS + 2, sweepFrom);   // faces where the swing starts, then turns with it
             kit.body.getWorld().playSound(center, Sound.BLOCK_NOTE_BLOCK_BIT, 1.5F, 0.9F);
             // the fan it will swing through: its two edges and its rim
             boolean decal = kit.warnFan(center, sweepFrom + SWEEP_ARC / 2, SWEEP_ARC, SWEEP_LENGTH, WARNING, HOTFIX);
@@ -182,6 +183,7 @@ final class DevSignatures {
                 return;
             }
             double angle = sweepFrom + SWEEP_ARC * sweepTick / SWEEP_TICKS;
+            kit.face(angle);
             Location base = kit.body.getLocation().add(0, 1.1, 0);
             for (int i = 0; i < sweep.size(); i++) {
                 sweep.get(i).teleport(point(base, angle, 1.8 * (i + 1)));
