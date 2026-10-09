@@ -68,7 +68,15 @@ public final class BossFight {
     private static final double AWAY_REGEN_PER_SECOND = 0.02;
     private static final int PILLAR_TICKS = 10 * 20;
     private static final int MAX_ADDS = 10;
+    /**
+     * A fighter earns a share with at least this much of the fight's contribution - or, in a bigger group, a fifth of
+     * an even split ({@link #FAIR_SHARE_PART}), whichever is less: 5% for up to 4 fighters, 1% with 20. A fixed 5% cut
+     * most of a large group out (25 players average 4% each).
+     */
     private static final double MIN_DAMAGE_SHARE = 0.05;
+    private static final double FAIR_SHARE_PART = 0.2;
+    /** Each hit on a breakable fight object counts as this much of the boss's maximum health. */
+    private static final double OBJECT_HIT_CREDIT = 0.02;
     private static final double MIN_PRESENCE_SHARE = 0.25;
     private static final double BONUS_DROP_CHANCE = 0.25;
 
@@ -250,6 +258,11 @@ public final class BossFight {
     private final Map<UUID, FightObject> objects = new HashMap<>();
     private final Map<UUID, Double> damage = new HashMap<>();
     private final Map<UUID, Integer> presence = new HashMap<>();
+    /**
+     * What players did to the fight's other creatures and objects (adds, mounts, breakable objects): it earns a share
+     * like damage to the boss, but doesn't steer the boss (topDamager) and isn't saved with the fight.
+     */
+    private final Map<UUID, Double> support = new HashMap<>();
     private final Set<UUID> tainted = new HashSet<>();
 
     private int elapsed;
@@ -744,6 +757,31 @@ public final class BossFight {
             ? org.bukkit.ChatColor.stripColor(item.getItemMeta().getDisplayName()) : item.getType().name().toLowerCase();
     }
 
+    /** A player hurt one of the fight's other creatures (an add, a mount): it counts towards their share. */
+    void onAddDamagedByPlayer(LivingEntity add, Player player, double amount) {
+        support.merge(player.getUniqueId(), Math.max(0, Math.min(amount, add.getHealth())), Double::sum);
+    }
+
+    /** A player struck a breakable fight object: it counts towards their share. */
+    void onObjectHitByPlayer(Player player) {
+        LivingEntity boss = bosses.isEmpty() ? null : bosses.get(0);
+        AttributeInstance max = boss == null ? null : boss.getAttribute(Attribute.MAX_HEALTH);
+        if (max != null) {
+            support.merge(player.getUniqueId(), max.getValue() * OBJECT_HIT_CREDIT, Double::sum);
+        }
+    }
+
+    /** Self-test: a fighter (need not be online) who did this much to the boss and to the rest of the fight, present throughout. */
+    public void creditForTest(UUID player, double bossDamage, double otherDamage) {
+        if (bossDamage > 0) {
+            damage.merge(player, bossDamage, Double::sum);
+        }
+        if (otherDamage > 0) {
+            support.merge(player, otherDamage, Double::sum);
+        }
+        presence.put(player, Math.max(1, elapsed) * 100);
+    }
+
     void onPlayerHitByFight() {
         lastBossHit = elapsed;
     }
@@ -1134,20 +1172,28 @@ public final class BossFight {
      * gets theirs when they next join (Session P4).
      */
     private void distributeLoot() {
-        double total = damage.values().stream().mapToDouble(Double::doubleValue).sum();
-        for (Map.Entry<UUID, Double> entry : damage.entrySet()) {
+        Map<UUID, Double> contribution = new HashMap<>(damage);
+        support.forEach((player, amount) -> contribution.merge(player, amount, Double::sum));
+        double total = contribution.values().stream().mapToDouble(Double::doubleValue).sum();
+        long fighters = contribution.entrySet().stream()
+            .filter(e -> e.getValue() > 0 && !tainted.contains(e.getKey()) && presentShare(e.getKey()) >= MIN_PRESENCE_SHARE).count();
+        double needed = Math.min(MIN_DAMAGE_SHARE, FAIR_SHARE_PART / Math.max(1, fighters));
+        for (Map.Entry<UUID, Double> entry : contribution.entrySet()) {
             Player player = Bukkit.getPlayer(entry.getKey());
             if (tainted.contains(entry.getKey())) {
                 continue;
             }
             double share = total <= 0 ? 0 : entry.getValue() / total;
-            double present = elapsed <= 0 ? 0 : presence.getOrDefault(entry.getKey(), 0) / (double) elapsed;
-            if (share >= MIN_DAMAGE_SHARE && present >= MIN_PRESENCE_SHARE) {
+            if (share > 0 && share >= needed && presentShare(entry.getKey()) >= MIN_PRESENCE_SHARE) {
                 service.reward(entry.getKey(), spec.name(), rewards());
             } else if (player != null) {
                 player.sendMessage(ChatColor.GRAY + "You didn't contribute enough to " + spec.name() + " to earn a reward.");
             }
         }
+    }
+
+    private double presentShare(UUID player) {
+        return elapsed <= 0 ? 0 : presence.getOrDefault(player, 0) / (double) elapsed;
     }
 
     /** One share, rolled now: "sf:ID:n", "mc:MATERIAL:n", "xp:n", "win:BOSS" (see {@link BossService#reward}). */

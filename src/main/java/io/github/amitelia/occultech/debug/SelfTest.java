@@ -694,9 +694,29 @@ final class SelfTest {
     private void lootTables() {
         BossSpec brood = rituals.spec("BROOD_MOTHER").orElseThrow();
         check("Brood Mother can drop a Brood Egg", brood.bonusDrops().containsKey(ItemKeys.slimefunId("BROOD_EGG")), brood.bonusDrops().toString());
-        for (String bossId : BOSSES) {
-            BossSpec spec = rituals.spec(bossId).orElseThrow();
+        List<String> all = new java.util.ArrayList<>(BOSSES);
+        all.addAll(TIER1_BOSSES);
+        all.addAll(TIER2_BOSSES);
+        all.addAll(TIER3_BOSSES);
+        all.add("GALLUS");
+        for (String bossId : all) {
+            BossSpec spec = rituals.spec(bossId).orElse(null);
+            if (spec == null) {
+                check(ContentRegistrar.title(bossId) + " is registered", false, "no spec");
+                continue;
+            }
             check(ContentRegistrar.title(bossId) + " has mob drops and XP", !spec.mobDrops().isEmpty() && spec.xp() > 0, "none");
+            check(ContentRegistrar.title(bossId) + " drops a registered item", SlimefunItem.getById(spec.dropId()) != null && spec.drops() > 0,
+                spec.dropId() + " x" + spec.drops());
+        }
+        // every chance drop in recipes.yml is wired to its boss
+        for (var def : plugin.catalog().items()) {
+            boolean mainDrop = def.isBossDrop()
+                && ItemKeys.slimefunId(def.id()).equals(rituals.spec(def.recipe().boss()).map(BossSpec::dropId).orElse(""));
+            if (def.isBossDrop() && !mainDrop) {
+                boolean wired = rituals.spec(def.recipe().boss()).map(b -> b.bonusDrops().containsKey(ItemKeys.slimefunId(def.id()))).orElse(false);
+                check(def.name() + " can drop from " + ContentRegistrar.title(def.recipe().boss()), wired, "not in its boss's drops");
+            }
         }
     }
 
@@ -862,7 +882,22 @@ final class SelfTest {
             last == null ? "no singer" : currentFight.bosses().size() + " singers, glowing " + last.isGlowing());
     }
 
+    /**
+     * Test fighters (never online, so their shares are kept on disk): one hitting the boss, one only fighting the adds,
+     * one who barely scratched it (under 5% of 3 fighters' total: no share), one who only stood there (no share).
+     */
+    private final java.util.UUID bossFighter = java.util.UUID.randomUUID();
+    private final java.util.UUID addFighter = java.util.UUID.randomUUID();
+    private final java.util.UUID scratcher = java.util.UUID.randomUUID();
+    private final java.util.UUID idler = java.util.UUID.randomUUID();
+
     private void killCurrentFight() {
+        if (currentFight != null && !currentFight.isOver()) {
+            currentFight.creditForTest(bossFighter, 1000, 0);
+            currentFight.creditForTest(addFighter, 0, 150);
+            currentFight.creditForTest(scratcher, 20, 0);
+            currentFight.creditForTest(idler, 0, 0);
+        }
         if (currentFight != null) {
             // copy: each death removes the boss from the fight's live list
             for (LivingEntity boss : List.copyOf(currentFight.bosses())) {
@@ -878,6 +913,7 @@ final class SelfTest {
         }
         check(name + " ends in victory", currentFight.isOver() && currentFight.result() == BossFight.Result.VICTORY,
             String.valueOf(currentFight.result()));
+        checkShares(name, currentFight.spec());
         List<Entity> left = nearby().stream().filter(Keys::isSummoned).toList();
         check(name + " leaves no summoned entities", left.isEmpty(),
             left.size() + " left: " + left.stream().map(e -> e.getType() + (e.isDead() ? " (dead)" : "")).toList());
@@ -889,6 +925,43 @@ final class SelfTest {
         check(name + " leaves no split slimes", slimes == 0, slimes + " new slimes");
         nearby().stream().filter(e -> e instanceof Item).forEach(Entity::remove);
         currentFight = null;
+    }
+
+    /** Both real contributors hold the boss's full reward; the scratcher and the idler hold nothing. */
+    private void checkShares(String name, BossSpec spec) {
+        for (java.util.UUID fighter : List.of(bossFighter, addFighter)) {
+            List<String> share = bosses.pendingFor(fighter);
+            List<String> missing = new java.util.ArrayList<>();
+            boolean drop = share.stream().anyMatch(r -> r.startsWith("sf:" + spec.dropId() + ":")
+                && Integer.parseInt(r.substring(r.lastIndexOf(':') + 1)) >= spec.drops());
+            if (!drop) {
+                missing.add(spec.dropId() + " x" + spec.drops());
+            }
+            spec.bonusDrops().forEach((id, chance) -> {
+                if (chance >= 1 && !share.contains("sf:" + id + ":1")) {
+                    missing.add(id);
+                }
+            });
+            spec.mobDrops().forEach((material, range) -> {
+                if (range[0] > 0 && share.stream().noneMatch(r -> r.startsWith("mc:" + material + ":"))) {
+                    missing.add(material);
+                }
+            });
+            if (spec.xp() > 0 && !share.contains("xp:" + spec.xp())) {
+                missing.add("xp " + spec.xp());
+            }
+            if (!share.contains("win:" + spec.id())) {
+                missing.add("the win");
+            }
+            check(name + ": the " + (fighter == bossFighter ? "boss fighter" : "add fighter") + " gets the full reward", missing.isEmpty(),
+                "missing " + missing + " in " + share);
+        }
+        check(name + ": no share without a real contribution (a scratch, or only standing there)",
+            bosses.pendingFor(scratcher).isEmpty() && bosses.pendingFor(idler).isEmpty(),
+            bosses.pendingFor(scratcher) + " / " + bosses.pendingFor(idler));
+        for (java.util.UUID fighter : List.of(bossFighter, addFighter, scratcher, idler)) {
+            bosses.discardPending(fighter);
+        }
     }
 
     private void lootKeptForAbsent() {

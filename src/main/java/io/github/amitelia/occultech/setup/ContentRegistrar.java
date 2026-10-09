@@ -159,11 +159,12 @@ public final class ContentRegistrar {
             }
             boolean major = "major".equals(boss.kind());
 
-            // bonus drops: other items whose recipe is a chance-based drop from this boss (e.g. the Brood Egg)
+            // bonus drops: every other item this boss drops, at its chance (the Brood Egg's 15%, the Gallus Wishbone's 100% -
+            // a guaranteed extra used to be left out here, so nobody ever got one)
             Map<String, Double> bonus = new LinkedHashMap<>();
             for (ItemDef def : catalog.items()) {
                 if (def.tier() <= IMPLEMENTED_TIER && def.isBossDrop() && boss.id().equals(def.recipe().boss())
-                    && !def.id().equals(boss.drop()) && def.recipe().chance() < 1) {
+                    && !def.id().equals(boss.drop())) {
                     bonus.put(ItemKeys.slimefunId(def.id()), def.recipe().chance());
                 }
             }
