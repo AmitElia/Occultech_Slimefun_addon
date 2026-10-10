@@ -1,0 +1,27 @@
+# Volley's body. Occultech still decides every attack, deals all damage (Volley.java) and hands out loot.
+# Health is the solo value; Occultech multiplies it for the group after the spawn.
+OCCULTECH_VOLLEY:
+  Type: SKELETON
+  Display: '&6Volley'
+  Health: 160
+  Damage: 3
+  Armor: 0
+  Equipment:
+  - BOW HAND
+  - CHAINMAIL_HELMET HEAD
+  Options:
+    # Occultech rebuilds the body from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    PreventRandomEquipment: true
+    MovementSpeed: 0.27
+    KnockbackResistance: 0.5
+    FollowRange: 32
+    AlwaysShowName: true
+    # a 4-block hitbox for the 4.3-block model; the model is drawn at half the carrier's scale, so at its own size
+    Scale: 2.0
+  Drops: []
+  Skills:
+  - model{m=occultech_volley;s=0.5} @self ~onSpawn

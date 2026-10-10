@@ -309,7 +309,7 @@ public final class BossFight {
     /** Spawns a main boss entity (the fight is won when all of them are dead), scaled for the group size. */
     @Nonnull
     public <T extends LivingEntity> T spawnBoss(Class<T> type, Location at, Consumer<T> setup) {
-        T entity = at.getWorld().spawn(at, type, e -> {
+        T entity = service.body().spawn(spec.id(), type, at, e -> {
             prepare(e);
             setup.accept(e);
             scaleHealth(e);
@@ -325,12 +325,26 @@ public final class BossFight {
         if (liveAdds() >= MAX_ADDS) {
             return null;
         }
-        T entity = at.getWorld().spawn(at, type, e -> {
+        T entity = service.body().spawn("", type, at, e -> {
             prepare(e);
             setup.accept(e);
         });
         extras.add(entity);
         return entity;
+    }
+
+    /** Whether this boss currently uses a Mythic carrier; behaviors use this to avoid overriding its YAML stats. */
+    public boolean usesMythicBody() {
+        return service.body().isMythic(spec.id());
+    }
+
+    public boolean carrierMatchesMode() {
+        return bosses.stream().allMatch(service.body()::isCarrier);
+    }
+
+    /** Cosmetic action hook. Geometry, targeting and damage remain owned by the behavior. */
+    public void playAction(LivingEntity entity, String action) {
+        service.body().playAction(entity, spec.id(), action);
     }
 
     /** Spawns a non-living fight entity (display, cloud, projectile) that is removed when the fight ends. */
@@ -985,6 +999,7 @@ public final class BossFight {
         }
 
         for (LivingEntity boss : bosses) {
+            service.body().stop(boss);
             boss.remove();
         }
         for (Entity extra : extras) {
@@ -1216,6 +1231,7 @@ public final class BossFight {
         if (spec.xp() > 0) {
             out.add("xp:" + spec.xp());
         }
+        out.addAll(service.body().extraRewards(spec.id()));
         out.add("win:" + spec.id());
         return out;
     }

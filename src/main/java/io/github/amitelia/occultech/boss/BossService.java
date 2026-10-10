@@ -71,6 +71,7 @@ public final class BossService implements Listener {
 
     private final Plugin plugin;
     private final FightHooks hooks;
+    private BossBody body = new VanillaBody();
     private final Map<String, BossBlueprint> blueprints = new HashMap<>();
     private final Map<UUID, BossFight> fights = new LinkedHashMap<>();
     private BukkitTask task;
@@ -81,6 +82,20 @@ public final class BossService implements Listener {
     public BossService(Plugin plugin, FightHooks hooks) {
         this.plugin = plugin;
         this.hooks = hooks;
+    }
+
+    public void setBody(BossBody body) {
+        this.body = java.util.Objects.requireNonNull(body);
+    }
+
+    BossBody body() {
+        return body;
+    }
+
+    /** Resolve a tagged carrier only; proximity must never grant a Mythic skill access to another fight. */
+    @Nullable
+    public BossFight fightFor(Entity entity) {
+        return fightOf(entity);
     }
 
     public void start() {
@@ -719,6 +734,12 @@ public final class BossService implements Listener {
                         for (ItemStack rest : player.getInventory().addItem(new ItemStack(material, Integer.parseInt(f[2]))).values()) {
                             player.getWorld().dropItem(player.getLocation(), rest).setOwner(player.getUniqueId());
                         }
+                    }
+                }
+                case "item" -> {
+                    ItemStack item = ItemStack.deserializeBytes(java.util.Base64.getDecoder().decode(f[1]));
+                    for (ItemStack rest : player.getInventory().addItem(item).values()) {
+                        player.getWorld().dropItem(player.getLocation(), rest).setOwner(player.getUniqueId());
                     }
                 }
                 case "xp" -> player.giveExp(Integer.parseInt(f[1]));

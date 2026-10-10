@@ -13,6 +13,7 @@ occultech-pack-items.txt, the item ids that have a model - the plugin only sets 
 Run: python tools/art/build_pack.py
 """
 import io
+import argparse
 import json
 import os
 import sys
@@ -31,6 +32,36 @@ NS = "occultech"
 HANDHELD = {"weapon"}     # held like a tool in third person
 BOW_STATES = ["standby", "pulling_0", "pulling_1", "pulling_2"]
 FIXED_DATE = (2026, 1, 1, 0, 0, 0)   # deterministic zip: same art, same bytes, same hash
+
+
+def merge_bettermodel(files, zip_path):
+    """Merge BetterModel's generated assets, with Occultech retaining pack metadata and icon.
+
+    BetterModel 3.5.0 emits its own pack.mcmeta and pack.png. Every other path must be
+    unique so a future BetterModel update cannot silently replace Occultech blockstates.
+    """
+    with zipfile.ZipFile(zip_path) as source:
+        names = source.namelist()
+        if len(names) != len(set(names)):
+            raise SystemExit("BetterModel pack contains duplicate ZIP paths")
+        metadata = json.loads(source.read("pack.mcmeta"))["pack"]
+        low = metadata.get("min_format", metadata.get("pack_format"))
+        high = metadata.get("max_format", metadata.get("pack_format"))
+        if not low <= PACK_FORMAT <= high:
+            raise SystemExit(f"BetterModel pack does not support format {PACK_FORMAT}: {low}-{high}")
+        existing = {name.casefold() for name in files}
+        count = 0
+        for name in names:
+            if name in ("pack.mcmeta", "pack.png") or name.endswith("/"):
+                continue
+            if name.startswith("/") or "\\" in name or ".." in name.split("/"):
+                raise SystemExit(f"Unsafe BetterModel ZIP path: {name}")
+            if name.casefold() in existing:
+                raise SystemExit(f"BetterModel asset collision: {name}")
+            files[name] = source.read(name)
+            existing.add(name.casefold())
+            count += 1
+    print(f"Merged {count} BetterModel assets from {zip_path}")
 
 # ---- custom blocks (Session N): Occultech's blocks as real block states, the way Nexo does it ----
 # Each block look gets a vanilla block state of its own, set aside for it, and the pack's blockstate files show the
@@ -278,6 +309,10 @@ def bow_definition(key):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Build the Occultech resource pack")
+    parser.add_argument("--bettermodel-zip", default=None,
+                        help="BetterModel build.zip to merge; omitted means use run/plugins/BetterModel/build.zip when present")
+    args = parser.parse_args()
     with open(os.path.join(ROOT, "docs", "recipes.yml"), encoding="utf-8") as f:
         items = yaml.safe_load(f)["items"]
     files = {}
@@ -479,6 +514,17 @@ def main():
         "min_format": PACK_FORMAT, "max_format": PACK_FORMAT, "pack_format": PACK_FORMAT}}
     icon = Image.open(os.path.join(ART, "session-a", "hollow_sigil.png")).convert("RGBA").resize((64, 64), Image.NEAREST)
     files["pack.png"] = png_bytes(icon)
+
+    bettermodel_zip = args.bettermodel_zip or os.path.join(ROOT, "run", "plugins", "BetterModel", "build.zip")
+    if os.path.isfile(bettermodel_zip):
+        with zipfile.ZipFile(bettermodel_zip) as candidate:
+            has_occultech_model = any("occultech_" in name for name in candidate.namelist())
+        if args.bettermodel_zip or has_occultech_model:
+            merge_bettermodel(files, bettermodel_zip)
+        else:
+            print("BetterModel build.zip has no Occultech model; leaving sample assets out of the pack")
+    elif args.bettermodel_zip:
+        raise SystemExit(f"BetterModel pack not found: {bettermodel_zip}")
 
     os.makedirs(OUT, exist_ok=True)
     zip_path = os.path.join(OUT, "occultech-pack.zip")

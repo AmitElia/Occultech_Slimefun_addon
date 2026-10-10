@@ -5,6 +5,8 @@ designs, never copied art.
 
 **Read [REFERENCES.md](REFERENCES.md) first** - the arcane mods we learn from and *the Occultech look* (dark vessel,
 living light; chromatic ramps; glowing inlay; the twinkle; hard facets; everything magical moves).
+For boss models, also read [BOSS_STYLE.md](BOSS_STYLE.md), which records the Volley design feedback and the boss-specific
+review workflow.
 
 ## Rules
 0. **Bold beats literal.** A striking, simple shape wins over an accurate symbol (the Hollow Sigil's bold star was

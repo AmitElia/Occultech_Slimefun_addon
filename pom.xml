@@ -34,6 +34,10 @@
             <id>project-libs</id>
             <url>${project.baseUri}libs</url>
         </repository>
+        <repository>
+            <id>lumine</id>
+            <url>https://mvn.lumine.io/repository/maven-public/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -55,6 +59,18 @@
             <version>3.0.2</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>io.lumine</groupId>
+            <artifactId>Mythic-Dist</artifactId>
+            <version>5.13.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.toxicity188</groupId>
+            <artifactId>bettermodel-bukkit-api</artifactId>
+            <version>3.5.0</version>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -74,6 +90,16 @@
             <!-- The resource pack, built from the art by tools/art/build_pack.py (binary: never filtered) -->
             <resource>
                 <directory>src/main/pack</directory>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/mythic</directory>
+                <targetPath>mythic</targetPath>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/models</directory>
+                <targetPath>models</targetPath>
                 <filtering>false</filtering>
             </resource>
             <!-- The design data is the runtime data: items, recipes and researches are loaded from it -->

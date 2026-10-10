@@ -58,15 +58,17 @@ public final class Volley extends BossBehavior {
     @Override
     public void spawn(Location at) {
         archer = fight.spawnBoss(Skeleton.class, at, s -> {
-            s.setCustomName(ChatColor.GOLD + "Volley");
-            s.setCustomNameVisible(true);
-            s.getEquipment().setItemInMainHand(new ItemStack(Material.BOW));
-            s.getEquipment().setHelmet(new ItemStack(Material.CHAINMAIL_HELMET));
-            BossFight.setAttribute(s, Attribute.MAX_HEALTH, 160);
-            BossFight.setAttribute(s, Attribute.SCALE, 1.4);
-            BossFight.setAttribute(s, Attribute.MOVEMENT_SPEED, 0.27);
-            BossFight.setAttribute(s, Attribute.KNOCKBACK_RESISTANCE, 0.5);
-            BossFight.setAttribute(s, Attribute.FOLLOW_RANGE, 32);
+            if (!fight.usesMythicBody()) {
+                s.setCustomName(ChatColor.GOLD + "Volley");
+                s.setCustomNameVisible(true);
+                s.getEquipment().setItemInMainHand(new ItemStack(Material.BOW));
+                s.getEquipment().setHelmet(new ItemStack(Material.CHAINMAIL_HELMET));
+                BossFight.setAttribute(s, Attribute.MAX_HEALTH, 160);
+                BossFight.setAttribute(s, Attribute.MOVEMENT_SPEED, 0.27);
+                BossFight.setAttribute(s, Attribute.KNOCKBACK_RESISTANCE, 0.5);
+                BossFight.setAttribute(s, Attribute.FOLLOW_RANGE, 32);
+                BossFight.setAttribute(s, Attribute.SCALE, 1.4);
+            }
         });
     }
 
@@ -111,6 +113,7 @@ public final class Volley extends BossBehavior {
         }
 
         if (every(WARD_INTERVAL) && wards.isEmpty()) {
+            fight.playAction(archer, "WARDS_PREPARE");
             for (int i = 0; i < 2; i++) {
                 wards.add(fight.spawnObject(fight.randomPoint(4, Math.min(9, fight.radius() - 2)), Material.AMETHYST_CLUSTER, 1.4F, 4, () -> {
                     if (!hasWards()) {
@@ -129,11 +132,15 @@ public final class Volley extends BossBehavior {
         if (every(VOLLEY_INTERVAL) && archer.isValid()) {
             volleyAt = now + VOLLEY_WARNING;
             archer.setGlowing(true);
-            archer.getWorld().playSound(archer.getLocation(), Sound.ITEM_CROSSBOW_LOADING_MIDDLE, 1.5F, 0.8F);
+            fight.playAction(archer, "BURST_PREPARE");
+            if (!fight.usesMythicBody()) {
+                archer.getWorld().playSound(archer.getLocation(), Sound.ITEM_CROSSBOW_LOADING_MIDDLE, 1.5F, 0.8F);
+            }
         }
         if (now == volleyAt) {
             archer.setGlowing(false);
             arrowsLeft = 5;
+            fight.playAction(archer, "BURST_CONTACT");
         }
         if (arrowsLeft > 0 && archer.isValid()) {
             // STEP is 5 ticks; fire one arrow per step for a tight burst

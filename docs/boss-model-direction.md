@@ -1,0 +1,27 @@
+# Occultech: boss modeling references and revised direction
+
+**Current production:** Volley starts with the [eight-session boss-art plan](boss-art-sessions.md). Its [Session 1 review](art/bosses/volley/overhaul/s1_silhouettes/README.md) contains the editable humanoid revision and silhouette views.
+
+**Revised 2026-10-09.** The comprehensive implementation brief is [boss-rework-plan.md](boss-rework-plan.md). It covers all 19 bosses, retained mechanics, reusable code, required combat changes, animation timing, feasibility and acceptance tests. The original imaginative concepts are restored after the user rejected the overly conservative interpretation of vanilla-esque.
+
+Minecraft supplies the visual language: angular geometry, pixel texture discipline, readable materials and gameplay signals. Boss anatomy and silhouettes may diverge substantially from the vanilla carrier. The current concepts include bone-arbalest Volley, wax crones, royal throne jelly, escaped reliquary spirit, widow moth, mirror magician, rib-arch hierophant, bathysphere jailer, hollow monarch, orchard shrine and ritual-engine Colossus. Their per-boss implementation briefs are in [boss-rework-plan.md](boss-rework-plan.md).
+
+Retain the user's specific anchors: nautilus Tidebreaker, highly upgraded Blaze Choir, ambitious Breeze/Guardian interpretations for Tempest and Elder, convincing player-copy Doppelganger, rooster/chicken Gallus with hatching eggs, and existing tethers. Preserve held-item model geometry and armor sets. Original furnace, sail/pressure-vane, benthic-oracle and cathedral-rooster motifs enrich those anchors. Doppelganger's porcelain reveal is confined to a brief transition/defeat and must not compromise the disguise.
+
+Concept discussion and silhouette review precede a refined model. References inform original art, staging and asset production; technical workflow remains in [bettermodel.md](bettermodel.md).
+
+## Curated reference shelf
+
+These are my strongest candidates for specific study goals, not an objective ranking of every Minecraft artist. Evidence comes from official documentation, creator product descriptions, linked galleries and the installed BetterModel sample sources. Some embedded videos were inaccessible to the research tool; detailed motion judgments below are **study objectives**, not claims that every clip was watched. Third-party art remains reference material; no paid model was acquired or imported.
+
+| Reference and creator | Verified reason to include it | What to study or borrow as a principle | Occultech applications |
+|---|---|---|---|
+| [Tower Skeleton — LittleRoom](https://mcmodels.net/products/12451/littleroom-tower-skeleton-boss) · [creator-linked demo](https://www.youtube.com/watch?v=a7o-B5tVUew) | Creator lists three phases and 40 animations. Strong candidate for studying a complete performance rather than a single attack loop. | Distinct phase poses, entrances/exits and recovery transitions. Aim for consistent character acting across the full fight; animation count alone is not quality. | Hollow Warlord, Archevoker, Gallus. |
+| [Mowzie's Mobs — Bob Mowzie and collaborators](https://www.curseforge.com/minecraft/mc-mods/mowzies-mobs) | Ferrous Wroughtnaut, Frostmaw and Naga provide armored, massive organic and flying creature references on one creator page. | Wroughtnaut: mass and readable commitment. Frostmaw: bodily acting around a breath attack. Naga: preparation and exposure while airborne. These are animation study lenses. | Colossus/Warlord; Unbound/Sovereign; Matriarch/Tidebreaker. |
+| [Void Dragon — EliteCreatures](https://mcmodels.net/products/10049/void-dragon-boss-battle-mount) · [creator-linked demo](https://www.youtube.com/watch?v=Xfz1HYKb-nk) | Includes a boss, animated mount, separate skill models, emissive textures and sounds; the description explicitly distinguishes takeoff and landing. | Treat flight transitions, face/neck acting and effects as part of the creature's complete asset family. | Night Matriarch, Drowned Elder, Gallus Hollowing. |
+| [The Necromancer — SamusDev](https://samusdev.com/product/the-necromancer/) | Creator lists nine boss animations, two phases, separate flame/wheel/gravestone models, two minions and custom sounds. | Coordinate caster, summons, ground object and impact through a shared shape language. Budget effects as authored assets. | Archevoker, Blaze Choir, Witch Coven. |
+| [Herobrine Boss — LittleRoom](https://mcmodels.net/products/11130/herobrine-boss) | Creator describes multiple skins and a template that accepts Minecraft skins. | Keep identity readable during dramatic posing; separate skin mapping from the rig and silhouette. | Doppelganger's skin and equipment fidelity. |
+| BetterModel's installed `demon_knight.bbmodel` and `blue_wizard.bbmodel` | Locally inspected source projects have ten and three animation clips respectively, and both load on this exact server. | Practical ground truth for outliner hierarchy, supported channels, texture embedding and exported attack names. | First engineering prototype; inspection exercises before authoring a boss. |
+
+The commercial server packs above generally name ModelEngine/MythicMobs dependencies; their gameplay configurations are not automatically portable to BetterModel. Mowzie's Mobs is a client/server mod and is a visual reference, not an install candidate for this Paper server. Our goal is original designs informed by staging, timing and production completeness.
+

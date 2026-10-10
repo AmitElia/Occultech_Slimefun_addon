@@ -73,4 +73,5 @@ Special mechanics (servitor labor, necromancy, held-use weapons): [mechanics.md]
 - Bosses beyond the pools above, or boss variants and hard modes
 - Integrations with other addons (Networks storage, Infinity inputs)
 - Dimensions, custom structures, or natural world spawns of bosses
-- A *required* resource pack. v1.0 must look complete with heads, display entities and vanilla models; an optional pack is still undecided
+- ~~A *required* resource pack~~ - **changed 2026-10-10:** the Occultech pack is required (boss models need it). BetterModel's
+  boss models are merged into it ([boss-art-sessions.md](boss-art-sessions.md))

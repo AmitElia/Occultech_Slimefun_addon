@@ -3,6 +3,8 @@
 Each session finishes completely (assets + review sheet + self-critique + fixes) before the next starts.
 Style rules and the checklist: [STYLE.md](STYLE.md). Plan: [../visual-overhaul.md](../visual-overhaul.md).
 
+Boss models (BetterModel) have their own eight-session plan: [../boss-art-sessions.md](../boss-art-sessions.md).
+
 | Session | Content | Status |
 |---|---|---|
 | **A** | Style guide, toolkit, 3 test icons (Ritual Chalk, Spirit Essence, Hollow Sigil) | **Done** - reviewed |

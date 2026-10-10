@@ -4,6 +4,9 @@ options:
   debug: false
 
 bosses:
+  # auto uses installed Mythic mob definitions; vanilla preserves the original Bukkit carriers.
+  # mythic requires MythicMobs and falls back with a warning if a definition is unavailable.
+  bodies: auto
   # Multiplies every boss's health (1.0 = as designed, 0.8 = 20% less)
   health-multiplier: 1.0
   # Boss health for a group in the arena at the summon: x(1 + group-scaling * (players - 1)^group-exponent), counting at

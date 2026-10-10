@@ -68,6 +68,43 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
             getConfig().getInt("bosses.group-cap", 5)));
         bosses.setMinFightDistance(getConfig().getDouble("bosses.min-fight-distance", 96));
         bosses.setAwaySeconds(getConfig().getInt("bosses.away-seconds", 180));
+        String bodyMode = getConfig().getString("bosses.bodies", "auto");
+        if (!java.util.Set.of("auto", "vanilla", "mythic").contains(bodyMode.toLowerCase(java.util.Locale.ROOT))) {
+            getLogger().warning("Unknown bosses.bodies mode " + bodyMode + "; using vanilla");
+            bodyMode = "vanilla";
+        }
+        if (getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
+            try {
+                boolean packChanged = io.github.amitelia.occultech.integration.mythic.MythicPackInstaller.install(this);
+                new io.lumine.mythic.core.skills.CustomComponentRegistry(this,
+                    "io.github.amitelia.occultech.integration.mythic");
+                if (!"vanilla".equalsIgnoreCase(bodyMode)) {
+                    bosses.setBody(new io.github.amitelia.occultech.integration.mythic.MythicBody(this, bodyMode));
+                }
+                if (packChanged) {
+                    getServer().getScheduler().runTask(this, () ->
+                        getServer().dispatchCommand(getServer().getConsoleSender(), "mythicmobs reload"));
+                }
+            } catch (IOException | LinkageError e) {
+                getLogger().warning("Mythic integration unavailable; using vanilla bodies: " + e);
+            }
+        } else if ("mythic".equalsIgnoreCase(bodyMode)) {
+            getLogger().warning("bosses.bodies is mythic, but MythicMobs is absent; using vanilla bodies");
+        }
+        if (getServer().getPluginManager().isPluginEnabled("BetterModel")) {
+            try {
+                if (io.github.amitelia.occultech.integration.mythic.MythicPackInstaller.installModels(this)) {
+                    // BetterModel normally loads its models after every plugin is enabled; reload only if it already had
+                    getServer().getScheduler().runTask(this, () -> {
+                        if (!io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_volley")) {
+                            getServer().dispatchCommand(getServer().getConsoleSender(), "bettermodel reload");
+                        }
+                    });
+                }
+            } catch (IOException | LinkageError e) {
+                getLogger().warning("Could not install the boss models into BetterModel: " + e);
+            }
+        }
         Tier0Bosses.all().forEach(bosses::register);
         Tier1Bosses.all().forEach(bosses::register);
         Tier2Bosses.all().forEach(bosses::register);
@@ -192,6 +229,10 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
 
     public io.github.amitelia.occultech.pack.ResourcePackService resourcePack() {
         return resourcePack;
+    }
+
+    public BossService bosses() {
+        return bosses;
     }
 
     public ContentRegistrar registrar() {

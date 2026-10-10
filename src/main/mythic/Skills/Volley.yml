@@ -1,0 +1,11 @@
+# Look and sound only. Volley.java locks the target, launches and labels every damaging arrow.
+VOLLEY_BURST_PREPARE:
+  Skills:
+  - sound{s=entity.crossbow.loading_middle;v=1.5;p=0.8} @self
+  - effect:particles{p=enchanted_hit;amount=20;hS=0.6;vS=1.2} @self
+VOLLEY_BURST_CONTACT:
+  Skills:
+  - sound{s=entity.skeleton.shoot;v=1;p=1.3} @self
+VOLLEY_WARDS_PREPARE:
+  Skills:
+  - sound{s=block.amethyst_block.chime;v=1;p=0.7} @self

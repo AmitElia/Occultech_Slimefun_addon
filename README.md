@@ -15,6 +15,9 @@ points elsewhere. Maven is not needed; `mvnw.cmd` downloads it.
 # -Addons also installs Supreme, InfinityExpansion2, Networks and FluffyMachines (the rest of the bundle goes to run/addons-disabled)
 ./scripts/setup-dev.ps1 -Addons
 
+# Optional animated boss-model engine for the test server (pinned, checksum verified).
+./scripts/setup-bettermodel.ps1
+
 # Accept the Minecraft EULA yourself in run/eula.txt, then:
 ./scripts/run-server.ps1     # build, copy into run/plugins, start (debug port 5005)
 
@@ -34,3 +37,8 @@ Then set `<slimefun.version>` (and `<paper.version>`) in `pom.xml` to match.
 
 ## Project layout
 See [docs/](docs/) for scope, bosses, recipes and mechanics.
+
+BetterModel installation and workflow: [docs/bettermodel.md](docs/bettermodel.md).
+Comprehensive rework plan for all 19 bosses: [docs/boss-rework-plan.md](docs/boss-rework-plan.md).
+Boss visual overhaul and Volley model review: [docs/boss-visual-overhaul.md](docs/boss-visual-overhaul.md), [docs/art/bosses/volley/overhaul/s1_silhouettes/README.md](docs/art/bosses/volley/overhaul/s1_silhouettes/README.md).
+Modeling and animation references: [docs/boss-model-direction.md](docs/boss-model-direction.md).

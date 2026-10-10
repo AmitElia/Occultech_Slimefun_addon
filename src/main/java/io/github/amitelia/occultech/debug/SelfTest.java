@@ -129,9 +129,15 @@ final class SelfTest {
         then(40, this::awayRecovering);
         then(100, this::awayEnded);
         then(5, this::banishEnds);
-        then(5, this::saveStart);
+        then(5, () -> saveStart("BROOD_MOTHER"));
         then(110, this::fightSaved);
         then(5, this::fightResumed);
+        if (plugin.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
+            // the Mythic body: the restart must bring back one carrier with one model, never Mythic's old one as well
+            then(5, () -> saveStart("VOLLEY"));
+            then(110, this::fightSaved);
+            then(5, this::fightResumed);
+        }
         then(5, this::ritualCrash);
 
         // ---- tier 1
@@ -709,6 +715,13 @@ final class SelfTest {
             check(ContentRegistrar.title(bossId) + " drops a registered item", SlimefunItem.getById(spec.dropId()) != null && spec.drops() > 0,
                 spec.dropId() + " x" + spec.drops());
         }
+        if (plugin.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
+            boolean extraRolled = false;
+            for (int i = 0; i < 100 && !extraRolled; i++) {
+                extraRolled = !io.github.amitelia.occultech.integration.mythic.MythicLoot.roll("VOLLEY", plugin.getLogger()).isEmpty();
+            }
+            check("Mythic Volley extras roll as serializable per-fighter rewards", extraRolled, "100 rolls gave no item");
+        }
         // every chance drop in recipes.yml is wired to its boss
         for (var def : plugin.catalog().items()) {
             boolean mainDrop = def.isBossDrop()
@@ -845,9 +858,24 @@ final class SelfTest {
         BossSpec spec = rituals.spec(bossId).orElseThrow();
         currentFight = bosses.summon(bossId, spec, altar, null);
         check(ContentRegistrar.title(bossId) + " spawns", !currentFight.bosses().isEmpty(), "no entities");
+        if (currentFight.usesMythicBody()) {
+            check(ContentRegistrar.title(bossId) + " has an active Mythic carrier", currentFight.carrierMatchesMode(),
+                "Mythic did not register the fight carrier");
+            // Mythic applies its mob file during the spawn; Occultech's setup must still win afterwards
+            check(ContentRegistrar.title(bossId) + " keeps Occultech's persistence over Mythic's despawn option",
+                currentFight.bosses().stream().noneMatch(LivingEntity::getRemoveWhenFarAway), "removed when far away");
+        }
     }
 
     private void checkFightRunning(String bossId) {
+        if ("VOLLEY".equals(bossId) && currentFight.usesMythicBody()
+            && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_volley")) {
+            LivingEntity carrier = currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+            check("Volley has one BetterModel tracker", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(carrier, "occultech_volley"),
+                carrier == null ? "no carrier" : io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier));
+        }
         check(ContentRegistrar.title(bossId) + " is not scaled up for a solo summon", Math.abs(currentFight.healthMultiplier() - 1.0) < 0.001,
             "multiplier " + currentFight.healthMultiplier());
         check(ContentRegistrar.title(bossId) + " runs 3s without errors", !currentFight.isOver(),
@@ -1046,16 +1074,21 @@ final class SelfTest {
     private BossFight savedFight;
     private int savedElapsed;
 
-    private void saveStart() {
+    private String savedBoss;
+    private List<java.util.UUID> savedCarriers = List.of();
+
+    private void saveStart(String bossId) {
         DebugWorld.setAltarCenter(altar, null);
-        savedFight = bosses.summon("BROOD_MOTHER", rituals.spec("BROOD_MOTHER").orElseThrow(), altar, DebugWorld.item(MARKER, 1));
+        savedBoss = bossId;
+        savedFight = bosses.summon(bossId, rituals.spec(bossId).orElseThrow(), altar, DebugWorld.item(MARKER, 1));
+        savedCarriers = savedFight.bosses().stream().map(Entity::getUniqueId).toList();
         LivingEntity boss = savedFight.bosses().get(0);
         boss.setHealth(boss.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue() * 0.4);
     }
 
     private void fightSaved() {
         String state = BlockStorage.getLocationInfo(altar.getLocation(), "occultech_fight_state");
-        check("a running fight saves itself every few seconds", state != null && state.contains("BROOD_MOTHER"), String.valueOf(state));
+        check("a running fight saves itself every few seconds", state != null && state.contains(savedBoss), String.valueOf(state));
         savedElapsed = savedFight.elapsed();
         bosses.abort(savedFight, BossFight.Result.SHUTDOWN);   // a server stop
         check("a server stop keeps the fight (no refund)", !refunded()
@@ -1069,6 +1102,19 @@ final class SelfTest {
         if (back != null) {
             check("the resumed boss keeps its health", Math.abs(back.healthFraction() - 0.4) < 0.05, String.valueOf(back.healthFraction()));
             check("the resumed fight keeps its clock", back.elapsed() >= savedElapsed, savedElapsed + " -> " + back.elapsed());
+            if (back.usesMythicBody()) {
+                String title = ContentRegistrar.title(savedBoss);
+                long bodies = nearby().stream().filter(e -> e instanceof LivingEntity && Keys.isSummoned(e)).count();
+                check(title + " resumes with one Mythic carrier", back.bosses().size() == 1 && bodies == 1 && back.carrierMatchesMode()
+                    && savedCarriers.stream().noneMatch(io.github.amitelia.occultech.integration.mythic.MythicBody::isActive),
+                    back.bosses().size() + " bosses, " + bodies + " summoned bodies near the altar");
+                if ("VOLLEY".equals(savedBoss) && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+                    && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_volley")) {
+                    check(title + " resumes with one model", back.bosses().stream().allMatch(e ->
+                        io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.count(e, "occultech_volley") == 1),
+                        back.bosses().stream().map(io.github.amitelia.occultech.integration.mythic.BetterModelVisuals::trackerNames).toList().toString());
+                }
+            }
             bosses.abort(back);
             check("a fight over for good clears its saved state",
                 BlockStorage.getLocationInfo(altar.getLocation(), "occultech_fight_state") == null, "state left");
