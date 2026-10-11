@@ -36,7 +36,7 @@ Slimefun resources -> occult materials -> ritual components -> circle glyph bloc
 | Brood Mother | giant Spider | 220 | Egg sacs hatch cave spiders unless smashed (3 hits); web zones slow; telegraphed pounce | Brood Silk; 15% Brood Egg |
 | Volley | Skeleton archer | 160 | Glowing 1s warning, then a 5-arrow volley (slowness/poison/spectral); ward crystals cut its damage taken by 70% until broken | Fletcher's Quill |
 | Witch Coven | 3 Witches | 3x80 | Roles rotate every 15s (healer green, curser purple, bomber red); kill the healer first | Coven Brew Base |
-| Mire Monarch (was the Gelatinous Sovereign; a giant toad once its model ships) | Slime (size 7) | 600 | Ringed leap-slam with a jumpable shockwave; at 66% three shards crawl to the altar and heal it 6% each; at 33% it shrinks, speeds up and leaves acid puddles | Sovereign Gel |
+| Mire Monarch (was the Gelatinous Sovereign; a giant toad once its model ships) | Slime (size 7) | 600 | Ringed leap-slam with a jumpable shockwave; a laned tongue lash that pulls the first player in it to its mouth (step aside); at 66% three shards crawl to the altar and heal it 6% each; at 33% it shrinks, speeds up and leaves acid puddles | Sovereign Gel |
 
 **Brood Egg** (15% per contributor per Brood Mother win): placed, it's a sniffer egg that never hatches and spins 1 String
 every 20s (config) into a 9-slot store while its chunk is loaded - no offline catch-up. Right-click to collect; Slimefun

@@ -4,6 +4,7 @@ import io.github.amitelia.occultech.boss.FloorDecals;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -26,6 +27,9 @@ import io.github.amitelia.occultech.boss.BossFight;
  * <ul>
  * <li>Phase 1: every 8s marks a player's spot with a lime ring (1.5s), leaps onto it and sends out a shockwave that
  * only hurts players standing on the ground - jump to dodge.</li>
+ * <li>Tongue (every 10s, 8s from 33%): picks a player 5-14 blocks away it can see, marks a lane towards them (1.25s,
+ * its direction locked), then lashes its tongue down it: the first player in the lane is hit and yanked to its mouth
+ * (a capped pull, never a teleport) - step out of the lane to dodge.</li>
  * <li>Phase 2 (66%): splits off 3 shards that crawl back to the altar; each one that arrives heals the Monarch by 6%.</li>
  * <li>Phase 3 (33%): shrinks and speeds up, leaving acid puddles that hurt anyone standing in them.</li>
  * </ul>
@@ -35,6 +39,7 @@ public final class MireMonarch extends BossBehavior {
     private static final io.github.amitelia.occultech.boss.Mechanic CRUSH = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Crush", 7, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic SHOCKWAVE = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Shockwave", 11, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final io.github.amitelia.occultech.boss.Mechanic ACID_BURN = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Acid", 2, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic TONGUE = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Tongue", 5, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, true);
     private static final io.github.amitelia.occultech.boss.Mechanic SHARD = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Shard", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final Color LIME = Color.fromRGB(120, 230, 60);
@@ -42,6 +47,13 @@ public final class MireMonarch extends BossBehavior {
     private static final int SLAM_INTERVAL = 160;
     private static final int SLAM_WARNING = 30;
     private static final int PUDDLE_INTERVAL = 100;
+    private static final int TONGUE_INTERVAL = 200;
+    private static final int TONGUE_INTERVAL_ENRAGED = 160;
+    private static final int TONGUE_WARNING = 25;
+    private static final double TONGUE_MIN = 5;
+    private static final double TONGUE_RANGE = 14;
+    /** Half the lane's width plus a player's half width. */
+    private static final double TONGUE_REACH_SIDE = 1.3;
     private static final double BASE_HEALTH = 600;
     private static final int SHARDS = 3;
     private static final double SHARD_HEAL = 0.06;
@@ -52,6 +64,10 @@ public final class MireMonarch extends BossBehavior {
     private int leapAt = -1;
     private int landingCheckUntil = -1;
     private boolean airborne;
+    private int nextTongue = TONGUE_INTERVAL / 2;
+    private int lashAt = -1;
+    private Location tongueFrom;
+    private Vector tongueDir;
     private boolean split;
     private boolean enraged;
 
@@ -91,6 +107,7 @@ public final class MireMonarch extends BossBehavior {
         }
 
         slam(now);
+        tongue(now);
         tendShards();
 
         if (enraged && every(PUDDLE_INTERVAL)) {
@@ -120,6 +137,72 @@ public final class MireMonarch extends BossBehavior {
             airborne = false;
             shockwave();
         }
+    }
+
+    private void tongue(int now) {
+        if (lashAt < 0 && now >= nextTongue && !airborne && (leapAt < now || leapAt - now > TONGUE_WARNING + 15)) {
+            nextTongue = now + (enraged ? TONGUE_INTERVAL_ENRAGED : TONGUE_INTERVAL);
+            Location from = sovereign.getLocation();
+            List<Player> inReach = new ArrayList<>();
+            for (Player player : fight.players()) {
+                double d = player.getLocation().distance(from);
+                if (d >= TONGUE_MIN && d <= TONGUE_RANGE && sovereign.hasLineOfSight(player)) {
+                    inReach.add(player);
+                }
+            }
+            if (inReach.isEmpty()) {
+                return;
+            }
+            Player target = inReach.get(ThreadLocalRandom.current().nextInt(inReach.size()));
+            Vector dir = target.getLocation().toVector().subtract(from.toVector()).setY(0);
+            if (dir.lengthSquared() < 0.01) {
+                return;
+            }
+            // the lane's direction is locked now; the lash uses this same geometry
+            tongueFrom = from.clone();
+            tongueDir = dir.normalize();
+            lashAt = now + TONGUE_WARNING;
+            FloorDecals.lane(fight, tongueFrom, tongueDir, TONGUE_RANGE, 2 * (TONGUE_REACH_SIDE - 0.3), TONGUE_WARNING, LIME);
+            sovereign.getWorld().playSound(from, Sound.ENTITY_FROG_AMBIENT, 2F, 0.5F);
+        }
+        if (lashAt >= 0 && now >= lashAt) {
+            lashAt = -1;
+            lash();
+        }
+    }
+
+    /** The tongue shoots down the locked lane: the first player in it is hit and pulled to the Monarch's mouth. */
+    private void lash() {
+        Location mouth = sovereign.getLocation();
+        Player caught = null;
+        double nearest = Double.MAX_VALUE;
+        for (Player player : fight.players()) {
+            Vector rel = player.getLocation().toVector().subtract(tongueFrom.toVector());
+            double along = rel.getX() * tongueDir.getX() + rel.getZ() * tongueDir.getZ();
+            double side = Math.abs(rel.getX() * tongueDir.getZ() - rel.getZ() * tongueDir.getX());
+            if (along >= 0 && along <= TONGUE_RANGE && side <= TONGUE_REACH_SIDE && Math.abs(rel.getY()) <= 2.5
+                && along < nearest && sovereign.hasLineOfSight(player)) {
+                caught = player;
+                nearest = along;
+            }
+        }
+        double reach = caught == null ? TONGUE_RANGE : nearest;
+        for (double t = 0.5; t <= reach; t += 0.5) {
+            Location p = tongueFrom.clone().add(tongueDir.clone().multiply(t)).add(0, 1.0, 0);
+            p.getWorld().spawnParticle(Particle.DUST, p, 2, 0.08, 0.08, 0.08, 0, new Particle.DustOptions(ACID, 1.4F));
+        }
+        mouth.getWorld().playSound(mouth, Sound.ENTITY_FROG_TONGUE, 2F, 0.6F);
+        if (caught == null) {
+            return;
+        }
+        fight.hit(caught, TONGUE, sovereign);
+        // a capped yank towards the mouth, landing about two blocks in front of it (knockback, never a teleport)
+        Vector pull = mouth.toVector().subtract(caught.getLocation().toVector()).setY(0);
+        double distance = pull.length();
+        if (distance > 2.5) {
+            caught.setVelocity(pull.normalize().multiply(Math.min(1.6, 0.15 + (distance - 2) * 0.1)).setY(0.42));
+        }
+        caught.getWorld().playSound(caught.getLocation(), Sound.ENTITY_SLIME_ATTACK, 1.2F, 0.7F);
     }
 
     private void shockwave() {
