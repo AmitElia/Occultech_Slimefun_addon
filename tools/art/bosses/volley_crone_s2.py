@@ -94,6 +94,11 @@ def build():
         make_arm(torso, s)
     s1.make_head(torso, {"bend": BEND})
     s1.make_crystals(torso, {"crystals": "geode"}, b)
+    # the crystal bones turn and grow from the geode's root, so a flare scales them out of the hump
+    root = [0.0, 46.0, s1.back_surface(46, b) - 1]
+    for g in model.groups:
+        if g.name in ("crystals_back", "glow_crystals"):
+            g.origin = list(root)
     snap(model)
     return model
 

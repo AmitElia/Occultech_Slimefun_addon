@@ -175,6 +175,9 @@ for v in job["views"]:
         shading.show_object_outline = False
         shading.background_type = "VIEWPORT"
         world.color = tuple(job.get("sky", (0.16, 0.15, 0.19)))
+    # optional see-through, so markers inside the model (pivots) show
+    shading.show_xray = bool(v.get("xray"))
+    shading.xray_alpha = v.get("xray", 1.0) or 1.0
     scene.display.light_direction = (-0.45, 0.35, 0.82)
     scene.render.filepath = f"{job['out']}/{v['name']}.png"
     bpy.ops.render.render(write_still=True)
