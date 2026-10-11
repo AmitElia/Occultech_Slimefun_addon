@@ -72,4 +72,4 @@ textures for effect models. Mirrored parts share UV space only when they are tru
 |---|---|---|
 | Volley | 8 pack and in-game review (redesign: the Amethyst Crone) | shipped with its geode-spire wards: [s8_ship](art/bosses/volley/overhaul/s8_ship/README.md); the in-game sign-off is pending |
 | Brood Mother | 8 pack and in-game review (redesign: the candle-laden tarantula) | shipped: Mythic body, candles snuff at 75/50/25%, pack sha1 54fe6811 (first in-game review fixes in): [s8_ship](art/bosses/brood_mother/overhaul/s8_ship/README.md); the in-game sign-off is pending |
-| Mire Monarch (was the Gelatinous Sovereign) | 1 concept and silhouette | the slime takes were rejected; the boss is now a giant crowned cellar toad, renamed `MIRE_MONARCH`. Toad directions next |
+| Mire Monarch (was the Gelatinous Sovereign) | 1 concept and silhouette | a giant crowned cellar toad (the slime takes were rejected): three directions, big and dried (Bullfrog Tyrant, Horned Maw, Bog King); ready for review: [s1_concepts](art/bosses/mire_monarch/overhaul/s1_concepts/README.md) |
