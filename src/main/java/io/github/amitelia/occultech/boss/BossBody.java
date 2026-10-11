@@ -18,4 +18,7 @@ public interface BossBody {
     default boolean isCarrier(LivingEntity entity) { return true; }
 
     default List<String> extraRewards(String id) { return List.of(); }
+
+    /** A model at {@code at} (its feet on that spot) for a fight object, or null to keep the vanilla look. */
+    default Prop prop(String modelId, Location at) { return null; }
 }

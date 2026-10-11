@@ -91,6 +91,14 @@ public final class MythicBody implements BossBody {
     }
 
     @Override
+    public io.github.amitelia.occultech.boss.Prop prop(String modelId, Location at) {
+        if (!plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")) {
+            return null;
+        }
+        return BetterModelVisuals.prop(modelId, at);
+    }
+
+    @Override
     public List<String> extraRewards(String id) {
         return MythicLoot.roll(id, plugin.getLogger());
     }

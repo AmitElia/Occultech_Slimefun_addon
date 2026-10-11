@@ -1,14 +1,11 @@
-# Volley's body. Occultech still decides every attack, deals all damage (Volley.java) and hands out loot.
-# Health is the solo value; Occultech multiplies it for the group after the spawn.
+# Volley's body: the Amethyst Crone model on a skeleton carrier. Occultech still decides every attack, deals all damage
+# (Volley.java) and hands out loot. Health is the solo value; Occultech multiplies it for the group after the spawn.
 OCCULTECH_VOLLEY:
   Type: SKELETON
   Display: '&6Volley'
   Health: 160
   Damage: 3
   Armor: 0
-  Equipment:
-  - BOW HAND
-  - CHAINMAIL_HELMET HEAD
   Options:
     # Occultech rebuilds the body from its saved fight state; Mythic never restores it
     Despawn: true
@@ -20,9 +17,18 @@ OCCULTECH_VOLLEY:
     KnockbackResistance: 0.5
     FollowRange: 32
     AlwaysShowName: true
+  # no vanilla bow: every arrow is Volley.java's, fired from the model's arbalest (bursts and snap shots)
+  AIGoalSelectors:
+  - clear
+  - float
+  - lookatplayers
+  - randomstroll
+  AITargetSelectors:
+  - clear
+  - players
   Drops: []
-  # The carrier stays at normal size and the model is drawn as authored (4.3 blocks); the model's own ob_hitbox bone
-  # covers the body and passes hits on to the carrier. The body turns with the aim within a few ticks.
+  # The carrier stays at normal size and the model is drawn as authored; its ob_hitbox bone covers the body and passes
+  # hits on to the carrier. The body turns with the aim within a few ticks. idle, walk, spawn and death play by themselves.
   Skills:
   - model{m=occultech_volley} @self ~onSpawn
   - bodyrotation{mh=25;mnh=-25;rde=0;rdu=3} @self ~onSpawn

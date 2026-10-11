@@ -3,10 +3,44 @@ package io.github.amitelia.occultech.integration.mythic;
 import org.bukkit.entity.Entity;
 
 import kr.toxicity.model.api.BetterModel;
+import kr.toxicity.model.api.bukkit.platform.BukkitAdapter;
+import kr.toxicity.model.api.tracker.DummyTracker;
+import kr.toxicity.model.api.tracker.TrackerUpdateAction;
 
-/** Read-only probe of the pinned BetterModel 3.5.0 tracker API. */
+/** The pinned BetterModel 3.5.0 API: tracker probes, and models placed at a location for fight objects. */
 public final class BetterModelVisuals {
     private BetterModelVisuals() {}
+
+    /** A model standing on {@code at}, or null if BetterModel has no such model. Packets only: nothing is saved. */
+    public static io.github.amitelia.occultech.boss.Prop prop(String modelId, org.bukkit.Location at) {
+        var renderer = BetterModel.model(modelId).orElse(null);
+        if (renderer == null) {
+            return null;
+        }
+        DummyTracker tracker = renderer.create(BukkitAdapter.adapt(at));
+        return new io.github.amitelia.occultech.boss.Prop() {
+            @Override
+            public void animate(String clip) {
+                if (!tracker.isClosed()) {
+                    tracker.animate(clip);
+                }
+            }
+
+            @Override
+            public void hidePart(String part) {
+                if (!tracker.isClosed()) {
+                    tracker.update(TrackerUpdateAction.togglePart(false), bone -> bone.name().name().equals(part));
+                }
+            }
+
+            @Override
+            public void remove() {
+                if (!tracker.isClosed()) {
+                    tracker.close();
+                }
+            }
+        };
+    }
 
     public static boolean available(String modelId) {
         return BetterModel.model(modelId).isPresent();

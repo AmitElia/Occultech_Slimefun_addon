@@ -875,6 +875,13 @@ final class SelfTest {
             check("Volley has one BetterModel tracker", carrier != null
                 && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(carrier, "occultech_volley"),
                 carrier == null ? "no carrier" : io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier));
+            if (io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_volley_ward")) {
+                // Volley raises his first wards after 15 s, so spawn one the way he does and check the model draws it
+                BossFight.FightObject ward = currentFight.spawnObject(altar.getLocation().add(3.5, 1, 0.5), "occultech_volley_ward",
+                    org.bukkit.Material.AMETHYST_CLUSTER, 1.4F, 1.4F, 2.0F, 4, () -> { });
+                check("Volley's wards are drawn by the ward model", ward.hasProp(), "vanilla look");
+                ward.remove();
+            }
             check("Volley's model has its hitbox", carrier != null
                 && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_volley"), "no hitbox entity");
         }

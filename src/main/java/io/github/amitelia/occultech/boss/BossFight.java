@@ -195,13 +195,22 @@ public final class BossFight {
         private final ItemDisplay display;
         private final Interaction hitbox;
         private final Runnable onBreak;
+        private final int maxHits;
+        @Nullable private final Prop prop;
         private int hits;
 
-        private FightObject(ItemDisplay display, Interaction hitbox, int hits, Runnable onBreak) {
+        private FightObject(ItemDisplay display, Interaction hitbox, int hits, Runnable onBreak, @Nullable Prop prop) {
             this.display = display;
             this.hitbox = hitbox;
             this.hits = hits;
+            this.maxHits = hits;
             this.onBreak = onBreak;
+            this.prop = prop;
+        }
+
+        /** Whether a model shows this object (otherwise its vanilla item look). */
+        public boolean hasProp() {
+            return prop != null;
         }
 
         public boolean isAlive() {
@@ -216,17 +225,33 @@ public final class BossFight {
             if (--hits > 0) {
                 display.getWorld().spawnParticle(Particle.CRIT, display.getLocation(), 8, 0.2, 0.2, 0.2, 0.1);
                 display.getWorld().playSound(display.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, 1F, 1.2F);
+                if (prop != null) {
+                    prop.hidePart("shard_" + (maxHits - hits - 1));   // one piece breaks off per hit
+                    prop.animate("hit");
+                }
                 return;
             }
             display.getWorld().spawnParticle(Particle.BLOCK, display.getLocation(), 20, 0.3, 0.3, 0.3, Material.COBWEB.createBlockData());
             display.getWorld().playSound(display.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_BREAK, 1F, 0.8F);
             AirEffects.burst(BossFight.this, display.getLocation().clone().add(0, 0.6, 0), AirEffects.Burst.SOUL, Color.fromRGB(180, 140, 255), 2.4F);
-            remove();
+            if (prop != null) {
+                // the shatter plays out, then the model goes; the hitbox and the object are gone at once
+                prop.animate("shatter");
+                Bukkit.getScheduler().runTaskLater(service.plugin(), prop::remove, 14L);
+            }
+            discard();
             onBreak.run();
         }
 
         /** Remove without triggering the break callback (e.g. an egg sac that hatched). */
         public void remove() {
+            if (prop != null) {
+                prop.remove();
+            }
+            discard();
+        }
+
+        private void discard() {
             hits = 0;
             display.remove();
             hitbox.remove();
@@ -372,9 +397,39 @@ public final class BossFight {
             i.setInteractionHeight(0.9F * scale);
             i.setResponsive(true);
         });
-        FightObject object = new FightObject(display, hitbox, hits, onBreak);
+        FightObject object = new FightObject(display, hitbox, hits, onBreak, null);
         objects.put(hitbox.getUniqueId(), object);
         return object;
+    }
+
+    /**
+     * A hittable object shown as the model {@code modelId} when the boss body can draw models (BetterModel), with a
+     * {@code width} x {@code height} hitbox to match it; otherwise as {@code fallback} (the plain item look and its
+     * hitbox). Hits break the model's {@code shard_N} pieces one by one and the last plays its shatter.
+     */
+    @Nonnull
+    public FightObject spawnObject(Location at, String modelId, Material fallback, float scale, float width, float height,
+        int hits, Runnable onBreak) {
+        Prop prop = service.body().prop(modelId, at);
+        if (prop == null) {
+            return spawnObject(at, fallback, scale, hits, onBreak);
+        }
+        // the display stays as the object's anchor (location, effects), empty: the prop is what players see
+        ItemDisplay display = spawnExtra(ItemDisplay.class, at.clone().add(0, 0.4 * scale, 0), d -> { });
+        Interaction hitbox = spawnExtra(Interaction.class, at, i -> {
+            i.setInteractionWidth(width);
+            i.setInteractionHeight(height);
+            i.setResponsive(true);
+        });
+        FightObject object = new FightObject(display, hitbox, hits, onBreak, prop);
+        objects.put(hitbox.getUniqueId(), object);
+        prop.animate("rise");
+        return object;
+    }
+
+    /** Live fight objects (for the self-test). */
+    public java.util.Collection<FightObject> objects() {
+        return java.util.List.copyOf(objects.values());
     }
 
     /**
@@ -394,7 +449,7 @@ public final class BossFight {
             i.setInteractionHeight(height);
             i.setResponsive(true);
         });
-        FightObject object = new FightObject(display, hitbox, hits, onBreak);
+        FightObject object = new FightObject(display, hitbox, hits, onBreak, null);
         objects.put(hitbox.getUniqueId(), object);
         return object;
     }
@@ -1004,6 +1059,9 @@ public final class BossFight {
         }
         for (Entity extra : extras) {
             extra.remove();
+        }
+        for (FightObject object : List.copyOf(objects.values())) {
+            object.remove();      // props are packets, not entities: they go with their object
         }
         bosses.clear();
         extras.clear();

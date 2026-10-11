@@ -70,4 +70,4 @@ textures for effect models. Mirrored parts share UV space only when they are tru
 
 | Boss | Session | Status |
 |---|---|---|
-| Volley | 7 animation (redesign: the Amethyst Crone) | variants in [s6_variants](art/bosses/volley/overhaul/s6_variants/README.md); eight clips timed to Volley.java ready for review: [s7_animation](art/bosses/volley/overhaul/s7_animation/README.md) |
+| Volley | 8 pack and in-game review (redesign: the Amethyst Crone) | shipped with its geode-spire wards: [s8_ship](art/bosses/volley/overhaul/s8_ship/README.md); the in-game sign-off is pending |

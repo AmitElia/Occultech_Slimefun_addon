@@ -21,7 +21,7 @@ public final class MythicPackInstaller {
     private static final String[] MYTHIC_FILES = {
         "packinfo.yml", "Mobs/Volley.yml", "Skills/Volley.yml", "DropTables/Volley.yml"
     };
-    private static final String[] MODELS = {"occultech_volley.bbmodel"};
+    private static final String[] MODELS = {"occultech_volley.bbmodel", "occultech_volley_ward.bbmodel"};
     private static final String STAMP = ".occultech-installed.properties";
 
     private MythicPackInstaller() {}

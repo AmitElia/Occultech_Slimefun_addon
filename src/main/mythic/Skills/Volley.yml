@@ -1,11 +1,31 @@
-# Look and sound only. Volley.java locks the target, launches and labels every damaging arrow.
+# Look and sound only. Volley.java decides when each of these runs, locks the target, launches and labels every arrow.
 VOLLEY_BURST_PREPARE:
   Skills:
-  - sound{s=entity.crossbow.loading_middle;v=1.5;p=0.8} @self
-  - effect:particles{p=enchanted_hit;amount=20;hS=0.6;vS=1.2} @self
+  - state{m=occultech_volley;s=burst} @self
+  - sound{s=item.crossbow.loading_middle;v=1.5;p=0.8} @self
 VOLLEY_BURST_CONTACT:
   Skills:
-  - sound{s=entity.skeleton.shoot;v=1;p=1.3} @self
+  - sound{s=item.crossbow.shoot;v=1;p=0.8} @self
+VOLLEY_SHOT:
+  Skills:
+  - state{m=occultech_volley;s=shot} @self
+  - sound{s=item.crossbow.loading_end;v=0.8;p=1.1} @self
 VOLLEY_WARDS_PREPARE:
   Skills:
+  - state{m=occultech_volley;s=wards} @self
+  - brightness{m=occultech_volley;p=crystals_back;b=15;s=15} @self
   - sound{s=block.amethyst_block.chime;v=1;p=0.7} @self
+VOLLEY_WARDS_BROKEN:
+  Skills:
+  - state{m=occultech_volley;s=stagger} @self
+  # back to world light; the glowing shards keep their own full brightness
+  - brightness{m=occultech_volley;p=crystals_back;b=-1;s=-1} @self
+  - brightness{m=occultech_volley;p=glow_crystals;b=15;s=15} @self
+  - brightness{m=occultech_volley;p=glow_crystals_broken;b=15;s=15} @self
+  - sound{s=block.amethyst_cluster.break;v=1.2;p=0.6} @self
+VOLLEY_CRACKED:
+  Skills:
+  - state{m=occultech_volley;s=cracked} @self
+  - partvisibility{m=occultech_volley;p=glow_crystals;v=false} @self
+  - partvisibility{m=occultech_volley;p=glow_crystals_broken;v=true} @self
+  - sound{s=block.amethyst_block.break;v=1.5;p=0.5} @self

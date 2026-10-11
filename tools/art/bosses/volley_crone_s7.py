@@ -190,6 +190,26 @@ def clips(model):
     burst["arbalest_bolt"] = {"position": bolt_pos, "scale": bolt_scale}
     out["burst"] = (2.6, "once", burst)
 
+    # the snap shot: Volley.java fires one arrow 10 ticks after starting it (between bursts, every 2 s)
+    shot = {}
+    for bone in set(windup) | set(aim):
+        w, a = windup.get(bone, zero), aim.get(bone, zero)
+        shot[bone] = {"rotation": [(0.0, zero, "catmullrom"), (0.18, w, "catmullrom"), (0.42, a, "linear"),
+                                   (0.56, a, "catmullrom"), (0.9, zero, "catmullrom")]}
+    shot["arm_right_forearm"]["rotation"].insert(3, (0.53, tuple(v + d for v, d in zip(aim["arm_right_forearm"],
+                                                                                    (-9, 0, 0))), "catmullrom"))
+    shot["windlass"] = {"rotation": [(0.0, zero, "linear"), (0.38, (360, 0, 0), "linear")]}
+    for side, (rel, kk) in (("left", (rel_l, k_l)), ("right", (rel_r, k_r))):
+        shot[f"arbalest_string_{side}"] = {
+            "rotation": [(0.0, rel, "linear"), (0.38, zero, "linear"), (0.5, zero, "step"), (0.51, rel, "step")],
+            "scale": [(0.0, (kk,) * 3, "linear"), (0.38, one, "linear"), (0.5, one, "step"), (0.51, (kk,) * 3, "step")]}
+    shot["arbalest_bolt"] = {"scale": [(0.0, gone, "step"), (0.2, gone, "linear"), (0.38, one, "linear"),
+                                       (0.57, one, "step"), (0.58, gone, "step")],
+                             "position": [(0.0, zero, "step"), (0.5, zero, "linear"), (0.57, (0, -46, 0), "step"),
+                                          (0.58, zero, "step")]}
+    shot["jaw_counter"] = {"rotation": [(0.0, zero, "step"), (0.5, (-7, 0, 0), "step"), (0.62, zero, "step")]}
+    out["shot"] = (0.9, "once", shot)
+
     def to_pose_and_back(pose, length, hold_from, hold_to, extra=None):
         clip = {b: {"rotation": rot((0, zero), (hold_from, v), (hold_to, v), (length, zero), interp="catmullrom")}
                 for b, v in pose.items()}
@@ -222,7 +242,7 @@ def clips(model):
         "arbalest": {"rotation": rot((0, zero), (1.0, zero), (1.4, (70, 0, 10)), (2.6, (75, 0, 10)), interp="catmullrom")},
     })
     for name, (length, loop, bones) in out.items():
-        if name != "burst":
+        if name not in ("burst", "shot"):
             for bone, channels in unloaded(length).items():
                 bones.setdefault(bone, {}).update(channels)
     return out

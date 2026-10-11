@@ -121,7 +121,7 @@ plugin jar so the pack hash matches, as today. Without the pack, players see the
 | M0 | Install MythicMobs 5.13.x on the test server (`scripts/setup-mythic.ps1`, SHA-checked like BetterModel); confirm free/Premium on production | server boots with Slimefun Legacy + both plugins, no errors |
 | M1 | Extract `BossBody`/`VanillaBody`; no behavior change | self-test passes unchanged |
 | M2 | `integration/mythic` skeleton: components registered, pack installer, `MythicBody` spawning one test mob | `occultechHit` deals labelled damage that appears in the combat log; `@OccultechFighters` ignores players outside the arena |
-| M3 | Vertical slice: **Volley** fully on Mythic + BetterModel (approved model, burst action, ward objects) | self-test passes in both body modes; restart mid-fight resumes with one boss and one model; no floor drops |
+| M3 | Done pending the in-game sign-off. Volley runs on Mythic + BetterModel with the redesigned Amethyst Crone model and his geode-spire wards (BetterModel props on the fight objects, a piece lost per hit). Mythic skills play the burst, snap-shot, wards, stagger and cracked clips and switch the variants. Every arrow leaves the arbalest's muzzle. Self-test: Mythic 532/0, vanilla 525/0. Details: [s8_ship](art/bosses/volley/overhaul/s8_ship/README.md). |
 | M4 | Loot bridge: DropTable extras per fighter | self-test reward check passes with extras; offline fighter receives them on join |
 | M5 | Tier 0 and 1 rollout (one boss per session), then tier 2, tier 3, Gallus last | each boss: both body modes pass self-test, combat log matches the old damage profile |
 | M6 | Pack merge, performance: 1/4/8 players, three arenas at once, max adds | stable 20 TPS, no leaked displays after banish/unload/restart |
