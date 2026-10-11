@@ -866,9 +866,12 @@ final class SelfTest {
         if (currentFight.usesMythicBody()) {
             check(ContentRegistrar.title(bossId) + " has an active Mythic carrier", currentFight.carrierMatchesMode(),
                 "Mythic did not register the fight carrier");
+            // Mythic applies its mob file during the spawn; Occultech's setup must still win afterwards
+            check(ContentRegistrar.title(bossId) + " keeps Occultech's persistence over Mythic's despawn option",
+                currentFight.bosses().stream().noneMatch(LivingEntity::getRemoveWhenFarAway), "removed when far away");
             if ("VOLLEY".equals(bossId)) {
-                // the burst skill draws a target ring under the action target: occultechTelegraph, @OccultechActionTarget
-                // and ?occultechInFight together. Then Mythic reloads mid-fight; the 3 s check repeats it
+                // Mythic reloads mid-fight, then the burst skill draws a target ring under the action target
+                // (occultechTelegraph and @OccultechActionTarget); the 3 s check counts the cast
                 LivingEntity carrier = currentFight.bosses().get(0);
                 actionTarget = carrier.getWorld().spawn(carrier.getLocation().add(4, 0, 0), org.bukkit.entity.ArmorStand.class, a -> {
                     a.setInvisible(true);
@@ -880,9 +883,6 @@ final class SelfTest {
                 castsBefore = io.github.amitelia.occultech.integration.mythic.OccultechTelegraph.casts();
                 currentFight.playAction(carrier, "BURST_PREPARE", actionTarget);
             }
-            // Mythic applies its mob file during the spawn; Occultech's setup must still win afterwards
-            check(ContentRegistrar.title(bossId) + " keeps Occultech's persistence over Mythic's despawn option",
-                currentFight.bosses().stream().noneMatch(LivingEntity::getRemoveWhenFarAway), "removed when far away");
         }
     }
 
@@ -894,7 +894,7 @@ final class SelfTest {
                 && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getBaseValue() - maxBeforeReload) < 1e-6,
                 "removed when far away " + carrier.getRemoveWhenFarAway() + ", max health "
                     + carrier.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getBaseValue() + " (was " + maxBeforeReload + ")");
-            // occultechTelegraph, @OccultechActionTarget and ?occultechInFight together, after the reload
+            // occultechTelegraph and @OccultechActionTarget together, after the reload
             check("after /mm reload a Mythic skill draws a telegraph under the action target",
                 io.github.amitelia.occultech.integration.mythic.OccultechTelegraph.casts() > castsBefore, "the mechanic never ran");
             actionTarget.remove();

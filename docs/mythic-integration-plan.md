@@ -133,7 +133,7 @@ plugin jar so the pack hash matches, as today. Without the pack, players see the
 |---|---|
 | M0 | Done. MythicMobs 5.13.0 (free) + BetterModel 3.5.0 + Slimefun Legacy boot together; `scripts/setup-mythic.ps1`. Production still to confirm. |
 | M1 | Done. `BossBody` / `VanillaBody`; `BossFight.spawnBoss`/`spawnAdd` go through it. |
-| M2 | Done. All the planned components are built (reference below). Self-test: a Mythic skill (Volley's burst) draws a fight telegraph under the action target through `occultechTelegraph`, `@OccultechActionTarget` and `?occultechInFight`, after a live `/mm reload` mid-fight; after the reload the fight keeps its carrier, its model and Occultech's carrier rules. Still untested in a real skill: `occultechHit` (no shipped skill deals damage) and `occultechPhase`/`occultechSolo` (no boss uses them yet). |
+| M2 | Done. All the planned components are built (reference below). Self-test: a Mythic skill (Volley's burst) draws a fight telegraph under the action target through `occultechTelegraph`, and `@OccultechActionTarget` after a live `/mm reload` mid-fight; after the reload the fight keeps its carrier, its model and Occultech's carrier rules. Still untested in a real skill: `occultechHit` (no shipped skill deals damage) and `occultechPhase`/`occultechSolo` (no boss uses them yet). |
 | M3 | Done pending the in-game sign-off. Volley runs on Mythic + BetterModel with the redesigned Amethyst Crone model and his geode-spire wards (BetterModel props on the fight objects, a piece lost per hit). Mythic skills play the burst, snap-shot, wards, stagger and cracked clips and switch the variants. Every arrow leaves the arbalest's muzzle. Self-test: Mythic 532/0, vanilla 525/0. Details: [s8_ship](art/bosses/volley/overhaul/s8_ship/README.md). |
 | M4 | Done. `MythicLoot` rolls `OCCULTECH_<BOSS>_EXTRAS` once per eligible fighter into their reward list (`item:` entries, the item serialised whole). Self-test: the extras roll, and an extra kept for an offline fighter reads back from `pending-rewards.yml` as the identical item; delivery on join is the same path as every other pending reward. |
 
@@ -166,7 +166,7 @@ Mythic skill except through `occultechHit`, so contribution, combat logs, the ar
 | `occultechTelegraph{shape=circle;r=2;t=20;mark=target;color=#c08cff}` | mechanic (location or entity) | a fight floor warning: `circle` at the target, or a `wedge`/`lane` (`length=`, `width=`) from the caster to it. A warning only: the behavior deals the damage on the same geometry |
 | `@OccultechFighters` | targeter | living players inside the caster's arena |
 | `@OccultechActionTarget` | targeter | the target the current action locked (`BossFight.playAction(entity, action, target)`); Volley sets it for the burst and the snap shots |
-| `?occultechInFight` | condition | the entity belongs to a running fight |
+| `?occultechInFight` | condition | the entity belongs to a running fight. Note: written inline after a targeter (`@X ?cond`), Mythic checks a condition against each **target**, not the caster; put caster checks under the skill's `Conditions:` |
 | `?occultechPhase{p=2}` (or `min=`/`max=`) | condition | the fight's phase (`BossBehavior.phase()`; Gallus has 1-3, others 1) |
 | `?occultechSolo` | condition | exactly one fighter in the arena |
 | `~onOCCULTECHACTION` | trigger | (internal) skills named `<BOSS>_<ACTION>` run when the behavior plays that action |
