@@ -186,8 +186,17 @@ def paint_levels(cube, zone, face, w, h, seed):
                 if edge == 0:
                     lv[y, x] -= 1
             elif zone == "glow":
-                d = max(abs((x + 0.5) / w - 0.5), abs((y + 0.5) / h - 0.5))
-                lv[y, x] = 6 if d < 0.2 else (5 if d < 0.38 else 4)
+                # lit amethyst: the same diagonal facets as the crystals, a step brighter, with a darker rim on two
+                # sides so the shape keeps its edges; tiny faces just get a hot centre
+                if w * h <= 9:
+                    lv[y, x] = 6 if abs(x - (w - 1) / 2) < 1 and abs(y - (h - 1) / 2) < 1 else 5
+                else:
+                    band = (x + y + seed % 5) % 6
+                    lv[y, x] = 6 if band in (0, 1) else 5
+                    if x == 0 or y == h - 1:
+                        lv[y, x] = 4
+                    elif noise(seed + 11, x, y) > 940:
+                        lv[y, x] = 6
     if zone == "bone" and w * h >= 120 and not cube.name.startswith("rib_"):
         crack(lv, seed, w, h)
     return np.clip(lv, 0, len(RAMP[ramp]) - 1)
