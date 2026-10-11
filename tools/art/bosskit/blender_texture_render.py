@@ -117,10 +117,11 @@ player_bits = [((-4, 0, -2), (0, 12, 2)), ((0, 0, -2), (4, 12, 2)),
                ((-4, 12, -2), (4, 24, 2)), ((-8, 12, -2), (-4, 24, 2)),
                ((4, 12, -2), (8, 24, 2)), ((-4, 24, -4), (4, 32, 4))]
 players = []
+PLAYER_AT = job.get("player_at", (3.4, 1.2))   # where the scale figure stands, in blocks
 for lower, upper in player_bits:
     center = [(lower[i] + upper[i]) / 2 * 1.8 / 32 for i in range(3)]
     size = [(upper[i] - lower[i]) * 1.8 / 32 for i in range(3)]
-    bpy.ops.mesh.primitive_cube_add(size=1, location=(3.4 + center[0], 1.2 - center[2], center[1]))
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(PLAYER_AT[0] + center[0], PLAYER_AT[1] - center[2], center[1]))
     player = bpy.context.object
     player.name = "scale-player"
     player.dimensions = (size[0], size[2], size[1])
