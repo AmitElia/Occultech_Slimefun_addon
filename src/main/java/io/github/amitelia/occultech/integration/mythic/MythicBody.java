@@ -74,6 +74,15 @@ public final class MythicBody implements BossBody {
         setup.accept(entity);
         // the spawn event came before the setup gave it Occultech's data, so the clearer guard tags it now
         io.github.amitelia.occultech.core.ClearLagGuard.protect(entity);
+        // the model goes on now, not a moment later from the mob's onSpawn skill, and the vanilla body is hidden at once:
+        // otherwise the plain spider or skeleton shows for about a second before the model replaces it
+        String model = "occultech_" + id.toLowerCase(java.util.Locale.ROOT);
+        if (plugin.getServer().getPluginManager().isPluginEnabled("BetterModel") && BetterModelVisuals.available(model)) {
+            entity.setInvisible(true);
+            if (BetterModelVisuals.count(entity, model) == 0) {
+                BetterModelVisuals.attach(entity, model);
+            }
+        }
         return entity;
     }
 

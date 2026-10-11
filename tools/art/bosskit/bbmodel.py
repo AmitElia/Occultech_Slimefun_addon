@@ -252,3 +252,22 @@ def leg(parent, name, hip, yaw, segments, ground=0.0, joint_scale=1.2, mat="chit
         x += length
         prev = pitch
     return bones
+
+
+def rename_group(bb, old, new):
+    """Renames a bone in a finished .bbmodel dict: its group, its outliner entry and every animator that keys it."""
+    def walk(nodes):
+        for n in nodes:
+            if isinstance(n, dict):
+                if n.get("name") == old:
+                    n["name"] = new
+                walk(n.get("children", []))
+    for g in bb.get("groups", []):
+        if g.get("name") == old:
+            g["name"] = new
+    walk(bb.get("outliner", []))
+    for anim in bb.get("animations", []):
+        for animator in anim.get("animators", {}).values():
+            if animator.get("name") == old:
+                animator["name"] = new
+    return bb

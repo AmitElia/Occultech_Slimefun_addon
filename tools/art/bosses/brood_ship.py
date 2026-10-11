@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools" / "art"))
+from bosskit.bbmodel import rename_group  # noqa: E402
 from bosskit.checks import flicker_pairs  # noqa: E402
 from bosses import brood_s3 as s3, brood_s4 as s4, brood_s7 as s7  # noqa: E402
 
@@ -28,6 +29,9 @@ def main():
     rig["name"] = MODEL_ID
     clips = set(s7.clips())
     rig["animations"] = [a for a in rig["animations"] if a["name"] in clips]   # the held test poses stay in review
+    # BetterModel's "h" tag turns only the head bone; "hi" (head with children) turns what hangs off it too, so the
+    # eyes, jaws and anything else on the head follow where she looks
+    rename_group(rig, "h_head", "hi_head")
     MODELS.mkdir(parents=True, exist_ok=True)
     (MODELS / f"{MODEL_ID}.bbmodel").write_text(json.dumps(rig, indent=1) + "\n", encoding="utf-8")
     print(json.dumps({"model": MODEL_ID, "animations": [a["name"] for a in rig["animations"]],

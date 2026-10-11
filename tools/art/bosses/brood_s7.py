@@ -5,11 +5,12 @@ BroodMother.java; animation is cosmetic, every hit and telegraph still comes fro
 starts on the server event that starts the attack (session 8 wires the Mythic `state` calls):
 
   idle     loop 3.0 s   breathing abdomen, a front leg taps, the jaws chew, the palps twitch, small flames flicker
-  walk     loop 0.8 s   the spider gait: two alternating sets of four legs (R0 L1 R2 L3 / L0 R1 L2 R3)
+  walk     loop 0.7 s   the spider gait: two alternating sets of four legs (R0 L1 R2 L3 / L0 R1 L2 R3), each leg
+                        lifted on an eased arc and pushed back along the ground, a front-to-back ripple, body sway
   spawn    once 2.4 s   unfolds out of a crouch into the threat display, then settles (the ritual arrival)
-  pounce   once 1.8 s   POUNCE_WARNING is 20 ticks: the tell 0-1.0 s (head up, front legs high, jaws wide), the leap
-                        1.0-1.3 s (the server throws her), the landing crouch 1.3-1.8 s
-  bite     once 0.7 s   jaws open, then snap shut as the front legs stab (her melee hit)
+  pounce   once 2.6 s   POUNCE_WARNING is 20 ticks: she crouches into the tell 0-0.9 s (held still and turned to her
+                        mark by the server), launches at 1.0 s, flies about a second front legs first, lands 1.95-2.2 s
+  bite     once 0.7 s   a rear-back, then her whole front lunges as the jaws snap and the front legs stab
   egg_sac  once 1.6 s   the abdomen pumps down twice as the two sacs appear
   web      once 1.8 s   WEB_WARNING is 30 ticks: the abdomen tips up and quivers, then jerks at 1.5 s as the web lands
   snuff    once 0.8 s   a shudder as a group of candles goes out (session 6's health thresholds)
@@ -85,25 +86,8 @@ def clips():
     idle.update(flicker(3.0))
     out["idle"] = (3.0, "loop", idle)
 
-    # ---- walk: each set lifts and swings forward while the other pushes back
-    walk, length = {}, 0.8
-    for leg in LEGS:
-        lead = leg in SET_A
-        t0, t1 = (0.0, length / 2) if lead else (length / 2, length)   # this leg's swing (lifted) half
-        mid = (t0 + t1) / 2
-        if lead:
-            yaw = [(0.0, fwd(leg, -10)), (mid, fwd(leg, 0)), (t1, fwd(leg, 10)), (length, fwd(leg, -10))]
-            lift = [(0.0, ZERO), (mid, (0, 0, 14)), (t1, ZERO), (length, ZERO)]
-        else:
-            yaw = [(0.0, fwd(leg, 10)), (t0, fwd(leg, -10)), (mid, fwd(leg, 0)), (length, fwd(leg, 10))]
-            lift = [(0.0, ZERO), (t0, ZERO), (mid, (0, 0, 14)), (length, ZERO)]
-        walk[f"{leg}_hip"] = {"rotation": rot(*yaw)}
-        walk[f"{leg}_1"] = {"rotation": rot(*lift)}
-        walk[f"{leg}_3"] = {"rotation": rot(*[(t, tuple(-0.6 * c for c in v)) for t, v in lift])}
-    walk["root_body"] = {"position": rot((0, ZERO), (0.2, (0, 0.8, 0)), (0.4, ZERO), (0.6, (0, 0.8, 0)), (0.8, ZERO))}
-    walk["abdomen"] = {"rotation": rot((0, (1.5, 0, 0)), (0.4, (-1.5, 0, 0)), (0.8, (1.5, 0, 0)))}
-    walk.update(flicker(length))
-    out["walk"] = (length, "loop", walk)
+    # ---- walk: a smooth tetrapod gait with a front-to-back ripple, the body swaying over it
+    out["walk"] = (WALK, "loop", walk_clip())
 
     # ---- spawn: a crouch (legs drawn in, body low) unfolding into the threat display
     spawn = {"root_body": {"position": rot((0, (0, -7, 0)), (1.1, ZERO), (2.4, ZERO))}}
@@ -117,29 +101,17 @@ def clips():
         ch["rotation"] = rot((0, base.get(0, ZERO)), (1.1, ZERO), (1.6, v), (2.0, v), (2.4, ZERO))
     out["spawn"] = (2.4, "once", spawn)
 
-    # ---- pounce: the tell, the leap, the landing
-    tell = deltas("pounce")
-    pounce = {b: {"rotation": rot((0, ZERO), (0.3, v), (0.95, v), (1.1, ZERO), (1.8, ZERO))} for b, v in tell.items()}
-    for leg in LEGS:
-        front = leg in FRONT
-        reach = (0, 0, -10) if front else (0, 0, -6)
-        yaw = fwd(leg, 14 if front else -12)                 # in the air: front legs reach, the rest trail
-        pounce.setdefault(f"{leg}_hip", {})["rotation"] = rot((0, ZERO), (0.95, ZERO), (1.15, yaw), (1.35, ZERO),
-                                                             (1.8, ZERO))
-        femur = pounce.setdefault(f"{leg}_1", {})
-        femur["rotation"] = sorted(femur.get("rotation", rot((0, ZERO), (0.95, ZERO))) +
-                                   rot((1.15, reach), (1.4, (0, 0, 12)), (1.8, ZERO)), key=lambda k: k[0])
-    pounce["root_body"] = {"position": rot((0, ZERO), (0.3, (0, -0.5, 0)), (0.95, (0, -0.5, 0)), (1.15, (0, 1, 0)),
-                                           (1.4, (0, -1, 0)), (1.8, ZERO))}
-    out["pounce"] = (1.8, "once", pounce)
+    # ---- pounce: crouch into the tell, launch, fly with the front legs reaching, land and absorb
+    out["pounce"] = (POUNCE, "once", pounce_clip())
 
-    # ---- bite
+    # ---- bite: a short rear-back, then the whole front of her lunges as the jaws snap
     out["bite"] = (0.7, "once", {
+        "root_body": {"position": rot((0, ZERO), (0.12, (0, 0.5, 1.5)), (0.25, (0, -0.5, -3)), (0.7, ZERO))},
         "h_head": {"rotation": rot((0, ZERO), (0.12, (8, 0, 0)), (0.25, (-2, 0, 0)), (0.7, ZERO))},
         "mandible_r": {"rotation": rot((0, ZERO), (0.12, (0, -26, 0)), (0.25, (0, 8, 0)), (0.7, ZERO), interp="linear")},
         "mandible_l": {"rotation": rot((0, ZERO), (0.12, (0, 26, 0)), (0.25, (0, -8, 0)), (0.7, ZERO), interp="linear")},
-        **{f"{leg}_1": {"rotation": rot((0, ZERO), (0.12, (0, 0, 10)), (0.25, (0, 0, -6)), (0.7, ZERO))} for leg in FRONT},
-        **{f"{leg}_3": {"rotation": rot((0, ZERO), (0.12, (0, 0, 14)), (0.25, (0, 0, -10)), (0.7, ZERO))} for leg in FRONT},
+        **{f"{leg}_1": {"rotation": rot((0, ZERO), (0.12, (0, 0, 14)), (0.25, (0, 0, 2)), (0.7, ZERO))} for leg in FRONT},
+        **{f"{leg}_3": {"rotation": rot((0, ZERO), (0.12, (0, 0, 18)), (0.25, (0, 0, -2)), (0.7, ZERO))} for leg in FRONT},
     })
 
     # ---- egg sac: two pumps
@@ -180,6 +152,99 @@ def clips():
         death[f"{leg}_4"] = {"rotation": rot((0, ZERO), (start, ZERO), (1.8, (0, 0, -40)), (2.8, (0, 0, -40)))}
     out["death"] = (2.8, "hold", death)
     return out
+
+
+WALK = 0.7           # one stride
+SWING = 0.42         # the share of a stride a leg spends lifted and swinging forward
+
+
+def walk_clip():
+    """Each leg: lifted and swung forward (an eased arc, the knee rising and the shin tucking) for SWING of the stride,
+    then pushed back along the ground for the rest. The two sets of four legs are half a stride apart, and within a
+    set the rear legs lead the front ones a little (a ripple, not a march). The body bobs twice a stride, sways side to
+    side, and the abdomen sways against it."""
+    import math
+    n = 10
+    times = [round(WALK * k / n, 3) for k in range(n + 1)]
+    clip = {}
+    for leg in LEGS:
+        pair = int(leg[-1])
+        phase = (0.0 if leg in SET_A else 0.5) + 0.04 * (3 - pair)
+        reach = 12 if pair == 0 else 15
+        yaw, femur, tibia, meta = [], [], [], []
+        for t in times:
+            u = (t / WALK - phase) % 1.0
+            if u < SWING:
+                f = u / SWING
+                ease = f * f * (3 - 2 * f)
+                swing, lift = -reach + 2 * reach * ease, math.sin(math.pi * f)
+            else:
+                f = (u - SWING) / (1 - SWING)
+                swing, lift = reach - 2 * reach * f, 0.0
+            yaw.append((t, fwd(leg, swing)))
+            femur.append((t, (0, 0, 16 * lift)))
+            tibia.append((t, (0, 0, -11 * lift)))
+            meta.append((t, (0, 0, -6 * lift)))
+        clip[f"{leg}_hip"] = {"rotation": rot(*yaw)}
+        clip[f"{leg}_1"] = {"rotation": rot(*femur)}
+        clip[f"{leg}_3"] = {"rotation": rot(*tibia)}
+        clip[f"{leg}_4"] = {"rotation": rot(*meta)}
+    clip["root_body"] = {"position": rot(*[(t, (0, -0.35 + 0.35 * math.cos(4 * math.pi * t / WALK), 0)) for t in times])}
+    clip["thorax"] = {"rotation": rot(*[(t, (0, 1.5 * math.sin(2 * math.pi * t / WALK), 0.8 * math.sin(2 * math.pi * t / WALK)))
+                                        for t in times])}
+    clip["abdomen"] = {"rotation": rot(*[(t, (1.0 * math.cos(4 * math.pi * t / WALK), -2.5 * math.sin(2 * math.pi * t / WALK), 0))
+                                         for t in times])}
+    clip["h_head"] = {"rotation": rot(*[(t, (0, -1.2 * math.sin(2 * math.pi * t / WALK), 0)) for t in times])}
+    clip.update(flicker(WALK))
+    return clip
+
+
+POUNCE = 2.6
+
+
+def pounce_clip():
+    """POUNCE_WARNING is 20 ticks; the server holds her still and turned to her mark for it, then throws her (0.75 up:
+    about a second in the air).
+      0.00-0.35  she sinks into a crouch: knees up, body low, the front legs raised high, the jaws wide (the tell)
+      0.35-0.90  held, the head trembling
+      0.90-1.05  launch: the rear legs kick straight, the abdomen swings down
+      1.05-1.95  in the air: the front legs reach for the mark, the rest trail behind
+      1.95-2.20  landing: the legs fold to absorb it, the jaws snap shut
+      2.20-2.60  she rises back to her stance"""
+    tell = deltas("pounce")
+    clip = {}
+    for leg in LEGS:
+        front = leg in FRONT
+        tf = tell.get(f"{leg}_1", ZERO)
+        tt = tell.get(f"{leg}_3", ZERO)
+        if front:
+            femur = [(0, ZERO), (0.35, tf), (0.9, tf), (1.1, (0, 0, -4)), (1.9, (0, 0, -4)), (2.05, (0, 0, 8)),
+                     (2.6, ZERO)]
+            tibia = [(0, ZERO), (0.35, tt), (0.9, tt), (1.1, (0, 0, -8)), (1.9, (0, 0, -6)), (2.05, (0, 0, -8)),
+                     (2.6, ZERO)]
+            yaw = [(0, ZERO), (0.9, ZERO), (1.1, fwd(leg, 16)), (1.9, fwd(leg, 12)), (2.15, ZERO), (2.6, ZERO)]
+        else:
+            femur = [(0, ZERO), (0.35, (0, 0, 10)), (0.9, (0, 0, 10)), (0.98, (0, 0, -6)), (1.15, (0, 0, -2)),
+                     (1.9, (0, 0, 2)), (2.05, (0, 0, 10)), (2.6, ZERO)]
+            tibia = [(0, ZERO), (0.35, (0, 0, -12)), (0.9, (0, 0, -12)), (0.98, (0, 0, 10)), (1.15, (0, 0, 6)),
+                     (1.9, ZERO), (2.05, (0, 0, -10)), (2.6, ZERO)]
+            yaw = [(0, ZERO), (0.9, ZERO), (1.1, fwd(leg, -14)), (1.9, fwd(leg, -8)), (2.15, ZERO), (2.6, ZERO)]
+        clip[f"{leg}_1"] = {"rotation": rot(*femur)}
+        clip[f"{leg}_3"] = {"rotation": rot(*tibia)}
+        clip[f"{leg}_hip"] = {"rotation": rot(*yaw)}
+    head = tell.get("h_head", (14, 0, 0))
+    tremble = [(0.5 + 0.1 * i, tuple(v + (2 if i % 2 else -1) * (k == 0) for k, v in enumerate(head))) for i in range(4)]
+    clip["h_head"] = {"rotation": rot((0, ZERO), (0.35, head), *tremble, (0.9, head), (1.1, (8, 0, 0)), (1.9, (4, 0, 0)),
+                                      (2.1, ZERO), (2.6, ZERO))}
+    jaw_r = tell.get("mandible_r", (0, -28, 0))
+    jaw_l = tell.get("mandible_l", (0, 28, 0))
+    clip["mandible_r"] = {"rotation": rot((0, ZERO), (0.3, jaw_r), (1.95, jaw_r), (2.05, (0, 8, 0)), (2.6, ZERO))}
+    clip["mandible_l"] = {"rotation": rot((0, ZERO), (0.3, jaw_l), (1.95, jaw_l), (2.05, (0, -8, 0)), (2.6, ZERO))}
+    clip["root_body"] = {"position": rot((0, ZERO), (0.35, (0, -2, 0)), (0.9, (0, -2, 0)), (1.0, (0, 1, 0)),
+                                         (1.9, (0, 0.5, 0)), (2.05, (0, -1.5, 0)), (2.6, ZERO))}
+    clip["abdomen"] = {"rotation": rot((0, ZERO), (0.35, (6, 0, 0)), (0.9, (6, 0, 0)), (1.1, (-8, 0, 0)), (1.9, ZERO),
+                                       (2.05, (6, 0, 0)), (2.6, ZERO))}
+    return clip
 
 
 def flicker(length):
@@ -280,7 +345,7 @@ def main():
     for name, (length, loop, bones) in clip_set.items():
         frames = [frame(model, bones, t) for t in np.arange(0, length + 1e-6, 1 / 15)]
         frames[0].save(gifs / f"{name}.gif", save_all=True, append_images=frames[1:], duration=66, loop=0)
-        picks = {"pounce": [0, 0.5, 1.15, 1.4, 1.8], "web": [0, 0.5, 1.45, 1.55, 1.8],
+        picks = {"pounce": [0, 0.5, 1.0, 1.5, 2.05], "web": [0, 0.5, 1.45, 1.55, 1.8],
                  "bite": [0, 0.12, 0.25, 0.45, 0.7]}.get(name, [length * f for f in (0, 0.25, 0.5, 0.75, 1.0)])
         stills.append((name, [(t, frame(model, bones, t, size=(330, 290), scale=1.8)) for t in picks]))
     tw, th, pad, top, left = 330, 290, 8, 54, 110

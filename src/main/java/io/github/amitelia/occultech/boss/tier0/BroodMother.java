@@ -76,6 +76,34 @@ public final class BroodMother extends BossBehavior {
     }
 
     @Override
+    public void move() {
+        if (pounceTarget == null || mother == null || !mother.isValid()) {
+            return;
+        }
+        int now = fight.elapsed();
+        if (now < pounceAt && pounceTarget.isValid()) {
+            // the tell: she crouches where she stands, turned to her mark (walking on in the crouch read as a glide)
+            mother.getPathfinder().stopPathfinding();
+            mother.setVelocity(mother.getVelocity().setX(0).setZ(0));
+            face(pounceTarget.getLocation().toVector().subtract(mother.getLocation().toVector()));
+        } else if (now >= pounceAt && now <= pounceAt + 15) {
+            Vector flight = mother.getVelocity().setY(0);
+            if (flight.lengthSquared() > 1e-3) {
+                face(flight);                // in the air she faces the way she flies
+            }
+        }
+    }
+
+    private void face(Vector direction) {
+        if (direction.setY(0).lengthSquared() < 1e-6) {
+            return;
+        }
+        float yaw = (float) Math.toDegrees(Math.atan2(-direction.getX(), direction.getZ()));
+        mother.setRotation(yaw, 0F);
+        mother.setBodyYaw(yaw);
+    }
+
+    @Override
     public void tick() {
         int now = fight.elapsed();
 

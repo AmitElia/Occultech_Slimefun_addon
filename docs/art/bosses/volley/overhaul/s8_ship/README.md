@@ -70,3 +70,10 @@ Each ward is a BetterModel model at its spot: packets only, so nothing is saved 
   world reset; that is the known storage race, not this change.
 - **Pack:** BetterModel's output for exactly the two shipped models was merged into the Occultech pack
   (sha1 `604d7cb2`). The jar carries the same zip, so the hash the server sends matches.
+
+## Later fixes (2026-10-11)
+
+- **The eye glint and jaw didn't follow the head:** BetterModel's `h` tag turns only the head bone; the shipped model
+  now uses `hi_head` (head with children), so everything on the head turns with it.
+- **The plain skeleton showed for a second before the model:** the model is now attached the moment the carrier
+  spawns, and the vanilla body is hidden at once.

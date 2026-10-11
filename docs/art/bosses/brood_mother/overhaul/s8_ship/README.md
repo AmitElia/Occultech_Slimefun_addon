@@ -65,14 +65,26 @@ reads right with the model, but it is a change from the 2.2x vanilla spider; wor
   targeters skip. With a living stand-in, Volley's burst skill draws its telegraph under the action target after a
   live `/mm reload`.
 
+## Fixes from the first in-game review
+
+- **The model came a second late:** the plain spider (and Volley's plain skeleton) showed for about a second before
+  the model replaced it, because the model waited for the mob's onSpawn skill. `MythicBody` now attaches the model
+  the moment the carrier spawns, and hides the vanilla body at once. The self-test still finds exactly one tracker.
+- **The eyes didn't follow the head (both bosses):** BetterModel's `h` tag turns only the head bone itself;
+  `hi` (head with children) turns everything hanging off it. Both shipped models now use `hi_head`, so the eyes,
+  jaws, pedipalps and head candles (Brood Mother) and the eye glint and jaw (Volley) turn with the head.
+- **Clunky walk, gliding, not facing the pounce:** see the
+  [revised animation](../s7_animation/README.md). `BroodMother.move()` holds her still and turned to her mark
+  through the pounce tell, and faces her along her flight.
+
 ## Tests
 
-- **Self-test with Mythic:** 543 passed, 0 failed, on a reset world. New checks: the Brood Mother has one BetterModel
+- **Self-test with Mythic:** 543 passed, 0 failed, on a reset world (again after the review fixes; one run in between hit the known flaky ritual tests and passed on rerun). New checks: the Brood Mother has one BetterModel
   tracker, her model has its hitbox, and her carrier stays unscaled. (The long-used test world gave the documented
   dirty-world failures first; it was set aside, not deleted, as `run-mythic-b/world.dirty-*`.)
 - **Unit tests:** 52 passed.
 - **Pack:** BetterModel's output for exactly the three shipped models (Volley, his ward, the Brood Mother) is merged
-  into the Occultech pack, sha1 `70ef4b44`. The jar carries the same zip, so the hash the server sends matches.
+  into the Occultech pack, sha1 `54fe6811` (after the review fixes). The jar carries the same zip, so the hash the server sends matches.
 
 ## In game
 

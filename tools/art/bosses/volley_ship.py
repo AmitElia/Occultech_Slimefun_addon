@@ -16,7 +16,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools" / "art"))
-from bosskit.bbmodel import pivot_matrix  # noqa: E402
+from bosskit.bbmodel import pivot_matrix, rename_group  # noqa: E402
 from bosskit.checks import flicker_pairs  # noqa: E402
 from bosses import volley_crone_s3 as s3, volley_crone_s6 as s6, volley_crone_s7 as s7, volley_ward_s2 as ward  # noqa: E402
 
@@ -50,6 +50,9 @@ def main():
     clips = set(s7.clips(s6.build()))
     # the held test poses go; the clips that share a name with one (idle, wards, stagger) replaced it in session 7
     rig["animations"] = [a for a in rig["animations"] if a["name"] in clips]
+    # BetterModel's "h" tag turns only the head bone; "hi" (head with children) turns what hangs off it too, so the
+    # eyes, jaws and anything else on the head follow where he looks
+    rename_group(rig, "h_head", "hi_head")
     (MODELS / "occultech_volley.bbmodel").write_text(json.dumps(rig, indent=1) + "\n", encoding="utf-8")
     ward_src = ward.OUT / f"{ward.MODEL_ID}.bbmodel"
     (MODELS / f"{ward.MODEL_ID}.bbmodel").write_bytes(ward_src.read_bytes())

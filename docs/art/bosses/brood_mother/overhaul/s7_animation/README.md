@@ -13,10 +13,10 @@ GIF previews (a quick software render with the hair cards left out, for judging 
 | Clip | Length | Plays | Started by | What happens |
 |---|---|---|---|---|
 | idle | 3.0 s loop | BetterModel, automatically | - | the abdomen breathes, each front leg taps in turn, the jaws chew, the palps twitch, the small flames flicker |
-| walk | 0.8 s loop | BetterModel, while moving | - | the spider gait: R0 L1 R2 L3 lift and swing while L0 R1 L2 R3 push, then the other way; a slight bob |
+| walk | 0.7 s loop | BetterModel, while moving | - | the spider gait: R0 L1 R2 L3 lift and swing while L0 R1 L2 R3 push, then the other way. Each leg rises on an eased arc (knee up, shin tucked) for 42% of the stride and pushes back along the ground for the rest; within a set the rear legs lead the front ones a little, so it ripples rather than marches. The body bobs twice a stride and sways, and the abdomen sways against it |
 | spawn | 2.4 s | BetterModel, when the model appears | the ritual's summon | unfolds out of a crouch into the threat display (front legs up, fangs bared), then settles |
-| pounce | 1.8 s | Mythic `state{s=pounce}` | the pounce telegraph | see the timing below |
-| bite | 0.7 s | Mythic | her melee hit | the jaws open, then snap shut as the front legs stab down |
+| pounce | 2.6 s | Mythic `state{s=pounce}` | the pounce telegraph | see the timing below |
+| bite | 0.7 s | Mythic | her melee hit | a rear-back, then her whole front slides forward as the jaws snap; the front legs rise and strike down to the floor |
 | egg_sac | 1.6 s | Mythic | the egg sacs appear | the abdomen pumps down twice |
 | web | 1.8 s | Mythic | the web telegraph | the abdomen tips up and quivers through the warning, then jerks as the web lands |
 | snuff | 0.8 s | Mythic | a group of candles goes out (75%, 50%, 25%) | a shudder through the thorax, the head dips |
@@ -26,8 +26,14 @@ GIF previews (a quick software render with the hair cards left out, for judging 
 
 | Clip | Server | Animation |
 |---|---|---|
-| pounce | the telegraph, then `POUNCE_WARNING` (20 ticks) until the server throws her at the target | 0-0.3 s she rears into the tell: head up, front legs high, jaws wide. She holds it until 0.95 s. 1.0-1.3 s the leap: the front legs reach, the rest trail. 1.3-1.8 s the landing crouch |
+| pounce | the telegraph, then `POUNCE_WARNING` (20 ticks): the server holds her still and turned to her mark, then throws her (about a second in the air), facing the way she flies | 0-0.35 s she sinks into a crouch for the tell: knees up, body low, front legs high, jaws wide. She holds it, the head trembling, until 0.9 s. 0.9-1.05 s launch: the rear legs kick straight. 1.05-1.95 s in the air: the front legs reach for the mark, the rest trail. 1.95-2.2 s landing: the legs fold to absorb it, the jaws snap shut. Back to her stance by 2.6 s |
 | web | the telegraph, then `WEB_WARNING` (30 ticks) until the web zone lands | 0-0.35 s the abdomen tips up. She quivers until 1.45 s, then jerks at 1.5 s as the web lands, and recovers by 1.8 s |
+
+**Revised after the first in-game review:** the walk was clunky, she glided during attacks, and she didn't face where
+she pounced. The walk is the new gait above; during the pounce tell the server now holds her still and turns her to
+her mark, and in the air she faces the way she flies. No clip pitches the thorax any more: every leg hangs off it, so
+a pitch drove the feet through the floor. Every grounded frame of the walk, bite and pounce now keeps the body and
+feet within two texels of the floor line, which is about where the feet already sit at rest.
 
 **Override:** bite, egg_sac, web and snuff move only part of her. With BetterModel's override on, the bones they don't
 key keep walking, so she can bite or web on the move without gliding (the lesson from Volley). Pounce, spawn and death
