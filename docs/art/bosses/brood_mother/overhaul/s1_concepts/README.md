@@ -1,50 +1,49 @@
-# Brood Mother redesign, session 1 (take 2): three directions
+# Brood Mother redesign, session 1 (take 3): three proportion studies
 
-The first take (a villager mask and egg cocoons) was rejected; it stays in git history. The new brief (2026-10-10):
+The brief (2026-10-10):
 - the **vanilla spider**, buffed and mutated;
 - **long predator legs** with several joints;
 - on her back, a **mountain of melted wax and lit candles**;
 - no mask; **large mandibles**.
 
-These are blockouts for picking a direction, in flat colours. Texture, the candle glow and the flicker come in later
-sessions.
+Take 1 (a villager mask and cocoons) was dropped. Take 2 had a small body on stilts and a wax tower. Both stay in git
+history.
 
-![Three directions: front, side, three-quarter](compare.png)
-![Material zones: front, side, back](compare_material.png)
+Take 3 copies a real spider's threat:
+- **The body:** low and heavy, with the big head carried low and a fat abdomen raised behind.
+- **The legs:** they arch high over her back, then reach far out and down, so she crouches inside a cage of her own
+  legs. The front legs are the longest and turn forward; the back legs turn back.
+- **The wax:** heaped on the abdomen as a cluster of rounded lumps. Thick flows run down her flanks with thin drips
+  between them, and candles stand in clusters, the tallest on the highest lump.
 
-| | Direction | Posture | Size (w x h x d) |
+These are flat-colour blockouts. Textures and the candle glow come in later sessions.
+
+![Three studies: front, side, three-quarter](compare.png)
+![Material zones: front, three-quarter, side](compare_material.png)
+
+| | Study | Build | Size (w x h x d) |
 |---|---|---|---|
-| A | **Candle stalker** | slung high between very long four-joint legs, the knees far above her back (a harvestman's build); a tall, narrow wax spire | 5.7 x 5.9 x 4.9 blocks |
-| B | **Wax hulk** | heavy and muscled, low to the ground on thick legs; the biggest wax mountain, spilling down her sides | 5.9 x 5.3 x 6.0 |
-| C | **Ambush hunter** | head carried low with the mandibles spread wide; the front pair of legs held up and folded like a mantis's scythes | 5.6 x 4.9 x 4.7 |
+| A | **Huntress** | a wolf spider: balanced and low, with thick legs of middle length | 6.8 x 4.1 x 6.0 blocks |
+| B | **Brute** | a tarantula: the heaviest body and abdomen, shorter, thicker legs and the biggest wax load | 6.6 x 4.7 x 6.3 |
+| C | **Stalker** | a huntsman: a flatter body on very long legs, with the knees far above her back | 7.5 x 3.7 x 6.7 |
 
-Sheets per direction: [A](A/sheet.png), [B](B/sheet.png), [C](C/sheet.png). Regenerate:
+Sheets per study: [A](A/sheet.png), [B](B/sheet.png), [C](C/sheet.png). Regenerate:
 `python tools/art/bosses/brood_s1.py`.
 
 ## What all three share
 
-- **The vanilla spider underneath:** the vanilla parts in their vanilla proportions, scaled up 2 to 2.6 times. A big
-  square head, a small thorax, a long boxy abdomen, and the red eye pattern on the face. Mutated: the thorax is swollen
-  with muscle humps, an extra cluster of eyes spills down one cheek, and the abdomen bulges and splits its flank plates
-  under the wax.
-- **Predator legs:** eight legs with four segments each, bristled, climbing to a high knee and reaching down to the floor.
-- **Mandibles:** big chelicerae under the face, reaching forward like pincers, with a hooked fang and a row of teeth
-  inside.
-- **The wax mountain:** lumps of melted wax run together around one slumped peak. A skirt of drips hangs over the edge
-  of the abdomen. Candles of every height stand all over it: tall ones crown the peak, some are burnt down to stubs and
-  some lean. Each flame is its own `glow_` bone, ready for full-bright and a flicker.
-- **Colours:** tier 0. Dark chitin and bone-coloured mandibles; honey wax in two shades; red eyes; orange flames.
-
-## Fit with the fight
-
-- **Egg sacs:** they could become wax-sealed egg clutches dropped from the mountain, so the pile shrinks as the fight goes on.
-- **Web zone:** the spinnerets at the back of the abdomen.
-- **Pounce:** A rears up on its long legs, B crouches low, and C cocks its scythes: each is a clear one-second warning.
-- **A wax hazard:** molten wax spilling from the pile as a slowing puddle, telegraphed by the flames flaring.
+- **The vanilla spider underneath:**
+  - the square head with the vanilla red eye pattern, a thorax and a boxy abdomen;
+  - mutated: a muscle-swollen thorax, extra eyes down one cheek, a bulging abdomen with split flank plates.
+- **Legs:** six segments each (coxa, femur, patella, tibia, metatarsus, tarsus), tapering from a thick femur to a thin
+  foot.
+- **Jaws:** big mandibles reaching forward and curling in like pincers, with teeth and a hooked fang. Short pedipalps
+  sit beside them.
+- **Candles:** every candle is its own bone, and every flame a `glow_` bone, ready for full-bright and a flicker.
 
 ## Inspirations
 
-- **The vanilla spider:** body plan, head and eye pattern.
-- **Harvestmen (daddy longlegs):** legs many times the body length, which reach down from a high body (A).
-- **Candle golems and wax golems:** wax heaped into a body, candles on every ledge, drips everywhere.
-- **Mantids and solifuges:** the folded front scythes and the forward pincer jaws (C).
+- **Body plan:** the vanilla spider.
+- **Proportions:** a wolf spider (A), a tarantula (B) and a huntsman (C).
+- **The wax:** harvestman-like knees framing the pile, and candle and wax golems: wax heaped into a body, with drips
+  everywhere.
