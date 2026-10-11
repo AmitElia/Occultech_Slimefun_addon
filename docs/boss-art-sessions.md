@@ -72,3 +72,4 @@ textures for effect models. Mirrored parts share UV space only when they are tru
 |---|---|---|
 | Volley | 8 pack and in-game review (redesign: the Amethyst Crone) | shipped with its geode-spire wards: [s8_ship](art/bosses/volley/overhaul/s8_ship/README.md); the in-game sign-off is pending |
 | Brood Mother | 8 pack and in-game review (redesign: the candle-laden tarantula) | shipped: Mythic body, candles snuff at 75/50/25%, pack sha1 54fe6811 (first in-game review fixes in): [s8_ship](art/bosses/brood_mother/overhaul/s8_ship/README.md); the in-game sign-off is pending |
+| Gelatinous Sovereign | 1 concept and silhouette | three directions (Drowned Regent, Crowned Core, The Pretender) and an in-game jelly see-through test; ready for review: [s1_concepts](art/bosses/gelatinous_sovereign/overhaul/s1_concepts/README.md) |

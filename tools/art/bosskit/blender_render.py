@@ -27,11 +27,15 @@ QUADS = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (
 materials = {}
 
 
-def material(color):
-    key = tuple(round(c, 3) for c in color)
+def material(color, alpha=1.0):
+    """A flat colour; below 1 alpha it is see-through in the flat views (jelly, glass), so what is inside shows."""
+    key = tuple(round(c, 3) for c in color) + (round(alpha, 3),)
     if key not in materials:
         m = bpy.data.materials.new("m%d" % len(materials))
-        m.diffuse_color = (*color, 1)
+        m.diffuse_color = (*color, alpha)
+        if alpha < 1:
+            m.blend_method = "BLEND"
+            m.show_transparent_back = False
         materials[key] = m
     return materials[key]
 
@@ -41,7 +45,7 @@ mat_list = []
 for b in job["boxes"]:
     base = len(verts)
     verts += [to_blender(p) for p in b["corners"]]
-    m = material(b["color"])
+    m = material(b["color"], b.get("alpha", 1.0))
     if m not in mat_list:
         mat_list.append(m)
     for q in QUADS:

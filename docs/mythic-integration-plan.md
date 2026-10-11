@@ -131,7 +131,7 @@ plugin jar so the pack hash matches, as today. Without the pack, players see the
 
 | # | State |
 |---|---|
-| M0 | Done. MythicMobs 5.13.0 (free) + BetterModel 3.5.0 + Slimefun Legacy boot together; `scripts/setup-mythic.ps1`. Production still to confirm. |
+| M0 | Done. MythicMobs 5.13.0 (free) + BetterModel 3.5.0 + Slimefun Legacy boot together; `scripts/setup-mythic.ps1`. Production runs the free versions of both, for now (confirmed 2026-10-11). |
 | M1 | Done. `BossBody` / `VanillaBody`; `BossFight.spawnBoss`/`spawnAdd` go through it. |
 | M2 | Done. All the planned components are built (reference below). Self-test: a Mythic skill (Volley's burst) draws a fight telegraph under the action target through `occultechTelegraph`, on the action's target (`@trigger`) after a live `/mm reload` mid-fight (verified 2026-10-11, with a living stand-in target: Mythic's targeters skip armour stands); after the reload the fight keeps its carrier, its model and Occultech's carrier rules. Still untested in a real skill: `occultechHit` (no shipped skill deals damage) and `occultechPhase`/`occultechSolo` (no boss uses them yet). |
 | M3 | Done pending the in-game sign-off. Volley runs on Mythic + BetterModel with the redesigned Amethyst Crone model and his geode-spire wards (BetterModel props on the fight objects, a piece lost per hit). Mythic skills play the burst, snap-shot, wards, stagger and cracked clips and switch the variants. Every arrow leaves the arbalest's muzzle. Self-test: Mythic 532/0, vanilla 525/0. Details: [s8_ship](art/bosses/volley/overhaul/s8_ship/README.md). |

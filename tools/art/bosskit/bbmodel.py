@@ -141,11 +141,15 @@ class Model:
 
     # ---- export --------------------------------------------------------------------------------------------
     def render_json(self, palette):
-        """World-space boxes for the Blender renderer. palette: mat -> (r, g, b) 0..255."""
+        """World-space boxes for the Blender renderer. palette: mat -> (r, g, b) or (r, g, b, a) 0..255; an alpha
+        below 255 renders see-through in the flat views."""
         out = []
         for c in self.cubes:
-            out.append({"name": c.name, "mat": c.mat, "color": [v / 255 for v in palette[c.mat][:3]],
-                        "corners": c.corners().tolist()})
+            col = palette[c.mat]
+            box = {"name": c.name, "mat": c.mat, "color": [v / 255 for v in col[:3]], "corners": c.corners().tolist()}
+            if len(col) > 3 and col[3] < 255:
+                box["alpha"] = col[3] / 255
+            out.append(box)
         return out
 
     def to_bbmodel(self, texture_size=(64, 64), textures=()):
