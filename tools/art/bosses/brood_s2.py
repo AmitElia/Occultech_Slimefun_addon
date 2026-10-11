@@ -22,6 +22,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools" / "art"))
@@ -335,6 +336,11 @@ def main():
     for b in boxes[:-1]:
         b["color"] = [v * 0.55 + 0.4 for v in b["color"]]
     v2.run_blender(boxes, OUT / "hitbox", HITBOX_VIEWS)
+    views = [Image.open(OUT / "hitbox" / f"{v['name']}.png") for v in HITBOX_VIEWS]
+    pair = Image.new("RGB", (sum(v.width for v in views), max(v.height for v in views)))
+    pair.paste(views[0], (0, 0))
+    pair.paste(views[1], (views[0].width, 0))
+    pair.save(OUT / "hitbox.png")
 
     for key in POSES:
         posed = build()
