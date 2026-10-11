@@ -880,6 +880,9 @@ final class SelfTest {
                 BossFight.FightObject ward = currentFight.spawnObject(altar.getLocation().add(3.5, 1, 0.5), "occultech_volley_ward",
                     org.bukkit.Material.AMETHYST_CLUSTER, 1.4F, 1.4F, 2.0F, 4, () -> { });
                 check("Volley's wards are drawn by the ward model", ward.hasProp(), "vanilla look");
+                // spawned level with the altar's top, a block above the floor: it must drop to stand on the floor
+                check("a ward stands on the ground", ward.location().clone().subtract(0, 0.6, 0).getBlock().getType().isSolid(),
+                    "floating at y " + ward.location().getY());
                 ward.remove();
             }
             check("Volley's model has its hitbox", carrier != null

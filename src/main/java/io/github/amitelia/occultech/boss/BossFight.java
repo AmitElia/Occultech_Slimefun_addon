@@ -416,6 +416,8 @@ public final class BossFight {
     @Nonnull
     public FightObject spawnObject(Location at, String modelId, Material fallback, float scale, float width, float height,
         int hits, Runnable onBreak) {
+        // fight points sit level with the altar's top, a block above the arena floor: a model stands on the ground
+        at = groundUnder(at);
         Prop prop = service.body().prop(modelId, at);
         if (prop == null) {
             return spawnObject(at, fallback, scale, hits, onBreak);
@@ -431,6 +433,21 @@ public final class BossFight {
         objects.put(hitbox.getUniqueId(), object);
         prop.animate("rise");
         return object;
+    }
+
+    /** The spot on the first solid block at or below {@code at} (up to 4 blocks down), or {@code at} itself. */
+    private static Location groundUnder(Location at) {
+        org.bukkit.block.Block block = at.getBlock();
+        for (int i = 0; i < 4; i++) {
+            org.bukkit.block.Block below = block.getRelative(org.bukkit.block.BlockFace.DOWN);
+            if (below.getType().isSolid()) {
+                Location ground = at.clone();
+                ground.setY(below.getY() + 1);
+                return ground;
+            }
+            block = below;
+        }
+        return at;
     }
 
     /** Live fight objects (for the self-test). */
