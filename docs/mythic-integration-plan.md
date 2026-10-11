@@ -133,9 +133,9 @@ plugin jar so the pack hash matches, as today. Without the pack, players see the
 |---|---|
 | M0 | Done. MythicMobs 5.13.0 (free) + BetterModel 3.5.0 + Slimefun Legacy boot together; `scripts/setup-mythic.ps1`. Production still to confirm. |
 | M1 | Done. `BossBody` / `VanillaBody`; `BossFight.spawnBoss`/`spawnAdd` go through it. |
-| M2 | Done. `MythicBody`, `MythicPackInstaller`, `occultechHit`, `@OccultechFighters`, the `OCCULTECHACTION` trigger. Not built yet: `occultechTelegraph`, `@OccultechActionTarget`, the conditions, `MythicReloadedEvent` handling. `occultechHit` is not yet used by a skill, so no combat-log check exists for it. |
+| M2 | Done. All the planned components are built (reference below). Self-test: a Mythic skill (Volley's burst) draws a fight telegraph under the action target through `occultechTelegraph`, `@OccultechActionTarget` and `?occultechInFight`, after a live `/mm reload` mid-fight; after the reload the fight keeps its carrier, its model and Occultech's carrier rules. Still untested in a real skill: `occultechHit` (no shipped skill deals damage) and `occultechPhase`/`occultechSolo` (no boss uses them yet). |
 | M3 | Done pending the in-game sign-off. Volley runs on Mythic + BetterModel with the redesigned Amethyst Crone model and his geode-spire wards (BetterModel props on the fight objects, a piece lost per hit). Mythic skills play the burst, snap-shot, wards, stagger and cracked clips and switch the variants. Every arrow leaves the arbalest's muzzle. Self-test: Mythic 532/0, vanilla 525/0. Details: [s8_ship](art/bosses/volley/overhaul/s8_ship/README.md). |
-| M4 | Partly done. `MythicLoot` rolls `OCCULTECH_<BOSS>_EXTRAS` per fighter into the reward list (`item:` entries), so offline fighters get them through `pending-rewards.yml`. No self-test yet for an offline fighter getting an extra. |
+| M4 | Done. `MythicLoot` rolls `OCCULTECH_<BOSS>_EXTRAS` once per eligible fighter into their reward list (`item:` entries, the item serialised whole). Self-test: the extras roll, and an extra kept for an offline fighter reads back from `pending-rewards.yml` as the identical item; delivery on join is the same path as every other pending reward. |
 
 Lessons from M3:
 - `MythicMob.spawn(..., Consumer)` runs the callback **before** Mythic applies the mob file (health, despawn,
@@ -154,6 +154,26 @@ Lessons from M3:
 - Test servers: `run-mythic-b` (port 25568) is a clean copy with Mythic + BetterModel and `bosses.bodies: mythic`.
   `run-mythic-test` (port 25567) has `Mobs/Volley.yml` hand-edited (the installer keeps it as a staff edit). Delete
   `plugins/MythicMobs/Packs/Occultech/` there to get the bundled files back.
+
+### Occultech's Mythic components (reference)
+
+All of them act only inside an Occultech fight: they find the fight from the caster. Damage never comes from a
+Mythic skill except through `occultechHit`, so contribution, combat logs, the arena rule and solo scaling hold.
+
+| Component | Kind | Use |
+|---|---|---|
+| `occultechHit{mechanic=SLAM}` | mechanic (entity) | deals the named `Mechanic` of this boss to a fighter, through `BossFight.hit` |
+| `occultechTelegraph{shape=circle;r=2;t=20;mark=target;color=#c08cff}` | mechanic (location or entity) | a fight floor warning: `circle` at the target, or a `wedge`/`lane` (`length=`, `width=`) from the caster to it. A warning only: the behavior deals the damage on the same geometry |
+| `@OccultechFighters` | targeter | living players inside the caster's arena |
+| `@OccultechActionTarget` | targeter | the target the current action locked (`BossFight.playAction(entity, action, target)`); Volley sets it for the burst and the snap shots |
+| `?occultechInFight` | condition | the entity belongs to a running fight |
+| `?occultechPhase{p=2}` (or `min=`/`max=`) | condition | the fight's phase (`BossBehavior.phase()`; Gallus has 1-3, others 1) |
+| `?occultechSolo` | condition | exactly one fighter in the arena |
+| `~onOCCULTECHACTION` | trigger | (internal) skills named `<BOSS>_<ACTION>` run when the behavior plays that action |
+
+`/mm reload` mid-fight is safe: `MythicReloadWatch` puts Occultech's carrier rules back on every running boss body
+(Mythic re-applies its mob file to running mobs: despawning, persistence and the unscaled health) and puts back any
+boss model that went missing.
 
 ## 7. Risks
 

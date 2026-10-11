@@ -68,6 +68,11 @@ public abstract class BossBehavior {
     /** An extra mob of this fight died ({@code killer} is the player responsible, if any). */
     public void onAddDeath(Entity entity, @Nullable Player killer) {}
 
+    /** The fight's phase for Mythic conditions (occultechPhase); a boss with phases overrides it. */
+    public int phase() {
+        return 1;
+    }
+
     /** True every {@code interval} ticks (interval must be a multiple of the step). */
     protected boolean every(int interval) {
         return fight.elapsed() % interval == 0;

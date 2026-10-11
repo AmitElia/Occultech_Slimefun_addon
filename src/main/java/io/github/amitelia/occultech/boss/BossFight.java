@@ -277,6 +277,9 @@ public final class BossFight {
      */
     private final boolean event;
     private final BossBehavior behavior;
+    @Nullable private Entity actionTarget;
+    /** Each boss body's max health once scaled for the group: what a Mythic reload must not undo. */
+    private final Map<UUID, Double> scaledHealth = new HashMap<>();
     private final BossBar bar;
     private int playersAtStart;
     /** Every main boss in spawn order, dead ones too: saved health lines up with a fresh spawn on resume. */
@@ -375,7 +378,30 @@ public final class BossFight {
 
     /** Cosmetic action hook. Geometry, targeting and damage remain owned by the behavior. */
     public void playAction(LivingEntity entity, String action) {
+        playAction(entity, action, null);
+    }
+
+    /**
+     * Cosmetic action hook with the target the action locked: Mythic skills reach it as {@code @OccultechActionTarget}
+     * (a marker under it, a look at it). It stays the action target until the next action.
+     */
+    public void playAction(LivingEntity entity, String action, @Nullable Entity target) {
+        actionTarget = target;
         service.body().playAction(entity, spec.id(), action);
+    }
+
+    /** The target the current action locked, while it is still a valid fighter of this fight. */
+    @Nullable
+    public Entity actionTarget() {
+        if (actionTarget instanceof Player player && !(player.isValid() && players().contains(player))) {
+            return null;
+        }
+        return actionTarget != null && actionTarget.isValid() ? actionTarget : null;
+    }
+
+    /** The behavior's phase (for Mythic conditions). */
+    public int phase() {
+        return behavior.phase();
     }
 
     /** Spawns a non-living fight entity (display, cloud, projectile) that is removed when the fight ends. */
@@ -1130,6 +1156,24 @@ public final class BossFight {
         if (max != null) {
             max.setBaseValue(max.getBaseValue() * healthMultiplier());
             entity.setHealth(max.getValue());
+            scaledHealth.put(entity.getUniqueId(), max.getBaseValue());
+        }
+    }
+
+    /**
+     * Puts Occultech's carrier rules back on a boss body after something outside re-applied its own (a Mythic reload
+     * re-applies the mob file: despawning, persistence, the unscaled health). Health keeps its fraction.
+     */
+    public void reapplyCarrier(LivingEntity body) {
+        body.setPersistent(!event);
+        body.setRemoveWhenFarAway(false);
+        body.setCanPickupItems(false);
+        Double scaled = scaledHealth.get(body.getUniqueId());
+        AttributeInstance max = body.getAttribute(Attribute.MAX_HEALTH);
+        if (scaled != null && max != null && Math.abs(max.getBaseValue() - scaled) > 1e-6) {
+            double fraction = body.getHealth() / Math.max(1e-6, max.getValue());
+            max.setBaseValue(scaled);
+            body.setHealth(Math.max(1, Math.min(max.getValue(), fraction * max.getValue())));
         }
     }
 

@@ -78,6 +78,11 @@ public final class Gallus extends BossBehavior {
     private Chicken gallus;
     private Zombie rider;
     private int phase = 1;
+
+    @Override
+    public int phase() {
+        return phase;
+    }
     private boolean riderDead;
     private Player target;
 

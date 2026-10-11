@@ -709,6 +709,11 @@ public final class BossService implements Listener {
         return pending().getStringList(player.toString());
     }
 
+    /** Rewards waiting for {@code player}, read back from pending-rewards.yml itself (self-test: survives a restart). */
+    public List<String> pendingOnDisk(UUID player) {
+        return org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(pendingFile()).getStringList(player.toString());
+    }
+
     /** Drops what is kept for {@code player} (self-test cleanup). */
     public void discardPending(UUID player) {
         pending().set(player.toString(), null);

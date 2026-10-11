@@ -853,6 +853,11 @@ final class SelfTest {
         }
     }
 
+    /** The stand-in action target for the Mythic component checks (M2), between Volley's spawn and its 3 s check. */
+    private org.bukkit.entity.ArmorStand actionTarget;
+    private int castsBefore;
+    private double maxBeforeReload;
+
     private void summonDirect(String bossId) {
         snapshotSlimes();
         BossSpec spec = rituals.spec(bossId).orElseThrow();
@@ -861,6 +866,20 @@ final class SelfTest {
         if (currentFight.usesMythicBody()) {
             check(ContentRegistrar.title(bossId) + " has an active Mythic carrier", currentFight.carrierMatchesMode(),
                 "Mythic did not register the fight carrier");
+            if ("VOLLEY".equals(bossId)) {
+                // the burst skill draws a target ring under the action target: occultechTelegraph, @OccultechActionTarget
+                // and ?occultechInFight together. Then Mythic reloads mid-fight; the 3 s check repeats it
+                LivingEntity carrier = currentFight.bosses().get(0);
+                actionTarget = carrier.getWorld().spawn(carrier.getLocation().add(4, 0, 0), org.bukkit.entity.ArmorStand.class, a -> {
+                    a.setInvisible(true);
+                    a.setMarker(true);
+                    a.setPersistent(false);
+                });
+                maxBeforeReload = carrier.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getBaseValue();
+                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "mythicmobs reload");
+                castsBefore = io.github.amitelia.occultech.integration.mythic.OccultechTelegraph.casts();
+                currentFight.playAction(carrier, "BURST_PREPARE", actionTarget);
+            }
             // Mythic applies its mob file during the spawn; Occultech's setup must still win afterwards
             check(ContentRegistrar.title(bossId) + " keeps Occultech's persistence over Mythic's despawn option",
                 currentFight.bosses().stream().noneMatch(LivingEntity::getRemoveWhenFarAway), "removed when far away");
@@ -868,6 +887,19 @@ final class SelfTest {
     }
 
     private void checkFightRunning(String bossId) {
+        if ("VOLLEY".equals(bossId) && currentFight.usesMythicBody() && actionTarget != null) {
+            LivingEntity carrier = currentFight.bosses().get(0);
+            check("after /mm reload the fight keeps its Mythic carrier", currentFight.carrierMatchesMode(), "carrier lost");
+            check("after /mm reload Occultech's carrier rules are back", !carrier.getRemoveWhenFarAway()
+                && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getBaseValue() - maxBeforeReload) < 1e-6,
+                "removed when far away " + carrier.getRemoveWhenFarAway() + ", max health "
+                    + carrier.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getBaseValue() + " (was " + maxBeforeReload + ")");
+            // occultechTelegraph, @OccultechActionTarget and ?occultechInFight together, after the reload
+            check("after /mm reload a Mythic skill draws a telegraph under the action target",
+                io.github.amitelia.occultech.integration.mythic.OccultechTelegraph.casts() > castsBefore, "the mechanic never ran");
+            actionTarget.remove();
+            actionTarget = null;
+        }
         if ("VOLLEY".equals(bossId) && currentFight.usesMythicBody()
             && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
             && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_volley")) {
@@ -1011,6 +1043,28 @@ final class SelfTest {
         List<String> kept = bosses.pendingFor(absent);
         check("an absent fighter's reward is kept for their return", kept.contains("xp:5") && kept.size() == 4, String.valueOf(kept));
         bosses.discardPending(absent);
+        if (plugin.getServer().getPluginManager().isPluginEnabled("MythicMobs")) {
+            // M4: a Mythic drop-table extra rolled for a fighter who is offline at the victory
+            List<String> extra = List.of();
+            for (int i = 0; i < 200 && extra.isEmpty(); i++) {
+                extra = io.github.amitelia.occultech.integration.mythic.MythicLoot.roll("VOLLEY", plugin.getLogger());
+            }
+            if (extra.isEmpty()) {
+                check("a Mythic extra rolls for the offline test", false, "200 rolls gave nothing");
+            } else {
+                java.util.UUID offline = java.util.UUID.randomUUID();
+                bosses.reward(offline, "Volley", extra);
+                List<String> onDisk = bosses.pendingOnDisk(offline);
+                String stored = onDisk.stream().filter(r -> r.startsWith("item:")).findFirst().orElse(null);
+                org.bukkit.inventory.ItemStack rolled = org.bukkit.inventory.ItemStack.deserializeBytes(
+                    java.util.Base64.getDecoder().decode(extra.get(0).substring(5)));
+                org.bukkit.inventory.ItemStack back = stored == null ? null : org.bukkit.inventory.ItemStack.deserializeBytes(
+                    java.util.Base64.getDecoder().decode(stored.substring(5)));
+                check("an offline fighter's Mythic extra is kept on disk as the same item", back != null && back.equals(rolled),
+                    String.valueOf(onDisk));
+                bosses.discardPending(offline);
+            }
+        }
     }
 
     private void refundOnInterruption() {

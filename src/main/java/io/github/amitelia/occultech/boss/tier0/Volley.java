@@ -159,7 +159,7 @@ public final class Volley extends BossBehavior {
         if (every(VOLLEY_INTERVAL) && archer.isValid()) {
             volleyAt = now + VOLLEY_WARNING;
             archer.setGlowing(true);
-            fight.playAction(archer, "BURST_PREPARE");
+            fight.playAction(archer, "BURST_PREPARE", fight.nearestPlayer(archer.getLocation()));
             if (!fight.usesMythicBody()) {
                 archer.getWorld().playSound(archer.getLocation(), Sound.ITEM_CROSSBOW_LOADING_MIDDLE, 1.5F, 0.8F);
             }
@@ -194,7 +194,7 @@ public final class Volley extends BossBehavior {
             }
         }
         if (!bursting && shotAt < 0 && now >= nextShotAt && fight.nearestPlayer(archer.getLocation()) != null) {
-            fight.playAction(archer, "SHOT");
+            fight.playAction(archer, "SHOT", fight.nearestPlayer(archer.getLocation()));
             shotAt = now + SHOT_RELEASE;
             nextShotAt = now + SHOT_INTERVAL;
         }

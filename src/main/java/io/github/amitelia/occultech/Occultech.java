@@ -78,6 +78,8 @@ public final class Occultech extends JavaPlugin implements SlimefunAddon {
                 boolean packChanged = io.github.amitelia.occultech.integration.mythic.MythicPackInstaller.install(this);
                 new io.lumine.mythic.core.skills.CustomComponentRegistry(this,
                     "io.github.amitelia.occultech.integration.mythic");
+                getServer().getPluginManager().registerEvents(
+                    new io.github.amitelia.occultech.integration.mythic.MythicReloadWatch(this, bosses), this);
                 if (!"vanilla".equalsIgnoreCase(bodyMode)) {
                     bosses.setBody(new io.github.amitelia.occultech.integration.mythic.MythicBody(this, bodyMode));
                 }

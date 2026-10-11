@@ -74,6 +74,11 @@ public final class BetterModelVisuals {
             .orElse(false);
     }
 
+    /** Puts {@code modelId} on {@code entity} (after a Mythic reload lost it). */
+    public static void attach(Entity entity, String modelId) {
+        BetterModel.model(modelId).ifPresent(renderer -> renderer.create(BukkitAdapter.adapt(entity)));
+    }
+
     public static long count(Entity entity, String modelId) {
         return BetterModel.registry(entity.getUniqueId())
             .map(registry -> registry.trackers().stream().filter(tracker -> tracker.renderer().name().equals(modelId)).count())
