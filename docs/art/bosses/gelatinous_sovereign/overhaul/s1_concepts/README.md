@@ -1,51 +1,57 @@
-# Gelatinous Sovereign redesign, session 1: three directions
+# Gelatinous Sovereign redesign, session 1 (take 2): three directions, each in both forms
 
-**The fight and the name are set** (`GelatinousSovereign.java`):
-- a huge slime (a size-7 slime, about 3.6 blocks);
-- it marks a player and leaps onto them, with a shockwave you jump;
-- at 66% it splits off three shards that crawl back to the altar to heal it;
-- at 33% it shrinks, speeds up and leaves acid puddles.
+**The brief (2026-10-11):** the first take, a drowned king in jelly, was rejected. The new brief:
+- **Two forms:**
+  1. normal: big and jumpy;
+  2. compressed: small, dense, toxic and angry.
+- **The vanilla slime,** buff and mutated.
+- **Visibly radioactive.**
+- **A large crown.**
 
-**The look is open.** All three directions keep the vanilla slime's idea, a see-through jelly with something solid
-inside it, and each can show the split (a tear) and the shrink (the jelly burning off).
+The fight is unchanged (`GelatinousSovereign.java`). The compressed form is its 33% phase, when it shrinks, speeds up
+and leaves acid puddles.
 
-These are blockouts for picking a direction. In the colour views the jelly is drawn see-through; texture comes later.
+**What every direction shares:**
+- **The vanilla slime's own build, scaled up:** a see-through outer cube around an opaque core. Two 2x2x2 dark eye
+  cubes with a black pupil, and a black 1x1x1 mouth, stand half a pixel proud of the core's face, all from the
+  vanilla model.
+- **The crown:** a big, chunky Minecraft crown with blocky stepped points and a glowing radioactive front stone.
+- **The radioactive light:** neon lime. It's drawn bright here; in game it becomes full-bright glow bones, so it
+  shows at night.
 
-![Silhouettes and clay](compare.png)
-![The jelly see-through: front, three-quarter, side](compare_material.png)
+![Both forms of each direction: three-quarter, side silhouette, clay](compare.png)
+![The face and the crown: front, side](compare_front.png)
 
-| | Direction | Shape | Inside | At 33% | Size (w x h x d) |
-|---|---|---|---|---|---|
-| A | **Drowned Regent** | a low, wide, sagging dome of murky jelly; a pseudopod reaching forward with a swallowed gauntlet in its tip; the throne's tall back breaks out of the top | a dead king seated on his sunken stone throne; coins, helmets and a sword drifting round him. The crown sits outside, sunk halfway into the top | the jelly burns off and the king stands up | 5.6 x 3.7 x 5.8 blocks |
-| B | **Crowned Core** | the vanilla slime made huge: one bevelled cube of clear jelly, sagging under its own weight (the base bulges, the front lip droops), goo running down its sides | a great dark core with the vanilla slime face (two square eyes, a small mouth), wearing the crown; swallowed treasure orbiting it | the outer jelly is gone: the crowned core is left, small and fast | 5.3 x 3.8 x 5.1 |
-| C | **The Pretender** | the jelly has taken the shape of the king it ate: a robe spreading to the floor, a lap, shoulders, a head with the crown, arms resting on the throne's arms, slime fingers dripping off them; the throne's back rises behind its head | the real king's skeleton, seated in the same pose; a little treasure in its lap | the shape slumps and the skeleton walks out of it | 5.3 x 4.8 x 4.9 |
+| | Direction | Big (phase 1) | Compressed (phase 2) |
+|---|---|---|---|
+| A | **The Brute** (buff) | a squat, heavy body with muscle swelling over its back, and two huge jelly arms planted on their knuckles like a gorilla's, glowing veins down them. It leaps on its arms | the arms pulled in, fists clenched at its sides |
+| B | **The Swollen King** (mutated) | bulges straining out of every face like a bag about to burst, glowing veins standing out; smaller slimes bud out of it, each with its own little face | the buds have torn away, leaving glowing wounds. The buds can be the three shards it splits off at 66% |
+| C | **The Crystal King** (radioactive) | glowing uranium-green crystals grow out of its back and shoulders, with threads of light to its core and shards drifting in the jelly; its crown's points are crystals | crystals forced out of it all over, like spines |
 
-Sheets per direction: [A](A/sheet.png), [B](B/sheet.png), [C](C/sheet.png). Regenerate:
-`python tools/art/bosses/sovereign_s1.py`.
+In every compressed form it is squeezed into a dense, nearly opaque, sickly cube about 2.5 blocks across:
+- the face scowls, its mouth open on the glow;
+- light cracks through its skin;
+- glowing acid runs off it into a puddle;
+- the same big crown is jammed on askew.
 
-**My read:**
-- **B** is the most Minecraft: anyone sees a giant crowned slime at once, and its 33% state is the vanilla slime's
-  inner core.
-- **A** is the most story: a drowned court in a puddle.
-- **C** is the most unsettling, and the strongest silhouette.
+Sizes, big then compressed: A 6.6 x 5.3 x 4.8 / 4.4 x 4.3 x 4.3 blocks; B 5.1 x 5.1 x 5.2 / 4.4 x 4.3 x 4.3; C 5.7 x
+5.7 x 5.0 / 4.6 x 4.4 x 4.3. These include the crown and the acid puddle; the compressed body is about 2.5 blocks.
 
-Parts can be mixed. For example, B's vanilla cube and face with A's seated king inside instead of a core, or C's
-mimicry with A's murk.
+**Mixing:** the three lean on one word each of the brief (buff, mutated, radioactive), so they mix easily. For
+example, A's arms with C's crystals, or B's budding shards with A's arms.
 
-## Check in game first: see-through jelly
+Sheets: [A big](A1/sheet.png), [A compressed](A2/sheet.png), [B big](B1/sheet.png), [B compressed](B2/sheet.png),
+[C big](C1/sheet.png), [C compressed](C2/sheet.png). Regenerate with `python tools/art/bosses/sovereign_s1.py`.
 
-Every direction depends on solid things showing through the jelly. BetterModel draws each bone as its own item
-display, and Minecraft doesn't sort the see-through faces of separate entities against each other, so the inside may
-vanish, or show through wrongly, from some angles. A tiny test model is on your server (port 25565) and the test
-server, and loads cleanly. It's a 2-block jelly cube around an opaque core with a gold crown, and a loose bone.
+## Still to check in game: see-through jelly
+
+All three depend on the core and its face showing through the jelly. The test model `occultech_jelly_test` is on your
+server (port 25565): a jelly cube around an opaque core with a crown, and a loose bone.
 
 ```
 /bm reload
 /bm spawn occultech_jelly_test
 ```
 
-Walk round it and look from above and below. The core, crown and bone should always show through the jelly, and the
-jelly should never disappear behind them. If it breaks, the jelly can be painted as a frosted, mostly opaque skin with
-see-through windows, and the session 2 design adapts.
-
-Test model source: `python tools/art/bosses/sovereign_jelly_test.py` (never shipped).
+Walk round it. The inside should always show through the jelly, and the jelly should never vanish behind it. If it
+breaks, the outer jelly becomes a thicker, frosted skin, with the face showing through clear patches.
