@@ -170,7 +170,11 @@ def render(name, location, target, scale, show_player):
     bpy.ops.render.render(write_still=True)
 
 
-render("textured_hero", (6.5, 8.5, 6.8), (0, .3, 2.0), 8.5, True)
-render("textured_front", (0, 10, 3.4), (0, 0, 2.15), 7.5, False)
-render("textured_player_eye", (-3.4, 7.2, 1.62), (0, 0, 2.25), 7.5, False)
+# a job may name its own views: {"name", "location", "target", "scale", "player"} in Blender coordinates (blocks, Z up)
+for v in job.get("views", [
+        {"name": "textured_hero", "location": (6.5, 8.5, 6.8), "target": (0, .3, 2.0), "scale": 8.5, "player": True},
+        {"name": "textured_front", "location": (0, 10, 3.4), "target": (0, 0, 2.15), "scale": 7.5, "player": False},
+        {"name": "textured_player_eye", "location": (-3.4, 7.2, 1.62), "target": (0, 0, 2.25), "scale": 7.5,
+         "player": False}]):
+    render(v["name"], v["location"], v["target"], v["scale"], v["player"])
 print("TEXTURED_RENDER_DONE")

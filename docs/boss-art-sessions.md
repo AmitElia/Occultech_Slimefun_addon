@@ -70,4 +70,4 @@ textures for effect models. Mirrored parts share UV space only when they are tru
 
 | Boss | Session | Status |
 |---|---|---|
-| Volley | 3 rig and pose test (redesign: the Amethyst Crone) | design locked in [s2_design](art/bosses/volley/overhaul/s2_design/README.md); rig checks, six test poses and an in-game review model: [s3_rig](art/bosses/volley/overhaul/s3_rig/README.md); in-game look pending |
+| Volley | 4 UV and material blocking (redesign: the Amethyst Crone) | rig in [s3_rig](art/bosses/volley/overhaul/s3_rig/README.md); UVs, flat zones, vanilla face and value check: [s4_uv](art/bosses/volley/overhaul/s4_uv/README.md); 256x512 atlas awaiting OK |
