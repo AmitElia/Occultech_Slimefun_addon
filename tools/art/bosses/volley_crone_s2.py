@@ -29,6 +29,7 @@ PALETTE = dict(s1.PALETTE, hitbox=(220, 60, 60))
 
 BEND = 46                    # A's stoop, split over the curved spine
 BODY, ARMS, LEGS = 1.2, 1.45, 1.15
+ARBALEST = 1.45   # the weapon is scaled up about the fist: a 3-block prod, a 2.7-block stock
 
 
 def make_arm(torso, s):
@@ -51,7 +52,7 @@ def make_arm(torso, s):
     if s > 0:
         fore.box("right_bracer", (wrist[0], 22, 3), (9 * ARMS, 9, 9 * ARMS), "iron")
         fore.box("right_bracer_rim", (wrist[0], 26.5, 3), (10 * ARMS, 2, 10 * ARMS), "chain")
-        s1.make_arbalest(hand, wrist, tilt=12)
+        s1.make_arbalest(hand, wrist, tilt=12, k=ARBALEST)
     else:
         s1.make_pauldron(upper, shoulder, ARMS, False)
 
@@ -88,7 +89,8 @@ def build():
     for s in (-1, 1):
         torso.box(f"scapula_{s}", (s * 7 * b, 44, 10 + 2 * b), (8 * b, 10, 3), "bone", rotation=(0, s * 15, 0))
     torso.box("breastplate", (-2 * b, 42, 3 - 7.6 * b), (13 * b, 10, 2), "iron", rotation=(0, 0, 6))
-    torso.box("gorget", (0, 49.5, 2), (15 * b, 4, 13 * b), "iron")
+    # the collar sits low and behind the neck, clear of the skull and jaw hanging forward of it
+    torso.box("gorget", (0, 46.5, 5), (15 * b, 4, 13), "iron")
     s1.beam(torso, "baldric", (-6 * b, 47, 3 - 7.8 * b), (8 * b, 33, 3 - 7.8 * b), 2, "string", depth=1)
     for s in (-1, 1):
         make_arm(torso, s)

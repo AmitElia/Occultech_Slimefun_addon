@@ -123,27 +123,38 @@ def make_pauldron(upper, shoulder, b, cracked):
             crystal(upper, f"pauldron_crystal_{i}", (x + dx * b, y + 8, z + dz), p, sd, L, w, "crystal")
 
 
-def make_arbalest(hand, wrist, tilt=55):
-    """Built along -Y from the fist (the forearm points it forward): stock, steel prod at the muzzle, windlass at the butt."""
+def make_arbalest(hand, wrist, tilt=55, k=1.0):
+    """Built along -Y from the fist (the forearm points it forward): stock, steel prod at the muzzle, windlass at the
+    butt. k scales the whole weapon about the fist. The string halves pivot at the prod's nocks and the bolt is its
+    own bone, so the animation can draw, release and reload."""
     x, y, z = wrist
-    # the fist turns the weapon level: it points ahead from the hip instead of continuing the hanging forearm
+
+    def at(dx, dy, dz):
+        return (x + dx * k, y + dy * k, z + dz * k)
+
+    def size(*v):
+        return tuple(c * k for c in v)
+
     bow = hand.group("arbalest", (x, y - 3, z), (tilt, 0, 0))
-    bow.box("stock", (x, y - 9, z - 3), (5, 30, 5), "wood")
-    bow.box("lath_rail", (x, y - 10, z - 6), (2.5, 24, 1.5), "iron")
-    bow.box("trigger_lever", (x, y + 1, z + 1), (1.5, 6, 3), "iron")
-    bow.box("stirrup", (x, y - 25, z - 3), (9, 3, 2), "iron")
-    prod = bow.group("arbalest_prod", (x, y - 21, z - 3))
-    prod.box("prod_center", (x, y - 21, z - 3), (8, 3, 4), "iron")
+    bow.box("stock", at(0, -9, -3), size(5, 30, 5), "wood")
+    bow.box("lath_rail", at(0, -10, -6), size(2.5, 24, 1.5), "iron")
+    bow.box("trigger_lever", at(0, 1, 1), size(1.5, 6, 3), "iron")
+    bow.box("stirrup", at(0, -25, -3), size(9, 3, 2), "iron")
+    prod = bow.group("arbalest_prod", at(0, -21, -3))
+    prod.box("prod_center", at(0, -21, -3), size(8, 3, 4), "iron")
     for s in (-1, 1):
-        beam(prod, f"prod_limb_{s}", (x + s * 4, y - 21, z - 3), (x + s * 17, y - 18, z - 3), 3, "iron")
-        prod.box(f"prod_nock_{s}", (x + s * 17, y - 18, z - 3), (2.5, 2.5, 3), "iron")
-        beam(prod, f"string_{s}", (x + s * 17, y - 18, z - 3), (x, y - 5, z - 6), 0.8, "string")
-    bow.box("bolt", (x, y - 16, z - 7.5), (1.4, 24, 1.4), "wood")
-    bow.box("bolt_tip", (x, y - 30, z - 7.5), (3, 5, 3), "glow")
-    crank = bow.group("windlass", (x, y + 8, z - 3))
-    crank.box("windlass_drum", (x, y + 8, z - 3), (9, 4, 4), "iron")
-    crank.box("windlass_arm", (x + 6, y + 8, z - 3), (2, 2, 9), "iron")
-    crank.box("windlass_handle", (x + 6, y + 8, z + 2), (4, 1.6, 1.6), "wood")
+        beam(prod, f"prod_limb_{s}", at(s * 4, -21, -3), at(s * 17, -18, -3), 3 * k, "iron")
+        prod.box(f"prod_nock_{s}", at(s * 17, -18, -3), size(2.5, 2.5, 3), "iron")
+        side = "left" if s < 0 else "right"
+        string = prod.group(f"arbalest_string_{side}", at(s * 17, -18, -3))
+        beam(string, f"string_{s}", at(s * 17, -18, -3), at(0, -5, -6), 0.8 * k, "string")
+    bolt = bow.group("arbalest_bolt", at(0, -16, -7.5))
+    bolt.box("bolt", at(0, -16, -7.5), size(1.4, 24, 1.4), "wood")
+    bolt.box("bolt_tip", at(0, -30, -7.5), size(3, 5, 3), "glow")
+    crank = bow.group("windlass", at(0, 8, -3))
+    crank.box("windlass_drum", at(0, 8, -3), size(9, 4, 4), "iron")
+    crank.box("windlass_arm", at(6, 8, -3), size(2, 2, 9), "iron")
+    crank.box("windlass_handle", at(6, 8, 2), size(4, 1.6, 1.6), "wood")
 
 
 def make_head(torso, d):
@@ -157,9 +168,10 @@ def make_head(torso, d):
     jaw = head.group("jaw_counter", (0, 51, -7))
     jaw.box("jaw", (0, 49, -14), (15.5, 4, 15.5), "bone")
     jaw.box("mouth", (0, 50, -21.9), (12, 2, 0.6), "marrow")
+    # a chainmail hood fitted flush to the skull's sides and back (it stops above the jaw, so the jaw swings free)
     for s in (-1, 1):
-        head.box(f"coif_{s}", (s * 8.6, 54, -11), (1.4, 10, 9), "chain")
-    head.box("coif_back", (0, 54, -5.6), (14, 10, 1.4), "chain")
+        head.box(f"coif_{s}", (s * 8.5, 57, -10), (1, 8, 8), "chain")
+    head.box("coif_back", (0, 57, -5.5), (18, 8, 1), "chain")
 
 
 def back_surface(y, b):

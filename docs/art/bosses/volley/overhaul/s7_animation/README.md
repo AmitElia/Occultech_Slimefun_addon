@@ -1,5 +1,11 @@
 # Volley redesign, session 7: animation
 
+**Revision after the first review:**
+- the chainmail hood now sits flush on the skull, and the gorget sits lower and further back, so nothing clips the
+  face or the jaw, closed or fully open;
+- the arbalest is 1.45x larger (about 3.3 blocks across the prod, 3.9 long);
+- the burst now shows the crossbow being loaded and shot (string halves and the bolt are their own bones).
+
 Eight clips, keyed on the session 6 painted rig. Animation is cosmetic: every hit, telegraph and timing still comes
 from `Volley.java`, and each clip starts on the server event that starts the attack.
 
@@ -20,14 +26,20 @@ GIF previews (a quick software render, for judging motion, not looks): [idle](gi
 | cracked | 1.4 s | Mythic | health below 40% (new action) | a shudder; the big shards snap (part swap from session 6) |
 | death | 2.6 s, holds | BetterModel, on death | - | a last rearing cry, then he folds onto his knees, the arbalest drops |
 
-**Burst timing, against Volley.java** (`VOLLEY_WARNING` 20 ticks, then one arrow per 5-tick step):
+**Burst timing, against Volley.java** (`VOLLEY_WARNING` 20 ticks, then one arrow per 5-tick step). The arbalest is
+carried **unloaded** in every other clip (string slack against the prod, no bolt), so the loading reads:
 
 | Time | Server | Animation |
 |---|---|---|
-| 0.0 s | `BURST_PREPARE`: glows, crank sound | prepare: settles into the crank pose by 0.3 s; the windlass turns twice by 0.85 s |
-| 1.0 s | `BURST_CONTACT`: first arrow | commit: snaps up to aim exactly as the first bolt leaves |
-| 1.0, 1.25, 1.5, 1.75, 2.0 s | an arrow each | a recoil kick of the forearm and one counting click of the jaw per arrow |
-| 2.0-2.6 s | burst over | recover to idle |
+| 0.0 s | `BURST_PREPARE`: glows, crank sound | prepare: settles into the crank pose by 0.3 s |
+| 0.35-0.85 s | (warning) | loading: the windlass turns twice and draws the string back; an amethyst bolt grows into the groove |
+| 1.0 s | `BURST_CONTACT`: first arrow | commit: snaps up to aim, the string snaps forward, the bolt flies off the muzzle |
+| each shot (1.0, 1.25, 1.5, 1.75, 2.0 s) | an arrow | release + bolt away, a forearm kick, one counting click of the jaw; then within 0.2 s the windlass whirls a turn, the string is redrawn and the next bolt grows in |
+| 2.0-2.6 s | burst over | recover to idle; the arbalest stays unloaded |
+
+![The arbalest alone, seen from above: unloaded, drawing, loaded, release, slack, reloaded, next release](burst_closeup.png)
+
+The weapon alone through the whole burst: [burst_arbalest.gif](gifs/burst_arbalest.gif).
 
 The arrows leave from the carrier's eye (about 1.7 blocks up), which is the height of the raised arbalest in the aim
 pose, so the visible shot and the real one line up.

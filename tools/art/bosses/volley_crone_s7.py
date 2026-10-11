@@ -43,6 +43,30 @@ OUT = ROOT / "docs/art/bosses/volley/overhaul/s7_animation"
 SHOTS = (1.0, 1.25, 1.5, 1.75, 2.0)          # Volley.java: BURST_CONTACT at +20 ticks, then one arrow per 5-tick step
 
 
+def euler_zyx(m):
+    """Blockbench group angles (degrees) of a rotation matrix: R = Rz @ Ry @ Rx."""
+    y = math.asin(max(-1.0, min(1.0, -m[2, 0])))
+    return (math.degrees(math.atan2(m[2, 1], m[2, 2])), math.degrees(y), math.degrees(math.atan2(m[1, 0], m[0, 0])))
+
+
+def string_release(model, side):
+    """Rotation and scale that swing a drawn string half (nock -> nut) onto the prod line (nock -> prod centre)."""
+    groups = {g.name: g for g in model.groups}
+    half = groups[f"arbalest_string_{side}"]
+    nock = np.array(half.origin)
+    cube = next(c for c in half.children if not hasattr(c, "children"))
+    drawn = (np.array(cube.frm) + np.array(cube.to)) / 2
+    drawn = (pivot_matrix(cube.origin, cube.rotation) @ np.array([*drawn, 1.0]))[:3] - nock
+    slack = np.array(groups["arbalest_prod"].origin) - nock
+    a, b = drawn / np.linalg.norm(drawn), slack / np.linalg.norm(slack)
+    axis = np.cross(a, b)
+    sin, cos = np.linalg.norm(axis), float(np.dot(a, b))
+    axis = axis / sin
+    kx = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+    rot = np.eye(3) + sin * kx + (1 - cos) * kx @ kx
+    return euler_zyx(rot), float(np.linalg.norm(slack) / (2 * np.linalg.norm(drawn)))
+
+
 def rest(model):
     return {g.name: list(g.rotation) for g in model.groups}
 
@@ -61,6 +85,17 @@ def clips(model):
 
     def rot(*keys, interp="linear"):
         return [(t, v, interp) for t, v in keys]
+
+    (rel_l, k_l), (rel_r, k_r) = string_release(model, "left"), string_release(model, "right")
+    one, gone = (1, 1, 1), (0.01, 0.01, 0.01)
+
+    def unloaded(length):
+        """The arbalest at rest: the string slack against the prod, no bolt in the groove."""
+        return {"arbalest_string_left": {"rotation": [(0, rel_l, "step"), (length, rel_l, "step")],
+                                         "scale": [(0, (k_l,) * 3, "step"), (length, (k_l,) * 3, "step")]},
+                "arbalest_string_right": {"rotation": [(0, rel_r, "step"), (length, rel_r, "step")],
+                                          "scale": [(0, (k_r,) * 3, "step"), (length, (k_r,) * 3, "step")]},
+                "arbalest_bolt": {"scale": [(0, gone, "step"), (length, gone, "step")]}}
 
     out["idle"] = (3.0, "loop", {
         "torso": {"rotation": rot((0, zero), (1.5, (-2.5, 0, 0)), (3.0, zero), interp="catmullrom")},
@@ -121,15 +156,38 @@ def clips(model):
         key(bone, "rotation", 2.6, zero)              # recover
     key("windlass", "rotation", 0.0, zero, "linear")
     key("windlass", "rotation", 0.85, (720, 0, 0), "linear")  # two turns of the crank during the 1 s warning
-    key("windlass", "rotation", 2.6, (720, 0, 0), "linear")
     jaw = [(0.0, zero, "step")]
-    for t in SHOTS:                                   # contact: a kick and a counting click per arrow
+    # loading: the crank draws the string back over the warning and a bolt grows into the groove
+    strings = {"left": [(0.0, rel_l, k_l)], "right": [(0.0, rel_r, k_r)]}
+    for side in strings:
+        strings[side].append((0.35, strings[side][0][1], strings[side][0][2]))
+        strings[side].append((0.85, zero, 1.0))
+    bolt_scale = [(0.0, gone, "step"), (0.6, gone, "linear"), (0.85, one, "catmullrom")]
+    bolt_pos = [(0.0, zero, "step")]
+    for n, t in enumerate(SHOTS):                     # contact: release, the bolt flies, a kick and a jaw click
         key("arm_right_forearm", "rotation", t + 0.06, tuple(v + d for v, d in zip(aim["arm_right_forearm"], (-9, 0, 0))))
         key("arm_right_forearm", "rotation", t + 0.2, aim["arm_right_forearm"])
         jaw += [(t, (-7, 0, 0), "step"), (t + 0.12, zero, "step")]
+        for side, (rel, kk) in (("left", (rel_l, k_l)), ("right", (rel_r, k_r))):
+            strings[side] += [(t, zero, 1.0), (t + 0.01, rel, kk)]          # the string snaps forward
+            if n < len(SHOTS) - 1:
+                strings[side] += [(t + 0.09, rel, kk), (t + 0.2, zero, 1.0)]  # ...and is cranked back for the next
+        bolt_pos += [(t, zero, "linear"), (t + 0.07, (0, -46, 0), "step"), (t + 0.08, zero, "step")]
+        bolt_scale += [(t + 0.07, one, "step"), (t + 0.08, gone, "linear")]
+        if n < len(SHOTS) - 1:
+            bolt_scale += [(t + 0.12, gone, "linear"), (t + 0.21, one, "linear")]      # the next bolt grows in
+            key("windlass", "rotation", t + 0.09, (720 + 360 * n, 0, 0), "linear")
+            key("windlass", "rotation", t + 0.2, (720 + 360 * (n + 1), 0, 0), "linear")
     for bone in burst:
         burst[bone]["rotation"].sort(key=lambda k: k[0])
     burst["jaw_counter"] = {"rotation": jaw}
+    for side, keys in strings.items():
+        burst[f"arbalest_string_{side}"] = {
+            "rotation": [(t, r, "step" if i and abs(t - keys[i - 1][0]) < 0.02 else "linear")
+                         for i, (t, r, _) in enumerate(keys)],
+            "scale": [(t, (kk,) * 3, "step" if i and abs(t - keys[i - 1][0]) < 0.02 else "linear")
+                      for i, (t, _, kk) in enumerate(keys)]}
+    burst["arbalest_bolt"] = {"position": bolt_pos, "scale": bolt_scale}
     out["burst"] = (2.6, "once", burst)
 
     def to_pose_and_back(pose, length, hold_from, hold_to, extra=None):
@@ -163,6 +221,10 @@ def clips(model):
         "arm_right_upper": {"rotation": rot((0, zero), (0.4, (-10, 0, 20)), (1.6, (15, 0, 0)), (2.6, (18, 0, 0)), interp="catmullrom")},
         "arbalest": {"rotation": rot((0, zero), (1.0, zero), (1.4, (70, 0, 10)), (2.6, (75, 0, 10)), interp="catmullrom")},
     })
+    for name, (length, loop, bones) in out.items():
+        if name != "burst":
+            for bone, channels in unloaded(length).items():
+                bones.setdefault(bone, {}).update(channels)
     return out
 
 
@@ -234,7 +296,7 @@ QUADS = {"north": (0, 2, 6, 4), "south": (1, 5, 7, 3), "west": (0, 1, 3, 2), "ea
          "down": (0, 4, 5, 1), "up": (2, 3, 7, 6)}
 
 
-def frame(model, bones, t, yaw=-32, pitch=16, size=(420, 420), scale=4.2):
+def frame(model, bones, t, yaw=-32, pitch=16, size=(420, 420), scale=4.2, only=None, fit=False):
     mats = matrices(model, bones, t)
     a, b = math.radians(yaw), math.radians(-pitch)
     ry = np.array([[math.cos(a), 0, math.sin(a)], [0, 1, 0], [-math.sin(a), 0, math.cos(a)]])
@@ -242,7 +304,7 @@ def frame(model, bones, t, yaw=-32, pitch=16, size=(420, 420), scale=4.2):
     view = rx @ ry     # the camera sits in front (-Z), turned by yaw and raised by pitch, looking at +Z
     polys = []
     for c in model.cubes:
-        if s6.hidden(c):
+        if s6.hidden(c) or (only is not None and not only(c)):
             continue
         m = mats[c.group.name] @ pivot_matrix(c.origin, c.rotation)
         lo, hi = np.array(c.frm), np.array(c.to)
@@ -257,6 +319,19 @@ def frame(model, bones, t, yaw=-32, pitch=16, size=(420, 420), scale=4.2):
             # painter's order: farthest first; the screen's right is the model's left (-X) from the front
             polys.append((v[list(idx), 2].mean(), [(size[0] / 2 - p[0] * scale, size[1] * 0.86 - p[1] * scale)
                                                     for p in v[list(idx)]], col))
+    if fit and polys:
+        # centre and fill the frame with what was drawn (close-ups of one part)
+        xs = [x for _, pts, _ in polys for x, _ in pts]
+        ys = [y for _, pts, _ in polys for _, y in pts]
+        k = 0.9 * min(size[0] / max(1, max(xs) - min(xs)), size[1] / max(1, max(ys) - min(ys)))
+        cx, cy = (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2
+        polys = [(d, [(size[0] / 2 + (x - cx) * k, size[1] / 2 + (y - cy) * k) for x, y in pts], col)
+                 for d, pts, col in polys]
+        img = Image.new("RGB", size, (40, 38, 46))
+        dr = ImageDraw.Draw(img)
+        for _, pts, col in sorted(polys, key=lambda p: -p[0]):
+            dr.polygon(pts, fill=col)
+        return img
     img = Image.new("RGB", size, (40, 38, 46))
     dr = ImageDraw.Draw(img)
     dr.rectangle((0, size[1] * 0.86 + 1, size[0], size[1]), fill=(30, 28, 34))
