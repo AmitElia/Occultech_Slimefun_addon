@@ -188,7 +188,9 @@ def paint_levels(cube, zone, face, w, h, seed):
             elif zone == "glow":
                 # lit amethyst: the same diagonal facets as the crystals, a step brighter, with a darker rim on two
                 # sides so the shape keeps its edges; tiny faces just get a hot centre
-                if w * h <= 9:
+                if cube.name == "eye_glint":
+                    lv[y, x] = 4          # a violet glint in the socket, not a white spot
+                elif w * h <= 9:
                     lv[y, x] = 6 if abs(x - (w - 1) / 2) < 1 and abs(y - (h - 1) / 2) < 1 else 5
                 else:
                     band = (x + y + seed % 5) % 6

@@ -79,18 +79,19 @@ def build():
     for i in range(2):
         waist.box(f"rib_{i}", (0, 33 + i * 4, 3), (20 * b, 2, 13 * b), "bone")
     torso = waist.group("torso", (0, 37, 3), (-BEND * 0.65, 0, 0))
-    torso.box("ribcage_core", (0, 43, 3), (17 * b, 11, 11 * b), "marrow")
+    # the dark core stops a texel under the collarbones and gorget: their tops no longer share a plane (the neck flicker)
+    torso.box("ribcage_core", (0, 42.5, 3), (17 * b, 10, 11 * b), "marrow")
     for i in range(2, 4):
         torso.box(f"rib_{i}", (0, 33 + i * 4, 3), (21 * b, 2, 14 * b), "bone")
     torso.box("sternum", (0, 43, 3 - 7.2 * b), (3, 10, 2), "bone")
     torso.box("spine_ridge", (0, 40, 3 + 7.4 * b), (4, 18, 2), "bone")
     torso.box("collarbones", (0, 47, 3), (34 * b + 4, 3, 6), "bone")
-    torso.blob("hump", (0, 45, 9), (9 * b, 7, 6), "bone", layers=4)
+    torso.blob("hump", (0, 45, 9), (9 * b, 7, 6), "bone", layers=5, axes=("y",))
     for s in (-1, 1):
         torso.box(f"scapula_{s}", (s * 7 * b, 44, 10 + 2 * b), (8 * b, 10, 3), "bone", rotation=(0, s * 15, 0))
     torso.box("breastplate", (-2 * b, 42, 3 - 7.6 * b), (13 * b, 10, 2), "iron", rotation=(0, 0, 6))
     # the collar sits low and behind the neck, clear of the skull and jaw hanging forward of it
-    torso.box("gorget", (0, 46.5, 5), (15 * b, 4, 13), "iron")
+    torso.box("gorget", (0, 47, 5.5), (15 * b, 5, 14), "iron")
     s1.beam(torso, "baldric", (-6 * b, 47, 3 - 7.8 * b), (8 * b, 33, 3 - 7.8 * b), 2, "string", depth=1)
     for s in (-1, 1):
         make_arm(torso, s)

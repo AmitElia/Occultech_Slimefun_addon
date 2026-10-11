@@ -17,6 +17,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools" / "art"))
 from bosskit.bbmodel import pivot_matrix  # noqa: E402
+from bosskit.checks import flicker_pairs  # noqa: E402
 from bosses import volley_crone_s3 as s3, volley_crone_s6 as s6, volley_crone_s7 as s7, volley_ward_s2 as ward  # noqa: E402
 
 MODELS = ROOT / "src/main/models"
@@ -38,6 +39,12 @@ def muzzle():
 
 
 def main():
+    # no two faces may share a plane and overlap (they flicker in game): the neck bug of the first in-game review
+    for name, cubes in (("occultech_volley", [c for c in s6.build().cubes if not s6.hidden(c)]),
+                        (ward.MODEL_ID, ward.build().cubes)):
+        clash = flicker_pairs(cubes)
+        if clash:
+            raise SystemExit(f"{name}: faces that would flicker in game: {clash[:5]}")
     rig = json.loads(RIG.read_text(encoding="utf-8"))
     rig["name"] = "occultech_volley"
     clips = set(s7.clips(s6.build()))

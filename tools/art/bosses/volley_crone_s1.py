@@ -83,7 +83,7 @@ def make_leg(body, s, b):
     foot = shin.group(f"leg_{word}_foot", ankle)
     foot.box(f"{word}_heel", (s * 8.5, 2, 1), (6.5 * b, 4, 5), "bone")
     for i, dx in enumerate((-2.2, 0, 2.2)):
-        foot.box(f"{word}_toe_{i}", (s * 8.5 + dx * b, 1.5, -5), (1.9 * b, 3, 8), "bone")
+        foot.box(f"{word}_toe_{i}", (s * 8.5 + dx * 0.9 * b, 1.6, -5), (1.9 * b, 3, 8), "bone")
 
 
 def make_arm(torso, s, d, b):
@@ -144,7 +144,7 @@ def make_arbalest(hand, wrist, tilt=55, k=1.0):
     prod.box("prod_center", at(0, -21, -3), size(8, 3, 4), "iron")
     for s in (-1, 1):
         beam(prod, f"prod_limb_{s}", at(s * 4, -21, -3), at(s * 17, -18, -3), 3 * k, "iron")
-        prod.box(f"prod_nock_{s}", at(s * 17, -18, -3), size(2.5, 2.5, 3), "iron")
+        prod.box(f"prod_nock_{s}", at(s * 17, -18, -3), size(3.5, 3.5, 3.5), "iron")
         side = "left" if s < 0 else "right"
         string = prod.group(f"arbalest_string_{side}", at(s * 17, -18, -3))
         beam(string, f"string_{s}", at(s * 17, -18, -3), at(0, -5, -6), 0.8 * k, "string")
@@ -152,7 +152,7 @@ def make_arbalest(hand, wrist, tilt=55, k=1.0):
     bolt.box("bolt", at(0, -16, -7.5), size(1.4, 24, 1.4), "wood")
     bolt.box("bolt_tip", at(0, -30, -7.5), size(3, 5, 3), "glow")
     crank = bow.group("windlass", at(0, 8, -3))
-    crank.box("windlass_drum", at(0, 8, -3), size(9, 4, 4), "iron")
+    crank.box("windlass_drum", at(0, 8, -3), size(7, 4, 4), "iron")
     crank.box("windlass_arm", at(6, 8, -3), size(2, 2, 9), "iron")
     crank.box("windlass_handle", at(6, 8, 2), size(4, 1.6, 1.6), "wood")
 
@@ -199,7 +199,7 @@ def make_crystals(torso, d, b):
         c = (0, 46, back_surface(46, b) - 1)
         for i, a in enumerate(range(0, 360, 45)):
             r = math.radians(a)
-            back.box(f"geode_rim_{i}", (c[0] + math.cos(r) * 9, c[1] + math.sin(r) * 7.5, c[2] + 0.5),
+            back.box(f"geode_rim_{i}", (c[0] + math.cos(r) * 9, c[1] + math.sin(r) * 7.5, c[2] + 1.0),
                      (7, 6 + (i % 3) * 2, 5 + (i % 2) * 2), "basalt", rotation=(0, 0, a))
         back.box("geode_calcite", c, (15, 12, 4), "calcite")
         shards = ((0, 2, 62, 0, 22, 6, True), (-4, -1, 45, -30, 18, 5, True), (4.5, 0, 50, 32, 17, 5, True),

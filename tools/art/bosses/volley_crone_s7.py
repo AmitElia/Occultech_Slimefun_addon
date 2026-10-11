@@ -265,7 +265,10 @@ def blockbench_animations(model, clip_set, name):
                     frames.append({"channel": channel, "data_points": [point], "time": round(t, 3), "color": -1,
                                    "interpolation": interp, "uuid": _uuid(f"{name}/{clip}/{bone}/{channel}/{t}")})
             animators[_uuid(f"{name}/group/{bone}")] = {"name": bone, "type": "bone", "keyframes": frames}
-        anims.append({"uuid": _uuid(f"{name}/anim/{clip}"), "name": clip, "loop": loop, "override": False,
+        # BetterModel: with override on, bones the clip doesn't key keep their current animation (the walk);
+        # with it off they are held at rest. Only spawn and death (and the base loops) move the whole body.
+        partial = clip in ("burst", "shot", "wards", "stagger", "cracked", "hit")
+        anims.append({"uuid": _uuid(f"{name}/anim/{clip}"), "name": clip, "loop": loop, "override": partial,
                       "length": length, "snapping": 20, "selected": False, "anim_time_update": "", "blend_weight": "",
                       "start_delay": "", "loop_delay": "", "animators": animators})
     return anims

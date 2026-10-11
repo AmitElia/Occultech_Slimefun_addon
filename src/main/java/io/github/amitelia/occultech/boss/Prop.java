@@ -12,4 +12,7 @@ public interface Prop {
     void hidePart(String part);
 
     void remove();
+
+    /** Called every fight step: shows the model to players who have come near since it appeared. */
+    default void refresh() {}
 }

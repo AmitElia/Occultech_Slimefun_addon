@@ -208,6 +208,12 @@ public final class BossFight {
             this.prop = prop;
         }
 
+        void refreshProp() {
+            if (prop != null) {
+                prop.refresh();
+            }
+        }
+
         /** Whether a model shows this object (otherwise its vanilla item look). */
         public boolean hasProp() {
             return prop != null;
@@ -921,6 +927,9 @@ public final class BossFight {
         applyHazards();
         extras.removeIf(e -> !e.isValid());
         updateBar();
+        for (FightObject object : objects.values()) {
+            object.refreshProp();
+        }
 
         try {
             behavior.tick();

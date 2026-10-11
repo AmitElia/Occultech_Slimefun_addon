@@ -53,8 +53,8 @@ def build():
     groups = {g.name: g for g in model.groups}
     torso, head = groups["torso"], groups["h_head"]
     # the glint sits in the right eye slit (vanilla columns 1-2, doubled: x 2..6), half sunk into the socket
-    eye = head.group("glow_eye", (4, 53.5, -22))
-    eye.box("eye_glint", (4, 53.5, -22), (2, 1, 1), "glow")
+    eye = head.group("glow_eye", (4, 53.5, -21.6))
+    eye.box("eye_glint", (4, 53.5, -21.6), (2, 1, 1), "glow")
     root = groups["crystals_back"].origin
     broken = torso.group("glow_crystals_broken", root)
     broken.visible = False

@@ -11,14 +11,36 @@ import kr.toxicity.model.api.tracker.TrackerUpdateAction;
 public final class BetterModelVisuals {
     private BetterModelVisuals() {}
 
-    /** A model standing on {@code at}, or null if BetterModel has no such model. Packets only: nothing is saved. */
+    /** How near a player must be to be shown a prop (blocks). */
+    private static final double PROP_VIEW = 48;
+
+    /**
+     * A model standing on {@code at}, or null if BetterModel has no such model. Packets only: nothing is saved. A
+     * model at a location is shown to no one by itself, so it is spawned for the players near it, and for anyone who
+     * comes near later on each refresh.
+     */
     public static io.github.amitelia.occultech.boss.Prop prop(String modelId, org.bukkit.Location at) {
         var renderer = BetterModel.model(modelId).orElse(null);
         if (renderer == null) {
             return null;
         }
         DummyTracker tracker = renderer.create(BukkitAdapter.adapt(at));
+        Runnable show = () -> {
+            for (org.bukkit.entity.Player player : at.getWorld().getPlayers()) {
+                if (player.getLocation().distanceSquared(at) < PROP_VIEW * PROP_VIEW && !tracker.isSpawned(player.getUniqueId())) {
+                    tracker.spawn(BukkitAdapter.adapt(player));
+                }
+            }
+        };
+        show.run();
         return new io.github.amitelia.occultech.boss.Prop() {
+            @Override
+            public void refresh() {
+                if (!tracker.isClosed()) {
+                    show.run();
+                }
+            }
+
             @Override
             public void animate(String clip) {
                 if (!tracker.isClosed()) {

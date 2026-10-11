@@ -68,12 +68,15 @@ class Group:
         s = np.array(size, float) / 2
         return self.cube(name, c - s, c + s, mat, rotation, center if origin is None else origin)
 
-    def blob(self, name, center, radii, mat, layers=5):
-        """A stepped ellipsoid: slabs stacked along Y unioned with slabs stacked along Z (rounded in every view)."""
+    def blob(self, name, center, radii, mat, layers=5, axes=("y", "z")):
+        """A stepped ellipsoid: slabs stacked along Y unioned with slabs stacked along Z (rounded in every view).
+
+        With both axes, outer slabs of the two stacks share face planes, which flickers in game where the faces show;
+        axes=("y",) keeps every visible face on its own plane."""
         cx, cy, cz = center
         rx, ry, rz = radii
         out = []
-        for axis in ("y", "z"):
+        for axis in axes:
             r = ry if axis == "y" else rz
             for i in range(layers):
                 t0, t1 = -1 + 2 * i / layers, -1 + 2 * (i + 1) / layers
