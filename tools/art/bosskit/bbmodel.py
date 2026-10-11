@@ -48,6 +48,7 @@ class Group:
         self.model, self.name, self.parent = model, name, parent
         self.origin, self.rotation = list(map(float, origin)), list(map(float, rotation))
         self.children = []          # Groups and Cubes, in order
+        self.visible = True         # False: the bone starts hidden (BetterModel shows it on a part-visibility call)
 
     def group(self, name, origin, rotation=(0, 0, 0)):
         g = Group(self.model, name, origin, rotation, self)
@@ -161,7 +162,7 @@ class Model:
         def outline(g):
             node = {"name": g.name, "origin": g.origin, "rotation": g.rotation, "color": 0,
                     "uuid": _uuid(f"{self.name}/group/{g.name}"), "export": True, "mirror_uv": False,
-                    "isOpen": False, "locked": False, "visibility": True, "autouv": 0, "children": []}
+                    "isOpen": False, "locked": False, "visibility": g.visible, "autouv": 0, "children": []}
             for ch in g.children:
                 node["children"].append(uuids[id(ch)] if isinstance(ch, Cube) else outline(ch))
             return node
@@ -172,7 +173,7 @@ class Model:
         for g in self.groups:
             groups.append({"name": g.name, "origin": g.origin, "rotation": g.rotation, "color": 0,
                            "uuid": _uuid(f"{self.name}/group/{g.name}"), "export": True, "mirror_uv": False,
-                           "isOpen": False, "locked": False, "visibility": True, "autouv": 0})
+                           "isOpen": False, "locked": False, "visibility": g.visible, "autouv": 0})
         return {
             "meta": {"format_version": "4.10", "model_format": "free", "box_uv": False},
             "name": self.name, "model_identifier": "", "visible_box": [1, 1, 0], "variable_placeholders": "",

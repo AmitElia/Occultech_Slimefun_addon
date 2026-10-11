@@ -70,4 +70,4 @@ textures for effect models. Mirrored parts share UV space only when they are tru
 
 | Boss | Session | Status |
 |---|---|---|
-| Volley | 5 texture painting (redesign: the Amethyst Crone) | UVs and zones in [s4_uv](art/bosses/volley/overhaul/s4_uv/README.md) (256x512 approved); painted atlas ready for review: [s5_paint](art/bosses/volley/overhaul/s5_paint/README.md) |
+| Volley | 6 polish and variants (redesign: the Amethyst Crone) | painted in [s5_paint](art/bosses/volley/overhaul/s5_paint/README.md); wards-up, cracked and eye-glint variants plus night and damage-tint checks ready for review: [s6_variants](art/bosses/volley/overhaul/s6_variants/README.md) |

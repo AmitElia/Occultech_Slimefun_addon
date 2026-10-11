@@ -205,9 +205,11 @@ def crack(lv, seed, w, h):
         y = int(np.clip(y + 1, 0, h - 1))
 
 
-def paint(model, positions):
+def paint(model, positions, shadowed=None):
     head = vanilla_head()
-    solids = [(np.linalg.inv(cube_matrix(c)), np.array(c.frm), np.array(c.to)) for c in model.cubes]
+    # cubes that cast ambient occlusion: by default all of them; hidden variant parts are left out by the caller
+    solids = [(np.linalg.inv(cube_matrix(c)), np.array(c.frm), np.array(c.to)) if shadowed is None or shadowed(c)
+              else (np.eye(4), np.full(3, 1e9), np.full(3, -1e9)) for c in model.cubes]
     atlas = Image.new("RGBA", (s4.SIZE, s4.HEIGHT), (0, 0, 0, 0))
     for (i, face), (x0, y0, w, h) in positions.items():
         cube = model.cubes[i]
