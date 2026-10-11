@@ -71,4 +71,4 @@ textures for effect models. Mirrored parts share UV space only when they are tru
 | Boss | Session | Status |
 |---|---|---|
 | Volley | 8 pack and in-game review (redesign: the Amethyst Crone) | shipped with its geode-spire wards: [s8_ship](art/bosses/volley/overhaul/s8_ship/README.md); the in-game sign-off is pending |
-| Brood Mother | 6 polish and variants | vanilla lit candles with clear flames, drippy wax, candles go out as her health drops, night and damage-tint checks; ready for review: [s6_variants](art/bosses/brood_mother/overhaul/s6_variants/README.md) |
+| Brood Mother | 7 animation | nine clips (idle, walk, spawn, pounce, bite, egg sac, web, snuff, death) in the review model; ready for review: [s7_animation](art/bosses/brood_mother/overhaul/s7_animation/README.md) |
