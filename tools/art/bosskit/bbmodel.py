@@ -179,6 +179,27 @@ class Model:
             json.dump(self.to_bbmodel(**kw), f, indent=1)
 
 
+def add_hitbox(bb, frm, to, name="ob_hitbox"):
+    """Adds BetterModel's hitbox bone to a finished .bbmodel dict: one untextured box, never drawn in game.
+
+    BetterModel turns an `ob_` bone into an invisible hitbox entity that follows the model and passes every hit on to the
+    boss (with the attacker kept, so Occultech's contribution and arena rules still apply). Sizes are model units.
+    """
+    seed = f"{bb['name']}/hitbox"
+    cube = _uuid(seed + "/cube")
+    bb["elements"].append({
+        "name": "hitbox", "box_uv": False, "rescale": False, "locked": False, "light_emission": 0,
+        "render_order": "default", "allow_mirror_modeling": True, "from": list(frm), "to": list(to), "autouv": 0,
+        "color": 8, "inflate": 0.0, "rotation": [0, 0, 0], "origin": [0, 0, 0],
+        "faces": {f: {"uv": [0, 0, 0, 0], "texture": None} for f in FACES}, "type": "cube", "uuid": cube,
+    })
+    group = {"name": name, "origin": [0, 0, 0], "rotation": [0, 0, 0], "color": 0, "uuid": _uuid(seed + "/group"),
+             "export": True, "mirror_uv": False, "isOpen": False, "locked": False, "visibility": True, "autouv": 0}
+    bb["groups"].append(dict(group))
+    bb["outliner"].append(dict(group, children=[cube]))
+    return bb
+
+
 # Blockbench's cube marker colours, so materials are told apart in the editor before texturing
 _COLOR_INDEX = {"chitin": 0, "bone": 1, "silk": 2, "glow": 3, "iron": 4, "wax": 5, "chalk": 6, "flesh": 7}
 

@@ -140,9 +140,14 @@ plugin jar so the pack hash matches, as today. Without the pack, players see the
 Lessons from M3:
 - `MythicMob.spawn(..., Consumer)` runs the callback **before** Mythic applies the mob file (health, despawn,
   persistence). `MythicBody` runs Occultech's setup after the spawn, or group health scaling and chunk persistence are lost.
-- BetterModel's `model` mechanic scales the model by the carrier's `SCALE` attribute times `s`. Volley's carrier has
-  `Scale: 2.0` (a 4-block hitbox for the 4.3-block model) and the model uses `s=0.5`, so it is drawn at its authored size.
-  In vanilla mode Volley keeps its old 1.4 scale. The bigger hitbox is a small gameplay change: an easier target, and arrows leave from higher up.
+- Model size and hitbox: the carrier stays at normal scale and the model is drawn as authored. The first try scaled
+  the carrier to 2.0 and the model to `s=0.5` (BetterModel multiplies the model by the carrier's `SCALE`), but in game
+  the model hovered and the 1.2-block-wide hitbox missed the head. Now the model has an `ob_hitbox` bone
+  (`bosskit.bbmodel.add_hitbox`): BetterModel makes it an invisible hitbox entity that passes each hit to the carrier
+  with the original damage source, so contribution and arena rules still see the player.
+- Turning: BetterModel's body rotator waits 10 ticks, then turns over 10 ticks, so an archer looked sluggish.
+  `bodyrotation{mh=25;mnh=-25;rde=0;rdu=3}` makes the body follow the aim at once.
+- `/occultech models` lists every BetterModel model, its carrier's hitbox and yaw, and its hitbox bones.
 - Boss models ship in the jar (`src/main/models/`, written by the boss's texture script) and are installed into
   `plugins/BetterModel/models/` with the same staff-edit-preserving stamp as the Mythic pack. BetterModel loads models
   after every plugin is enabled, so no reload is needed at startup.

@@ -875,6 +875,8 @@ final class SelfTest {
             check("Volley has one BetterModel tracker", carrier != null
                 && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(carrier, "occultech_volley"),
                 carrier == null ? "no carrier" : io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier));
+            check("Volley's model has its hitbox", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_volley"), "no hitbox entity");
         }
         check(ContentRegistrar.title(bossId) + " is not scaled up for a solo summon", Math.abs(currentFight.healthMultiplier() - 1.0) < 0.001,
             "multiplier " + currentFight.healthMultiplier());

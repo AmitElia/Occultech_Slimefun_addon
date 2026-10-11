@@ -20,8 +20,9 @@ OCCULTECH_VOLLEY:
     KnockbackResistance: 0.5
     FollowRange: 32
     AlwaysShowName: true
-    # a 4-block hitbox for the 4.3-block model; the model is drawn at half the carrier's scale, so at its own size
-    Scale: 2.0
   Drops: []
+  # The carrier stays at normal size and the model is drawn as authored (4.3 blocks); the model's own ob_hitbox bone
+  # covers the body and passes hits on to the carrier. The body turns with the aim within a few ticks.
   Skills:
-  - model{m=occultech_volley;s=0.5} @self ~onSpawn
+  - model{m=occultech_volley} @self ~onSpawn
+  - bodyrotation{mh=25;mnh=-25;rde=0;rdu=3} @self ~onSpawn

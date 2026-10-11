@@ -8569,6 +8569,96 @@
    },
    "type": "cube",
    "uuid": "1de7891e-b085-55a9-b967-1df9299b4dbb"
+  },
+  {
+   "name": "hitbox",
+   "box_uv": false,
+   "rescale": false,
+   "locked": false,
+   "light_emission": 0,
+   "render_order": "default",
+   "allow_mirror_modeling": true,
+   "from": [
+    -14,
+    0,
+    -9
+   ],
+   "to": [
+    14,
+    69,
+    11
+   ],
+   "autouv": 0,
+   "color": 8,
+   "inflate": 0.0,
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "origin": [
+    0,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "texture": null
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "texture": null
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "texture": null
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "texture": null
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "texture": null
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "texture": null
+    }
+   },
+   "type": "cube",
+   "uuid": "512bedbe-246b-5dad-8eb2-37a01994c7c0"
   }
  ],
  "groups": [
@@ -9069,6 +9159,27 @@
    ],
    "color": 0,
    "uuid": "2d08b6b8-a354-5129-b3c9-d1b211950179",
+   "export": true,
+   "mirror_uv": false,
+   "isOpen": false,
+   "locked": false,
+   "visibility": true,
+   "autouv": 0
+  },
+  {
+   "name": "ob_hitbox",
+   "origin": [
+    0,
+    0,
+    0
+   ],
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "color": 0,
+   "uuid": "5d0365cd-a409-599a-97b9-3fdd92b03005",
    "export": true,
    "mirror_uv": false,
    "isOpen": false,
@@ -9723,6 +9834,30 @@
       }
      ]
     }
+   ]
+  },
+  {
+   "name": "ob_hitbox",
+   "origin": [
+    0,
+    0,
+    0
+   ],
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "color": 0,
+   "uuid": "5d0365cd-a409-599a-97b9-3fdd92b03005",
+   "export": true,
+   "mirror_uv": false,
+   "isOpen": false,
+   "locked": false,
+   "visibility": true,
+   "autouv": 0,
+   "children": [
+    "512bedbe-246b-5dad-8eb2-37a01994c7c0"
    ]
   }
  ],

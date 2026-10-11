@@ -86,6 +86,26 @@ public final class OccultechCommand implements TabExecutor {
             io.github.amitelia.occultech.event.RaidCommand.run(plugin.raids(), sender, args);
             return true;
         }
+        if (args.length == 1 && args[0].equalsIgnoreCase("models")) {
+            // where BetterModel puts each boss model relative to its carrier (positions in blocks from the feet)
+            if (!plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")) {
+                sender.sendMessage("BetterModel is not installed.");
+                return true;
+            }
+            for (org.bukkit.World world : plugin.getServer().getWorlds()) {
+                for (org.bukkit.entity.LivingEntity entity : world.getLivingEntities()) {
+                    List<String> lines = io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.describe(entity);
+                    if (!lines.isEmpty()) {
+                        org.bukkit.util.BoundingBox box = entity.getBoundingBox();
+                        sender.sendMessage(String.format("%s at %.1f %.1f %.1f, hitbox %.2f x %.2f, yaw %.0f body %.0f",
+                            entity.getName(), entity.getX(), entity.getY(), entity.getZ(), box.getWidthX(), box.getHeight(),
+                            entity.getLocation().getYaw(), entity.getBodyYaw()));
+                        lines.forEach(line -> sender.sendMessage("  " + line));
+                    }
+                }
+            }
+            return true;
+        }
         if (args.length >= 1 && args[0].equalsIgnoreCase("fights")) {
             fights(sender, args);
             return true;
@@ -268,7 +288,7 @@ public final class OccultechCommand implements TabExecutor {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            return List.of("selftest", "showcase", "studio", "restock", "inspect", "unlockhalos", "iteminfo", "setslot", "fights", "begin", "kit", "balance", "event");
+            return List.of("selftest", "showcase", "studio", "restock", "inspect", "unlockhalos", "iteminfo", "setslot", "fights", "begin", "kit", "balance", "event", "models");
         }
         if (args.length >= 2 && args[0].equalsIgnoreCase("event")) {
             return io.github.amitelia.occultech.event.RaidCommand.complete(args, plugin.raids().roster());

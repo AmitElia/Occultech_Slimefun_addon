@@ -19,6 +19,7 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools" / "art"))
 from bosses.volley_s1 import build  # noqa: E402
+from bosskit.bbmodel import add_hitbox  # noqa: E402
 from palettes import RAMPS  # noqa: E402
 
 OUT = ROOT / "docs/art/bosses/volley/overhaul/s1_silhouettes"
@@ -183,6 +184,8 @@ def main():
             element["faces"][face] = {"uv": [x, y, x + w, y + h], "texture": 0}
         if model.cubes[i].mat == "glow":
             element["light_emission"] = 15
+    # the body from the feet to the top of the skull, shoulders and yoke included; the side-carried crossbow is left out
+    add_hitbox(bb, (-14, 0, -9), (14, 69, 11))
     out_model = OUT / "occultech_volley_humanoid_textured.bbmodel"
     out_model.write_text(json.dumps(bb, indent=1) + "\n", encoding="utf-8")
     # the copy the plugin ships and installs into BetterModel's models folder
