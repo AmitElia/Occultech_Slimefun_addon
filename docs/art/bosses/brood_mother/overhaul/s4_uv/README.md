@@ -10,19 +10,19 @@ atlas.
 - **One texel per model unit** (16 per block, the vanilla density) on every face. Every cube size is whole, so no
   face is stretched; the script refuses to run if one isn't.
 - **Atlas: 256 x 512**, the size you approved for Volley ([occultech_brood_mother.png](occultech_brood_mother.png),
-  [enlarged](atlas_preview.png)). 501 of the 512 rows are used. She's twice Volley's size, so three things were
+  [enlarged](atlas_preview.png)). 477 of the 512 rows are used (after session 6). She's twice Volley's size, so three things were
   needed to fit:
-  - **Buried faces left out:** 269 faces lie wholly inside another cube of the same bone (inside the stepped wax
+  - **Buried faces left out:** 1,157 faces lie wholly inside another cube of the same bone (inside the stepped wax
     lumps and the bevelled boxes). They can never be seen, so they get no texture and aren't drawn.
   - **Sharing only where parts are truly identical:**
     - each left leg segment uses its right twin's texture space (the legs are built the same way and only turned
       apart);
     - hair cards of one size share one hair strip, used by both sides of each card;
-    - upright candles, wicks and flames of one size share theirs.
+    - candles, wick and flame cards, and wax drips of one size share theirs.
   - **A tighter packer:** islands go where they end lowest (skyline packing).
-- **1,486 islands for 2,219 drawn faces,** each island with a 1-pixel border that repeats its edge, so filtering never
+- **1,233 islands for 3,065 drawn faces,** each island with a 1-pixel border that repeats its edge, so filtering never
   pulls in a neighbour's colour.
-- **Little room left:** only 11 rows are free. Any phase or damage variants (session 6) will be part swaps or tints,
+- **Little room left:** 35 rows are free. Any phase or damage variants (session 6) will be part swaps or tints,
   or need a second small texture.
 
 ## Zones and values

@@ -33,9 +33,10 @@ in-game look is the real review.
 - **Jaws:** glossy near-black with one highlight line along each mandible; bone fangs that darken towards the tip.
 - **Wax:** fresh runs stream down from the top of each face, ending in a darker lip. The fresh wax has sheen spots
   and the old wax has soot.
-- **Candles:** drip lines down the sides, and a melt pool inside a bright rim on top.
-- **Wicks and flames:** wicks are near-black. Flames are hottest at the base and centre, and glow (full-bright in
-  game).
+- **Candles (since session 6):** vanilla's lit white candle, warmed to ivory: its two columns of shading, the warm
+  band under the wick and the shaded foot. The wick is vanilla's colour; the flame is vanilla's flame particle
+  with its alpha, glowing (full-bright in game).
+- **Drips (since session 6):** fresh wax with a glossy tip; beads catch the light.
 - **No painted light direction:** Minecraft shades faces itself. Ambient occlusion is baked from the real geometry: a
   texel darkens where another part is close in front of it (under the legs, between the wax lumps, where the jaws
   meet the face).

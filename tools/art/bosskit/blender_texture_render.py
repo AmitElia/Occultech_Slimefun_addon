@@ -45,9 +45,15 @@ def texture_material(name, emissive):
     tex.image = image
     tex.interpolation = "Closest"
     if emissive:
-        shader = nodes.new("ShaderNodeEmission")
-        shader.inputs["Strength"].default_value = 1.2
-        mat.node_tree.links.new(tex.outputs["Color"], shader.inputs["Color"])
+        # full-bright: emission only, and cut-out texels (flame cards) stay see-through like the matte material's
+        shader = nodes.new("ShaderNodeBsdfPrincipled")
+        shader.inputs["Base Color"].default_value = (0, 0, 0, 1)
+        shader.inputs["Specular"].default_value = 0.0
+        mat.node_tree.links.new(tex.outputs["Color"], shader.inputs["Emission"])
+        shader.inputs["Emission Strength"].default_value = 1.2
+        mat.node_tree.links.new(tex.outputs["Alpha"], shader.inputs["Alpha"])
+        mat.blend_method = "CLIP"
+        mat.shadow_method = "CLIP"
     else:
         shader = nodes.new("ShaderNodeBsdfPrincipled")
         shader.inputs["Roughness"].default_value = 0.96
@@ -57,6 +63,7 @@ def texture_material(name, emissive):
         mat.blend_method = "CLIP"
         mat.shadow_method = "CLIP"
     mat.node_tree.links.new(shader.outputs[0], output.inputs["Surface"])
+    mat.use_backface_culling = True   # like Minecraft: a face shows from its front only (cards have one per side)
     return mat
 
 

@@ -5,8 +5,8 @@ On top of the session 3 rig, this session:
   with a 1-pixel border on each island against seams;
 - leaves out faces buried inside another cube of the same bone (they can never be seen);
 - shares texture space only where parts are truly identical: a left leg segment with its right twin (both are built
-  along +X and only yawed apart), hair cards of one size (both sides of a card, and every card that size), and upright candles, wicks and
-  flames of one size;
+  along +X and only yawed apart), hair cards of one size (both sides of a card, and every card that size), and candles, wick and flame cards
+  and wax drips of one size;
 - moves the red eyes into their own glow bone: vanilla spider eyes glow in the dark, and so do hers;
 - fills each material zone with one flat colour; renders the result in colour and in grey (the value check) and lists
   every zone's value;
@@ -116,8 +116,11 @@ def island_keys(model):
                 continue
             if c.mat == "hair":
                 keys[(i, f)] = ("hair", w, h)
-            elif c.mat in ("candle", "wick", "flame") and _flat(c):
-                keys[(i, f)] = (c.mat, w, h, f)
+            elif c.mat in ("candle", "wick", "flame"):
+                keys[(i, f)] = (c.mat, w, h, f)   # every candle, wick card and flame card of a size looks the same
+            elif "_drip" in c.name or "_bead_" in c.name:
+                d = [round(c.to[k] - c.frm[k]) for k in range(3)]
+                keys[(i, f)] = ("drip", c.mat, *d, f)
             elif c.name.startswith("leg_l") and names.get("leg_r" + c.name[5:]) is not None \
                     and v4.face_size(names["leg_r" + c.name[5:]], f) == (w, h):
                 keys[(i, f)] = ("cube", "leg_r" + c.name[5:], f)

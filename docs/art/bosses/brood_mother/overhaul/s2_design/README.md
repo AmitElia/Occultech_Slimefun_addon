@@ -22,12 +22,15 @@ between the two (1.05x), so the long legs still carry the heavy body. Added in t
 The eyes are now vanilla's own eye layout as glowing cubes, the extra mutant eyes moved to her right cheek, and the
 brow ridge went (vanilla's head is a plain cube).
 
+**Changed in session 6:** the candles are vanilla's lit candles at twice vanilla's size, with crossed-plane wicks
+and clear flames, and wax drips hang over the edge of every step of the wax lumps and from the abdomen's edge.
+
 In the material view, the brown fins along the legs and flanks are the hair cards. Until they're textured they show
 as solid planes.
 
 ## Size and hitbox
 
-- **Model:** 8.0 x 4.7 x 6.9 blocks (w x h x d), including the leg reach and the candle flames. The body itself is
+- **Model:** 8.0 x 5.0 x 6.9 blocks (w x h x d), including the leg reach and the candle flames. The body itself is
   about 2.6 blocks tall to the top of the abdomen, and the wax and candles add the rest. Tier 0 arenas have about an
   18-block radius, so she fits.
 - **Hitbox:** one invisible `ob_hitbox` bone, 5 x 2.5 x 5 blocks, from the floor to the top of the abdomen, from her
@@ -58,7 +61,7 @@ The leap itself, walking, the candles guttering and her death are left for the a
 - **Glow bones:** `glow_pile_flames`, `glow_thorax_flames`, `glow_head_flames`, `glow_flank_flames`, and one per
   candle-bearing knee (`glow_leg_r1_knee`, `glow_leg_l0_knee`, `glow_leg_l2_knee`), so the knee flames move with
   the knee.
-- **Count:** 63 bones with geometry and 502 cubes, 131 of them hair cards.
+- **Count:** 63 bones with geometry and 855 cubes: 131 hair cards and, since session 6, 370 wax drips.
 - **The legs are most of the bones:** 8 legs × 6 segments. Session 3 checks the display cost in game and may merge
   each coxa into its hip.
 

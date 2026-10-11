@@ -33,7 +33,7 @@ This makes the session 2 blockout ready to move and to see in game:
   - the seven `glow_*` flame bones are drawn full-bright: the pile, the thorax, the head, the flank, and the three
     candle knees;
   - `ob_hitbox` is the invisible hitbox.
-- **Drawing cost:** 63 bones and 502 cubes (131 of them hair cards), drawn as **71 display entities**.
+- **Drawing cost:** 63 bones and 855 cubes (131 hair cards, 370 wax drips since session 6), drawn as **71 display entities**.
   - All hair cards, leaning candles and wax fit inside their bones' item models: they are single 22.5 or 45 degree
     turns.
   - The only extras are the mandibles (4 displays each) and the pedipalps (2 each). Their beams are turned on two axes.

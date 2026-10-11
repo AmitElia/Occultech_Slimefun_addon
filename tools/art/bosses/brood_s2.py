@@ -26,7 +26,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools" / "art"))
-from bosskit.bbmodel import Model, add_hitbox, leg  # noqa: E402
+from bosskit.bbmodel import Model, add_hitbox, leg, pivot_matrix  # noqa: E402
 from bosskit import sheet  # noqa: E402
 from bosses import brood_s1 as s1, volley_crone_s2 as v2  # noqa: E402
 from palettes import RAMPS  # noqa: E402
@@ -46,19 +46,62 @@ KNEE_CANDLES = ("leg_r1", "leg_l0", "leg_l2")
 
 
 def candle(body, glow, name, base, height, width, tilt=(0, 0, 0), melted=False):
-    """A candle as cubes in the area's bone, its flame in the area's glow bone. A lean is a cube rotation about the
-    candle's foot (one axis, 22.5 degrees: free for BetterModel). A melted candle is short, sits in a puddle and runs
-    over."""
+    """A vanilla candle at twice vanilla's size (session 6): a 4-wide body (2-wide for small ones), the wick as two
+    crossed planes, and a clear flame as two crossed planes in the area's glow bone, painted from vanilla's flame. The
+    flame always burns straight up, even over a leaning candle. Wax runs down the sides; a melted candle stands in a
+    puddle. A lean is a cube rotation about the candle's foot (one axis: free for BetterModel)."""
     x, y, z = base
+    w = 4 if width >= 3.5 else 2
     pivot = (x, y, z)
-    body.box(f"{name}_body", (x, y + height / 2 - 1, z), (width, height + 2, width), "candle", tilt, pivot)
-    body.box(f"{name}_collar", (x, y + height - 1.5, z), (width + 1, 1, width + 1), "wax", tilt, pivot)
-    body.box(f"{name}_drip", (x + width / 2 + 0.5, y + height - 3.5, z), (1, 4, 1), "wax", tilt, pivot)
-    body.box(f"{name}_wick", (x, y + height + 0.5, z), (1, 2, 1), "wick", tilt, pivot)
-    glow.box(f"{name}_flame", (x, y + height + 2.5, z), (2, 3, 2), "flame", tilt, pivot)
+    body.box(f"{name}_body", (x, y + height / 2 - 1, z), (w, height + 2, w), "candle", tilt, pivot)
+    seed = sum(map(ord, name))
+    for n, (dx, dz, f) in enumerate(((1, 0, 0.55), (0, -1, 0.3))[:1 + (height >= 5)]):
+        length = max(2, round(height * (f + (seed % 3) * 0.1)))   # runs of wax from the rim down the side
+        body.box(f"{name}_drip{n}", (x + dx * (w / 2 + 0.5), y + height - length / 2, z + dz * (w / 2 + 0.5)),
+                 (1, length, 1), "wax", tilt, pivot)
+    ws = w // 2
+    tip = np.array([x, y + height + ws * 0.5, z])
+    if any(tilt):
+        body.box(f"{name}_wick", (x, y + height + 0.5, z), (1, 2, 1), "wick", tilt, pivot)
+        tip = (pivot_matrix(pivot, tilt) @ np.array([x, y + height + 1.5, z, 1.0]))[:3]
+    else:
+        for r in (45, -45):
+            body.box(f"{name}_wick_{'a' if r > 0 else 'b'}", (x, y + height + ws / 2, z), (ws, ws, 0), "wick", (0, r, 0))
+    fw, fh = (4, 8) if w == 4 else (2, 5)
+    centre = (tip[0], tip[1] + fh / 2 - 0.5, tip[2])
+    for r in (45, -45):
+        glow.box(f"{name}_flame_{'a' if r > 0 else 'b'}", centre, (fw, fh, 0), "flame", (0, r, 0))
     if melted:
-        body.box(f"{name}_puddle", (x + 0.5, y + 0.5, z - 0.5), (width + 4, 1, width + 3), "wax")
-        body.box(f"{name}_run", (x - width / 2 - 0.5, y + height * 0.4, z + 0.5), (1, height * 0.8, 2), "wax", tilt, pivot)
+        body.box(f"{name}_puddle", (x + 0.5, y + 0.5, z - 0.5), (w + 4, 1, w + 3), "wax")
+
+
+def lump_steps(centre, radii, layers):
+    """The steps of a stepped wax lump (bbmodel.blob with axes=("y",), after whole-texel snapping), equator up: each
+    step's top, its half-width and half-depth, and its height."""
+    cx, cy, cz = centre
+    rx, ry, rz = radii
+    out = []
+    for i in range(layers // 2, layers):
+        t0, t1 = -1 + 2 * i / layers, -1 + 2 * (i + 1) / layers
+        t = min(abs(t0), abs(t1)) if t0 * t1 > 0 else 0.0
+        s = math.sqrt(max(0.0, 1 - t * t))
+        hx, hz = max(1, round(2 * rx * s)) / 2, max(1, round(2 * rz * s)) / 2
+        h = max(1, round((t1 - t0) * ry))
+        top = cy + (t0 + t1) / 2 * ry + h / 2
+        out.append((top, hx, hz, h))
+    return out
+
+
+def drips(group, name, points, rnd, longest):
+    """Icicles of wax: from each (x, top, z, out_x, out_z) a thin run hangs straight down, its back flush against the
+    surface, some ending in a bead where the wax gathered."""
+    for k, (x, top, z, ox, oz) in enumerate(points):
+        length = rnd.randint(2, max(3, int(longest)))
+        w, d = rnd.choice(((1, 1), (1, 1), (1, 1), (2, 1), (1, 2)))
+        cx, cz = x + ox * (w / 2), z + oz * (d / 2)
+        group.box(f"{name}_drip_{k}", (cx, top - length / 2, cz), (w, length, d), "wax")   # fresh wax: lighter runs
+        if rnd.random() < 0.35:
+            group.box(f"{name}_bead_{k}", (cx, top - length, cz), (w + 1, 2, d + 1), "wax")
 
 
 def wax_mountain(abdomen, top_y, cz, half_w, half_d, side_h, height, seed):
@@ -88,6 +131,32 @@ def wax_mountain(abdomen, top_y, cz, half_w, half_d, side_h, height, seed):
             else:
                 c, sz = (rnd.uniform(-0.4, 0.4) * half_w, seg_top - h / 2, cz + half_d + out + j), (width * wf, h, 2)
             pile.box(f"wax_flow_{i}_{j}", c, sz, "wax" if j else "wax_old")
+    # session 6: wax runs over the edge of every step of every lump (so the steps read as dripping ledges, not
+    # terraces) and hangs in icicles from the edge of the abdomen
+    for i, (x, y, z, r) in enumerate(lumps):
+        for k, (top, hx, hz, slab_h) in enumerate(lump_steps((x, y, z), r, 6)):
+            pts = []
+            for sx, sz, along_x in ((1, 0, False), (-1, 0, False), (0, 1, True), (0, -1, True)):
+                span = hx if along_x else hz
+                pos = -span + rnd.uniform(0.5, 2.5)
+                while pos < span - 1:
+                    if rnd.random() < 0.7:
+                        px = x + (pos if along_x else sx * hx)
+                        pz = z + (sz * hz if along_x else pos)
+                        pts.append((px, top, pz, sx, sz))
+                    pos += rnd.uniform(2.5, 4.5)
+            drips(pile, f"wax_lump_{i}_s{k}", pts, rnd, slab_h + 3)
+    rim = []
+    for side in (1, -1):
+        zz = cz - half_d + 2
+        while zz < cz + half_d - 2:
+            rim.append((side * (half_w + 0.5), top_y + 1, zz, side, 0))
+            zz += rnd.uniform(3, 5)
+    xx = -half_w + 2
+    while xx < half_w - 2:
+        rim.append((xx, top_y + 1, cz + half_d + 0.5, 0, 1))
+        xx += rnd.uniform(3, 5)
+    drips(pile, "wax_rim", rim, rnd, side_h * 0.55)
     k = 0
     for i, (x, y, z, r) in enumerate(lumps):
         count = 1 + (i % 3) + (1 if r[1] > height * 0.4 else 0)
@@ -101,7 +170,7 @@ def wax_mountain(abdomen, top_y, cz, half_w, half_d, side_h, height, seed):
                 cx, cz2, h = x + math.cos(a) * r[0] * f, z + math.sin(a) * r[2] * f, tall * rnd.uniform(0.3, 0.65)
             tilt = (0, 0, 0) if j == 0 or rnd.random() < 0.6 else rnd.choice(((22.5, 0, 0), (-22.5, 0, 0), (0, 0, 22.5)))
             candle(pile, glow, f"candle_{k}", (cx, y + r[1] * math.sqrt(1 - f * f) - 1.8, cz2), max(3, h),
-                   4 if j == 0 else rnd.choice((3, 3, 4)), tilt)
+                   4 if j == 0 else rnd.choice((2, 2, 4)), tilt)
             k += 1
 
 
@@ -155,7 +224,7 @@ def knee_candle(bones, name, hip, segs):
     patella = bones[3]
     top = hip[1] + t / 2
     glow = patella.group(f"glow_{name}_knee", (x + length / 2, top + 6, hip[2]))
-    candle(patella, glow, f"{name}_knee_candle", (x + length / 2, top - 0.5, hip[2]), 5, 3, melted=True)
+    candle(patella, glow, f"{name}_knee_candle", (x + length / 2, top - 0.5, hip[2]), 5, 2, melted=True)
     patella.box(f"{name}_knee_wax", (x, top - 0.5, hip[2]), (t * 1.6, 3, t * 1.6), "wax")
     patella.box(f"{name}_knee_drip", (x + length * 0.8, hip[1] - t / 2 - 2, hip[2]), (2, 6, 2), "wax_old")
 
@@ -206,7 +275,7 @@ def build():
     # melted candles on the carapace, between the humps
     tglow = thorax.group("glow_thorax_flames", (0, ty + th / 2 + 8, 2))
     for i, (x, z, h, w) in enumerate(((0, 3, 6, 3), (-3, 6, 4, 3), (3, 7, 3, 3))):
-        candle(thorax, tglow, f"thorax_candle_{i}", (x, ty + th / 2 + 1, z), h, w, melted=True)
+        candle(thorax, tglow, f"thorax_candle_{i}", (x, ty + th / 2 + 1, z), h, 4 if i == 0 else 2, melted=True)
     for s in (-1, 1):   # hair along the thorax flanks, under the leg roots
         comb(thorax, f"thorax_hair_{s}", ("z", -td / 2 + 2, td / 2 - 2), s * tw / 2, (ty - th / 2 + 1, ty - th / 2 + 4),
              4, "x", 3, rnd)
@@ -234,7 +303,7 @@ def build():
     # two candles stuck into her left flank, melted and drooping, their flames in one glow bone
     fglow = abdomen.group("glow_flank_flames", (-aw / 2 - 6, ay + 4, az))
     for i, (z, y, h) in enumerate(((az - 6, ay + 3, 7), (az + 7, ay - 2, 5))):
-        candle(abdomen, fglow, f"flank_candle_{i}", (-aw / 2 + 1, y, z), h, 3, (0, 0, 45), melted=False)
+        candle(abdomen, fglow, f"flank_candle_{i}", (-aw / 2 + 1, y, z), h, 4, (0, 0, 45), melted=False)
         abdomen.box(f"flank_candle_{i}_wax", (-aw / 2 - 1, y - 1, z), (3, 6, 5), "wax")
     wax_mountain(abdomen, ay + ah / 2 - 1, az, aw / 2, ad / 2, ah, WAX, seed=ord("B"))
 
@@ -251,7 +320,7 @@ def build():
     hglow = head.group("glow_head_flames", (0, hy + hh / 2 + 8, hz + hd * 0.3))
     for i, (s, h) in enumerate(((1, 5), (-1, 3))):
         x, z = s * hw * 0.32, hz + hd * 0.28
-        candle(head, hglow, f"head_candle_{i}", (x, hy + hh / 2 + 1, z), h, 3, melted=True)
+        candle(head, hglow, f"head_candle_{i}", (x, hy + hh / 2 + 1, z), h, 4 if i == 0 else 2, melted=True)
         head.box(f"head_wax_run_{i}", (s * (hw / 2 + 0.5), hy + hh / 2 - 4, z), (1, 8, 3), "wax")
     snap(model)
     return model

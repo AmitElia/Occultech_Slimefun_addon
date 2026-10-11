@@ -71,4 +71,4 @@ textures for effect models. Mirrored parts share UV space only when they are tru
 | Boss | Session | Status |
 |---|---|---|
 | Volley | 8 pack and in-game review (redesign: the Amethyst Crone) | shipped with its geode-spire wards: [s8_ship](art/bosses/volley/overhaul/s8_ship/README.md); the in-game sign-off is pending |
-| Brood Mother | 5 texture painting | vanilla spider head and eyes at 3x, hair strips with alpha, wax and candles painted; ready for review: [s5_paint](art/bosses/brood_mother/overhaul/s5_paint/README.md) |
+| Brood Mother | 6 polish and variants | vanilla lit candles with clear flames, drippy wax, candles go out as her health drops, night and damage-tint checks; ready for review: [s6_variants](art/bosses/brood_mother/overhaul/s6_variants/README.md) |

@@ -65,7 +65,14 @@ def vanilla_textures():
     with zipfile.ZipFile(VANILLA) as jar:
         body = Image.open(jar.open("assets/minecraft/textures/entity/spider/spider.png")).convert("RGBA")
         eyes = Image.open(jar.open("assets/minecraft/textures/entity/spider/spider_eyes.png")).convert("RGBA")
-    return body, eyes
+        candle = Image.open(jar.open("assets/minecraft/textures/block/white_candle_lit.png")).convert("RGBA")
+        flame = Image.open(jar.open("assets/minecraft/textures/particle/flame.png")).convert("RGBA")
+    return body, eyes, candle, flame
+
+
+# vanilla's white candle greys, warmed to ivory so the candles belong with the honey wax; its lit top stays as is
+CANDLE_WARM = {(199, 211, 211): (206, 196, 176), (224, 229, 229): (228, 220, 200), (248, 248, 248): (244, 238, 222),
+               (255, 255, 255): (252, 248, 236)}
 
 
 noise = v5.noise
@@ -202,6 +209,41 @@ def paint_hair(cube, face, w, h, seed):
     return from_levels(lv, RAMP["hair"], alpha)
 
 
+def paint_candle(face, w, h, candle):
+    """Vanilla's lit white candle at our size: its two columns of shading, its warm-lit band under the wick, the body
+    below and its shaded foot; the top face is vanilla's lit top. Each vanilla pixel is w/2 texels across."""
+    out = np.zeros((h, w, 4), np.uint8)
+    k = max(1, w // 2)
+    for y in range(h):
+        for x in range(w):
+            col = min(1, x * 2 // w)
+            if face in ("up", "down"):
+                vy = 6 + min(1, y * 2 // h)
+            else:
+                row, from_foot = y // k, (h - 1 - y) // k
+                if row < 4:
+                    vy = 6 + row                                  # the warm band under the flame
+                elif from_foot < 3:
+                    vy = 15 - from_foot                           # vanilla's shaded foot
+                else:
+                    vy = 10 + (row % 2)                           # the body, repeated
+            px = candle.getpixel((col, vy))
+            out[y, x] = (*CANDLE_WARM.get(px[:3], px[:3]), 255)
+    return out
+
+
+def paint_card(cube, w, h, flame):
+    """A wick card in vanilla's wick colour, or a flame card from vanilla's flame particle (its 4 x 8 core, scaled),
+    with its alpha: a clear teardrop flame."""
+    if cube.mat == "wick":
+        return np.tile(np.array([33, 32, 52, 255], np.uint8), (h, w, 1))
+    out = np.zeros((h, w, 4), np.uint8)
+    for y in range(h):
+        for x in range(w):
+            out[y, x] = flame.getpixel((2 + min(3, x * 4 // w), min(7, y * 8 // h)))
+    return out
+
+
 def paint_levels(cube, face, w, h, seed):
     """Level map for every other zone (before ambient occlusion)."""
     zone = cube.mat
@@ -243,6 +285,11 @@ def paint_levels(cube, face, w, h, seed):
             elif zone == "fang":
                 lv[y, x] -= 1 if fa[y, x] > 0.75 else 0                   # the tip darkens
                 lv[y, x] += 1 if r < 120 else 0
+            elif zone in ("wax", "wax_old") and ("_drip" in cube.name or "_bead_" in cube.name):
+                if "_bead_" in cube.name:
+                    lv[y, x] = 5 if (y == 0 or not upright) else 4         # a bead of wax catches the light
+                elif upright and y >= h - 1:
+                    lv[y, x] += 2                                       # the glossy tip of a run
             elif zone in ("wax", "wax_old"):
                 run = noise(seed + 2, x, 0, 1)
                 runs_to = h * (0.3 + run / 1500)
@@ -282,6 +329,10 @@ def paint_face(model, i, face, w, h, solids, vanilla):
         return paint_hair(cube, face, w, h, seed)
     if cube.mat in ("eye", "eye_small"):
         return paint_eye(cube, face, w, h, vanilla[1])
+    if cube.mat in ("flame", "wick") and zero_thick(cube):
+        return paint_card(cube, w, h, vanilla[3])
+    if cube.mat == "candle":
+        return paint_candle(face, w, h, vanilla[2])
     glow = cube.mat == "flame"
     ao = np.zeros((h, w)) if glow else occlusion(model, i, face, w, h, solids)
     if cube.name == "head":
@@ -289,6 +340,10 @@ def paint_face(model, i, face, w, h, solids, vanilla):
     lv = paint_levels(cube, face, w, h, seed)
     lv = lv - (ao >= 0.34) - (ao >= 0.6)
     return from_levels(lv, RAMP[ZONE[cube.mat][0]])
+
+
+def zero_thick(cube):
+    return min(np.array(cube.to) - np.array(cube.frm)) < 0.01
 
 
 # ---- atlas, model, renders -----------------------------------------------------------------------------------------
@@ -314,7 +369,7 @@ def build_atlas(model, keys):
     for key, (x, y, w, h) in positions.items():
         i, f = owner[key]
         patch = Image.fromarray(paint_face(model, i, f, w, h, solids, vanilla), "RGBA")
-        if model.cubes[i].mat != "hair":   # hair strips keep a clear border: no stray opaque texels at their edges
+        if not zero_thick(model.cubes[i]):   # cards keep a clear border: no stray opaque texels at their edges
             atlas.paste(patch.resize((w + 2, h + 2), Image.NEAREST), (x - 1, y - 1))
         atlas.paste(patch, (x, y))
     return atlas, positions, used, height
@@ -331,15 +386,14 @@ def views():
     ]
 
 
-def main():
+def painted():
     model = s4.rig()
     keys = island_keys(model)
     atlas, positions, used, height = build_atlas(model, keys)
-    OUT.mkdir(parents=True, exist_ok=True)
-    atlas_path = OUT / "occultech_brood_mother.png"
-    atlas.save(atlas_path)
-    atlas.resize((s4.SIZE * 2, height * 2), Image.NEAREST).save(OUT / "atlas_preview.png")
+    return model, keys, atlas, positions, used, height
 
+
+def to_bbmodel(model, keys, positions, height, atlas_path):
     texture = {"name": atlas_path.name, "path": "", "folder": "", "namespace": "", "id": "0", "group": "",
                "width": s4.SIZE, "height": height, "uv_width": s4.SIZE, "uv_height": height, "particle": False,
                "use_as_default": True, "layers_enabled": False, "render_mode": "default", "render_sides": "auto",
@@ -364,6 +418,16 @@ def main():
                          "length": 0.5, "snapping": 20, "selected": False, "anim_time_update": "", "blend_weight": "",
                          "start_delay": "", "loop_delay": "", "animators": v3.keyframes(model, pose)}
                         for key, pose in poses.items()]
+    return bb
+
+
+def main():
+    model, keys, atlas, positions, used, height = painted()
+    OUT.mkdir(parents=True, exist_ok=True)
+    atlas_path = OUT / "occultech_brood_mother.png"
+    atlas.save(atlas_path)
+    atlas.resize((s4.SIZE * 2, height * 2), Image.NEAREST).save(OUT / "atlas_preview.png")
+    bb = to_bbmodel(model, keys, positions, height, atlas_path)
     path = OUT / f"{s3.MODEL_ID}.bbmodel"
     path.write_text(json.dumps(bb, indent=1) + "\n", encoding="utf-8")
     if s3.SERVER_MODELS.is_dir():
