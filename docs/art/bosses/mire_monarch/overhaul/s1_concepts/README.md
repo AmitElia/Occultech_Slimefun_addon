@@ -1,3 +1,6 @@
+> **Rejected (2026-10-11):** the slime directions below were dropped. The boss is now the Mire Monarch, a giant
+> crowned cellar toad; its own session 1 replaces this page.
+
 # Gelatinous Sovereign redesign, session 1 (take 2): three directions, each in both forms
 
 **The brief (2026-10-11):** the first take, a drowned king in jelly, was rejected. The new brief:

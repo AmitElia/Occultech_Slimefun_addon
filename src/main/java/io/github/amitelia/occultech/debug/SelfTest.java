@@ -49,7 +49,7 @@ final class SelfTest {
 
     private static final String CATALYST = ItemKeys.slimefunId("SOVEREIGN_CATALYST");
     private static final String ACTIVE_KEY = "occultech_active_fight";
-    private static final List<String> BOSSES = List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "GELATINOUS_SOVEREIGN");
+    private static final List<String> BOSSES = List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "MIRE_MONARCH");
     private static final List<String> TIER1_BOSSES = List.of("THE_UNBOUND", "NIGHT_MATRIARCH", "MIRRORED_MAGUS", "ARCHEVOKER");
     private static final List<String> TIER2_BOSSES = List.of("ABYSSAL_WARDEN", "TIDEBREAKER", "BLAZE_CHOIR", "TEMPEST", "DROWNED_ELDER");
     private static final List<String> TIER3_BOSSES = List.of("HOLLOW_WARLORD", "HEARTWOOD_HORROR", "DREAD_RIDERS", "CORRUPTED_COLOSSUS", "DOPPELGANGER");
@@ -1086,8 +1086,8 @@ final class SelfTest {
 
     private void refundOnInterruption() {
         DebugWorld.setAltarCenter(altar, null);
-        BossSpec spec = rituals.spec("GELATINOUS_SOVEREIGN").orElseThrow();
-        BossFight fight = bosses.summon("GELATINOUS_SOVEREIGN", spec, altar, DebugWorld.item(CATALYST, 1));
+        BossSpec spec = rituals.spec("MIRE_MONARCH").orElseThrow();
+        BossFight fight = bosses.summon("MIRE_MONARCH", spec, altar, DebugWorld.item(CATALYST, 1));
         check("active-fight marker saved on the altar", BlockStorage.getLocationInfo(altar.getLocation(), ACTIVE_KEY) != null, "no marker");
         bosses.abort(fight, BossFight.Result.UNLOADED);
         check("interrupted gate fight refunds the catalyst", CATALYST.equals(idIn(RitualAltar.CENTER_SLOT)), String.valueOf(idIn(RitualAltar.CENTER_SLOT)));

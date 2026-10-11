@@ -205,7 +205,7 @@ final class CodexMenu {
             case "BROOD_MOTHER" -> Material.SPIDER_SPAWN_EGG;
             case "VOLLEY" -> Material.SKELETON_SPAWN_EGG;
             case "WITCH_COVEN" -> Material.WITCH_SPAWN_EGG;
-            case "GELATINOUS_SOVEREIGN" -> Material.SLIME_SPAWN_EGG;
+            case "MIRE_MONARCH" -> Material.FROG_SPAWN_EGG;
             case "THE_UNBOUND" -> Material.VINDICATOR_SPAWN_EGG;
             case "NIGHT_MATRIARCH" -> Material.PHANTOM_SPAWN_EGG;
             case "MIRRORED_MAGUS" -> Material.PILLAGER_SPAWN_EGG;

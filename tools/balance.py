@@ -17,7 +17,7 @@ FOLDER = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "run", "plugin
 OUT = os.path.join(ROOT, "docs", "balance-playtests.md")
 
 # docs/scope.md: mini-bosses 1-3 min solo, gate bosses 4-8 min; a group of 3 about 60% of solo (the chosen curve)
-GATES = {"GELATINOUS_SOVEREIGN", "ARCHEVOKER", "DROWNED_ELDER", "GALLUS"}
+GATES = {"MIRE_MONARCH", "ARCHEVOKER", "DROWNED_ELDER", "GALLUS"}
 
 
 def target(boss, players):

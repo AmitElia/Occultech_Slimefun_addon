@@ -28,7 +28,7 @@ class ItemCatalogTest {
     void loadsAllTiersItemsAndBosses() {
         assertEquals("Initiate", catalog.tier(0).name());
         assertTrue(catalog.items().size() >= 80);
-        assertTrue(catalog.boss("GELATINOUS_SOVEREIGN").isPresent());
+        assertTrue(catalog.boss("MIRE_MONARCH").isPresent());
     }
 
     @Test

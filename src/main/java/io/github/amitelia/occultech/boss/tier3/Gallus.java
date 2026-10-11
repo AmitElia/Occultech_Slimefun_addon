@@ -512,7 +512,7 @@ public final class Gallus extends BossBehavior {
         switch (echoKind++ % 3) {
             case 0 -> fight.spawnAdd(Slime.class, spawn, s -> {
                 s.setSize(3);
-                s.setCustomName(ChatColor.GREEN + "Echo of the Sovereign");
+                s.setCustomName(ChatColor.GREEN + "Echo of the Monarch");
                 BossFight.setAttribute(s, Attribute.MAX_HEALTH, 50);
                 s.setHealth(50);
             });

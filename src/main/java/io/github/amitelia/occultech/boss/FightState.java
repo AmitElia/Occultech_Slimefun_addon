@@ -78,7 +78,7 @@ public record FightState(String bossId, int elapsed, List<Double> health, int pl
                 }
                 presence.put(player, Integer.parseInt(kv[2]));
             }
-            return new FightState(parts[1], Math.max(0, Integer.parseInt(parts[2])), health, Math.max(1, Integer.parseInt(parts[4])),
+            return new FightState(io.github.amitelia.occultech.core.BossIds.current(parts[1]), Math.max(0, Integer.parseInt(parts[2])), health, Math.max(1, Integer.parseInt(parts[4])),
                 summoner, damage, presence);
         } catch (RuntimeException e) {
             return null;

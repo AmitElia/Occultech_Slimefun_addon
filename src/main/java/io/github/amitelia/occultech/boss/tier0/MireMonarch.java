@@ -20,20 +20,22 @@ import io.github.amitelia.occultech.boss.BossBehavior;
 import io.github.amitelia.occultech.boss.BossFight;
 
 /**
- * Tier-0 gate boss (iron gear, 4-6 minutes). A huge slime in three phases.
+ * Tier-0 gate boss (iron gear, 4-6 minutes): the Mire Monarch, a giant crowned cellar toad (until 2026-10-11 the
+ * Gelatinous Sovereign, a slime; its old id is mapped by {@link io.github.amitelia.occultech.core.BossIds}).
+ * Its body is still a slime until the new model ships.
  * <ul>
  * <li>Phase 1: every 8s marks a player's spot with a lime ring (1.5s), leaps onto it and sends out a shockwave that
  * only hurts players standing on the ground - jump to dodge.</li>
- * <li>Phase 2 (66%): splits off 3 shards that crawl back to the altar; each one that arrives heals the Sovereign by 6%.</li>
+ * <li>Phase 2 (66%): splits off 3 shards that crawl back to the altar; each one that arrives heals the Monarch by 6%.</li>
  * <li>Phase 3 (33%): shrinks and speeds up, leaving acid puddles that hurt anyone standing in them.</li>
  * </ul>
  */
-public final class GelatinousSovereign extends BossBehavior {
+public final class MireMonarch extends BossBehavior {
 
-    private static final io.github.amitelia.occultech.boss.Mechanic CRUSH = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Crush", 7, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic SHOCKWAVE = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Shockwave", 11, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
-    private static final io.github.amitelia.occultech.boss.Mechanic ACID_BURN = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Acid", 2, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic SHARD = io.github.amitelia.occultech.boss.Mechanic.of("GELATINOUS_SOVEREIGN", "Shard", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic CRUSH = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Crush", 7, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SHOCKWAVE = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Shockwave", 11, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic ACID_BURN = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Acid", 2, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, false);
+    private static final io.github.amitelia.occultech.boss.Mechanic SHARD = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Shard", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final Color LIME = Color.fromRGB(120, 230, 60);
     private static final Color ACID = Color.fromRGB(160, 255, 40);
@@ -53,7 +55,7 @@ public final class GelatinousSovereign extends BossBehavior {
     private boolean split;
     private boolean enraged;
 
-    public GelatinousSovereign(BossFight fight) {
+    public MireMonarch(BossFight fight) {
         super(fight);
     }
 
@@ -61,7 +63,7 @@ public final class GelatinousSovereign extends BossBehavior {
     public void spawn(Location at) {
         sovereign = fight.spawnBoss(Slime.class, at, s -> {
             s.setSize(7);
-            s.setCustomName(ChatColor.GREEN + "Gelatinous Sovereign");
+            s.setCustomName(ChatColor.GREEN + "Mire Monarch");
             s.setCustomNameVisible(true);
             BossFight.setAttribute(s, Attribute.MAX_HEALTH, BASE_HEALTH);
             fight.label(s, CRUSH);
@@ -144,7 +146,7 @@ public final class GelatinousSovereign extends BossBehavior {
             Location at = fight.center().add(Math.cos(angle) * (fight.radius() - 3), 0.5, Math.sin(angle) * (fight.radius() - 3));
             Slime shard = fight.spawnAdd(Slime.class, at, s -> {
                 s.setSize(3);
-                s.setCustomName(ChatColor.GREEN + "Sovereign Shard");
+                s.setCustomName(ChatColor.GREEN + "Mire Spawn");
                 BossFight.setAttribute(s, Attribute.MAX_HEALTH, 40);
                 s.setHealth(40);
                 fight.label(s, SHARD);
@@ -153,7 +155,7 @@ public final class GelatinousSovereign extends BossBehavior {
                 shards.add(shard);
             }
         }
-        fight.broadcast("&aThe Sovereign splits! &fStop the shards before they crawl back to the altar!");
+        fight.broadcast("&aThe Mire Monarch retches up its spawn! &fStop them before they crawl back to the altar!");
         sovereign.getWorld().playSound(sovereign.getLocation(), Sound.ENTITY_SLIME_DEATH, 2F, 0.5F);
     }
 
@@ -168,7 +170,7 @@ public final class GelatinousSovereign extends BossBehavior {
                 fight.healBoss(sovereign, SHARD_HEAL);
                 shard.getWorld().spawnParticle(Particle.ITEM_SLIME, shard.getLocation(), 30, 0.5, 0.5, 0.5, 0);
                 shard.getWorld().playSound(shard.getLocation(), Sound.ENTITY_SLIME_SQUISH, 1.5F, 1.5F);
-                fight.broadcast("&aA shard rejoins its Sovereign.");
+                fight.broadcast("&aA spawn crawls back into the Monarch.");
                 shard.remove();
                 return true;
             }
@@ -190,7 +192,7 @@ public final class GelatinousSovereign extends BossBehavior {
         BossFight.setAttribute(sovereign, Attribute.KNOCKBACK_RESISTANCE, 0.8);
         BossFight.setAttribute(sovereign, Attribute.MOVEMENT_SPEED, 0.5);
         sovereign.setHealth(Math.max(1, max * fraction));
-        fight.broadcast("&aThe Sovereign condenses into its acidic core!");
+        fight.broadcast("&aThe Mire Monarch dries and splits, sweating acid!");
         sovereign.getWorld().playSound(sovereign.getLocation(), Sound.ENTITY_SLIME_ATTACK, 2F, 0.4F);
     }
 }

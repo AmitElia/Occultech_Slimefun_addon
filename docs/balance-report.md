@@ -6,10 +6,10 @@ Difficulty factor 1.0. Share = health one hit takes after armor (20 HP).
 |---|---|---|---|---|---|---|---|---|
 | 0 | BROOD_MOTHER | Bite | melee | no | 8.0 | 15% | 8-18% | ok |
 | 0 | BROOD_MOTHER | Spiderling bite | add | no | 4.0 | 7% | 3-10% | ok |
-| 0 | GELATINOUS_SOVEREIGN | Crush | melee | no | 7.0 | 13% | 8-18% | ok |
-| 0 | GELATINOUS_SOVEREIGN | Shockwave | area | yes | 11.0 | 23% | 12-30% | ok |
-| 0 | GELATINOUS_SOVEREIGN | Acid | zone | no | 2.0 | 3% | 2-8% | ok |
-| 0 | GELATINOUS_SOVEREIGN | Shard | add | no | 4.0 | 7% | 3-10% | ok |
+| 0 | MIRE_MONARCH | Crush | melee | no | 7.0 | 13% | 8-18% | ok |
+| 0 | MIRE_MONARCH | Shockwave | area | yes | 11.0 | 23% | 12-30% | ok |
+| 0 | MIRE_MONARCH | Acid | zone | no | 2.0 | 3% | 2-8% | ok |
+| 0 | MIRE_MONARCH | Shard | add | no | 4.0 | 7% | 3-10% | ok |
 | 0 | VOLLEY | Arrow | projectile | no | 6.0 | 11% | 8-18% | ok |
 | 0 | WITCH_COVEN | Potion of Harming | magic (pierces armor) | yes | 6.0 | 20% | 12-30% | ok |
 | 1 | ARCHEVOKER | Fangs | magic (pierces armor) | yes | 12.0 | 22% | 12-30% | ok |

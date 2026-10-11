@@ -60,12 +60,18 @@ public final class Keys {
         return new NamespacedKey("occultech", "wins_" + bossId.toLowerCase(java.util.Locale.ROOT));
     }
 
+    /** Wins against this boss, counting those recorded under its earlier ids ({@link BossIds}). */
     public static int winsOf(org.bukkit.entity.Player player, String bossId) {
-        return player.getPersistentDataContainer().getOrDefault(wins(bossId), PersistentDataType.INTEGER, 0);
+        int total = player.getPersistentDataContainer().getOrDefault(wins(bossId), PersistentDataType.INTEGER, 0);
+        for (String old : BossIds.previous(bossId)) {
+            total += player.getPersistentDataContainer().getOrDefault(wins(old), PersistentDataType.INTEGER, 0);
+        }
+        return total;
     }
 
     public static void recordWin(org.bukkit.entity.Player player, String bossId) {
-        player.getPersistentDataContainer().set(wins(bossId), PersistentDataType.INTEGER, winsOf(player, bossId) + 1);
+        int recorded = player.getPersistentDataContainer().getOrDefault(wins(bossId), PersistentDataType.INTEGER, 0);
+        player.getPersistentDataContainer().set(wins(bossId), PersistentDataType.INTEGER, recorded + 1);
     }
 
     public static boolean isSummoned(@Nullable Entity entity) {

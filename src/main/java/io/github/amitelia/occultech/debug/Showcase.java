@@ -83,7 +83,7 @@ final class Showcase {
     private static final int WEST_EDGE = -24;
     private static final int EAST_EDGE = 58;
     private static final Map<Integer, List<String>> BOSS_ORDER = Map.of(
-        0, List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "GELATINOUS_SOVEREIGN"),
+        0, List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "MIRE_MONARCH"),
         1, List.of("THE_UNBOUND", "NIGHT_MATRIARCH", "MIRRORED_MAGUS", "ARCHEVOKER"),
         2, List.of("ABYSSAL_WARDEN", "TIDEBREAKER", "BLAZE_CHOIR", "TEMPEST", "DROWNED_ELDER"),
         3, List.of("HOLLOW_WARLORD", "HEARTWOOD_HORROR", "DREAD_RIDERS", "CORRUPTED_COLOSSUS", "DOPPELGANGER", "GALLUS"));

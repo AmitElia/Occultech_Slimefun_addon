@@ -108,11 +108,13 @@ Effort ratings are relative engineering risk, not calendar estimates. **Moderate
 
 **Feasibility / proof.** Moderate. Prototype a rotation with a curse pending and one witch dying. Check that no orphaned caster applies a delayed curse, two remaining witches get valid roles, a lone witch cannot heal a nonexistent partner, and ground warnings truthfully describe the curse.
 
-### 04. Gelatinous Sovereign — `GELATINOUS_SOVEREIGN` · tier 0 gate
+### 04. Mire Monarch (was the Gelatinous Sovereign) — `MIRE_MONARCH` · tier 0 gate
+
+**Renamed 2026-10-11:** the boss is now a giant crowned cellar toad (see boss-visual-overhaul.md); the model notes below describe the old slime and are superseded. The mechanics are kept.
 
 **Model and personality.** Restore an immense royal jelly wearing fragments of a drowned throne, with a heavy crooked crown and painted or selectively modeled treasures suspended inside its mass. Large gel lobes imply deformation; a scepter-like appendage droops while it tries to remain dignified. Chartreuse/apple jelly and tarnished gold provide a focused palette. The throne frame surrounds a visible attackable body and leaves floor warnings readable. The smaller phase becomes an indignant, springy tyrant.
 
-**Keep / reuse.** [GelatinousSovereign.java](../src/main/java/io/github/amitelia/occultech/boss/tier0/GelatinousSovereign.java): leap/slam, the one-time split near 66%, healing shards, shrink/acid phase near 33%, and the grounded-player counter to slam. Current shards arrive from the arena rim and return to heal; retain that actual spatial interaction.
+**Keep / reuse.** [MireMonarch.java](../src/main/java/io/github/amitelia/occultech/boss/tier0/MireMonarch.java): leap/slam, the one-time split near 66%, healing shards, shrink/acid phase near 33%, and the grounded-player counter to slam. Current shards arrive from the arena rim and return to heal; retain that actual spatial interaction.
 
 **Rework steps.** (1) Keep the 30-tick launch preparation, but carry the landing warning through the actual flight rather than letting it expire early. (2) Couple slam contact to a valid landing; timeout must resolve safely instead of producing an unexplained impact. (3) Preserve the existing instantaneous grounded damage disk: the expanding aftermath ripple is decorative, not a traveling hit. (4) Send visible gel energy toward the rim before shards emerge, making their existing spawn positions coherent. (5) Apply phase scale from authoritative state and rebuild it on resume without retriggering the split.
 

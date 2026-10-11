@@ -16,7 +16,7 @@ public final class Tier0Bosses {
             new BossBlueprint("BROOD_MOTHER", BroodMother.class, BroodMother::new),
             new BossBlueprint("VOLLEY", Volley.class, Volley::new),
             new BossBlueprint("WITCH_COVEN", WitchCoven.class, WitchCoven::new),
-            new BossBlueprint("GELATINOUS_SOVEREIGN", GelatinousSovereign.class, GelatinousSovereign::new)
+            new BossBlueprint("MIRE_MONARCH", MireMonarch.class, MireMonarch::new)
         );
     }
 }

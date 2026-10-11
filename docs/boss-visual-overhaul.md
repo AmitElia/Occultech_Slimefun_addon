@@ -59,14 +59,15 @@ witch's shadow detaches and slides across the floor to the marked area. Healing:
 witch along the ground. Deaths: a dead witch melts into a puddle with her mask lying face-up; the survivors stop and
 look at it before continuing (brief, never during an attack).
 
-### 04. Gelatinous Sovereign
-**Concept: "The Drowned Regent."** A mountain of murky green jelly holding a **king's skeleton suspended inside**,
-seated on a sunken throne that floats in the middle; the crown sits on the outside, sunk halfway into the slime. Coins,
-swords and a few earlier adventurers' helmets drift slowly inside.
-**Moments.** Hop: the jelly squashes, the skeleton inside lags and floats up. Slam: everything inside slams down a beat
-after the jelly. **Split at 66%:** the jelly tears down the middle and the skeleton's arm reaches out through the gap.
-**Shrink at 33%:** the jelly burns off as acid and the skeleton is left wearing a thin skin of slime, crown on skull,
-much faster: the king himself, finally standing. Shards: little glowing pieces of the treasure inside.
+### 04. Mire Monarch (was the Gelatinous Sovereign)
+**Concept: a giant crowned cellar toad.** Chosen 2026-10-11 after two slime takes were rejected (the drowned king in
+jelly; the radioactive slime). Vanilla's frog, mutated huge and warty, squatting low and wide on folded back legs; a
+crown sunk into the fat of its head, a bulging throat sac, a back crusted with warts and toadstools.
+**Moments (the fight is unchanged).** Leap: the back legs coil (the telegraph), the belly-flop sends the shockwave
+players jump. Split at 66%: it retches up three spawn (tadpoles or egg clumps) that wriggle back to the altar to feed
+it. 33%: its skin dries and splits; leaner and faster, it sweats acid puddles. The id is `MIRE_MONARCH`; the old
+`GELATINOUS_SOVEREIGN` still resolves in saved data (`core/BossIds`). Its items (Sovereign Gel, Sovereign's Catalyst)
+are to be redesigned later.
 
 ---
 

@@ -1,4 +1,4 @@
-"""A tiny in-game test for the Gelatinous Sovereign: does see-through jelly with solid things inside it draw right as a
+"""A tiny in-game test (made for the Gelatinous Sovereign, now the Mire Monarch): does see-through jelly with solid things inside it draw right as a
 BetterModel model? BetterModel draws each bone as its own item display, and translucent faces of separate entities are
 not depth-sorted against each other, so things inside the jelly may vanish or show through it from some angles.
 
@@ -61,7 +61,7 @@ def main():
         (x, y), _ = SWATCH[cube.mat]
         for f in FACES:
             element["faces"][f] = {"uv": [x + 1, y + 1, x + 3, y + 3], "texture": 0}
-    out = ROOT / "docs/art/bosses/gelatinous_sovereign/overhaul/s1_concepts" / f"{MODEL_ID}.bbmodel"
+    out = ROOT / "docs/art/bosses/mire_monarch/overhaul/s1_concepts" / f"{MODEL_ID}.bbmodel"
     out.write_text(json.dumps(bb, indent=1) + "\n", encoding="utf-8")
     for folder in SERVERS:
         if folder.is_dir():

@@ -111,7 +111,8 @@ public final class RitualService {
     }
 
     @Nonnull
-    public Optional<BossSpec> spec(@Nonnull String bossId) {
+    public Optional<BossSpec> spec(@Nonnull String id) {
+        String bossId = io.github.amitelia.occultech.core.BossIds.current(id);   // renamed bosses still answer to their old id
         return Optional.ofNullable(specs.get(bossId));
     }
 

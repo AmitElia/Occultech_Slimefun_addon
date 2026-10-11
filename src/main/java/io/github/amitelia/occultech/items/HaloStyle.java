@@ -28,7 +28,7 @@ public enum HaloStyle {
         List.of(Part.ring(Material.ARROW, 6, 0.3, 0.26, 1.2))),
     POTION_CROWN("&5Coven Crown", "WITCH_COVEN", Material.POTION, Particle.WITCH,
         List.of(Part.ring(Material.POTION, 3, 0.32, 0.24, 0.8))),
-    SLIME_CROWN("&aSlime Crown", "GELATINOUS_SOVEREIGN", Material.SLIME_BALL, Particle.ITEM_SLIME,
+    SLIME_CROWN("&aSlime Crown", "MIRE_MONARCH", Material.SLIME_BALL, Particle.ITEM_SLIME,
         List.of(Part.ring(Material.SLIME_BALL, 5, 0.3, 0.22, 0.7))),
     AXE_CROWN("&cFrenzy Crown", "THE_UNBOUND", Material.IRON_AXE, null,
         List.of(Part.ring(Material.IRON_AXE, 4, 0.34, 0.26, 2))),
