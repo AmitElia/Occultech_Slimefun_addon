@@ -70,4 +70,4 @@ textures for effect models. Mirrored parts share UV space only when they are tru
 
 | Boss | Session | Status |
 |---|---|---|
-| Volley | 1 concept and silhouette; texture draft | humanoid model and painted atlas ready for review: [review](art/bosses/volley/overhaul/s1_silhouettes/README.md); in-game check pending |
+| Volley | 2 design lock (redesign: the Amethyst Crone) | direction chosen in [s1_crone](art/bosses/volley/overhaul/s1_crone/README.md) (A posture, B geode, C arms); blockout, hitbox and key poses ready for review: [s2_design](art/bosses/volley/overhaul/s2_design/README.md) |

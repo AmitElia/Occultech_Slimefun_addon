@@ -47,18 +47,18 @@ def direction_sheet(d, title, stats, out):
     img.save(out)
 
 
-def compare_sheet(root, items, out, subject="Boss"):
+def compare_sheet(root, items, out, subject="Boss", views=("sil_eye", "sil_side", "clay_34"), heading=None):
     root = Path(root)
     tw, th, pad, top = 520, 400, 14, 64
     W = pad + len(items) * (tw + pad)
-    H = top + 3 * (th + pad) + 10
+    H = top + len(views) * (th + pad) + 10
     img = Image.new("RGB", (W, H), BG)
     dr = ImageDraw.Draw(img)
-    dr.text((pad, 12), f"{subject} - silhouette study (session 1)", font=_font(32), fill=INK)
+    dr.text((pad, 12), heading or f"{subject} - silhouette study (session 1)", font=_font(32), fill=INK)
     for c, (key, title) in enumerate(items):
         x = pad + c * (tw + pad)
-        for r, name in enumerate(("sil_eye", "sil_side", "clay_34")):
+        for r, name in enumerate(views):
             img.paste(_tile(root / key / f"{name}.png", tw, th), (x, top + r * (th + pad)))
         dr.rectangle((x, top, x + 300, top + 34), fill=BG)
-        dr.text((x + 8, top + 4), f"{key}  {title}", font=_font(22), fill=INK)
+        dr.text((x + 8, top + 4), f"{key}  {title}".strip(), font=_font(22), fill=INK)
     img.save(out)
