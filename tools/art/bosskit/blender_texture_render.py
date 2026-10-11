@@ -53,6 +53,9 @@ def texture_material(name, emissive):
         shader.inputs["Roughness"].default_value = 0.96
         shader.inputs["Metallic"].default_value = 0.05
         mat.node_tree.links.new(tex.outputs["Color"], shader.inputs["Base Color"])
+        mat.node_tree.links.new(tex.outputs["Alpha"], shader.inputs["Alpha"])   # hair cards: cut-out texels
+        mat.blend_method = "CLIP"
+        mat.shadow_method = "CLIP"
     mat.node_tree.links.new(shader.outputs[0], output.inputs["Surface"])
     return mat
 

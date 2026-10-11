@@ -32,7 +32,7 @@ from bosses import brood_s2 as s2, brood_s3 as s3, volley_crone_s3 as v3, volley
 
 OUT = ROOT / "docs/art/bosses/brood_mother/overhaul/s4_uv"
 SIZE = 256
-EYES = ("eye_big", "eye_upper", "eye_outer", "eye_low", "eye_mutant")
+EYES = ("eye_v_", "eye_mutant")
 GLOW_ZONES = ("flame", "eye", "eye_small")
 
 # One flat colour per zone. The body is the vanilla spider's warm near-black; the hair a lighter dusty brown; the wax
@@ -183,13 +183,13 @@ def views():
     ]
 
 
-def render(model, bb, atlas_path, out):
+def render(model, bb, atlas_path, out, view_list=None):
     out.mkdir(parents=True, exist_ok=True)
     boxes = [{"corners": c.corners().tolist(), "from": c.frm, "to": c.to, "glow": c.mat in GLOW_ZONES,
               "uv": bb["elements"][i]["faces"]} for i, c in enumerate(model.cubes)]
     job_file = out / "render_job.json"
     job_file.write_text(json.dumps({"texture": str(atlas_path), "out": out.as_posix(), "boxes": boxes,
-                                    "views": views(), "player_at": (5.5, 2.5)}), encoding="utf-8")
+                                    "views": view_list or views(), "player_at": (5.5, 2.5)}), encoding="utf-8")
     import subprocess
     result = subprocess.run([str(v4.BLENDER), "-b", "--factory-startup", "--python",
                              str(ROOT / "tools/art/bosskit/blender_texture_render.py"), "--", str(job_file)],

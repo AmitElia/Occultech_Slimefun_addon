@@ -35,12 +35,13 @@ OUT = ROOT / "docs/art/bosses/brood_mother/overhaul/s2_design"
 PALETTE = dict(s1.PALETTE, hair=RAMPS["leather"][2], hitbox=(220, 60, 60))
 v2.PALETTE = PALETTE   # v2's renderer and hitbox box read its module palette
 
-HEAD, THORAX, ABDOMEN, THORAX_Y = (23, 20, 22), (25, 17, 20), (37, 28, 38), 18   # B
+# B's body; the head's face is 24 x 24 so the vanilla spider face maps at exactly 3x (session 5)
+HEAD, THORAX, ABDOMEN, THORAX_Y = (24, 24, 22), (25, 17, 20), (37, 28, 38), 18
 LEG_LEN, LEG_THICK, FEMUR = 1.25, 1.05, 66                                       # C's reach, a little thicker
 WAX = 22
 SEGMENTS = ("coxa", "femur", "patella", "tibia", "metatarsus", "tarsus")
 # hair length past the chitin per segment; the coxa and the tarsus stay bare
-LEG_HAIR = {1: 3.0, 2: 3.0, 3: 2.5, 4: 2.0}
+LEG_HAIR = {1: 4.0, 2: 4.0, 3: 3.5, 4: 2.5}
 KNEE_CANDLES = ("leg_r1", "leg_l0", "leg_l2")
 
 
@@ -129,8 +130,9 @@ def comb(group, name, along, fixed, y_range, length, out_axis, spacing, rnd):
 
 def hairy_leg(thorax, name, hip, yaw, segs, rnd):
     """C's long leg on B's body, furred like a tarantula's: on the femur, patella, tibia and metatarsus two hair cards
-    the length of the segment cross along its axis (an X in section, turned 45 degrees about it), standing out past
-    the chitin on every side, so the leg has a fuzzy outline from every angle once the alpha texture is on."""
+    the length of the segment cross along its axis (a + in section: one upright, one flat), so hair stands straight out
+    of all four faces of the leg and it has a fuzzy outline from every angle once the alpha texture is on. (Session 5
+    turned them square: crossed at 45 degrees, the hair barely cleared the leg's corners and read as dashes.)"""
     bones = leg(thorax, name, hip, yaw, segs, ground=0.0, mat="chitin", knuckle_mat="chitin_lit", joint_scale=1.25,
                 bristles=0)
     x = hip[0]
@@ -138,9 +140,9 @@ def hairy_leg(thorax, name, hip, yaw, segs, rnd):
         if i in LEG_HAIR and length:
             hl = LEG_HAIR[i]
             span = t + 2 * hl
-            for r in (45, -45):
-                bones[i + 1].box(f"{name}_{i}_fur_{'a' if r > 0 else 'b'}", (x + length / 2, hip[1], hip[2]),
-                                 (length - 1, span, 0), "hair", (r, 0, 0))
+            centre = (x + length / 2, hip[1], hip[2])
+            bones[i + 1].box(f"{name}_{i}_fur_a", centre, (length - 1, span, 0), "hair")
+            bones[i + 1].box(f"{name}_{i}_fur_b", centre, (length - 1, 0, span), "hair")
         x += length or 0
     return bones
 
@@ -170,6 +172,25 @@ def legs(thorax, ty, tw, td, rnd):
             bones = hairy_leg(thorax, name, hip, yaw if side > 0 else 180 - yaw, segs, rnd)
             if name in KNEE_CANDLES:
                 knee_candle(bones, name, hip, segs)
+
+
+# The vanilla spider's eyes (spider_eyes.png, the head's front face): runs of eye pixels as (column, row, width,
+# height) on the 8 x 8 face, column 0 at the viewer's left. Each becomes a glowing cube one texel proud of the face.
+VANILLA_EYES = [(1, 0, 1, 1), (6, 0, 1, 1), (2, 1, 1, 1), (5, 1, 1, 1), (0, 2, 1, 2), (7, 2, 1, 2), (2, 3, 4, 2)]
+
+
+def vanilla_eyes(head, hy, face_z, hw, hh):
+    """The eyes exactly where vanilla has them, each vanilla pixel 3 x 3 texels; and, mutated, a cluster of three more
+    on her right cheek (+X), near the front."""
+    u, v = hw / 8, hh / 8
+    top = hy + hh / 2
+    for c, r, w, h in VANILLA_EYES:
+        x1 = hw / 2 - c * u            # column 0 is the viewer's left, which is her right: +X
+        y1 = top - r * v
+        head.cube(f"eye_v_{c}_{r}_{w}_{h}", (x1 - w * u, y1 - h * v, face_z - 1), (x1, y1, face_z), "eye")
+    for i, (z, y) in enumerate(((5, -3), (8, -6), (4, -8))):
+        zz, yy = face_z + z, hy + y
+        head.cube(f"eye_mutant_{i}", (hw / 2, yy - 1.5, zz - 1.5), (hw / 2 + 1, yy + 1.5, zz + 1.5), "eye_small")
 
 
 def build():
@@ -217,11 +238,10 @@ def build():
         abdomen.box(f"flank_candle_{i}_wax", (-aw / 2 - 1, y - 1, z), (3, 6, 5), "wax")
     wax_mountain(abdomen, ay + ah / 2 - 1, az, aw / 2, ad / 2, ah, WAX, seed=ord("B"))
 
-    hz, hy = -td / 2 - hd / 2 + 2, ty - hh * 0.12
+    hz, hy = -td / 2 - hd / 2 + 2, ty - 2
     head = thorax.group("h_head", (0, hy, -td / 2))
     head.box("head", (0, hy, hz), (hw, hh, hd), "chitin")
-    head.box("head_brow", (0, hy + hh * 0.4, hz - hd * 0.06), (hw + 1, hh * 0.16, hd * 0.9), "chitin_lit")
-    s1.eyes(head, hy, hz - hd / 2 - 0.2, hw, hh)
+    vanilla_eyes(head, hy, hz - hd / 2, hw, hh)
     s1.jaws(head, hy, hz - hd / 2, hw, hh)
     for s in (-1, 1):   # the beard: hair round the jaws and down the cheeks
         comb(head, f"cheek_hair_{s}", ("z", hz - hd / 2 + 2, hz + hd / 2 - 3), s * hw / 2, (hy - hh / 2 + 2, hy - hh * 0.1),

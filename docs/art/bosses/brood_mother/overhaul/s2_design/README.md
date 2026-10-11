@@ -6,7 +6,8 @@ between the two (1.05x), so the long legs still carry the heavy body. Added in t
 
 - **Tarantula fur as 2D hair:** flat hair cards (zero-thickness cubes), each carrying an alpha hair texture from session 5.
   - **Legs:** on every femur, patella, tibia and metatarsus, two cards the length of the segment cross along its axis
-    (an X in section). Each leg gets a fuzzy outline from every angle; the coxa and the foot stay bare.
+    (a + in section, one upright and one flat). Each leg gets a fuzzy outline from every angle; the coxa and the
+    foot stay bare. Session 5 changed this from an X: crossed at 45 degrees, the hair barely cleared the leg's corners.
   - **Body:** fringes down the flanks of the thorax and abdomen, round the back above the spinnerets, down the
     cheeks, and a beard under the jaws. Each fringe card hangs just off the surface and flares out at the bottom.
 - **Melted candles on the rest of her:**
@@ -16,6 +17,10 @@ between the two (1.05x), so the long legs still carry the heavy body. Added in t
   - two stuck sideways into her left flank, melting.
 
 ![Design lock: silhouettes, clay and material zones](sheet.png)
+
+**Changed in session 5:** the head's face is 24 x 24 (it was 23 x 20), so the vanilla spider face maps at exactly 3x.
+The eyes are now vanilla's own eye layout as glowing cubes, the extra mutant eyes moved to her right cheek, and the
+brow ridge went (vanilla's head is a plain cube).
 
 In the material view, the brown fins along the legs and flanks are the hair cards. Until they're textured they show
 as solid planes.
@@ -53,7 +58,7 @@ The leap itself, walking, the candles guttering and her death are left for the a
 - **Glow bones:** `glow_pile_flames`, `glow_thorax_flames`, `glow_head_flames`, `glow_flank_flames`, and one per
   candle-bearing knee (`glow_leg_r1_knee`, `glow_leg_l0_knee`, `glow_leg_l2_knee`), so the knee flames move with
   the knee.
-- **Count:** 63 bones with geometry and 504 cubes, 131 of them hair cards.
+- **Count:** 63 bones with geometry and 502 cubes, 131 of them hair cards.
 - **The legs are most of the bones:** 8 legs × 6 segments. Session 3 checks the display cost in game and may merge
   each coxa into its hip.
 

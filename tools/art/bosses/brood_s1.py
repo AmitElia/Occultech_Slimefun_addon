@@ -159,7 +159,7 @@ def jaws(head, hy, face_z, hw, hh):
         palp = head.group(f"palp_{'r' if s > 0 else 'l'}", (s * hw * 0.44, bottom + 1, face_z + 1))
         knee = (s * hw * 0.56, bottom + hh * 0.05, face_z - hw * 0.22)
         v1.beam(palp, f"palp_{s}_0", (s * hw * 0.44, bottom + 1, face_z + 1), knee, hw * 0.12, "chitin_lit")
-        v1.beam(palp, f"palp_{s}_1", knee, (s * hw * 0.5, bottom - hh * 0.25, face_z - hw * 0.4), hw * 0.09, "chitin_lit")
+        v1.beam(palp, f"palp_{s}_1", knee, (s * hw * 0.5, bottom - hh * 0.1, face_z - hw * 0.4), hw * 0.09, "chitin_lit")
 
 
 def legs(thorax, d, ty, tw, td):
