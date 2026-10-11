@@ -14,6 +14,13 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
 
 
+FACE_UV = {
+    "north": (0, -1, 1, -1), "south": (0, 1, 1, -1),
+    "east": (2, -1, 1, -1), "west": (2, 1, 1, -1),
+    "up": (0, 1, 2, 1), "down": (0, 1, 2, -1),
+}
+
+
 def to_blender(point):
     return Vector((point[0] / 16, -point[2] / 16, point[1] / 16))
 
@@ -62,15 +69,16 @@ for cube in job["boxes"]:
         faces.append(tuple(start + i for i in indices))
         face_mats.append(1 if cube["glow"] else 0)
         u0, v0, u1, v1 = cube["uv"][face_name]["uv"]
-        axis_u, axis_v = ((0, 1) if face_name in ("north", "south") else
-                          ((2, 1) if face_name in ("east", "west") else (0, 2)))
+        # Minecraft's face orientation (bosskit.bbmodel.FACE_UV), so the preview matches the game
+        axis_u, sign_u, axis_v, sign_v = FACE_UV[face_name]
         this_uv = []
         for idx in indices:
             p = local[idx]
             du = (p[axis_u] - lo[axis_u]) / max(1e-9, hi[axis_u] - lo[axis_u])
             dv = (p[axis_v] - lo[axis_v]) / max(1e-9, hi[axis_v] - lo[axis_v])
-            this_uv.append(((u0 + du * (u1 - u0)) / image.size[0],
-                            1 - (v1 - dv * (v1 - v0)) / image.size[1]))
+            du = du if sign_u > 0 else 1 - du
+            dv = dv if sign_v > 0 else 1 - dv
+            this_uv.append(((u0 + du * (u1 - u0)) / image.size[0], 1 - (v0 + dv * (v1 - v0)) / image.size[1]))
         uv_faces.append(this_uv)
 
 mesh = bpy.data.meshes.new("volley-textured-cuboids")
@@ -160,7 +168,8 @@ scene.view_settings.gamma = 1
 scene.camera.data.type = "ORTHO"
 
 
-def render(name, location, target, scale, show_player):
+def render(name, location, target, scale, show_player, res=(1200, 900)):
+    scene.render.resolution_x, scene.render.resolution_y = res
     camera.location = location
     camera.rotation_euler = (Vector(target) - camera.location).to_track_quat("-Z", "Y").to_euler()
     camera_data.ortho_scale = scale
@@ -176,5 +185,5 @@ for v in job.get("views", [
         {"name": "textured_front", "location": (0, 10, 3.4), "target": (0, 0, 2.15), "scale": 7.5, "player": False},
         {"name": "textured_player_eye", "location": (-3.4, 7.2, 1.62), "target": (0, 0, 2.25), "scale": 7.5,
          "player": False}]):
-    render(v["name"], v["location"], v["target"], v["scale"], v["player"])
+    render(v["name"], v["location"], v["target"], v["scale"], v["player"], tuple(v.get("res", (1200, 900))))
 print("TEXTURED_RENDER_DONE")

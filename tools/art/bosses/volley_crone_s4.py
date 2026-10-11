@@ -165,13 +165,13 @@ def views():
     ]
 
 
-def render(model, bb, atlas_path, out):
+def render(model, bb, atlas_path, out, view_list=None):
     out.mkdir(parents=True, exist_ok=True)
     boxes = [{"corners": c.corners().tolist(), "from": c.frm, "to": c.to, "glow": zone_for(c) == "glow",
               "uv": bb["elements"][i]["faces"]} for i, c in enumerate(model.cubes)]
     job_file = out / "render_job.json"
     job_file.write_text(json.dumps({"texture": str(atlas_path), "out": out.as_posix(), "boxes": boxes,
-                                    "views": views()}), encoding="utf-8")
+                                    "views": view_list or views()}), encoding="utf-8")
     result = subprocess.run([str(BLENDER), "-b", "--factory-startup", "--python",
                              str(ROOT / "tools/art/bosskit/blender_texture_render.py"), "--", str(job_file)],
                             capture_output=True, text=True)

@@ -13,6 +13,14 @@ import numpy as np
 
 FACES = ("north", "east", "south", "west", "up", "down")
 
+# How Minecraft (and Blockbench) lays a texture on each cube face, so it reads unmirrored from outside:
+# face -> (axis along u, +1 if u grows with that axis, axis along v, +1 if v grows with it). Axes: 0 x, 1 y, 2 z.
+FACE_UV = {
+    "north": (0, -1, 1, -1), "south": (0, 1, 1, -1),
+    "east": (2, -1, 1, -1), "west": (2, 1, 1, -1),
+    "up": (0, 1, 2, 1), "down": (0, 1, 2, -1),
+}
+
 
 def _uuid(seed):
     return str(uuidlib.uuid5(uuidlib.NAMESPACE_URL, "occultech/" + seed))
