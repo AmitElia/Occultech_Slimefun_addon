@@ -18,6 +18,7 @@ It reads the vanilla spider textures from the installed 26.2 client jar; the jar
 """
 import base64
 import json
+import random
 import shutil
 import sys
 import zipfile
@@ -42,7 +43,8 @@ VANILLA = v5.VANILLA
 RAMP = {
     "chitin": [(18, 14, 20), (26, 20, 15), (38, 32, 27), (50, 43, 38), (61, 52, 45), (71, 62, 53), (79, 69, 60),
                (96, 84, 72), (122, 108, 92)],
-    "hair": [(46, 34, 30), (82, 62, 48), (120, 94, 72), (163, 132, 106), (198, 166, 118), (228, 200, 140)],
+    # tarantula hair: dark at the root like the chitin, lighter only at the tips; guard hairs pale gold
+    "hair": [(34, 27, 25), (62, 50, 43), (96, 77, 62), (138, 112, 88), (186, 158, 116)],
     "mandible": [(8, 5, 10), (18, 10, 14), (30, 16, 20), (48, 28, 32), (80, 52, 58)],
     "fang": [(94, 79, 72), (146, 137, 127), (186, 172, 148), (214, 198, 166), (238, 228, 200)],
     "wax": [(60, 36, 28), (96, 64, 46), (118, 81, 54), (160, 118, 78), (212, 167, 115), (236, 200, 144),
@@ -174,38 +176,69 @@ def paint_eye(cube, face, w, h, eyes):
     return out
 
 
+def tuft(lv, alpha, x0, y0, step_y, length, width, lean, rnd, guard=False):
+    """One clump of hair drawn out from (x0, y0): width texels at the root tapering to one at the tip, leaning `lean`
+    texels sideways per two texels outward. Root dark, a lighter middle, only the tip catching light; a guard hair is a
+    single long strand with a paler tip."""
+    h, w = lv.shape
+    for k in range(int(length)):
+        f = k / max(1.0, length - 1)
+        y = y0 + step_y * k
+        span = 1 if guard else max(1, round(width * (1 - f) + f))
+        xs = x0 + int(lean * k / 2)
+        for dx in range(span):
+            x = xs + dx
+            if 0 <= x < w and 0 <= y < h:
+                level = 1 if f < 0.4 else (2 if f < 0.8 else 3)
+                if guard and f >= 0.8:
+                    level = 4
+                elif span >= 3 and dx == span // 2 and 0.3 < f < 0.8:
+                    level += 1                              # a lit spine down the middle of a wide clump
+                lv[y, x] = max(lv[y, x], level) if alpha[y, x] else level
+                alpha[y, x] = 255
+
+
+def distal(face):
+    """Which way along the texture's u the leg's foot is (the leg runs along +X in rest space)."""
+    au, su, _, _ = v5.FACE_UV[face]
+    return su if au == 0 else 1
+
+
 def paint_hair(cube, face, w, h, seed):
-    """A hair strip with alpha. Leg cards: strands grow out from the leg (the card's middle band, inside the chitin)
-    to both edges. Fringe cards: strands hang from the top edge. Root dark, tip gold, gaps between strands."""
+    """Tarantula hair with alpha, in clumps rather than strands. Leg cards: a dark fuzz hugging the leg, then tufts
+    growing out to both edges, all leaning towards the foot, a few longer guard hairs among them. Body fringes: a dark
+    root band along the top, tufts hanging down from it with a slight random lean, ragged at the bottom."""
+    rnd = random.Random(seed)
     lv = np.zeros((h, w), int)
     alpha = np.zeros((h, w), int)
     if "_fur_" in cube.name:
         hl = s2.LEG_HAIR[int(cube.name.split("_")[2])]
         mid = (h - 1) / 2
         core = max(1.0, h / 2 - hl)              # the leg's half-thickness: hidden inside the chitin
-        for x in range(w):
-            for side in (-1, 1):
-                if noise(seed + side, x, 0, 1) < 140:   # a gap in the fringe
-                    continue
-                reach = (h / 2 - core) * (0.7 + noise(seed + 5 + side, x, 1, 1) / 3400)
-                steps = int(round(core + reach))
-                for k in range(int(core) - 1, steps):
-                    y = int(round(mid + side * (k + 0.5)))
-                    if 0 <= y < h:
-                        f = (k - core) / max(1.0, reach)
-                        alpha[y, x] = 255
-                        lv[y, x] = 1 if f < 0.25 else (2 if f < 0.55 else (3 if f < 0.85 else 4))
+        lean = distal(face)
+        for y in range(h):
+            if abs(y - mid) <= core + 0.5:       # fuzz hugging the chitin, so the hair grows out of the leg
+                lv[y, :], alpha[y, :] = 0, 255
+        for side in (-1, 1):
+            y0 = int(round(mid + side * (core + 0.5)))
+            x = rnd.uniform(-2, 0)
+            while x < w:                         # short dark under-fuzz, so the edge of the leg is soft everywhere
+                tuft(lv, alpha, int(x), y0, side, rnd.uniform(1.5, 2.6), 3, lean, rnd)
+                x += rnd.uniform(1.0, 1.8)
+            x = rnd.uniform(-1.5, 0.5)
+            while x < w:                         # the tufts: irregular spacing and length, so it reads shaggy
+                tuft(lv, alpha, int(x), y0, side, hl * rnd.uniform(0.45, 1.0) + 0.5, rnd.choice((2, 2, 3)), lean, rnd)
+                x += rnd.uniform(1.4, 3.4)
+            for _ in range(max(1, w // 9)):     # sparse guard hairs, longer and paler
+                tuft(lv, alpha, rnd.randrange(w), y0, side, hl + 1, 1, lean, rnd, guard=True)
     else:
-        alpha[0, :] = 255
-        lv[0, :] = 1                                    # the root line along the top
-        for x in range(w):
-            if noise(seed, x, 0, 1) < 250:
-                continue
-            length = int(round(h * (0.45 + noise(seed + 3, x, 1, 1) / 1800)))
-            for y in range(1, max(2, length)):
-                f = y / max(1, length)
-                alpha[y, x] = 255
-                lv[y, x] = 1 if f < 0.3 else (2 if f < 0.6 else (3 if f < 0.85 else 5))
+        lv[:2, :], alpha[:2, :] = 0, 255        # the root band where the fringe grows from her side
+        x = rnd.uniform(-1.5, 0.5)
+        while x < w:
+            tuft(lv, alpha, int(x), 2, 1, h * rnd.uniform(0.45, 0.95), rnd.choice((2, 3, 3)), rnd.choice((-1, 0, 0, 1)), rnd)
+            x += rnd.uniform(1.4, 2.4)
+        for _ in range(max(1, w // 6)):
+            tuft(lv, alpha, rnd.randrange(w), 2, 1, h, 1, rnd.choice((-1, 0, 1)), rnd, guard=True)
     return from_levels(lv, RAMP["hair"], alpha)
 
 
@@ -353,7 +386,9 @@ def island_keys(model):
     keys = s4.island_keys(model)
     for k, key in keys.items():
         if key[0] == "hair":
-            keys[k] = ("hair", "leg" if "_fur_" in model.cubes[k[0]].name else "fringe", key[1], key[2])
+            leg = "_fur_" in model.cubes[k[0]].name
+            # leg hair leans towards the foot, which lies one way or the other along a face's texture: an island per lean
+            keys[k] = ("hair", "leg", key[1], key[2], distal(k[1])) if leg else ("hair", "fringe", key[1], key[2])
     return keys
 
 

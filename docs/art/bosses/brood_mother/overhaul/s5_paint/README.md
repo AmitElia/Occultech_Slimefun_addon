@@ -23,11 +23,18 @@ in-game look is the real review.
   - legs: joint ends darken into the knuckles, and the femur and tibia have a lighter tarantula band near each knee;
   - plates: lit top edges with a dark lower lip;
   - a pale chevron runs down the rear of her abdomen, and dust settles low on the big faces.
-- **Hair cards:** hair strips with alpha.
-  - Leg cards grow strands out from the leg to both edges, leaning a little apart.
-  - Body fringes hang strands from a root line along the top.
-  - Every strand runs from a dark root to a gold tip, with gaps between them, so a card reads as a fringe and not a
-    plane.
+- **Hair cards:** hair strips with alpha, painted as clumps rather than strands (reworked after session 6; see
+  [the before and after](../s6_variants/fur_before_after.png)).
+  - Leg cards:
+    - a band of dark fuzz hugs the chitin, so the hair grows out of the leg;
+    - over it, short dark under-fuzz and tapering tufts (two or three texels at the root, one at the tip) at irregular
+      spacing and length;
+    - every tuft leans towards the foot, so each side of a card has its own strip with the lean the right way;
+    - a few longer guard hairs with pale tips.
+  - Body fringes: a dark root band along the top, then tufts hanging from it with a slight random lean, ragged at the
+    bottom.
+  - The hair is dark like the chitin at the root and only catches light at the tips. The first pass (one-texel
+    strands with gold tips, evenly spaced) read as combs and stripes.
   - The leg cards were turned square to the leg (one upright, one flat) and their hair lengthened, because crossed at
     45 degrees the hair barely cleared the leg's corners and read as dashes.
 - **Jaws:** glossy near-black with one highlight line along each mandible; bone fangs that darken towards the tip.

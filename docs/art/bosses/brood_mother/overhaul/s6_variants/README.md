@@ -21,7 +21,22 @@ shows the same model.
 
 All of this is free to draw: the flame and wick planes are single 45-degree turns, and the drips are unturned. She
 is drawn as 72 display entities (71 before, plus the glowing eyes from session 4). Identical candles, cards and drips
-share texture space, so the atlas is fuller of detail but has more room than before: 477 of 512 rows used.
+share texture space, so the atlas is fuller of detail but still fits: 497 of 512 rows used after the fur rework.
+
+## Fur
+
+Reworked before animation, at your request.
+- **Before:** the hair was one-texel strands at right angles to the leg, evenly spaced, with gold tips. On the dark
+  chitin it read as combs and ladder rungs, and the shared strip made the hair lean back towards the body on one side
+  of each card.
+- **Now:** dark fuzz hugs the chitin, with tapering tufts at irregular spacing and length over it, all leaning towards
+  the foot (each side of a card has its own strip). A few longer guard hairs have pale tips. The hair is dark at the
+  root and only the tips catch light. The belly and flank fringes hang in clumps from a dark root band, ragged at the
+  bottom.
+
+![Fur, before and after](fur_before_after.png)
+
+The atlas still fits 256 x 512 (497 rows used).
 
 ## Variants: her candles go out as she weakens
 
