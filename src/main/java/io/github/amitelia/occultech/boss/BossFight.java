@@ -277,7 +277,6 @@ public final class BossFight {
      */
     private final boolean event;
     private final BossBehavior behavior;
-    @Nullable private Entity actionTarget;
     /** Each boss body's max health once scaled for the group: what a Mythic reload must not undo. */
     private final Map<UUID, Double> scaledHealth = new HashMap<>();
     private final BossBar bar;
@@ -382,21 +381,15 @@ public final class BossFight {
     }
 
     /**
-     * Cosmetic action hook with the target the action locked: Mythic skills reach it as {@code @OccultechActionTarget}
-     * (a marker under it, a look at it). It stays the action target until the next action.
+     * Cosmetic action hook with the target the action locked: Mythic skills reach it as {@code @trigger} (a marker
+     * under it, a look at it).
      */
     public void playAction(LivingEntity entity, String action, @Nullable Entity target) {
-        actionTarget = target;
-        service.body().playAction(entity, spec.id(), action);
-    }
-
-    /** The target the current action locked, while it is still a valid fighter of this fight. */
-    @Nullable
-    public Entity actionTarget() {
-        if (actionTarget instanceof Player player && !(player.isValid() && players().contains(player))) {
-            return null;
+        if (target == null) {
+            service.body().playAction(entity, spec.id(), action);
+        } else {
+            service.body().playAction(entity, spec.id(), action, target);
         }
-        return actionTarget != null && actionTarget.isValid() ? actionTarget : null;
     }
 
     /** The behavior's phase (for Mythic conditions). */

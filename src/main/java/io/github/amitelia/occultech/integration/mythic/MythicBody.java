@@ -77,12 +77,16 @@ public final class MythicBody implements BossBody {
 
     @Override
     public void playAction(LivingEntity entity, String bossId, String action) {
-        MythicBukkit.inst().getMobManager().getMythicMob("OCCULTECH_" + bossId).ifPresent(mob -> {
-            MythicBukkit.inst().getMobManager().getActiveMob(entity.getUniqueId()).ifPresent(active ->
-                MythicBukkit.inst().getSkillManager().getSkill(bossId + "_" + action).ifPresent(skill ->
-                    skill.execute(ACTION, active, BukkitAdapter.adapt(entity), BukkitAdapter.adapt(entity.getLocation()),
-                        new HashSet<>(), new HashSet<>(), 1F)));
-        });
+        playAction(entity, bossId, action, entity);
+    }
+
+    /** Runs the skill {@code <BOSS>_<ACTION>} if it exists, with the action's target as its trigger ({@code @trigger}). */
+    @Override
+    public void playAction(LivingEntity entity, String bossId, String action, Entity target) {
+        MythicBukkit.inst().getMobManager().getActiveMob(entity.getUniqueId()).ifPresent(active ->
+            MythicBukkit.inst().getSkillManager().getSkill(bossId + "_" + action).ifPresent(skill ->
+                skill.execute(ACTION, active, BukkitAdapter.adapt(target), BukkitAdapter.adapt(entity.getLocation()),
+                    new HashSet<>(), new HashSet<>(), 1F)));
     }
 
     @Override

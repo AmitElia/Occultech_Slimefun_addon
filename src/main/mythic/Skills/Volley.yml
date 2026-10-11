@@ -3,7 +3,7 @@ VOLLEY_BURST_PREPARE:
   Skills:
   - state{m=occultech_volley;s=burst} @self
   # a target ring under the player the burst locked (the arrows aim at them); a warning only, no damage
-  - occultechTelegraph{r=1.2;t=20;mark=target;color=#c08cff} @OccultechActionTarget
+  - occultechTelegraph{r=1.2;t=20;mark=target;color=#c08cff} @trigger
   - sound{s=item.crossbow.loading_middle;v=1.5;p=0.8} @self
 VOLLEY_BURST_CONTACT:
   Skills:

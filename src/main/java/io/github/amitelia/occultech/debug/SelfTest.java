@@ -871,7 +871,7 @@ final class SelfTest {
                 currentFight.bosses().stream().noneMatch(LivingEntity::getRemoveWhenFarAway), "removed when far away");
             if ("VOLLEY".equals(bossId)) {
                 // Mythic reloads mid-fight, then the burst skill draws a target ring under the action target
-                // (occultechTelegraph and @OccultechActionTarget); the 3 s check counts the cast
+                // (occultechTelegraph on @trigger, the action's target); the 3 s check counts the cast
                 LivingEntity carrier = currentFight.bosses().get(0);
                 actionTarget = carrier.getWorld().spawn(carrier.getLocation().add(4, 0, 0), org.bukkit.entity.ArmorStand.class, a -> {
                     a.setInvisible(true);
@@ -894,7 +894,7 @@ final class SelfTest {
                 && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getBaseValue() - maxBeforeReload) < 1e-6,
                 "removed when far away " + carrier.getRemoveWhenFarAway() + ", max health "
                     + carrier.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getBaseValue() + " (was " + maxBeforeReload + ")");
-            // occultechTelegraph and @OccultechActionTarget together, after the reload
+            // occultechTelegraph on the action target (@trigger), after the reload
             check("after /mm reload a Mythic skill draws a telegraph under the action target",
                 io.github.amitelia.occultech.integration.mythic.OccultechTelegraph.casts() > castsBefore, "the mechanic never ran");
             actionTarget.remove();

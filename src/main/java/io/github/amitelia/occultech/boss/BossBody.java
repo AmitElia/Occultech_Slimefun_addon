@@ -11,6 +11,11 @@ public interface BossBody {
 
     default void playAction(LivingEntity entity, String bossId, String action) {}
 
+    /** The action with the target it locked: Mythic skills reach it as {@code @trigger}. */
+    default void playAction(LivingEntity entity, String bossId, String action, org.bukkit.entity.Entity target) {
+        playAction(entity, bossId, action);
+    }
+
     default void stop(LivingEntity entity) {}
 
     default boolean isMythic(String id) { return false; }
