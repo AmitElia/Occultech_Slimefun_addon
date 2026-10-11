@@ -1,45 +1,50 @@
-# Brood Mother redesign, session 1: three directions
+# Brood Mother redesign, session 1 (take 2): three directions
 
-The brief (2026-10-10):
-- a scary, mutated Minecraft spider that looks enchanted and cursed;
-- a wooden mask carved like a villager's face, worn as a lure, with two large glowing eyes showing through its eye
-  holes;
-- on her back, piles of breathing, glowing egg cocoons.
+The first take (a villager mask and egg cocoons) was rejected; it stays in git history. The new brief (2026-10-10):
+- the **vanilla spider**, buffed and mutated;
+- **long predator legs** with several joints;
+- on her back, a **mountain of melted wax and lit candles**;
+- no mask; **large mandibles**.
 
-These are blockouts for picking a direction, in flat colours. Texture, the breathing and the glow animation come in
-later sessions.
+These are blockouts for picking a direction, in flat colours. Texture, the candle glow and the flicker come in later
+sessions.
 
 ![Three directions: front, side, three-quarter](compare.png)
-![Material zones: side, three-quarter, back](compare_material.png)
+![Material zones: front, side, back](compare_material.png)
 
-| | Direction | Posture | Size (w x h x d) | Cocoons |
-|---|---|---|---|---|
-| A | **Masked matriarch** | high-arched legs, the knees above the body: the classic looming spider | 3.5 x 3.7 x 4.6 blocks | a heap on the abdomen |
-| B | **Weaver crone** | low and wide, the swollen abdomen near the ground, splayed legs | 5.7 x 3.3 x 5.9 | a whole hill of cocoons |
-| C | **The lure** | the front body reared up so the mask sits at a villager's head height, the front legs raised | 4.3 x 4.0 x 4.4 | a heap on the abdomen |
+| | Direction | Posture | Size (w x h x d) |
+|---|---|---|---|
+| A | **Candle stalker** | slung high between very long four-joint legs, the knees far above her back (a harvestman's build); a tall, narrow wax spire | 5.7 x 5.9 x 4.9 blocks |
+| B | **Wax hulk** | heavy and muscled, low to the ground on thick legs; the biggest wax mountain, spilling down her sides | 5.9 x 5.3 x 6.0 |
+| C | **Ambush hunter** | head carried low with the mandibles spread wide; the front pair of legs held up and folded like a mantis's scythes | 5.6 x 4.9 x 4.7 |
 
 Sheets per direction: [A](A/sheet.png), [B](B/sheet.png), [C](C/sheet.png). Regenerate:
 `python tools/art/bosses/brood_s1.py`.
 
 ## What all three share
 
-- **The mask:** a carved wooden board with the villager's brow ridge, his long nose and a mouth line. A crack runs
-  through it and twine straps tie it on. The eye holes are real openings, filled by two large glowing eyes.
-- **The spider behind it:** six small spider eyes peek out round the mask's edges. The mask is a disguise over
-  something with too many eyes.
-- **The brood:** egg cocoons heaped on the abdomen, two layers deep in the middle, bound with silk strands. The ember
-  light of the eggs shows through a split in each cocoon. The fight's egg sacs can be laid from this pile, and the
-  "breathing" is the cocoons swelling in turn (animation session).
-- **A mutated body:** thick jointed legs with bristles and knuckles, a ridge of spines down the abdomen, fangs under
-  the mask.
-- **Colours:** tier 0: dark chitin, pale silk, old wood, twine. The accent is ember, in her eyes and inside the eggs.
-  "Enchanted and cursed" would come through in the texture: carved runes on the mask, an ember glow, and a faint
-  enchantment shimmer on the cocoons. To lean harder into "cursed", the eggs could glow sickly green instead, as
-  a second accent.
+- **The vanilla spider underneath:** the vanilla parts in their vanilla proportions, scaled up 2 to 2.6 times. A big
+  square head, a small thorax, a long boxy abdomen, and the red eye pattern on the face. Mutated: the thorax is swollen
+  with muscle humps, an extra cluster of eyes spills down one cheek, and the abdomen bulges and splits its flank plates
+  under the wax.
+- **Predator legs:** eight legs with four segments each, bristled, climbing to a high knee and reaching down to the floor.
+- **Mandibles:** big chelicerae under the face, reaching forward like pincers, with a hooked fang and a row of teeth
+  inside.
+- **The wax mountain:** lumps of melted wax run together around one slumped peak. A skirt of drips hangs over the edge
+  of the abdomen. Candles of every height stand all over it: tall ones crown the peak, some are burnt down to stubs and
+  some lean. Each flame is its own `glow_` bone, ready for full-bright and a flicker.
+- **Colours:** tier 0. Dark chitin and bone-coloured mandibles; honey wax in two shades; red eyes; orange flames.
 
 ## Fit with the fight
 
-- **Egg sacs:** laid from the pile on her back, so it shrinks and refills.
+- **Egg sacs:** they could become wax-sealed egg clutches dropped from the mountain, so the pile shrinks as the fight goes on.
 - **Web zone:** the spinnerets at the back of the abdomen.
-- **Pounce:** B's crouch and C's rear-up both make strong 1-second warnings before the leap.
-- **A new tell:** C could hold the lure pose and turn the mask towards a player before she pounces.
+- **Pounce:** A rears up on its long legs, B crouches low, and C cocks its scythes: each is a clear one-second warning.
+- **A wax hazard:** molten wax spilling from the pile as a slowing puddle, telegraphed by the flames flaring.
+
+## Inspirations
+
+- **The vanilla spider:** body plan, head and eye pattern.
+- **Harvestmen (daddy longlegs):** legs many times the body length, which reach down from a high body (A).
+- **Candle golems and wax golems:** wax heaped into a body, candles on every ledge, drips everywhere.
+- **Mantids and solifuges:** the folded front scythes and the forward pincer jaws (C).
