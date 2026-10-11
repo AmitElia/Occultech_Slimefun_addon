@@ -60,35 +60,67 @@ def candle(body, glow, name, base, height, width, tilt=(0, 0, 0), melted=False):
         body.box(f"{name}_drip{n}", (x + dx * (w / 2 + 0.5), y + height - length / 2, z + dz * (w / 2 + 0.5)),
                  (1, length, 1), "wax", tilt, pivot)
     ws = w // 2
-    tip = np.array([x, y + height + ws * 0.5, z])
+    tip = np.array([x, y + height + ws, z])
     if any(tilt):
         body.box(f"{name}_wick", (x, y + height + 0.5, z), (1, 2, 1), "wick", tilt, pivot)
-        tip = (pivot_matrix(pivot, tilt) @ np.array([x, y + height + 1.5, z, 1.0]))[:3]
+        tip = (pivot_matrix(pivot, tilt) @ np.array([x, y + height + 2, z, 1.0]))[:3]
     else:
         for r in (45, -45):
             body.box(f"{name}_wick_{'a' if r > 0 else 'b'}", (x, y + height + ws / 2, z), (ws, ws, 0), "wick", (0, r, 0))
     fw, fh = (4, 8) if w == 4 else (2, 5)
-    centre = (tip[0], tip[1] + fh / 2 - 0.5, tip[2])
+    centre = (tip[0], tip[1] + fh / 2, tip[2])
     for r in (45, -45):
         glow.box(f"{name}_flame_{'a' if r > 0 else 'b'}", centre, (fw, fh, 0), "flame", (0, r, 0))
-    if melted:
-        body.box(f"{name}_puddle", (x + 0.5, y + 0.5, z - 0.5), (w + 4, 1, w + 3), "wax")
+    if melted:   # each puddle a fraction of a texel higher than the last, so neighbours never share a plane
+        body.box(f"{name}_puddle", (x + 0.5, y + 0.5 + (seed % 5) * 0.12, z - 0.5), (w + 4, 1, w + 3), "wax")
 
 
-def lump_steps(centre, radii, layers):
-    """The steps of a stepped wax lump (bbmodel.blob with axes=("y",), after whole-texel snapping), equator up: each
-    step's top, its half-width and half-depth, and its height."""
-    cx, cy, cz = centre
-    rx, ry, rz = radii
+def apart(lumps):
+    """Lifts lumps a fraction of a texel at a time until no two lumps' steps share a face plane (they overlap, and
+    coplanar faces flicker in game). Done before anything is placed on them, so drips and candles follow."""
+    from bosskit.checks import flicker_pairs
+    lumps = list(lumps)
+    for attempt in range(60):
+        tmp = Model("lumps")
+        g = tmp.group("g", (0, 0, 0))
+        for i, (x, y, z, r) in enumerate(lumps):
+            stepped(g.blob(f"wax_lump_{i}", (x, y, z), r, "wax", layers=6, axes=("y",)))
+        clashes = flicker_pairs(tmp.cubes)
+        if not clashes:
+            return lumps
+        i = int(clashes[0][1].split("_")[2])
+        x, y, z, r = lumps[i]
+        lumps[i] = (x, y + 0.07 + 0.03 * (attempt % 3), z, r)
+    raise SystemExit("wax lumps still share planes")
+
+
+def stepped(slabs):
+    """A lump's slabs (bottom to top), snapped to whole texels, each strictly narrower than the step it sits on (or
+    under, below the middle), a texel at a time: two steps of one width would share face planes where they overlap,
+    which flickers in game. Returns the slabs."""
+    snap_cubes(slabs)
+    width = lambda c, a: c.to[a] - c.frm[a]
+
+    def shrink(c, a):
+        c.frm[a] += 0.5
+        c.to[a] -= 0.5
+
+    mid = len(slabs) // 2
+    for a in (0, 2):
+        for k in range(mid, len(slabs)):
+            while width(slabs[k], a) >= width(slabs[k - 1], a) and width(slabs[k], a) > 1:
+                shrink(slabs[k], a)
+        for k in range(mid - 2, -1, -1):
+            while width(slabs[k], a) >= width(slabs[k + 1], a) and width(slabs[k], a) > 1:
+                shrink(slabs[k], a)
+    return slabs
+
+
+def lump_steps(slabs):
+    """The upper steps of a stepped lump, from the middle up: each step's top, half-width, half-depth and height."""
     out = []
-    for i in range(layers // 2, layers):
-        t0, t1 = -1 + 2 * i / layers, -1 + 2 * (i + 1) / layers
-        t = min(abs(t0), abs(t1)) if t0 * t1 > 0 else 0.0
-        s = math.sqrt(max(0.0, 1 - t * t))
-        hx, hz = max(1, round(2 * rx * s)) / 2, max(1, round(2 * rz * s)) / 2
-        h = max(1, round((t1 - t0) * ry))
-        top = cy + (t0 + t1) / 2 * ry + h / 2
-        out.append((top, hx, hz, h))
+    for c in slabs[len(slabs) // 2:]:
+        out.append((c.to[1], (c.to[0] - c.frm[0]) / 2, (c.to[2] - c.frm[2]) / 2, c.to[1] - c.frm[1]))
     return out
 
 
@@ -98,10 +130,12 @@ def drips(group, name, points, rnd, longest):
     for k, (x, top, z, ox, oz) in enumerate(points):
         length = rnd.randint(2, max(3, int(longest)))
         w, d = rnd.choice(((1, 1), (1, 1), (1, 1), (2, 1), (1, 2)))
-        cx, cz = x + ox * (w / 2), z + oz * (d / 2)
-        group.box(f"{name}_drip_{k}", (cx, top - length / 2, cz), (w, length, d), "wax")   # fresh wax: lighter runs
+        gap = 0.1 + 0.1 * (k % 3)                 # never flush with the surface or a neighbour: no shared planes
+        cx, cz = x + ox * (w / 2 + gap), z + oz * (d / 2 + gap)
+        top_k = top - 0.15 - 0.1 * (k % 4)
+        group.box(f"{name}_drip_{k}", (cx, top_k - length / 2, cz), (w, length, d), "wax")   # fresh wax: lighter runs
         if rnd.random() < 0.35:
-            group.box(f"{name}_bead_{k}", (cx, top - length, cz), (w + 1, 2, d + 1), "wax")
+            group.box(f"{name}_bead_{k}", (cx, top_k - length + 0.05 * (k % 3), cz), (w + 1, 2, d + 1), "wax")
 
 
 def wax_mountain(abdomen, top_y, cz, half_w, half_d, side_h, height, seed):
@@ -118,9 +152,12 @@ def wax_mountain(abdomen, top_y, cz, half_w, half_d, side_h, height, seed):
     for i, (fx, fz, frx, fh, frz) in enumerate(spots):
         x, z = fx * half_w + rnd.uniform(-1, 1), cz + fz * half_d + rnd.uniform(-1, 1)
         r = (frx * half_w, fh * height * 0.55, frz * half_d)
-        y = top_y + 1 + (fh * height * 0.35 if fh > 0.8 else 0)
-        pile.blob(f"wax_lump_{i}", (x, y, z), r, "wax" if i % 3 else "wax_old", layers=6, axes=("y",))
-        lumps.append((x, y, z, r))
+        lumps.append((x, top_y + 1 + (fh * height * 0.35 if fh > 0.8 else 0), z, r))
+    lumps = apart(lumps)
+    steps = []
+    for i, (x, y, z, r) in enumerate(lumps):
+        steps.append(stepped(pile.blob(f"wax_lump_{i}", (x, y, z), r, "wax" if i % 3 else "wax_old", layers=6,
+                                       axes=("y",))))
     for i, (side, f) in enumerate(((1, 0.1), (1, 0.6), (-1, -0.2), (-1, 0.45), (0, 1), (1, -0.5), (-1, 0.85))):
         drop, width, out = side_h * rnd.uniform(0.45, 0.8), rnd.uniform(5, 8), rnd.uniform(0.5, 1.0)
         for j, (wf, hf) in enumerate(((1.0, 0.3), (0.72, 0.4), (0.45, 0.3))):
@@ -134,7 +171,7 @@ def wax_mountain(abdomen, top_y, cz, half_w, half_d, side_h, height, seed):
     # session 6: wax runs over the edge of every step of every lump (so the steps read as dripping ledges, not
     # terraces) and hangs in icicles from the edge of the abdomen
     for i, (x, y, z, r) in enumerate(lumps):
-        for k, (top, hx, hz, slab_h) in enumerate(lump_steps((x, y, z), r, 6)):
+        for k, (top, hx, hz, slab_h) in enumerate(lump_steps(steps[i])):
             pts = []
             for sx, sz, along_x in ((1, 0, False), (-1, 0, False), (0, 1, True), (0, -1, True)):
                 span = hx if along_x else hz
@@ -187,7 +224,7 @@ def comb(group, name, along, fixed, y_range, length, out_axis, spacing, rnd):
         top = rnd.uniform(*y_range)
         drop = length * rnd.uniform(1.1, 1.6)
         mid = pos + piece / 2
-        off = fixed + sign * (0.5 + (i % 2) * 0.5)   # alternate planes: neighbouring cards never share one
+        off = fixed + sign * (0.5 + (i % 3) * 0.4)   # rotating planes: neighbouring cards never share one
         if out_axis == "x":
             c, sz, rot, pivot = (off, top - drop / 2, mid), (0, drop, piece), (0, 0, sign * 22.5), (off, top, mid)
         else:
@@ -209,9 +246,9 @@ def hairy_leg(thorax, name, hip, yaw, segs, rnd):
         if i in LEG_HAIR and length:
             hl = LEG_HAIR[i]
             span = t + 2 * hl
-            centre = (x + length / 2, hip[1], hip[2])
-            bones[i + 1].box(f"{name}_{i}_fur_a", centre, (length - 1, span, 0), "hair")
-            bones[i + 1].box(f"{name}_{i}_fur_b", centre, (length - 1, 0, span), "hair")
+            shift = 0.2 * (i % 2)                 # neighbouring segments' cards on their own planes
+            bones[i + 1].box(f"{name}_{i}_fur_a", (x + length / 2, hip[1], hip[2] + shift), (length - 1, span, 0), "hair")
+            bones[i + 1].box(f"{name}_{i}_fur_b", (x + length / 2, hip[1] + shift, hip[2]), (length - 1, 0, span), "hair")
         x += length or 0
     return bones
 
@@ -235,7 +272,7 @@ def legs(thorax, ty, tw, td, rnd):
             yaw = (52, 22, -14, -48)[i]
             ls = (1.0, 0.88, 0.8, 0.95)[i] * LEG_LEN
             hip = (side * (tw / 2 - 1.5), ty - 1.5, -td * 0.33 + i * td * 0.22)
-            segs = [(4 * ls, 18, 5.6 * LEG_THICK), (26 * ls, FEMUR, 5.6 * LEG_THICK), (6 * ls, 4, 5.0 * LEG_THICK),
+            segs = [(4 * ls, 18, 7.2 * LEG_THICK), (26 * ls, FEMUR, 5.6 * LEG_THICK), (6 * ls, 4, 5.0 * LEG_THICK),
                     (22 * ls, -34, 4.2 * LEG_THICK), (18 * ls, -60, 3.0 * LEG_THICK), (None, -76, 2.0 * LEG_THICK)]
             name = f"leg_{'r' if side > 0 else 'l'}{i}"
             bones = hairy_leg(thorax, name, hip, yaw if side > 0 else 180 - yaw, segs, rnd)
@@ -323,12 +360,76 @@ def build():
         candle(head, hglow, f"head_candle_{i}", (x, hy + hh / 2 + 1, z), h, 4 if i == 0 else 2, melted=True)
         head.box(f"head_wax_run_{i}", (s * (hw / 2 + 0.5), hy + hh / 2 - 4, z), (1, 8, 3), "wax")
     snap(model)
+    diamond_knuckles(model)
+    separate(model)
     return model
+
+
+def diamond_knuckles(model):
+    """Leg knuckles turned 45 degrees about the leg into diamonds (a single 45-degree turn: free for BetterModel). A
+    square knuckle the size of the next segment's thickness shared that segment's face planes and flickered in game."""
+    for c in model.cubes:
+        if c.name.startswith("leg_") and c.name.endswith("_joint"):
+            lo, hi = np.array(c.frm), np.array(c.to)
+            centre = (lo + hi) / 2
+            k = max(1.0, np.round((hi - lo)[0] * 0.8))
+            c.frm, c.to = (centre - k / 2).tolist(), (centre + k / 2).tolist()
+            c.rotation, c.origin = [45.0, 0.0, 0.0], centre.tolist()
+
+
+_NUDGES = {}
+
+
+def separate(model):
+    """No two faces may share a plane (they flicker in game; bosskit.checks.flicker_pairs finds them). For each clash
+    the smaller part moves a tenth of a texel off the plane, along the face normal; a wax lump moves whole, so its
+    steps stay stacked. Repeated until nothing clashes; the nudges are cached by cube name for later builds."""
+    from bosskit.checks import flicker_pairs
+    by_name = {c.name: c for c in model.cubes}
+
+    def move(c, world_n, amount):
+        r = c.group.world_matrix()[:3, :3]
+        local = np.linalg.solve(r, world_n) * amount
+        c.frm = (np.array(c.frm) + local).tolist()
+        c.to = (np.array(c.to) + local).tolist()
+        c.origin = (np.array(c.origin) + local).tolist()
+        _NUDGES[c.name] = _NUDGES.get(c.name, np.zeros(3)) + local
+
+    if _NUDGES:
+        for name, d in _NUDGES.items():
+            c = by_name[name]
+            c.frm, c.to, c.origin = [(np.array(v) + d).tolist() for v in (c.frm, c.to, c.origin)]
+        return
+    for rounds in range(40):
+        clashes = flicker_pairs(model.cubes)
+        if not clashes:
+            return
+        moved = set()
+        for _, a, face, b, _ in clashes:
+            ca, cb = by_name[a], by_name[b]
+            if ca.name in moved or cb.name in moved:
+                continue
+            size = lambda c: np.prod(np.maximum(np.array(c.to) - np.array(c.frm), 0.5))
+            small = ca if size(ca) <= size(cb) else cb
+            n = {"north": (0, 0, -1), "south": (0, 0, 1), "west": (-1, 0, 0), "east": (1, 0, 0), "down": (0, -1, 0),
+                 "up": (0, 1, 0)}[face]
+            world_n = (ca.group.world_matrix() @ pivot_matrix(ca.origin, ca.rotation))[:3, :3] @ np.array(n, float)
+            slab = lambda c: c.name.startswith("wax_lump_") and "_y" in c.name and "_s" not in c.name.split("_y")[1]
+            if slab(small):                          # a lump's step stays put; the part against it moves
+                small = cb if small is ca else ca
+            step = 0.11 + 0.06 * ((sum(map(ord, small.name)) + rounds) % 5)   # uneven steps: no two parts land together
+            move(small, world_n, step)
+            moved.update((ca.name, cb.name))
+    raise SystemExit(f"faces still share planes: {flicker_pairs(model.cubes)[:5]}")
 
 
 def snap(model):
     """Whole-texel cube sizes, so each face maps to whole texels; hair cards keep their zero thickness."""
-    for c in model.cubes:
+    snap_cubes(model.cubes)
+
+
+def snap_cubes(cubes):
+    for c in cubes:
         lo, hi = np.array(c.frm), np.array(c.to)
         center, size = (lo + hi) / 2, np.round(hi - lo)
         size = np.where(hi - lo < 0.01, 0, np.maximum(1, size))

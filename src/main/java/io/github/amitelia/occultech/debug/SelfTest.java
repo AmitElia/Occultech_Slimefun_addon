@@ -854,7 +854,7 @@ final class SelfTest {
     }
 
     /** The stand-in action target for the Mythic component checks (M2), between Volley's spawn and its 3 s check. */
-    private org.bukkit.entity.ArmorStand actionTarget;
+    private org.bukkit.entity.Pig actionTarget;
     private int castsBefore;
     private double maxBeforeReload;
 
@@ -873,9 +873,12 @@ final class SelfTest {
                 // Mythic reloads mid-fight, then the burst skill draws a target ring under the action target
                 // (occultechTelegraph on @trigger, the action's target); the 3 s check counts the cast
                 LivingEntity carrier = currentFight.bosses().get(0);
-                actionTarget = carrier.getWorld().spawn(carrier.getLocation().add(4, 0, 0), org.bukkit.entity.ArmorStand.class, a -> {
+                // a living stand-in (Mythic's targeters skip armour stands, so a marker stand never reached @trigger)
+                actionTarget = carrier.getWorld().spawn(carrier.getLocation().add(4, 0, 0), org.bukkit.entity.Pig.class, a -> {
+                    a.setAI(false);
+                    a.setInvulnerable(true);
+                    a.setSilent(true);
                     a.setInvisible(true);
-                    a.setMarker(true);
                     a.setPersistent(false);
                 });
                 maxBeforeReload = carrier.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getBaseValue();
@@ -919,6 +922,20 @@ final class SelfTest {
             }
             check("Volley's model has its hitbox", carrier != null
                 && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_volley"), "no hitbox entity");
+        }
+        if ("BROOD_MOTHER".equals(bossId) && currentFight.usesMythicBody()
+            && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_brood_mother")) {
+            LivingEntity carrier = currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+            check("the Brood Mother has one BetterModel tracker", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(carrier, "occultech_brood_mother"),
+                carrier == null ? "no carrier" : io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier));
+            check("the Brood Mother's model has its hitbox", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_brood_mother"),
+                "no hitbox entity");
+            check("the Brood Mother's Mythic carrier stays unscaled under the model", carrier != null
+                && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
+                carrier == null ? "no carrier" : "scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue());
         }
         check(ContentRegistrar.title(bossId) + " is not scaled up for a solo summon", Math.abs(currentFight.healthMultiplier() - 1.0) < 0.001,
             "multiplier " + currentFight.healthMultiplier());

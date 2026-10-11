@@ -42,6 +42,8 @@ public final class BroodMother extends BossBehavior {
     private static final int WEB_WARNING = 30;
     private static final int POUNCE_INTERVAL = 160;
     private static final int POUNCE_WARNING = 20;
+    /** Her candles go out as she weakens (the model's flame groups; Mythic hides them): knees and flank, then thorax and head, then the pile. */
+    private static final double[] SNUFF_AT = {0.75, 0.5, 0.25};
 
     private record Sac(BossFight.FightObject object, int hatchAt) {}
 
@@ -51,6 +53,7 @@ public final class BroodMother extends BossBehavior {
     private int webAt = -1;
     private Player pounceTarget;
     private int pounceAt = -1;
+    private int snuffed;
 
     public BroodMother(BossFight fight) {
         super(fight);
@@ -59,14 +62,16 @@ public final class BroodMother extends BossBehavior {
     @Override
     public void spawn(Location at) {
         mother = fight.spawnBoss(Spider.class, at, s -> {
-            s.setCustomName(ChatColor.DARK_RED + "Brood Mother");
-            s.setCustomNameVisible(true);
-            BossFight.setAttribute(s, Attribute.MAX_HEALTH, 320);
             fight.label(s, BITE);
-            BossFight.setAttribute(s, Attribute.SCALE, 2.2);
-            BossFight.setAttribute(s, Attribute.MOVEMENT_SPEED, 0.37);
-            BossFight.setAttribute(s, Attribute.KNOCKBACK_RESISTANCE, 0.6);
-            BossFight.setAttribute(s, Attribute.FOLLOW_RANGE, 32);
+            if (!fight.usesMythicBody()) {   // the Mythic body sets these in its mob file and stays unscaled under the model
+                s.setCustomName(ChatColor.DARK_RED + "Brood Mother");
+                s.setCustomNameVisible(true);
+                BossFight.setAttribute(s, Attribute.MAX_HEALTH, 320);
+                BossFight.setAttribute(s, Attribute.SCALE, 2.2);
+                BossFight.setAttribute(s, Attribute.MOVEMENT_SPEED, 0.37);
+                BossFight.setAttribute(s, Attribute.KNOCKBACK_RESISTANCE, 0.6);
+                BossFight.setAttribute(s, Attribute.FOLLOW_RANGE, 32);
+            }
         });
     }
 
@@ -76,6 +81,14 @@ public final class BroodMother extends BossBehavior {
 
         if (every(SAC_INTERVAL)) {
             layEggs(now);
+        }
+        // after a restart the resumed fight sees the low health again and puts the candles out again
+        if (mother.isValid()) {
+            double left = mother.getHealth() / mother.getAttribute(Attribute.MAX_HEALTH).getValue();
+            while (snuffed < SNUFF_AT.length && left < SNUFF_AT[snuffed]) {
+                fight.playAction(mother, "SNUFF_" + Math.round(SNUFF_AT[snuffed] * 100));
+                snuffed++;
+            }
         }
         sacs.removeIf(sac -> {
             if (!sac.object().isAlive()) {
@@ -96,6 +109,7 @@ public final class BroodMother extends BossBehavior {
                 webTarget = target.getLocation();
                 webAt = now + WEB_WARNING;
                 fight.telegraph(webTarget, 3, WEB_WARNING, WEB, FloorDecals.Mark.WEB);
+                fight.playAction(mother, "WEB_PREPARE", target);
                 target.playSound(target.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 1F, 0.6F);
             }
         }
@@ -111,6 +125,7 @@ public final class BroodMother extends BossBehavior {
                 pounceTarget = target;
                 pounceAt = now + POUNCE_WARNING;
                 fight.telegraph(target.getLocation(), 2.5, POUNCE_WARNING + 10, org.bukkit.Color.fromRGB(150, 30, 30), FloorDecals.Mark.DIVE);
+                fight.playAction(mother, "POUNCE_PREPARE", target);
                 mother.getWorld().playSound(mother.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 1.5F, 0.5F);
                 mother.getWorld().spawnParticle(Particle.CRIT, mother.getLocation().add(0, 1, 0), 25, 0.6, 0.4, 0.6, 0.1);
             }
@@ -130,6 +145,9 @@ public final class BroodMother extends BossBehavior {
             sacs.add(new Sac(sac, now + HATCH_DELAY));
         }
         fight.broadcast("&7The Brood Mother lays egg sacs. &fSmash them before they hatch!");
+        if (mother.isValid()) {
+            fight.playAction(mother, "EGG_SAC");
+        }
     }
 
     private void hatch(Location at) {

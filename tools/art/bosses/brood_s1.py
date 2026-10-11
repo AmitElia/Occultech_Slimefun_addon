@@ -49,11 +49,12 @@ DIRECTIONS = {
 
 
 def rounded_box(group, name, center, size, mat, bevel):
-    """A box with its edges bevelled: three overlapping boxes, each a bevel short on two axes."""
+    """A box with its edges bevelled: three overlapping boxes, each a bevel short on two axes. Each pair differs by a
+    texel more on one of them, so no two share a face plane (they would flicker in game)."""
     (x, y, z), (w, h, d), b = center, size, bevel
-    group.box(f"{name}", (x, y, z), (w, h - 2 * b, d - 2 * b), mat)
-    group.box(f"{name}_v", (x, y, z), (w - 2 * b, h, d - 2 * b), mat)
-    group.box(f"{name}_d", (x, y, z), (w - 2 * b, h - 2 * b, d), mat)
+    group.box(f"{name}", (x, y, z), (w, h - 2 * b, d - 2 * b - 1), mat)
+    group.box(f"{name}_v", (x, y, z), (w - 2 * b - 1, h, d - 2 * b), mat)
+    group.box(f"{name}_d", (x, y, z), (w - 2 * b, h - 2 * b - 1, d), mat)
 
 
 def candle(parent, name, base, height, width, tilt=(0, 0, 0)):

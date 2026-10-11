@@ -31,7 +31,8 @@ public final class ClearLagGuard implements Listener {
         }
     }
 
-    private static void protect(Entity entity) {
+    /** Tags an entity carrying Occultech data; also called for bodies set up after their spawn event (Mythic carriers). */
+    public static void protect(Entity entity) {
         if (isOurs(entity)) {
             entity.addScoreboardTag(PROTECTED);
         }

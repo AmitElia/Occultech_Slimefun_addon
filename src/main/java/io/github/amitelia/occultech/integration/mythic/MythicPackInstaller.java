@@ -19,9 +19,12 @@ import io.github.amitelia.occultech.Occultech;
 /** Installs versioned bundled Mythic definitions and BetterModel models without replacing staff edits. */
 public final class MythicPackInstaller {
     private static final String[] MYTHIC_FILES = {
-        "packinfo.yml", "Mobs/Volley.yml", "Skills/Volley.yml", "DropTables/Volley.yml"
+        "packinfo.yml", "Mobs/Volley.yml", "Skills/Volley.yml", "DropTables/Volley.yml",
+        "Mobs/BroodMother.yml", "Skills/BroodMother.yml"
     };
-    private static final String[] MODELS = {"occultech_volley.bbmodel", "occultech_volley_ward.bbmodel"};
+    private static final String[] MODELS = {
+        "occultech_volley.bbmodel", "occultech_volley_ward.bbmodel", "occultech_brood_mother.bbmodel"
+    };
     private static final String STAMP = ".occultech-installed.properties";
 
     private MythicPackInstaller() {}
@@ -67,7 +70,8 @@ public final class MythicPackInstaller {
             if (!target.startsWith(folder)) throw new IOException("Unsafe bundled path " + name);
             String oldHash = previous.getProperty(name);
             String currentHash = Files.exists(target) ? sha256(Files.readAllBytes(target)) : null;
-            if (currentHash == null || currentHash.equals(oldHash)) {
+            // untouched since the last install, or already exactly the bundled file (a copy is not a staff edit)
+            if (currentHash == null || currentHash.equals(oldHash) || currentHash.equals(sha256(bundled))) {
                 if (!sha256(bundled).equals(currentHash)) {
                     Files.createDirectories(target.getParent());
                     Path temp = Files.createTempFile(target.getParent(), ".occultech-", ".tmp");

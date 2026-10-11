@@ -1,0 +1,27 @@
+# The Brood Mother's body: the candle-laden tarantula model on a spider carrier. Occultech still decides every attack,
+# deals all damage (BroodMother.java) and hands out loot. Health is the solo value; Occultech multiplies it for the
+# group after the spawn.
+OCCULTECH_BROOD_MOTHER:
+  Type: SPIDER
+  Display: '&4Brood Mother'
+  Health: 320
+  Damage: 8
+  Armor: 0
+  Options:
+    # Occultech rebuilds the body from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    MovementSpeed: 0.37
+    KnockbackResistance: 0.6
+    FollowRange: 32
+    AlwaysShowName: true
+  Drops: []
+  # The carrier stays at normal size and the model is drawn as authored (an 8-block leg span); its ob_hitbox bone
+  # covers her body and passes hits on to the carrier. idle, walk, spawn and death play by themselves; the bite plays
+  # on each of her melee hits.
+  Skills:
+  - model{m=occultech_brood_mother} @self ~onSpawn
+  - bodyrotation{mh=30;mnh=-30;rde=0;rdu=3} @self ~onSpawn
+  - state{m=occultech_brood_mother;s=bite} @self ~onAttack

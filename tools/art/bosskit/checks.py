@@ -16,6 +16,8 @@ def _faces(cubes):
         for face, q in QUADS.items():
             pts = p[list(q)]
             n = np.cross(pts[1] - pts[0], pts[2] - pts[0])
+            if np.linalg.norm(n) < 1e-9:      # the edge of a zero-thickness card: no area, never drawn
+                continue
             n /= np.linalg.norm(n)
             if np.dot(pts.mean(0) - centre, n) < 0:
                 n = -n
@@ -43,7 +45,16 @@ def flicker_pairs(cubes, threshold=0.03):
     Returns (overlap, cube, face, other cube, other face), largest first, in the rest pose.
     """
     out = []
-    for (c1, f1, p1, n1, d1), (c2, f2, p2, n2, d2) in itertools.combinations(_faces(cubes), 2):
+    # only faces on one plane can fight: bucket them by direction and offset (neighbouring buckets too, for rounding)
+    buckets = {}
+    for f in _faces(cubes):
+        key = (tuple(np.round(f[3], 2)), round(f[4] * 10))
+        buckets.setdefault(key, []).append(f)
+    pairs = []
+    for (n, d), group in buckets.items():
+        pairs += itertools.combinations(group, 2)
+        pairs += [(a, b) for a in group for b in buckets.get((n, d + 1), ())]
+    for (c1, f1, p1, n1, d1), (c2, f2, p2, n2, d2) in pairs:
         if c1 is c2 or np.dot(n1, n2) < 1 - 1e-3 or abs(d1 - d2) > 0.05:
             continue
         share = _covered(p1, p2)

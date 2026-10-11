@@ -72,6 +72,8 @@ public final class MythicBody implements BossBody {
         }
         T entity = type.cast(carrier);
         setup.accept(entity);
+        // the spawn event came before the setup gave it Occultech's data, so the clearer guard tags it now
+        io.github.amitelia.occultech.core.ClearLagGuard.protect(entity);
         return entity;
     }
 

@@ -1,0 +1,36 @@
+# Look and sound only. BroodMother.java decides when each of these runs, telegraphs, and deals every hit.
+BROOD_MOTHER_POUNCE_PREPARE:
+  Skills:
+  # the 1 s tell (head up, front legs high, jaws wide), the leap the server throws her into, the landing
+  - state{m=occultech_brood_mother;s=pounce} @self
+BROOD_MOTHER_WEB_PREPARE:
+  Skills:
+  # the abdomen tips up and quivers through the 1.5 s warning, then jerks as the web lands
+  - state{m=occultech_brood_mother;s=web} @self
+BROOD_MOTHER_EGG_SAC:
+  Skills:
+  - state{m=occultech_brood_mother;s=egg_sac} @self
+  - sound{s=entity.turtle.lay_egg;v=1.2;p=0.6} @self
+# Her candles go out as she weakens. The wicks stay; only the flame bones are hidden.
+BROOD_MOTHER_SNUFF_75:
+  Skills:
+  - state{m=occultech_brood_mother;s=snuff} @self
+  - partvisibility{m=occultech_brood_mother;p=glow_leg_r1_knee;v=false} @self
+  - partvisibility{m=occultech_brood_mother;p=glow_leg_l0_knee;v=false} @self
+  - partvisibility{m=occultech_brood_mother;p=glow_leg_l2_knee;v=false} @self
+  - partvisibility{m=occultech_brood_mother;p=glow_flank_flames;v=false} @self
+  - sound{s=block.candle.extinguish;v=1.5;p=0.8} @self
+  - particles{p=smoke;a=16;hs=1.6;vs=0.4;s=0.02;y=1.2} @self
+BROOD_MOTHER_SNUFF_50:
+  Skills:
+  - state{m=occultech_brood_mother;s=snuff} @self
+  - partvisibility{m=occultech_brood_mother;p=glow_thorax_flames;v=false} @self
+  - partvisibility{m=occultech_brood_mother;p=glow_head_flames;v=false} @self
+  - sound{s=block.candle.extinguish;v=1.5;p=0.7} @self
+  - particles{p=smoke;a=16;hs=1;vs=0.4;s=0.02;y=2} @self
+BROOD_MOTHER_SNUFF_25:
+  Skills:
+  - state{m=occultech_brood_mother;s=snuff} @self
+  - partvisibility{m=occultech_brood_mother;p=glow_pile_flames;v=false} @self
+  - sound{s=block.candle.extinguish;v=2;p=0.5} @self
+  - particles{p=large_smoke;a=24;hs=1.2;vs=0.8;s=0.03;y=3.5} @self
