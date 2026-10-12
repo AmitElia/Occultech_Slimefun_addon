@@ -85,6 +85,9 @@ def arm(torso, name, sx, upper_rot, fore_rot):
     """An arm from the shoulder: the upper arm, then the forearm, fist and wrist shackle at the elbow."""
     sh = torso.group(f"arm_{name}", (sx * 16.5, 43, 0.5), upper_rot)
     sh.box(f"upper_arm_{name}", (sx * 18.5, 35, 0), (10, 15, 10.5), "skin_dark")
+    sh.box(f"arm_band_{name}", (sx * 18.5, 38.5, 0), (11, 2.6, 11.5), "strap")      # a restraint round the upper arm
+    sh.box(f"arm_band_stud_{name}", (sx * 18.5, 38.5, -6.05), (1.0, 1.0, 0.6), "stud")
+    sh.box(f"arm_band_buckle_{name}", (sx * 24.25, 38.5, 0), (0.7, 3.2, 2.4), "iron_lit")
     fore = sh.group(f"forearm_{name}", (sx * 19.3, 28, 0), fore_rot)
     fore.box(f"forearm_{name}_box", (sx * 19.6, 20, -0.4), (10.5, 15, 10.5), "skin")
     fore.box(f"fist_{name}", (sx * 19.8, 10.2, -0.8), (10, 7, 10), "skin_dark")

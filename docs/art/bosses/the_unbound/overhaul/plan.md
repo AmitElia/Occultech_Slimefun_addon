@@ -14,7 +14,8 @@ A berserk vindicator who broke out of a ritual binding, half beast. The user's b
 - **Chains dangle from his limbs**: broken shackles on the wrists and ankles.
 - **A burning chest piece:** a blackened iron plate where the straps cross, fire burning behind its grate. (The
   user tried three "burning from the inside" chests in the face study and went back to this.)
-- **Silver-studded leather straps** across his body.
+- **Silver-studded leather restraints** (session 4): bands round his chest and ribs and his upper arms, joined by a
+  harness over the shoulders and down the back, never across the chest piece.
 - **A giant bloody meat cleaver** in his right hand: the Frenzy Cleaver's design (a broad butcher's blade, a thick
   spine, the haft up through it, blood along the edge), at his size. Blood stays dark, dried stains along the edge,
   not gore.

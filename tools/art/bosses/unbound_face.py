@@ -83,6 +83,46 @@ def horn_steps(g, name, root, sx, steps, widths, tilt=0.0):
     horn(g, name, pts, widths, tilt)
 
 
+def band_round(t, name, y, x_front, z_front, x_back, z_back, studs=4, buckle=True):
+    """A leather band all the way round the torso at height y: front, back and both sides (unturned boxes, so no
+    extra displays), silver studs along the front and back, an iron buckle on the front."""
+    w, d = 2.6, 0.9
+    t.box(f"{name}_front", (0, y, z_front - d / 2), (2 * x_front + 2 * d, w, d), "strap")
+    t.box(f"{name}_back", (0, y, z_back + d / 2), (2 * x_back + 2 * d, w, d), "strap")
+    for sx in (-1, 1):
+        xs = max(x_front, x_back)
+        t.box(f"{name}_side_{sx}", (sx * (xs + d / 2), y, (z_front + z_back) / 2), (d, w, z_back - z_front + 2 * d),
+              "strap")
+    # studs evenly in pairs either side of the middle (the chest piece sits there), the buckle on his left
+    for i, f in enumerate((0.3, 0.55, 0.8)):
+        for sx in (-1, 1):
+            if buckle and sx == -1 and f == 0.55:
+                continue
+            t.box(f"{name}_stud_f{i}{sx}", (sx * x_front * f, y, z_front - d - 0.3), (1.0, 1.0, 0.6), "stud")
+            t.box(f"{name}_stud_b{i}{sx}", (sx * x_back * f, y, z_back + d + 0.3), (1.0, 1.0, 0.6), "stud")
+    if buckle:
+        t.box(f"{name}_buckle", (-x_front * 0.55, y, z_front - d - 0.35), (2.4, 3.2, 0.7), "iron_lit")
+
+
+def restraints(t):
+    """The restraints he broke out of, still strapped on: two studded leather bands all the way round his torso, one
+    over his chest above the chest piece and one round his ribs below it, joined by a strap over each shoulder that
+    runs down his front, over the top and down his back, like a harness. None of it crosses the chest piece. (Take 3:
+    the crossed straps of takes 1 and 2 floated on his front and ran over the furnace.)
+    Torso faces: the chest's front at z -8.5 (y 30-50), the back's rear at z 12.5 (y 30-48), the traps' top at y 51.5."""
+    band_round(t, "chest_band", 45.6, 15.0, -8.5, 13.5, 12.5)
+    band_round(t, "rib_band", 31.4, 14.2, -8.5, 13.0, 12.5)
+    d = 0.9
+    for sx in (-1, 1):
+        x = sx * 8.2
+        t.box(f"harness_front_{sx}", (x, 48.4, -8.5 - d / 2), (2.6, 5.4, d), "strap")          # up from the chest band
+        t.box(f"harness_chest_top_{sx}", (x, 50.0 + d / 2, -5.8), (2.6, d, 6.2), "strap")     # over the chest's top
+        t.box(f"harness_trap_{sx}", (x, 51.5 + d / 2, 2.6), (2.6, d, 11.6), "strap")          # over the shoulder
+        t.box(f"harness_back_{sx}", (x, 41.4, 12.5 + d / 2), (2.6, 20.2, d), "strap")         # down the back
+        t.box(f"harness_stud_{sx}", (x, 48.6, -8.5 - d - 0.3), (1.0, 1.0, 0.6), "stud")
+        t.box(f"harness_stud_b{sx}", (x, 38.0, 12.5 + d + 0.3), (1.0, 1.0, 0.6), "stud")
+
+
 def bust(model, face, chest="C1"):
     root = model.group("root", (0, 0, 0))
     root.box("waist", (0, 25, 0), (19, 8, 12), "pants")
@@ -101,20 +141,7 @@ def bust(model, face, chest="C1"):
         torso.box(f"trap_slope_{sx}", (sx * 11.5, 47.5, 2), (8, 4, 10), "skin", rotation=(0, 0, sx * -22.5))
         torso.box(f"upper_arm_{sx}", (sx * 18.5, 35, 0), (10, 15, 10.5), "skin_dark", rotation=(0, 0, sx * 6))
         torso.box(f"pec_line_{sx}", (sx * 5.5, 35.6, -8.6), (9, 1.0, 0.6), "skin_dark")
-    # the straps crossing the chest, studded, and the burning chest piece where they cross
-    for sx in (-1, 1):
-        # a flat strap lying on the chest (front at z -8.5), at 45 degrees (one display), from the shoulder to the
-        # chest's lower edge, passing behind the chest piece where the two cross
-        a, b = (sx * 13.5, 47, -9.05), (-sx * 3.5, 30, -9.05)
-        length = ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
-        torso.box(f"strap_{sx}", ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, a[2]), (length, 2.6, 1.0), "strap",
-                  rotation=(0, 0, 45 * sx))
-        for i in range(6):
-            t = (i + 0.5) / 6
-            p = tuple(a[j] + (b[j] - a[j]) * t for j in range(3))
-            if abs(p[0]) < 6.5 and 32 < p[1] < 44:
-                continue                                   # behind the chest piece
-            torso.box(f"stud_{sx}_{i}", (p[0], p[1], -9.85), (1.0, 1.0, 0.6), "stud")
+    restraints(torso)
     CHESTS[chest](torso)
     # the head, low and forward between the traps, lifted so he looks ahead
     head = torso.group("hi_head", (0, 47.5, -7), (-HUNCH - 4, 0, 0))
