@@ -12,13 +12,13 @@ A berserk vindicator who broke out of a ritual binding, half beast. The user's b
 - **Bull horns** grow from the sides of the head.
 - **A red cloth wrapped around his eyes**, its ends trailing. **One eye burns through the cloth.**
 - **Chains dangle from his limbs**: broken shackles on the wrists and ankles.
-- **He burns from the inside** (user, after the face study: no chest piece, no furnace look): the fire shows
-  through splits in the skin of his chest.
+- **A burning chest piece:** a blackened iron plate where the straps cross, fire burning behind its grate. (The
+  user tried three "burning from the inside" chests in the face study and went back to this.)
 - **Silver-studded leather straps** across his body.
 - **A giant bloody meat cleaver** in his right hand: the Frenzy Cleaver's design (a broad butcher's blade, a thick
   spine, the haft up through it, blood along the edge), at his size. Blood stays dark, dried stains along the edge,
   not gore.
-- **Embers and fire grow as he speeds up.** The fire in his chest burns brighter and spreads at each health threshold and embers
+- **Embers and fire grow as he speeds up.** The chest piece's fire burns brighter at each health threshold and embers
   stream off him. No fire on the horns.
 
 **User's changes after the first silhouettes (2026-10-12):** no burning horn tips; clear shackles with chains
@@ -50,7 +50,7 @@ shoulder to attack**; the burning eye is **tier 1's spirit cyan** through the re
 - **Taken:** Brood Mother's wax and candles; Volley's amethyst and bone; the Coven's iron vessels and coloured brew;
   the Monarch's toxic slime.
 - **The Unbound:** grey illager skin (bare above the waist) and dark trousers; dark leather and **silver studs** (tier 1's silver);
-  **blackened iron** (shackles, chains); **bone horns**; **red cloth**; the steel cleaver with dried
+  **blackened iron** (the chest piece, shackles, chains); **bone horns**; **red cloth**; the steel cleaver with dried
   blood; **fire and embers** as the one living light (the Frenzied set's ember).
 
 ## Process
@@ -76,4 +76,4 @@ Sessions 2-8 as for the Coven (boss-art-sessions.md). For The Unbound specifical
 
 - **The head (face study, 2026-10-12):** F3's horns (a horn boss and buffalo horns), F3's iron nose ring and eye
   (a cyan slit with a soft halo), F2's scowling brow and slipping ragged band, without F2's jaw and tusks.
-- **The chest:** which way he burns (s1_face2: the fissure, ember veins, the burning heart).
+- **The chest:** the burning chest piece (s1_face3).

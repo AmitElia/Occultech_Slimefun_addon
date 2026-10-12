@@ -46,6 +46,9 @@ FACES = {"F1": "The blindfolded vindicator", "F2": "The scowl", "F3": "The bull"
 # horns and nose ring - and the chest reworked: he burns from the inside, no furnace plate. Three ways to show it.
 TAKES = {"C1": ("Head: F2 + F3. Chest: the fissure", "C1"), "C2": ("Head: F2 + F3. Chest: ember veins", "C2"),
          "C3": ("Head: F2 + F3. Chest: the burning heart", "C3")}
+# take 3 (user, 2026-10-12): none of the burning chests; back to the chest piece. The locked head and chest.
+FINAL = ("The head (F2 + F3) and the burning chest piece", "PIECE")
+OUT3 = ROOT / "docs/art/bosses/the_unbound/overhaul/s1_face3"
 HUNCH = -20                                       # the upper body leans forward over the hips
 
 
@@ -276,7 +279,18 @@ def chest_heart(t):
         t.box(f"ember_{i}", (c[0] + dx, c[1] + dy, CHEST_Z + dz), (0.8, 0.8, 0.8), "fire_hot" if i % 2 else "fire")
 
 
-CHESTS = {"C1": chest_fissure, "C2": chest_veins, "C3": chest_heart}
+def chest_piece(t):
+    """The burning chest piece (the original brief, take 1's chest; the user went back to it after the three burning
+    chests): a blackened iron plate strapped where the straps cross, fire burning behind its grate."""
+    t.box("chest_piece", (0, 38, -9.0), (11, 10, 1.4), "iron")
+    t.box("chest_fire", (0, 38, -9.8), (6, 5.4, 0.4), "fire")
+    t.box("chest_fire_hot", (0, 37.4, -10.0), (1.4, 1.6, 0.3), "fire_hot")
+    for dx in (-1.6, 0, 1.6):
+        t.box(f"grate_{dx}", (dx, 38, -10.1), (0.8, 6.4, 0.4), "iron")
+    t.box("chest_rim", (0, 43.4, -9.2), (11.6, 1.2, 1.6), "iron_lit")
+
+
+CHESTS = {"C1": chest_fissure, "C2": chest_veins, "C3": chest_heart, "PIECE": chest_piece}
 HEADS = {"F1": face_blindfold, "F2": face_scowl, "F3": face_bull, "MIX": face_mix}
 VIEWS = [
     {"name": "face", "mode": "flat", "camera": "persp", "yaw": -24, "height": 3.25, "dist": 2.9, "target_z": 3.35, "player": False},
@@ -322,27 +336,23 @@ def render_glowing(model, out):
 
 
 def main():
-    """Take 2: the mixed head on three chests. (Take 1, the three heads on the furnace-plate chest, is in s1_face and
-    git history.)"""
-    if OUT2.exists():
-        for old in OUT2.iterdir():
+    """Take 3: the chosen head on the chest piece. (Take 1, three heads, is in s1_face; take 2, the burning chests,
+    in s1_face2.)"""
+    if OUT3.exists():
+        for old in OUT3.iterdir():
             if old.is_dir():
                 shutil.rmtree(old)
             elif old.name != "README.md":
                 old.unlink()
-    items = []
-    for key, (title, chest) in TAKES.items():
-        out = OUT2 / key
-        out.mkdir(parents=True, exist_ok=True)
-        model = Model(f"occultech_unbound_face2_{key.lower()}")
-        bust(model, "MIX", chest)
-        model.write_bbmodel(out / f"{model.name}.bbmodel")
-        render_glowing(model, out)
-        stats = model.stats()
-        (out / "stats.json").write_text(json.dumps(stats, indent=2) + "\n", encoding="utf-8")
-        items.append((key, title))
-        print(key, stats["cubes"], stats["size_blocks"])
-    sheet.compare_sheet(OUT2, items, OUT2 / "faces.png", heading="The Unbound - the head (F2 + F3), three burning chests",
+    title, chest = FINAL
+    out = OUT3 / "final"
+    out.mkdir(parents=True, exist_ok=True)
+    model = Model("occultech_unbound_face3")
+    bust(model, "MIX", chest)
+    model.write_bbmodel(out / f"{model.name}.bbmodel")
+    render_glowing(model, out)
+    print(model.stats()["cubes"], "cubes")
+    sheet.compare_sheet(OUT3, [("final", title)], OUT3 / "faces.png", heading="The Unbound - the head and chest",
                         views=("face", "front", "three_quarter", "player_eye"))
 
 
