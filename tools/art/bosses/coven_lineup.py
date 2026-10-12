@@ -69,8 +69,9 @@ def ragged_hem(x0, x1, top, depth, teeth):
 
 # ---- the body (villager 1.45x: head 12 x 14.5, robe 12 wide; the back built up into a hump) ------------------------
 HEM_TOP, SHOULDER = 9, 34          # the robe runs straight from y 9 up to the shoulders at y 34
-HEAD = (-9, 41)                    # pushed forward and down by the hunch
-TILT = 12
+HEAD = (-10, 41)                   # an old woman's stoop: the upper body leans forward, the head comes forward
+TILT = 6
+STOOP = 9                          # degrees the robe leans forward above the waist
 
 
 def hat(hx, top):
@@ -82,13 +83,14 @@ def hat(hx, top):
 
 def side_body():
     """Side view, facing left (-z is the front)."""
-    out = [("robe", [(-6, HEM_TOP), (-6, SHOULDER - 2), (-3, SHOULDER + 4), (4, 47), (12, 44), (13, 36), (8, 26),
-                     (7, HEM_TOP)])]                       # straight front and back, the big hump over the shoulders
+    upper = turn([(-6, 20), (-6, SHOULDER - 1), (-4.5, SHOULDER + 2), (3, SHOULDER + 3), (7, SHOULDER + 1), (7, 20)],
+                 (0, 18), STOOP)                            # straight sides, rounded old shoulders, leaning forward
+    out = [("robe", [(-6, HEM_TOP)] + upper + [(7, HEM_TOP)])]
     out.append(("hem", ragged_hem(-6, 7, HEM_TOP, 5, 4)))
     out.append(("herb", rect(-3, 18, 3.5, 7, 6)))
     out.append(("bone", rect(0.5, 15.5, 2.2, 3.4)))
     hx, hy = HEAD
-    head = [("robe_dark", [(-4, SHOULDER + 3), (hx + 1, hy - 6), (hx + 7, hy - 3), (2, 44)]),     # the hood joining the hump
+    head = [("robe_dark", [(-8, SHOULDER + 1), (hx + 1, hy - 6), (hx + 7, hy - 3), (-1, SHOULDER + 3)]),  # the collar
             ("skin", rect(hx, hy, 12, 14.5)), ("brow", rect(hx - 4.5, hy + 3.6, 4, 1.8)),
             ("eye", rect(hx - 5.4, hy + 1.6, 1.4, 2)),
             ("nose", [(hx - 6, hy + 1.5), (hx - 12, hy - 5), (hx - 11, hy - 7), (hx - 6, hy - 3.5)]),
@@ -107,11 +109,11 @@ def side_sister(kind, role):
     out = []
     if kind == "cauldron":
         # the extra-large cauldron rides the hump, roped round her middle; one sleeve raised to cast
-        out += [("iron", octagon(17, 32, 12, 11)), ("iron_dark", rect(15.5, 43, 22, 3, 12)), (G, rect(15, 44.8, 17, 1.6, 12))]
-        out += [(M, rect(13, 49, 1.8, 5, 8)), (M, rect(18, 50, 1.5, 4, -10))]
+        out += [("iron", octagon(15, 29, 12, 11)), ("iron_dark", rect(13.5, 40, 22, 3, 12)), (G, rect(13, 41.8, 17, 1.6, 12))]
+        out += [(M, rect(11, 46, 1.8, 5, 8)), (M, rect(16, 47, 1.5, 4, -10))]
         out += side_body()
-        out += [("rope", segment((-6.5, 25), (10, 30), 1.6)), ("rope", segment((-6.5, 30), (9, 37), 1.6)),
-                ("rope", rect(-6.4, 27.5, 1.6, 6))]
+        out += [("rope", segment((-7.6, 24), (8, 27), 1.6)), ("rope", segment((-8.4, 29), (6, 35), 1.6)),
+                ("rope", rect(-7.9, 26.5, 1.6, 6, STOOP))]
         out += side_sleeve((-3, 31), (-17, 27))
         out += [(G, octagon(-21, 27.5, 2.8))]                                  # magic gathering at her cuff
     elif kind == "bottles":
@@ -132,8 +134,7 @@ def side_sister(kind, role):
 
 
 def front_body():
-    out = [("robe", octagon(0, 42, 11.5, 6.5)),                                 # the hump rising behind the head
-           ("robe", [(-6.5, HEM_TOP), (6.5, HEM_TOP), (7.5, SHOULDER), (9, SHOULDER + 5), (-9, SHOULDER + 5), (-7.5, SHOULDER)])]
+    out = [("robe", [(-6.5, HEM_TOP), (6.5, HEM_TOP), (7, SHOULDER), (5.5, SHOULDER + 3), (-5.5, SHOULDER + 3), (-7, SHOULDER)])]
     out.append(("hem", ragged_hem(-6.5, 6.5, HEM_TOP, 5, 4)))
     hx, hy = 0, HEAD[1] - 3
     out += [("skin", rect(hx, hy, 12, 14.5)), ("brow", rect(hx, hy + 3.6, 9, 1.8)),

@@ -24,8 +24,8 @@ Rejected pitches: the Bottle Sisters (hard to read, easy to make goofy) and the 
 ## The three sisters: the same body, told apart only by their vessels
 
 **Decided by the user (2026-10-11):**
-- **Body:** built like a vanilla witch or villager (the long robe, the head, the big nose, the sleeves folded across
-  the chest), but with a **hunched back**, and **larger than a player** so they loom over you.
+- **Body:** built like a vanilla witch or villager (the long robe, the head, the big nose), **larger than a player**
+  so they loom over you, and crouched forward in an old woman's stoop. No hump.
 - **No fingers, no visible hands.** The sleeves end in dark cuffs; whatever a sister holds or throws comes out of
   her sleeves.
 - **All three are the same size and build.** Only their vessels tell them apart.
@@ -39,7 +39,7 @@ Rejected pitches: the Bottle Sisters (hard to read, easy to make goofy) and the 
 
 | Sister | Vessel | How she works |
 |---|---|---|
-| **The cauldron** | an extra-large cauldron hung on her hunched back, tied on with ropes round her middle | her sleeves are free: she casts and throws with them, drawing from the cauldron |
+| **The cauldron** | an extra-large cauldron hung on her back, tied on with ropes round her middle | her sleeves are free: she casts and throws with them, drawing from the cauldron |
 | **The bottles** | a diagonal shoulder belt of large potion bottles, and one held in her sleeve | she throws the bottles; the brew in all of them shows the role |
 | **The pot** | a pot held in front of her in both sleeves | she pours, tips and flings from it |
 
@@ -64,7 +64,7 @@ that fades. The survivors glance at it briefly, never during an attack.
 - **A vessel never covers the face or the torso.** That's the Volley arbalest lesson: it hangs in front below the
   chest, swings at the side, or rides the back. Each vessel stays within about 40% of its witch's silhouette.
 - **The three sisters share one body**, so the vessels must be large and placed differently (on the back, across
-  the chest, held in front) for the sisters to differ at a glance. The hat and the hunch are the shared marks.
+  the chest, held in front) for the sisters to differ at a glance. The hat and the stoop are the shared marks.
 - **Few parts:** the boss-modeling lessons say about 40-60 cubes per witch, so three witches stay near Brood
   Mother's 72 displays in total. The leaves, thorns, herb texture and twine are paint, not geometry.
 - **Faces:** the vanilla witch's face (big nose, wart, deep-set eyes) is the recognisable part, made more interesting.
