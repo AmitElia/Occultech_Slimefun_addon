@@ -12,7 +12,7 @@ Rejected pitches: the Bottle Sisters (hard to read, easy to make goofy) and the 
   charms hanging on twine; a real witch's hat.
 - **Vessels:** each sister's soot-black iron vessel is her weapon, and the only saturated thing about her is the brew
   glowing in it.
-- **Menace:** folk horror, not gore. They loom over you, hunched, with faces in the shadow of their hat brims, and
+- **Menace:** folk horror, not gore. They loom over you, stooped, with faces in the shadow of their hat brims, and
   they hover very still until they act.
 
 **Vanilla ties:**
@@ -84,7 +84,7 @@ that fades. The survivors glance at it briefly, never during an attack.
 ## How we get there (the process that worked for the Monarch)
 
 1. **Silhouette line-up:** 2-3 flat 2D line-ups of all three sisters side by side with a player for scale. They
-   differ in the shared body's proportion and hunch. You pick one.
+   differ in the shared body's proportion and stoop. You pick one.
 2. **Character study:** one sister, the cauldron witch, close up in 3D, to settle the face, the hat, how hedge meets iron,
    and the brew glow. You pick one, and that sets the language for all three.
 3. **One careful blockout** of all three, checked from a player's eye height before you see it.
