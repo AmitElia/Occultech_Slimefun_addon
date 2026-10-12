@@ -309,7 +309,91 @@ def burst_splash(f):
     return img
 
 
-BURSTS = {"slash": burst_slash, "impact": burst_impact, "crackle": burst_crackle, "soul": burst_soul, "splash": burst_splash}
+def ring(img, r, c, gap=None, squash=1.0, dy=0.0):
+    """A thin ring of radius r round the burst's centre; gap: (from, to) degrees left open (a popped bubble)."""
+    for i in range(int(r * 14) + 8):
+        a = 360.0 * i / (int(r * 14) + 8)
+        if gap and gap[0] <= a <= gap[1]:
+            continue
+        bput(img, BC + r * math.cos(math.radians(a)), BC + dy + r * math.sin(math.radians(a)) * squash, c)
+
+
+def burst_bubble(f):
+    """A bubble popping (Witch Coven): a round bubble with a highlight swells, splits open, and its film flies apart
+    as a ring of tiny drops that fade."""
+    img = bblank()
+    if f <= 1:
+        r = 4.5 if f == 0 else 6.5
+        ring(img, r, GREY[4])
+        ring(img, r - 1, GREY[2])
+        for dx, dy in ((-1, -1), (0, -1), (-1, 0)):
+            bput(img, BC - r * 0.45 + dx, BC - r * 0.45 + dy, GREY[5])        # the highlight
+    elif f == 2:
+        ring(img, 7.5, GREY[4], gap=(200, 290))                                 # split open
+        for k in range(5):
+            a = math.radians(205 + k * 18)
+            bput(img, BC + 9 * math.cos(a), BC + 9 * math.sin(a), GREY[5])
+    else:
+        r = [0, 0, 0, 10, 12][f]
+        for k in range(10):
+            a = math.radians(k * 36 + 18 * (f % 2))
+            bput(img, BC + r * math.cos(a), BC + r * math.sin(a) + (f - 3) * 2, GREY[4] if f == 3 else GREY[3])
+    return img
+
+
+def burst_droplets(f):
+    """Brew splashing (Witch Coven): a splat, then teardrop droplets flung out on arcs, falling and thinning."""
+    img = bblank()
+    if f == 0:
+        for y in range(BN):
+            for x in range(BN):
+                d = math.hypot(x + 0.5 - BC, (y + 0.5 - BC) * 1.4)
+                if d < 5:
+                    bput(img, x, y, GREY[5] if d < 2.5 else GREY[4])
+        return img
+    r = [0, 6, 10, 12, 13][f]
+    fall = [0, 1, 3, 6, 9][f]
+    for k in range(8):
+        a = math.radians(k * 45 + 22)
+        x = BC + r * math.cos(a)
+        y = BC + r * math.sin(a) * 0.7 + fall
+        if f <= 2:                                                              # a teardrop pointing back
+            bput(img, x, y, GREY[5])
+            bput(img, x + 1, y, GREY[4])
+            bput(img, x, y + 1, GREY[4])
+            bput(img, x - math.cos(a) * 2, y - math.sin(a) * 1.4, GREY[3])
+        else:
+            bput(img, x, y, GREY[4] if f == 3 else GREY[3])
+    return img
+
+
+def burst_shards(f):
+    """A bottle shattering (Witch Coven): a white flash, then angular glass shards spinning out, each with a bright
+    edge, falling and glinting out."""
+    img = bblank()
+    if f == 0:
+        for k in range(8):
+            a = math.radians(k * 45)
+            for t in range(1, 6 if k % 2 == 0 else 3):
+                bput(img, BC + t * math.cos(a), BC + t * math.sin(a), GREY[5])
+        return img
+    r = [0, 6, 10, 13, 14][f]
+    fall = [0, 0, 2, 5, 8][f]
+    for k in range(7):
+        a = math.radians(k * 51 + 10)
+        x0 = BC + r * math.cos(a)
+        y0 = BC + r * math.sin(a) * 0.8 + fall
+        if f >= 4 and k % 2:
+            continue
+        spin = (k + f) % 3                                                      # each shard turns as it flies
+        shape = (((0, 0), (1, 0), (0, 1)), ((0, 0), (1, 0), (1, 1), (2, 1)), ((0, 0), (0, 1), (1, 1)))[spin]
+        for i, (dx, dy) in enumerate(shape):
+            bput(img, x0 + dx, y0 + dy, GREY[5] if i == 0 else GREY[3])
+    return img
+
+
+BURSTS = {"slash": burst_slash, "impact": burst_impact, "crackle": burst_crackle, "soul": burst_soul, "splash": burst_splash,
+          "bubble": burst_bubble, "droplets": burst_droplets, "shards": burst_shards}
 
 
 def sprite(key, image):

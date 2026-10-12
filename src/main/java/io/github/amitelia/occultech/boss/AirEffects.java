@@ -130,8 +130,8 @@ public final class AirEffects {
         later(16, display::remove);
     }
 
-    /** A hit burst's look (Session O5, phase 2). */
-    public enum Burst { SLASH, IMPACT, CRACKLE, SOUL, SPLASH }
+    /** A hit burst's look (Session O5, phase 2; the Witch Coven's bubble pop, brew droplets and glass shards). */
+    public enum Burst { SLASH, IMPACT, CRACKLE, SOUL, SPLASH, BUBBLE, DROPLETS, SHARDS }
 
     private static final int BURST_FRAMES = 5;
     private static final int BURST_FRAME_TICKS = 2;

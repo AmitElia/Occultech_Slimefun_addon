@@ -120,14 +120,8 @@ def spin_gif(model, path, role, axis="y"):
     frames[0].save(path, save_all=True, append_images=frames[1:], duration=50, loop=0)
 
 
-def main():
-    if OUT.exists():
-        for old in OUT.iterdir():
-            if old.is_dir():
-                shutil.rmtree(old)
-            elif old.name != "README.md":
-                old.unlink()
-    OUT.mkdir(parents=True, exist_ok=True)
+def painted():
+    """The models, their face islands, the packed positions and the painted (neutral) atlas."""
     models, keys, sizes = {}, {}, {}
     for key in BUILD:
         m = build(key)
@@ -153,6 +147,18 @@ def main():
         patch = Image.fromarray(s5.paint_face(models[key], i, f, w, h, solids[key], solids[key]), "RGBA")
         atlas.paste(patch.resize((w + 2, h + 2), Image.NEAREST), (x - 1, y - 1))
         atlas.paste(patch, (x, y))
+    return models, keys, positions, atlas
+
+
+def main():
+    if OUT.exists():
+        for old in OUT.iterdir():
+            if old.is_dir():
+                shutil.rmtree(old)
+            elif old.name != "README.md":
+                old.unlink()
+    OUT.mkdir(parents=True, exist_ok=True)
+    models, keys, positions, atlas = painted()
     atlas_path = OUT / "occultech_coven_fx.png"
     atlas.save(atlas_path)
     atlas.resize((atlas.width * 3, atlas.height * 3), Image.NEAREST).save(OUT / "atlas_preview.png")
