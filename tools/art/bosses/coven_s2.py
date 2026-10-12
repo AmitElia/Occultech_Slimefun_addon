@@ -1,0 +1,248 @@
+"""Witch Coven redesign, session 2: design lock of the three sisters (plan: docs/art/bosses/witch_coven/overhaul/plan.md).
+
+The direction approved after step 3 (s3_set, 2026-10-11) is rebuilt here as a rig. On top of it, this session:
+- uses one body with proper bones: the lower robe, the torso (the stoop), the head, each sleeve, the vessel and
+  `glow_` bones for the brew;
+- snaps every cube to whole texels;
+- sets each witch's hitbox (an invisible `ob_hitbox` bone);
+- poses the fight's moments for each sister with her own vessel: the role rotation (all three strike their vessels),
+  heal, curse, the throw (bomber) and the death slump;
+- lists every part.
+
+A sleeve's rest pose hangs straight down from the shoulder. Its rotation swings it: +x forward, and +z outward for
+the right sleeve (-z for the left).
+
+Run from the repository root: python tools/art/bosses/coven_s2.py
+"""
+import json
+import shutil
+import sys
+from pathlib import Path
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "tools" / "art"))
+from bosskit.bbmodel import Model, add_hitbox  # noqa: E402
+from bosskit import sheet  # noqa: E402
+from bosses import monarch_s1 as m1, volley_crone_s2 as v2  # noqa: E402
+from bosses.coven_study import K, hat, ragged_hem  # noqa: E402
+from bosses.coven_set import PALETTE as SET_PALETTE, bottle, face  # noqa: E402
+
+OUT = ROOT / "docs/art/bosses/witch_coven/overhaul/s2_design"
+PALETTE = dict(SET_PALETTE, hitbox=(220, 60, 60))
+RW, RD = 13, 10                   # the villager robe (8x20x6, inflated 0.5) at 1.45x, in whole texels
+HW, HH = 12, 14                   # the villager head (8x10x8) at 1.45x, in whole texels
+WAIST, SHOULDER_Y = (0, 21, 0), 35
+STOOP = -11
+ARM_LEN = 14
+SISTERS = [("cauldron", "green", "the cauldron"), ("bottles", "purple", "the bottles"), ("pot", "red", "the pot")]
+
+
+def arm(torso, side, rot, vessel, role):
+    """A sleeve hanging from the shoulder (rest: straight down), the dark cuff at its end, and what it holds."""
+    word = "right" if side > 0 else "left"
+    sx = side * (RW / 2 + 3)
+    sh = (sx, SHOULDER_Y, -0.5)
+    a = torso.group(f"arm_{word}", sh, rot)
+    a.box(f"{word}_shoulder", (sx, SHOULDER_Y - 1, -0.5), (7, 6, 7), "sleeve")
+    a.box(f"{word}_sleeve", (sx, SHOULDER_Y - ARM_LEN / 2, -0.5), (6, ARM_LEN - 2, 6), "sleeve")
+    a.box(f"{word}_cuff", (sx, SHOULDER_Y - ARM_LEN + 1, -0.5), (8, 3, 8), "cuff")
+    end = SHOULDER_Y - ARM_LEN
+    if side > 0 and vessel == "cauldron":
+        g = a.group("glow_cast", (sx, end - 2.5, -0.5))
+        g.box("cast", (sx, end - 2.5, -0.5), (3, 3, 3), f"glow_{role}", rotation=(45, 45, 0))
+    if side > 0 and vessel == "bottles":
+        # the bottle comes out of the sleeve, its cork pointing away from it (upward when the sleeve is raised)
+        held = a.group("bottle_held", (sx, end - 1, -0.5), (180, 0, 0))
+        bottle(held, "bottle_held_body", (sx, end + 4.5, -0.5), role, 1.1)
+    return a
+
+
+def build(vessel, role, pose=None):
+    pose = pose or {}
+    model = Model(f"occultech_coven_{vessel}")
+    root = model.group("root", (0, 0, 0))
+    lower = root.group("robe_lower", (0, 9, 0))
+    lower.box("robe_lower_box", (0, 15.5, 0), (RW, 13, RD), "robe")
+    ragged_hem(lower, 9, RW / 2, RD / 2)
+    lower.box("herb", (-RW / 2 - 1, 15, -1), (2, 6, 3), "herb", rotation=(0, 0, 6))
+    lower.box("charm", (-RW / 2 - 1, 11, 2), (2, 2, 2), "bone")
+    torso = root.group("torso", WAIST, (pose.get("torso", STOOP), 0, 0))
+    m1.octo(torso, "robe_upper", (0, 29.5, 0), (RW, 17, RD), "robe", 0.22)
+    torso.box("collar", (0, 37.5, -0.5), (RW - 2, 2, RD - 1), "robe_dark")
+    if vessel == "pot":
+        # two bones: the carry swings from the shoulders (lifting it for the throw), the vessel tips about the pot
+        carry = torso.group("pot_carry", (0, SHOULDER_Y, 0), (pose.get("carry", 0), 0, 0))
+        v = carry.group("vessel", (0, 18.5, -14), (pose.get("pot", 0), 0, 0))
+    else:
+        v = torso.group("vessel", VESSEL_PIVOT[vessel])
+    VESSEL_BUILD[vessel](torso, v, role)
+    arm(torso, 1, pose.get("right", REST[vessel][0]), vessel, role)
+    arm(torso, -1, pose.get("left", REST[vessel][1]), vessel, role)
+    head = torso.group("h_head", (0, 38, -1.5), (pose.get("head", -4), 0, 0))
+    hc = (0, 38 + HH / 2, -1.5)
+    head.box("head", hc, (HW, HH, HW), "skin")
+    face(head, hc, HW, HH, hc[2] - HW / 2)
+    v2.snap(model)
+    return model
+
+
+def cauldron(torso, v, role):
+    cz = RD / 2 + 12
+    v.box("cauldron", (0, 25, cz), (24, 20, 22), "iron")
+    v.box("cauldron_lip", (0, 35.5, cz), (26, 3, 24), "iron_dark")
+    v.box("cauldron_band", (0, 21, cz), (25, 2, 23), "iron_dark")
+    for sx in (-1, 1):
+        v.box(f"cauldron_ear_{sx}", (sx * 12.5, 30, cz), (2, 4, 6), "iron_dark")
+        for sz in (-1, 1):
+            v.box(f"cauldron_leg_{sx}{sz}", (sx * 9.5, 13.5, cz + sz * 8.5), (4, 3, 4), "iron_dark")
+    g = v.group("glow_brew", (0, 36.5, cz))
+    g.box("brew", (0, 36.5, cz), (21, 1, 19), f"glow_{role}")
+    for i, (x, h, lean) in enumerate(((-4, 5, 10), (3, 7, -8), (8, 4, 12))):
+        g.box(f"steam_{i}", (x, 37 + h / 2, cz + (i - 1) * 4), (1, h, 1), f"steam_{role}", rotation=(0, 0, lean))
+    for i, y in enumerate((23, 30)):                       # two ropes round her middle and the cauldron
+        torso.box(f"rope_front_{i}", (0, y, -RD / 2 - 0.5), (RW + 2, 1, 1), "rope")
+        for sd in (-1, 1):
+            torso.box(f"rope_side_{i}_{sd}", (sd * (RW / 2 + 0.5), y, cz / 2 - 0.5), (1, 1, cz + RD / 2 + 3), "rope")
+        torso.box(f"rope_back_{i}", (0, y, cz + 11.5), (25, 1, 1), "rope")
+
+
+def bottles(torso, v, role):
+    fz = -RD / 2 - 0.5
+    v.box("strap_front", (0, 29, fz), (2, 22, 1), "strap", rotation=(0, 0, -38))
+    v.box("strap_back", (0, 29, RD / 2 + 0.5), (2, 22, 1), "strap", rotation=(0, 0, 38))
+    v.box("buckle", (0, 29, fz - 0.5), (3, 3, 1), "buckle", rotation=(0, 0, -38))
+    for i, t in enumerate((-0.62, -0.2, 0.22, 0.64)):
+        bottle(v, f"bottle_{i}", (8 * t, 28 - 9.5 * t, fz - 3), role, 1.0, rot=(0, 0, -12 + i * 6))
+
+
+def pot(torso, v, role):
+    """The pot, held at her waist in both sleeves."""
+    pz = -14
+    v.box("pot", (0, 18.5, pz), (14, 9, 12), "iron")
+    v.box("pot_lip", (0, 23.5, pz), (15, 2, 13), "iron_dark")
+    v.box("pot_base", (0, 13.5, pz), (10, 2, 8), "iron_dark")
+    for sd in (-1, 1):
+        v.box(f"pot_handle_{sd}", (sd * 8, 21.5, pz), (2, 2, 5), "iron_dark")
+    g = v.group("glow_brew", (0, 24.5, pz))
+    g.box("pot_brew", (0, 24.5, pz), (12, 1, 10), f"glow_{role}")
+    for i, (x, h, lean) in enumerate(((-3, 4, 10), (2, 6, -8))):
+        g.box(f"steam_{i}", (x, 25 + h / 2, pz + (i - 0.5) * 3), (1, h, 1), f"steam_{role}", rotation=(0, 0, lean))
+
+
+VESSEL_BUILD = {"cauldron": cauldron, "bottles": bottles, "pot": pot}
+VESSEL_PIVOT = {"cauldron": (0, 30, RD / 2 + 12), "bottles": (0, 29, -RD / 2)}
+# the idle pose of each sleeve (right, left)
+REST = {"cauldron": ((72, 0, 6), (18, 0, -6)), "bottles": ((105, 0, 10), (16, 0, -6)), "pot": ((62, 0, -14), (62, 0, 14))}
+
+# the fight's moments: rotations per bone (torso pitch, head pitch, pot swing, sleeves)
+POSES = {
+    "idle": ("idle", {}),
+    "rotation": ("the role rotation: she strikes her vessel", {
+        "cauldron": {"right": (-150, 0, 10), "head": 6},
+        "bottles": {"right": (55, 0, -42), "left": (55, 0, 30)},
+        "pot": {"right": (88, 0, -20), "pot": -8}}),
+    "heal": ("heal: brew poured towards her sister", {
+        "cauldron": {"right": (70, 0, 75), "left": (40, 0, -40)},
+        "bottles": {"right": (165, 0, 25), "head": 10},
+        "pot": {"carry": 18, "pot": -40, "right": (80, 0, -12), "left": (80, 0, 12), "torso": -14}}),
+    "curse": ("curse: cast down onto the marked floor", {
+        "cauldron": {"torso": -26, "right": (38, 0, 4), "left": (38, 0, -4), "head": -10},
+        "bottles": {"torso": -22, "right": (40, 0, 4), "head": -10},
+        "pot": {"torso": -24, "carry": 10, "pot": -80, "right": (72, 0, -12), "left": (72, 0, 12), "head": -10}}),
+    "throw": ("the throw (bomber): wound up overhead", {
+        "cauldron": {"torso": -2, "right": (172, 0, 34), "head": 8},
+        "bottles": {"torso": -2, "right": (172, 0, 34), "head": 8},
+        "pot": {"torso": 0, "carry": 118, "right": (150, 0, -14), "left": (150, 0, 14), "head": 12}}),
+    "death": ("death: she slumps", {
+        "cauldron": {"torso": -52, "head": -28, "right": (8, 0, 4), "left": (8, 0, -4)},
+        "bottles": {"torso": -52, "head": -28, "right": (8, 0, 4), "left": (8, 0, -4)},
+        "pot": {"torso": -52, "head": -28, "right": (14, 0, 4), "left": (14, 0, -4), "carry": -24, "pot": 28}}),
+}
+
+
+def in_subtree(cube, names):
+    g = cube.group
+    while g is not None:
+        if g.name in names:
+            return True
+        g = g.parent
+    return False
+
+
+def hitbox_bounds(model):
+    """A column over the body from the floor to the top of the head: the robe, torso and head, the same for all
+    three. The hat, the sleeves and the vessel are left out, so the cauldron can't be hit from behind for free."""
+    pts = np.vstack([c.corners() for c in model.cubes
+                     if not in_subtree(c, {"hat", "vessel", "arm_right", "arm_left"})])
+    lo, hi = pts.min(0), pts.max(0)
+    cz = float(np.round((lo[2] + hi[2]) / 2))
+    half = 10.0                                   # 1.25 blocks across
+    return (-half, 0.0, cz - half), (half, float(np.ceil(hi[1])), cz + half)
+
+
+def parts_list(model):
+    rows = []
+    for g in model.groups:
+        cubes = [c for c in g.children if not hasattr(c, "children")]
+        if cubes:
+            mats = sorted({c.mat for c in cubes})
+            rows.append(f"| `{g.name}` | {g.parent.name if g.parent.name != 'root' else '-'} | {len(cubes)} | {', '.join(mats)} |")
+    return "\n".join(["| Bone | Parent | Cubes | Materials |", "|---|---|---|---|"] + rows)
+
+
+POSE_VIEWS = [
+    {"name": "flat_34", "mode": "flat", "camera": "persp", "yaw": -38, "height": 2.6, "dist": 7, "target_z": 1.9},
+    {"name": "sil_side", "mode": "silhouette", "camera": "ortho_side"},
+]
+MAIN_VIEWS = m1.VIEWS
+
+
+def main():
+    if OUT.exists():
+        shutil.rmtree(OUT)
+    OUT.mkdir(parents=True)
+    report = {}
+    parts = ["# Witch Coven blockout parts (session 2)\n", "Generated by `tools/art/bosses/coven_s2.py`. Cube sizes are "
+             "whole texels.\n"]
+    hit_boxes, items = [], []
+    for i, (vessel, role, title) in enumerate(SISTERS):
+        out = OUT / vessel
+        model = build(vessel, role)
+        frm, to = hitbox_bounds(model)
+        bb = model.to_bbmodel()
+        add_hitbox(bb, frm, to)
+        out.mkdir()
+        (out / f"occultech_coven_{vessel}_blockout.bbmodel").write_text(json.dumps(bb, indent=1) + "\n", encoding="utf-8")
+        v2.run_blender(model.render_json(PALETTE), out, MAIN_VIEWS)
+        stats = model.stats()
+        stats["hitbox_blocks"] = [round((t - f) / 16, 2) for f, t in zip(frm, to)]
+        (out / "stats.json").write_text(json.dumps(stats, indent=2) + "\n", encoding="utf-8")
+        sheet.direction_sheet(out, f"Witch Coven - {title} (design lock)", stats, out / "sheet.png")
+        report[vessel] = stats
+        parts += [f"\n## {title.capitalize()}\n\n", parts_list(model) + "\n"]
+        # the hitbox drawn as a solid red box over the model
+        boxes = model.render_json(PALETTE) + [v2.box_json("hitbox", frm, to, "hitbox")]
+        for b in boxes[:-1]:
+            b["color"] = [c * 0.55 + 0.4 for c in b["color"]]
+        hit_boxes += [dict(b, corners=(np.array(b["corners"]) + [(i - 1) * 40, 0, 0]).tolist()) for b in boxes]
+        # the key poses
+        for key, (label, per) in POSES.items():
+            posed = build(vessel, role, per.get(vessel, {}))
+            v2.run_blender(posed.render_json(PALETTE), out / "poses" / key, POSE_VIEWS)
+        sheet.compare_sheet(out / "poses", [(k, "") for k in POSES], out / "poses.png",
+                            heading=f"Witch Coven - {title}: idle, rotation, heal, curse, throw, death",
+                            views=("flat_34", "sil_side"))
+        items.append((vessel, title))
+        print(vessel, stats["cubes"], stats["bones_with_geometry"], stats["size_blocks"], stats["hitbox_blocks"])
+    v2.run_blender(hit_boxes, OUT / "hitbox", [{"name": "hitbox_front", "mode": "flat", "camera": "ortho_front"},
+                                               {"name": "hitbox_side", "mode": "flat", "camera": "ortho_side"}])
+    sheet.compare_sheet(OUT, items, OUT / "design.png", heading="Witch Coven - design lock (session 2)",
+                        views=("flat_34", "flat_front", "sil_side", "clay_34"))
+    (OUT / "parts.md").write_text("".join(parts), encoding="utf-8")
+    (OUT / "stats.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()
