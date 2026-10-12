@@ -26,7 +26,7 @@ hanging; only trousers (bare, buff upper body); C's hunched posture at B's heigh
 shoulder to attack**; the burning eye is **tier 1's spirit cyan** through the red cloth.
 
 **Vanilla ties:**
-- the vindicator's head, nose, brow, coat and grey skin;
+- the vindicator's head, nose, brow and grey skin, and his dark trousers;
 - the axe swing he's built on (now the cleaver);
 - the husks he calls up stay vanilla husks.
 
@@ -48,7 +48,7 @@ shoulder to attack**; the burning eye is **tier 1's spirit cyan** through the re
 
 - **Taken:** Brood Mother's wax and candles; Volley's amethyst and bone; the Coven's iron vessels and coloured brew;
   the Monarch's toxic slime.
-- **The Unbound:** grey illager skin and the dark coat; dark leather and **silver studs** (tier 1's silver);
+- **The Unbound:** grey illager skin (bare above the waist) and dark trousers; dark leather and **silver studs** (tier 1's silver);
   **blackened iron** (chest piece, shackles, chains); **bone horns**; **red cloth**; the steel cleaver with dried
   blood; **fire and embers** as the one living light (the Frenzied set's ember).
 
