@@ -8,8 +8,7 @@ Cleaver come from, so the rewards echo the fight.
 ## Identity
 
 A berserk vindicator who broke out of a ritual binding, half beast. The user's brief:
-- **Clearly a vindicator:** the illager head (the long face, the big nose, the heavy brow), grey skin, the dark
-  vindicator coat. Larger than a player, with a **buff upper body**.
+- **Clearly a vindicator:** the illager head (the long face, the big nose, the heavy brow), grey skin; trousers only. Larger than a player, with a **buff upper body**.
 - **Bull horns** grow from the sides of the head.
 - **A red cloth wrapped around his eyes**, its ends trailing. **One eye burns through the cloth.**
 - **Chains dangle from his limbs**: broken shackles on the wrists and ankles.
@@ -18,8 +17,13 @@ A berserk vindicator who broke out of a ritual binding, half beast. The user's b
 - **A giant bloody meat cleaver** in his right hand: the Frenzy Cleaver's design (a broad butcher's blade, a thick
   spine, the haft up through it, blood along the edge), at his size. Blood stays dark, dried stains along the edge,
   not gore.
-- **Embers and fire grow as he speeds up.** The chest piece, the burning eye and the horn tips burn brighter at
-  each health threshold, and embers stream off him.
+- **Embers and fire grow as he speeds up.** The chest piece burns brighter at each health threshold and embers
+  stream off him. No fire on the horns.
+
+**User's changes after the first silhouettes (2026-10-12):** no burning horn tips; clear shackles with chains
+hanging; only trousers (bare, buff upper body); C's hunched posture at B's height and width, a little bigger
+(about 3.25 blocks to the top of the head); he **drags the cleaver behind him when he walks and lifts it round his
+shoulder to attack**; the burning eye is **tier 1's spirit cyan** through the red cloth.
 
 **Vanilla ties:**
 - the vindicator's head, nose, brow, coat and grey skin;
@@ -69,6 +73,4 @@ Sessions 2-8 as for the Coven (boss-art-sessions.md). For The Unbound specifical
 
 ## Open
 
-- **Size:** about 2.9 blocks to the top of the head (about 1.6x a player), horns above that. To be confirmed at the
-  silhouettes.
-- **The burning eye's colour:** fire (ember orange), matching the chest and horns, or tier 1's spirit cyan.
+- Nothing yet: the face study is next.
