@@ -50,11 +50,9 @@ def pose_table(k):
                if any(abs(a - b) > 1e-6 for a, b in zip(g.rotation, rest_rot[g.name]))}
         pos = {}
         if spec.get("drop"):
-            pos["root"] = (0.0, -spec["drop"] * k, 0.0)
+            pos["hips"] = (0.0, -spec["drop"] * k, 0.0)
         if spec["cleaver"] == "flat":
-            cl = s2.group(posed, "cleaver")
-            rest_cl = s2.group(s2.build("q", key), "cleaver")      # the same pose before it was set down
-            pos["cleaver"] = (0.0, (cl.origin[1] - rest_cl.origin[1]) * k, 0.0)
+            pos["cleaver"] = (0.0, -posed.flat_low * k, 0.0)      # set down onto the floor
         poses[key] = (rot, pos)
     return poses
 

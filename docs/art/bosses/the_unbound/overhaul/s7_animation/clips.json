@@ -1,0 +1,69 @@
+{
+  "release_seconds": {
+    "swing": 0.35,
+    "cleave": 1.3,
+    "devour": 0.8
+  },
+  "clips": {
+    "idle": {
+      "length": 3.0,
+      "loop": "loop",
+      "bones": 10
+    },
+    "walk": {
+      "length": 1.6,
+      "loop": "loop",
+      "bones": 15
+    },
+    "run": {
+      "length": 1.0,
+      "loop": "loop",
+      "bones": 17
+    },
+    "spawn": {
+      "length": 2.0,
+      "loop": "once",
+      "bones": 14
+    },
+    "swing": {
+      "length": 0.8,
+      "loop": "once",
+      "bones": 7
+    },
+    "cleave": {
+      "length": 2.2,
+      "loop": "once",
+      "bones": 13
+    },
+    "call": {
+      "length": 1.8,
+      "loop": "once",
+      "bones": 13
+    },
+    "devour": {
+      "length": 1.6,
+      "loop": "once",
+      "bones": 12
+    },
+    "sated": {
+      "length": 3.0,
+      "loop": "once",
+      "bones": 14
+    },
+    "enrage": {
+      "length": 1.2,
+      "loop": "once",
+      "bones": 13
+    },
+    "flinch": {
+      "length": 0.4,
+      "loop": "once",
+      "bones": 7
+    },
+    "death": {
+      "length": 2.6,
+      "loop": "hold",
+      "bones": 14
+    }
+  }
+}

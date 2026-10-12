@@ -118,7 +118,8 @@ def rig(name):
     model = Model(name)
     root = uf.bust(model, "MIX", "PIECE")
     torso, head = group(model, "torso"), group(model, "hi_head")
-    root.origin = [0.0, 21.0, 0.5]                          # the root turns (and sinks) at the hips
+    root.origin = [0.0, 21.0, 0.5]                          # the body turns (and sinks) at the hips
+    root.name = "hips"                                      # (not "root": that is the model's own top)
     for sx in (-1, 1):
         s1.drop_cube(model, f"upper_arm_{sx}")
     for helper in ("chest", "back", "hump"):
@@ -232,14 +233,23 @@ def pose(model, spec):
     elif kind == "sweep":
         h = np.array((0.08, -0.62, -0.78))
         aim(cl, frame(h, swing_edge(h / np.linalg.norm(h))))
+    elif not isinstance(kind, str):
+        # any handle direction (session 7's in-between keys); the edge faces where the swing carries it
+        h = np.array(kind, float)
+        aim(cl, frame(h, swing_edge(h / np.linalg.norm(h))))
     else:
         # dropped: lying flat on the ground by his right hand, pointing ahead
         aim(cl, frame((0.25, 0.0, -0.97), (1.0, 0.0, 0.0)))
+    for bone, d in spec.get("extra", {}).items():           # small additions: sways, twists, breaths
+        g = group(model, bone)
+        g.rotation = [g.rotation[i] + d[i] for i in range(3)]
+    model.flat_low = 0.0
     if spec.get("drop"):
         translate(model, (0, -spec["drop"], 0))
     if kind == "flat":
         # resting on the floor: move the whole cleaver down (its cubes and its pivot together)
         low = min(c.corners()[:, 1].min() for c in model.cubes if c.group is cl)
+        model.flat_low = low
         cl.origin[1] -= low
         for c in model.cubes:
             if c.group is cl:
