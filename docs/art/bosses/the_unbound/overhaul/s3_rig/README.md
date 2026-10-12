@@ -38,12 +38,12 @@ This makes the approved design lock ([../s2_design](../s2_design/README.md)) rea
   - `hi_head` turns with its children (the horns, the band's tails and the eye);
   - `glow_eye` and `glow_chest` are drawn full-bright;
   - `ob_hitbox` is the invisible hitbox.
-- **Drawing cost:** 21 bones with cubes (122 cubes), drawn as **23 display entities**. The first count was 42.
+- **Drawing cost:** 21 bones with cubes (116 cubes since session 4's fixes), drawn as **21 display entities**. The first count was 42.
   BetterModel gives a cube its own display unless it is turned on one axis by 0, 22.5 or 45 degrees.
   - The straps, the brows, the torn flap, the band's tails and every horn piece were at odd angles.
   - They now use those angles: the straps cross at 45 degrees, the brows and the horn pieces step by 22.5.
   - The look barely changes. The horns sit a little lower (3.56 blocks to the tips).
-  - Only the band's 7-degree slip keeps a display of its own, on purpose.
+  - The band's 7-degree slip had a display of its own; session 4 straightened the band, so that's gone too.
   - For comparison: Brood Mother draws 71, Volley 56, the coven 51 for all three.
 - **Load test:** on the second test server, BetterModel loaded the rig with the shipped models and no warnings
   ("7 of models are loaded successfully"). It was then taken off that server again, since its models folder must hold

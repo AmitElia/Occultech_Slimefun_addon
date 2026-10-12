@@ -1,12 +1,12 @@
 # The Unbound redesign, session 4: UV and material blocking
 
 On top of the session 3 rig ([../s3_rig](../s3_rig/README.md)):
-- **One atlas**, 256 x 256 (122 rows used, a little over half full, so session 5 has room). Every visible face is
+- **One atlas**, 256 x 256 (118 rows used, a little over half full, so session 5 has room). Every visible face is
   at one texel per model unit (16 per block, the vanilla density), with a 1-pixel border on each island against
   seams.
 - **Shared where truly identical:** a left limb, horn, strap, brow or stud uses its right twin's islands. That gives
-  457 islands for 635 drawn faces.
-- **Buried faces left out:** 97 faces that sit inside another cube of the same bone get no texture and are never
+  451 islands for 625 drawn faces.
+- **Buried faces left out:** 71 faces that sit inside another cube of the same bone get no texture and are never
   drawn.
 - **A flat colour per material zone, tied to vanilla's vindicator:**
   - grey skin, the heavy dark brow and nose;
@@ -21,6 +21,17 @@ On top of the session 3 rig ([../s3_rig](../s3_rig/README.md)):
   no warnings, and was then taken off it again.
 
 ![Colour and grey: hero, front, player's eye, side, back, face](sheet.png)
+
+## Model fixes after the first review
+
+- **The red band** was a slab tilted 7 degrees and larger than the head, with the scowl stacked above it, and it read
+  oddly. It is now a snug, straight wrap. The scowling brows press down onto its top edge, a torn flap hangs at his
+  right temple, and the knot and tails stay behind. (Tatters along its lower edge were tried and dropped: they read as
+  blood running down his face.)
+- **The leather straps** were thick bars half buried in the chest, and their lower ends floated in front of the
+  stomach. They are now flat straps lying on the chest. They cross at 45 degrees from each shoulder to the chest's
+  lower edge and pass behind the chest piece, and the studs that would sit on the piece are gone.
+- Model: 116 cubes, 21 bones, 21 displays (one fewer: the band no longer needs its own).
 
 ## The value check
 

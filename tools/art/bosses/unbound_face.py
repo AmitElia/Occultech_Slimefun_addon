@@ -103,12 +103,18 @@ def bust(model, face, chest="C1"):
         torso.box(f"pec_line_{sx}", (sx * 5.5, 35.6, -8.6), (9, 1.0, 0.6), "skin_dark")
     # the straps crossing the chest, studded, and the burning chest piece where they cross
     for sx in (-1, 1):
-        a, b = (sx * 13.5, 47, -7.5), (-sx * 8.5, 25, -7.5)      # at 45 degrees: one display
-        m1.beam(torso, f"strap_{sx}", a, b, 2.6, "strap")
+        # a flat strap lying on the chest (front at z -8.5), at 45 degrees (one display), from the shoulder to the
+        # chest's lower edge, passing behind the chest piece where the two cross
+        a, b = (sx * 13.5, 47, -9.05), (-sx * 3.5, 30, -9.05)
+        length = ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
+        torso.box(f"strap_{sx}", ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, a[2]), (length, 2.6, 1.0), "strap",
+                  rotation=(0, 0, 45 * sx))
         for i in range(6):
             t = (i + 0.5) / 6
             p = tuple(a[j] + (b[j] - a[j]) * t for j in range(3))
-            torso.box(f"stud_{sx}_{i}", (p[0], p[1], p[2] - 1.2), (1.0, 1.0, 0.6), "stud")
+            if abs(p[0]) < 6.5 and 32 < p[1] < 44:
+                continue                                   # behind the chest piece
+            torso.box(f"stud_{sx}_{i}", (p[0], p[1], -9.85), (1.0, 1.0, 0.6), "stud")
     CHESTS[chest](torso)
     # the head, low and forward between the traps, lifted so he looks ahead
     head = torso.group("hi_head", (0, 47.5, -7), (-HUNCH - 4, 0, 0))
@@ -219,12 +225,15 @@ def face_mix(h, hc, hw, hh, f):
     x, y, z = hc
     bottom = vanilla_face(h, hc, hw, hh, f, brow=False)
     eye_y = bottom + 6 * K
+    # the scowl: the brow pressed down onto the band's top edge
     for sx in (-1, 1):
-        h.box(f"brow_{sx}", (sx * 2.6, eye_y + 3.4, f - 0.9), (5.6, 2.2, 1.8), "brow", rotation=(0, 0, sx * 22.5))
+        h.box(f"brow_{sx}", (sx * 2.6, eye_y + 2.7, f - 0.6), (5.0, 1.8, 1.2), "brow", rotation=(0, 0, sx * 22.5))
     h.box("nose_wide", (x, bottom + 2.2, f - 1.2), (3.6, 4.4, 2.4), "nose")
-    band(h, hc, hw, eye_y, 4.4, tilt=7)
+    # the band: a snug straight wrap (take 2; the tilted slab read oddly; tatters along its edge read as blood),
+    # a torn flap hanging at his right temple, the knot and its tails behind
+    h.box("band", (x, eye_y, z), (hw + 1.0, 4.0, hw + 1.0), "cloth")
     tails(h, hc, hw, eye_y, long=True)
-    h.box("rag", (2.6, eye_y - 2.6, f - 0.5), (3.0, 1.8, 0.4), "cloth", rotation=(0, 0, 22.5))   # a torn flap hanging
+    h.box("rag", (hw / 2 + 0.6, eye_y - 2.8, f + 2.2), (0.4, 3.2, 2.4), "cloth_dark")     # the torn flap
     h.box("halo", (-2.4 * K, eye_y + 0.1, f - 0.55), (4.2, 2.2, 0.3), "eye_dim")
     h.box("eye", (-2.4 * K, eye_y + 0.1, f - 0.7), (2.6, 0.8, 0.3), "eye")
     h.box("eye_core", (-2.4 * K, eye_y + 0.1, f - 0.85), (0.8, 0.6, 0.2), "eye_hot")
