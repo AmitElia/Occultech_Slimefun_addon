@@ -1,0 +1,136 @@
+{
+  "release_seconds": {
+    "rotation": 0.6,
+    "heal": 0.8,
+    "curse": 1.0,
+    "throw": 0.65
+  },
+  "clips": {
+    "cauldron": {
+      "idle": {
+        "length": 3.0,
+        "loop": "loop",
+        "bones": 8
+      },
+      "walk": {
+        "length": 1.2,
+        "loop": "loop",
+        "bones": 5
+      },
+      "spawn": {
+        "length": 2.0,
+        "loop": "once",
+        "bones": 6
+      },
+      "rotation": {
+        "length": 1.4,
+        "loop": "once",
+        "bones": 3
+      },
+      "heal": {
+        "length": 1.4,
+        "loop": "once",
+        "bones": 2
+      },
+      "curse": {
+        "length": 1.6,
+        "loop": "once",
+        "bones": 4
+      },
+      "throw": {
+        "length": 1.2,
+        "loop": "once",
+        "bones": 3
+      },
+      "death": {
+        "length": 2.4,
+        "loop": "hold",
+        "bones": 7
+      }
+    },
+    "bottles": {
+      "idle": {
+        "length": 3.0,
+        "loop": "loop",
+        "bones": 8
+      },
+      "walk": {
+        "length": 1.2,
+        "loop": "loop",
+        "bones": 6
+      },
+      "spawn": {
+        "length": 2.0,
+        "loop": "once",
+        "bones": 6
+      },
+      "rotation": {
+        "length": 1.4,
+        "loop": "once",
+        "bones": 3
+      },
+      "heal": {
+        "length": 1.4,
+        "loop": "once",
+        "bones": 2
+      },
+      "curse": {
+        "length": 1.6,
+        "loop": "once",
+        "bones": 3
+      },
+      "throw": {
+        "length": 1.2,
+        "loop": "once",
+        "bones": 3
+      },
+      "death": {
+        "length": 2.4,
+        "loop": "hold",
+        "bones": 7
+      }
+    },
+    "pot": {
+      "idle": {
+        "length": 3.0,
+        "loop": "loop",
+        "bones": 7
+      },
+      "walk": {
+        "length": 1.2,
+        "loop": "loop",
+        "bones": 5
+      },
+      "spawn": {
+        "length": 2.0,
+        "loop": "once",
+        "bones": 6
+      },
+      "rotation": {
+        "length": 1.4,
+        "loop": "once",
+        "bones": 3
+      },
+      "heal": {
+        "length": 1.4,
+        "loop": "once",
+        "bones": 5
+      },
+      "curse": {
+        "length": 1.6,
+        "loop": "once",
+        "bones": 6
+      },
+      "throw": {
+        "length": 1.2,
+        "loop": "once",
+        "bones": 5
+      },
+      "death": {
+        "length": 2.4,
+        "loop": "hold",
+        "bones": 9
+      }
+    }
+  }
+}
