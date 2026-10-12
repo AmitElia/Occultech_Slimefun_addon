@@ -18,7 +18,7 @@ A berserk vindicator who broke out of a ritual binding, half beast. The user's b
 - **A giant bloody meat cleaver** in his right hand: the Frenzy Cleaver's design (a broad butcher's blade, a thick
   spine, the haft up through it, blood along the edge), at his size. Blood stays dark, dried stains along the edge,
   not gore.
-- **Embers and fire grow as he speeds up.** The chest piece burns brighter at each health threshold and embers
+- **Embers and fire grow as he speeds up.** The fire in his chest burns brighter and spreads at each health threshold and embers
   stream off him. No fire on the horns.
 
 **User's changes after the first silhouettes (2026-10-12):** no burning horn tips; clear shackles with chains
@@ -50,7 +50,7 @@ shoulder to attack**; the burning eye is **tier 1's spirit cyan** through the re
 - **Taken:** Brood Mother's wax and candles; Volley's amethyst and bone; the Coven's iron vessels and coloured brew;
   the Monarch's toxic slime.
 - **The Unbound:** grey illager skin (bare above the waist) and dark trousers; dark leather and **silver studs** (tier 1's silver);
-  **blackened iron** (chest piece, shackles, chains); **bone horns**; **red cloth**; the steel cleaver with dried
+  **blackened iron** (shackles, chains); **bone horns**; **red cloth**; the steel cleaver with dried
   blood; **fire and embers** as the one living light (the Frenzied set's ember).
 
 ## Process
