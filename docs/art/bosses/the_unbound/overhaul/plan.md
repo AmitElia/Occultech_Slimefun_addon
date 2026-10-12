@@ -12,7 +12,8 @@ A berserk vindicator who broke out of a ritual binding, half beast. The user's b
 - **Bull horns** grow from the sides of the head.
 - **A red cloth wrapped around his eyes**, its ends trailing. **One eye burns through the cloth.**
 - **Chains dangle from his limbs**: broken shackles on the wrists and ankles.
-- **A burning chest piece:** a blackened iron plate with fire burning in it.
+- **He burns from the inside** (user, after the face study: no chest piece, no furnace look): the fire shows
+  through splits in the skin of his chest.
 - **Silver-studded leather straps** across his body.
 - **A giant bloody meat cleaver** in his right hand: the Frenzy Cleaver's design (a broad butcher's blade, a thick
   spine, the haft up through it, blood along the edge), at his size. Blood stays dark, dried stains along the edge,
@@ -73,4 +74,6 @@ Sessions 2-8 as for the Coven (boss-art-sessions.md). For The Unbound specifical
 
 ## Open
 
-- Nothing yet: the face study is next.
+- **The head (face study, 2026-10-12):** F3's horns (a horn boss and buffalo horns), F3's iron nose ring and eye
+  (a cyan slit with a soft halo), F2's scowling brow and slipping ragged band, without F2's jaw and tusks.
+- **The chest:** which way he burns (s1_face2: the fissure, ember veins, the burning heart).

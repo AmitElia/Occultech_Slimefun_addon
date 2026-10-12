@@ -31,16 +31,21 @@ from bosskit import sheet  # noqa: E402
 from bosses import monarch_s1 as m1, volley_crone_s2 as v2  # noqa: E402
 
 OUT = ROOT / "docs/art/bosses/the_unbound/overhaul/s1_face"
+OUT2 = ROOT / "docs/art/bosses/the_unbound/overhaul/s1_face2"
 K = 1.5
 PALETTE = {
     "skin": (122, 128, 126), "skin_dark": (98, 104, 104), "nose": (112, 118, 116), "brow": (58, 60, 62),
     "pants": (50, 50, 58), "cloth": (150, 34, 34), "cloth_dark": (108, 24, 26), "scorch": (40, 22, 22),
     "horn": (208, 196, 164), "horn_dark": (164, 150, 116), "horn_root": (128, 116, 92),
     "strap": (88, 60, 40), "stud": (206, 210, 218), "iron": (70, 66, 72), "iron_lit": (120, 116, 124),
-    "fire": (255, 132, 36), "fire_hot": (255, 214, 120),
-    "eye": (90, 230, 255), "eye_hot": (220, 252, 255), "eye_dim": (60, 150, 176),
+    "fire": (236, 92, 18), "fire_hot": (255, 186, 70),
+    "eye": (70, 210, 250), "eye_hot": (200, 248, 255), "eye_dim": (26, 92, 116),
 }
 FACES = {"F1": "The blindfolded vindicator", "F2": "The scowl", "F3": "The bull"}
+# take 2 (user, 2026-10-12): one head - F2's scowling brow and slipping ragged band (not its jaw or tusks), F3's eye,
+# horns and nose ring - and the chest reworked: he burns from the inside, no furnace plate. Three ways to show it.
+TAKES = {"C1": ("Head: F2 + F3. Chest: the fissure", "C1"), "C2": ("Head: F2 + F3. Chest: ember veins", "C2"),
+         "C3": ("Head: F2 + F3. Chest: the burning heart", "C3")}
 HUNCH = -20                                       # the upper body leans forward over the hips
 
 
@@ -59,7 +64,7 @@ def horn(g, name, points, widths, tilt=0.0, mats=("horn_root", "horn", "horn", "
         m1.beam(hg, f"{name}_{i}", a2, b2, widths[i], mats[min(i, len(mats) - 1)])
 
 
-def bust(model, face):
+def bust(model, face, chest="C1"):
     root = model.group("root", (0, 0, 0))
     root.box("waist", (0, 25, 0), (19, 8, 12), "pants")
     root.box("belt", (0, 28.4, 0), (20, 2.4, 13), "strap")
@@ -81,12 +86,7 @@ def bust(model, face):
             t = (i + 0.5) / 6
             p = tuple(a[j] + (b[j] - a[j]) * t for j in range(3))
             torso.box(f"stud_{sx}_{i}", (p[0], p[1], p[2] - 1.2), (1.0, 1.0, 0.6), "stud")
-    torso.box("chest_piece", (0, 38, -9.0), (11, 10, 1.4), "iron")
-    torso.box("chest_fire", (0, 38, -9.8), (6, 5.4, 0.4), "fire")
-    torso.box("chest_fire_hot", (0, 37.4, -10.0), (1.4, 1.6, 0.3), "fire_hot")
-    for dx in (-1.6, 0, 1.6):
-        torso.box(f"grate_{dx}", (dx, 38, -10.1), (0.8, 6.4, 0.4), "iron")
-    torso.box("chest_rim", (0, 43.4, -9.2), (11.6, 1.2, 1.6), "iron_lit")
+    CHESTS[chest](torso)
     # the head, low and forward between the traps, lifted so he looks ahead
     head = torso.group("hi_head", (0, 49, -4), (-HUNCH - 6, 0, 0))
     hw, hh = 8 * K, 10 * K
@@ -190,7 +190,94 @@ def face_bull(h, hc, hw, hh, f):
                                (sx * (hw / 2 + 9.6), y + hh / 2 + 7.4, z - 2)], [5.4, 4.4, 3.2, 2.2], tilt=-8)
 
 
-HEADS = {"F1": face_blindfold, "F2": face_scowl, "F3": face_bull}
+def face_mix(h, hc, hw, hh, f):
+    """The user's mix: F2's scowling brow, broad nose and slipping ragged band (no jaw, no tusks); F3's eye (a slit
+    with a soft halo through the weave), its iron nose ring, its horn boss and buffalo horns."""
+    x, y, z = hc
+    bottom = vanilla_face(h, hc, hw, hh, f, brow=False)
+    eye_y = bottom + 6 * K
+    for sx in (-1, 1):
+        h.box(f"brow_{sx}", (sx * 2.6, eye_y + 3.4, f - 0.9), (5.6, 2.2, 1.8), "brow", rotation=(0, 0, sx * 14))
+    h.box("nose_wide", (x, bottom + 2.2, f - 1.2), (3.6, 4.4, 2.4), "nose")
+    band(h, hc, hw, eye_y, 4.4, tilt=7)
+    tails(h, hc, hw, eye_y, long=True)
+    h.box("rag", (2.6, eye_y - 2.6, f - 0.5), (3.0, 1.8, 0.4), "cloth", rotation=(0, 0, 12))   # a torn flap hanging
+    h.box("halo", (-2.4 * K, eye_y + 0.1, f - 0.55), (4.2, 2.2, 0.3), "eye_dim")
+    h.box("eye", (-2.4 * K, eye_y + 0.1, f - 0.7), (2.6, 0.8, 0.3), "eye")
+    h.box("eye_core", (-2.4 * K, eye_y + 0.1, f - 0.85), (0.8, 0.6, 0.2), "eye_hot")
+    nz = f - 2 * K - 0.4
+    h.box("ring_l", (-1.7, bottom - 1.6, nz), (0.8, 2.6, 0.8), "iron_lit")
+    h.box("ring_r", (1.7, bottom - 1.6, nz), (0.8, 2.6, 0.8), "iron_lit")
+    h.box("ring_b", (0, bottom - 2.9, nz), (4.2, 0.8, 0.8), "iron_lit")
+    h.box("boss", (x, y + hh / 2 + 0.6, z + 0.4), (hw + 1.4, 2.4, 6.4), "horn_root")
+    for sx in (-1, 1):
+        horn(h, f"horn_{sx}", [(sx * (hw / 2 - 0.5), y + hh / 2 + 0.2, z + 0.4), (sx * (hw / 2 + 5), y + hh / 2 - 1.2, z),
+                               (sx * (hw / 2 + 8.5), y + hh / 2, z - 0.4), (sx * (hw / 2 + 10.5), y + hh / 2 + 4, z - 1.2),
+                               (sx * (hw / 2 + 9.6), y + hh / 2 + 7.4, z - 2)], [5.4, 4.4, 3.2, 2.2], tilt=-8)
+
+
+# ---- the chest: burning from the inside (take 2) --------------------------------------------------------------------
+# The skin is split and the fire inside shows through: glowing cracks (a hot core line in a wider ember line) on the
+# chest's front face (z = -8.5). The skin round them gets a warm glow spill when it's painted (session 5).
+
+CHEST_Z = -8.75
+
+
+def crack(t, name, points, w=1.3, core=True):
+    """A glowing split in the skin along a polyline, drawn flat on the chest's front."""
+    for i in range(len(points) - 1):
+        z = CHEST_Z if (points[i][1] + points[i + 1][1]) / 2 >= 31 else -6.75     # the chest, or the narrower stomach
+        a, b = (*points[i], z), (*points[i + 1], z)
+        m1.beam(t, f"{name}_{i}", a, b, w, "fire")
+        if core and w >= 1.0:
+            m1.beam(t, f"{name}_{i}_hot", (a[0], a[1], z - 0.35), (b[0], b[1], z - 0.35), w * 0.4, "fire_hot")
+
+
+def chest_fissure(t):
+    """C1: one jagged fissure splits the sternum from the collarbones to the stomach, branching out across the pecs;
+    the light is brightest in its middle."""
+    crack(t, "fissure", [(0.6, 47.5), (-0.8, 44.5), (0.9, 41.5), (-0.6, 38.5), (1.1, 35.5), (-0.2, 32.5), (0.4, 29.5)], 1.8)
+    crack(t, "branch_a", [(-0.8, 44.5), (-4.5, 45.8), (-8.5, 44.6), (-11, 45.6)], 1.1)
+    crack(t, "branch_b", [(0.9, 41.5), (4.8, 42.6), (8.6, 40.6)], 1.1)
+    crack(t, "branch_c", [(-0.6, 38.5), (-4.2, 36.8), (-7.8, 37.6), (-10.4, 35)], 1.0)
+    crack(t, "branch_d", [(1.1, 35.5), (4.6, 33.4), (7, 34.4)], 0.9)
+    crack(t, "branch_e", [(-0.2, 32.5), (-3.6, 30.6)], 0.8, core=False)
+    t.box("fissure_glow", (0.2, 39, CHEST_Z - 0.5), (2.2, 5, 0.3), "fire_hot")
+
+
+def chest_veins(t):
+    """C2: no single wound - glowing veins spread from his heart over the whole chest and onto the shoulders, like
+    lava under cracked rock; thin, many, branching."""
+    heart = (-4.5, 40.5)
+    t.box("heart_glow", (heart[0], heart[1], CHEST_Z - 0.4), (2.6, 2.6, 0.3), "fire_hot", rotation=(0, 0, 45))
+    for i, path in enumerate([
+            [heart, (-8, 43), (-11.5, 44), (-14.5, 46.5)],
+            [heart, (-6.5, 46), (-4, 48)],
+            [heart, (-1, 43.5), (3.5, 45.5), (8, 44.5), (12.5, 46)],
+            [heart, (0.5, 39), (5, 37.5), (9.5, 39.5), (12, 37)],
+            [heart, (-8.5, 37.5), (-11.5, 34)],
+            [heart, (-3, 35.5), (-5, 31.5), (-3, 28.5)],
+            [(0.5, 39), (2.5, 34), (5.5, 31)],
+            [(3.5, 45.5), (5.5, 48)],
+            [(-8, 43), (-9, 39.5)]]):
+        crack(t, f"vein_{i}", path, 0.9 if i < 6 else 0.7, core=i < 4)
+
+
+def chest_heart(t):
+    """C3: the burning heart - a short, wide split over his heart (his left chest) blazing, short cracks radiating
+    from it, and embers drifting out of it."""
+    c = (-4.8, 40.5)
+    t.box("heart_split", (c[0], c[1], CHEST_Z - 0.2), (5.6, 2.8, 0.6), "fire", rotation=(0, 0, -18))
+    t.box("heart_core", (c[0], c[1], CHEST_Z - 0.55), (3.4, 1.2, 0.3), "fire_hot", rotation=(0, 0, -18))
+    for i, (dx, dy) in enumerate(((-5, 3.2), (-4.4, -3.4), (4.6, 2.6), (3.8, -3.8), (0.4, 5), (-1, -5.2))):
+        crack(t, f"ray_{i}", [(c[0] + dx * 0.45, c[1] + dy * 0.45), (c[0] + dx, c[1] + dy),
+                              (c[0] + dx * 1.45 + (0.8 if i % 2 else -0.8), c[1] + dy * 1.4)], 0.9, core=i < 2)
+    for i, (dx, dy, dz) in enumerate(((-1, 5, -2.2), (1.5, 7.5, -3.4), (-2.5, 9.5, -2.6), (0.5, 11.5, -4))):
+        t.box(f"ember_{i}", (c[0] + dx, c[1] + dy, CHEST_Z + dz), (0.8, 0.8, 0.8), "fire_hot" if i % 2 else "fire")
+
+
+CHESTS = {"C1": chest_fissure, "C2": chest_veins, "C3": chest_heart}
+HEADS = {"F1": face_blindfold, "F2": face_scowl, "F3": face_bull, "MIX": face_mix}
 VIEWS = [
     {"name": "face", "mode": "flat", "camera": "persp", "yaw": -24, "height": 3.25, "dist": 2.9, "target_z": 3.35, "player": False},
     {"name": "front", "mode": "flat", "camera": "persp", "yaw": 0, "height": 3.1, "dist": 4.2, "target_z": 2.8, "player": False},
@@ -198,30 +285,64 @@ VIEWS = [
      "player": False},
     {"name": "player_eye", "mode": "flat", "camera": "persp", "yaw": -14, "height": 1.62, "dist": 3.4, "target_z": 3.0,
      "lens": 24, "player": False},
-    {"name": "profile", "mode": "flat", "camera": "persp", "yaw": 90, "height": 3.35, "dist": 3.2, "target_z": 3.3, "player": False},
-]
+    ]
+
+
+GLOW = {"fire", "fire_hot", "eye", "eye_hot", "eye_dim"}
+
+
+def render_glowing(model, out):
+    """The study views, with the fire and the eye glowing: a normal render, then an unlit pass where everything but
+    the glowing parts is black (the same geometry, so it's hidden where it should be), laid over it with a bloom."""
+    from PIL import Image, ImageChops, ImageFilter
+    v2.run_blender(model.render_json(PALETTE), out, VIEWS)
+    dark = {k: (v if k in GLOW else (0, 0, 0)) for k, v in PALETTE.items()}
+    glow_dir = out / "glow"
+    job = model.render_json(dark)
+    views = [dict(v, light="FLAT") for v in VIEWS]
+    import json as _json
+    glow_dir.mkdir(parents=True, exist_ok=True)
+    (glow_dir / "job.json").write_text(_json.dumps({"boxes": job, "out": glow_dir.as_posix(), "views": views,
+                                                    "res": [900, 700], "ground": [0, 0, 0], "sky": [0, 0, 0]}))
+    import subprocess
+    r = subprocess.run([str(v2.BLENDER), "-b", "--factory-startup", "--python",
+                        str(ROOT / "tools/art/bosskit/blender_render.py"), "--", str(glow_dir / "job.json")],
+                       capture_output=True, text=True)
+    if r.returncode or "RENDER_DONE" not in r.stdout:
+        raise SystemExit(r.stdout[-2000:] + r.stderr[-2000:])
+    for v in VIEWS:
+        base = Image.open(out / f"{v['name']}.png").convert("RGB")
+        mask = Image.open(glow_dir / f"{v['name']}.png").convert("RGB")
+        lit = mask.convert("L").point(lambda x: 255 if x > 24 else 0)
+        base.paste(mask, (0, 0), lit)                                       # the glow, unlit
+        bloom = mask.filter(ImageFilter.GaussianBlur(8)).point(lambda x: min(255, int(x * 1.15)))
+        base = ImageChops.screen(base, bloom)
+        base.save(out / f"{v['name']}.png")
+    shutil.rmtree(glow_dir)
 
 
 def main():
-    if OUT.exists():
-        for old in OUT.iterdir():
+    """Take 2: the mixed head on three chests. (Take 1, the three heads on the furnace-plate chest, is in s1_face and
+    git history.)"""
+    if OUT2.exists():
+        for old in OUT2.iterdir():
             if old.is_dir():
                 shutil.rmtree(old)
             elif old.name != "README.md":
                 old.unlink()
     items = []
-    for key, title in FACES.items():
-        out = OUT / key
+    for key, (title, chest) in TAKES.items():
+        out = OUT2 / key
         out.mkdir(parents=True, exist_ok=True)
-        model = Model(f"occultech_unbound_face_{key.lower()}")
-        bust(model, key)
+        model = Model(f"occultech_unbound_face2_{key.lower()}")
+        bust(model, "MIX", chest)
         model.write_bbmodel(out / f"{model.name}.bbmodel")
-        v2.run_blender(model.render_json(PALETTE), out, VIEWS)
+        render_glowing(model, out)
         stats = model.stats()
         (out / "stats.json").write_text(json.dumps(stats, indent=2) + "\n", encoding="utf-8")
         items.append((key, title))
         print(key, stats["cubes"], stats["size_blocks"])
-    sheet.compare_sheet(OUT, items, OUT / "faces.png", heading="The Unbound - three heads (session 1, step 2)",
+    sheet.compare_sheet(OUT2, items, OUT2 / "faces.png", heading="The Unbound - the head (F2 + F3), three burning chests",
                         views=("face", "front", "three_quarter", "player_eye"))
 
 

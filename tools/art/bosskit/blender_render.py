@@ -166,15 +166,16 @@ for v in job["views"]:
         if player_obj:
             player_obj.color = (0.35, 0.5, 0.75, 1)
     else:
-        shading.light = "STUDIO"
-        shading.studio_light = v.get("studio", "basic.sl")
+        shading.light = v.get("light", "STUDIO")          # "FLAT": unlit colours (the glow pass)
+        if shading.light == "STUDIO":
+            shading.studio_light = v.get("studio", "basic.sl")
         shading.color_type = "MATERIAL" if v["mode"] == "flat" else "OBJECT"
         obj.color = (0.78, 0.76, 0.72, 1)
         if player_obj:
             player_obj.color = (0.42, 0.55, 0.72, 1)
-        shading.show_cavity = True
+        shading.show_cavity = shading.light != "FLAT"
         shading.cavity_type = "WORLD"
-        shading.show_shadows = True
+        shading.show_shadows = shading.light != "FLAT"
         shading.shadow_intensity = 0.45
         shading.show_object_outline = False
         shading.background_type = "VIEWPORT"
