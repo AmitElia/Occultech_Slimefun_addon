@@ -1,14 +1,14 @@
-"""Witch Coven redesign, step 1: silhouette line-ups of the three sisters (plan: docs/art/bosses/witch_coven/overhaul/plan.md).
+"""Witch Coven redesign, step 1 (take 2): the three sisters on the user's body (plan: docs/art/bosses/witch_coven/overhaul/plan.md).
 
-The sisters share one body: built like a vanilla witch or villager (long robe, big head, big nose, sleeves folded
-across the chest, no hands showing), hunched, larger than a player, hovering low, under a real witch's hat. Only their
-vessels differ: the Root-Mother's cauldron hanging in front, the Briar's censer on a chain, the Crook's pot on her back
-with a ladle over her shoulder. The brew's colour is the role (green healer, purple curser, red bomber).
-
-Three takes on the shared body, one per row:
-  A  Villager hunch   vanilla's proportions grown 1.45x, the back rounded into a hump, the head pushed forward.
-  B  Deep crone       bent much further: the hump is the highest point under the hat, the head hangs low in front.
-  C  Root bell        A's hunch over a robe that flares into a ragged bell of roots trailing behind as it hovers.
+The body (user, 2026-10-11): a villager with a hunched, big back, larger than a player. The robe falls straight, like
+a villager's, with no flare. When she hovers, a flat ragged hem (a 2D plane, ragged in its texture) hangs below it.
+A real witch's hat. No fingers: the sleeves end in dark cuffs. The sisters are the same size and differ only by their
+vessels:
+  1  the cauldron   an extra-large cauldron hung on her hunched back, tied on with ropes round her middle; her
+                    sleeves are free to cast and throw
+  2  the bottles    a diagonal shoulder belt of large potion bottles, and one bottle held up in her sleeve
+  3  the pot        a pot held out in front of her in both sleeves
+The brew's colour is the role (green healer, purple curser, red bomber); each sister is shown in one.
 
 Shapes are angular polygons and turned rectangles, buildable from cuboids. Units are model pixels (16 = one block).
 Run from the repository root: python tools/art/bosses/coven_lineup.py
@@ -20,16 +20,17 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[3]
 OUT = ROOT / "docs/art/bosses/witch_coven/overhaul/s1_lineup"
-S = 3.6
-BG, INK, DIM = (24, 22, 28), (236, 228, 214), (150, 142, 132)
+S = 3.9
+BG, INK = (24, 22, 28), (236, 228, 214)
 PLAYER = (150, 178, 222)
-TONE = {"robe": (64, 54, 44), "root": (40, 33, 27), "sleeve": (54, 46, 38), "skin": (150, 128, 98),
-        "nose": (138, 116, 88), "wart": (96, 120, 60), "hat": (42, 34, 50), "band": (84, 98, 54),
-        "iron": (56, 54, 60), "iron_dark": (34, 33, 38), "herb": (86, 96, 58), "bone": (196, 186, 160),
-        "eye": (30, 24, 20), "chain": (70, 68, 74)}
+SIL = (34, 33, 40)
+TONE = {"robe": (66, 56, 46), "robe_dark": (48, 40, 33), "hem": (56, 47, 38), "sleeve": (58, 49, 40),
+        "cuff": (30, 25, 21), "skin": (150, 128, 98), "nose": (136, 114, 86), "wart": (96, 120, 60), "brow": (70, 56, 44),
+        "eye": (40, 70, 40), "hat": (42, 34, 50), "band": (84, 98, 54), "iron": (56, 54, 60), "iron_dark": (34, 33, 38),
+        "rope": (150, 128, 84), "glass": (150, 170, 170), "cork": (120, 92, 60), "strap": (82, 60, 40),
+        "herb": (86, 96, 58), "bone": (196, 186, 160)}
 ROLE = {"green": ((110, 230, 90), (170, 240, 150)), "purple": ((170, 70, 220), (200, 150, 235)),
         "red": ((230, 70, 60), (240, 150, 130))}
-SIL = (34, 33, 40)
 
 
 def rect(cx, cy, w, h, ang=0.0):
@@ -52,174 +53,147 @@ def turn(points, pivot, ang):
     return [(px + (x - px) * c - (y - py) * s, py + (x - px) * s + (y - py) * c) for x, y in points]
 
 
-def ragged(z0, z1, y, depth, n):
-    """A ragged hem from z1 back to z0: teeth hanging down."""
-    pts = []
-    for i in range(n + 1):
-        z = z1 + (z0 - z1) * i / n
-        pts.append((z, y - (depth if i % 2 else 0)))
+def segment(a, b, w):
+    L = math.hypot(b[0] - a[0], b[1] - a[1])
+    return rect((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, L, w, math.degrees(math.atan2(b[1] - a[1], b[0] - a[0])))
+
+
+def ragged_hem(x0, x1, top, depth, teeth):
+    """The hovering hem: a flat plane hanging straight down from the robe, its lower edge torn into teeth."""
+    pts = [(x0, top), (x1, top)]
+    for i in range(teeth * 2 + 1):
+        x = x1 + (x0 - x1) * i / (teeth * 2)
+        pts.append((x, top - depth * (1.0 if i % 2 else 0.45) - (i % 3) * 0.6))
     return pts
 
 
-# ---- the shared body ---------------------------------------------------------------------------------------------
-# Side views face left: -z is the front. y is up; the ground is y = 0.
-
-VARIANTS = {
-    "A": {"title": "Villager hunch", "hem": 5, "hem_front": -9, "hem_back": 10, "chest": (-9, 28), "shoulder": (-6, 38),
-          "neck": (2, 44), "hump": (13, 36), "head": (-9, 47), "tilt": 14, "flare": 0},
-    "B": {"title": "Deep crone", "hem": 5, "hem_front": -12, "hem_back": 10, "chest": (-13, 24), "shoulder": (-11, 34),
-          "neck": (0, 47), "hump": (13, 40), "head": (-16, 40), "tilt": 26, "flare": 0},
-    "C": {"title": "Root bell", "hem": 4, "hem_front": -14, "hem_back": 16, "chest": (-9, 28), "shoulder": (-6, 38),
-          "neck": (2, 44), "hump": (13, 36), "head": (-9, 47), "tilt": 14, "flare": 1},
-}
+# ---- the body (villager 1.45x: head 12 x 14.5, robe 12 wide; the back built up into a hump) ------------------------
+HEM_TOP, SHOULDER = 9, 34          # the robe runs straight from y 9 up to the shoulders at y 34
+HEAD = (-9, 41)                    # pushed forward and down by the hunch
+TILT = 12
 
 
-def head_and_hat(v):
-    """The head (a tall vanilla villager head, 1.45x), the long crooked nose with its wart, the deep brow, and a real
-    witch's hat: a wide brim and a tall cone in steps, its tip bent back. All tilted forward with the head."""
-    hx, hy = v["head"]
-    t = -v["tilt"]          # negative: the face (at -z) tips down
-    out = []
-    head = rect(hx, hy, 13, 15)
-    out.append(("skin", head))
-    out.append(("eye", rect(hx - 6, hy + 2.5, 1.6, 2.2)))                       # the eye under the brow
-    out.append(("skin", rect(hx - 5.5, hy + 4.4, 3, 1.6)))                       # the brow ridge
-    out.append(("nose", [(hx - 6.5, hy + 2), (hx - 13, hy - 4.5), (hx - 12, hy - 6.5), (hx - 6.5, hy - 3)]))
-    out.append(("wart", rect(hx - 10.5, hy - 2.6, 1.8, 1.8)))
-    top = hy + 7.5
-    out.append(("hat", rect(hx, top + 1.2, 25, 2.4)))                           # the brim
-    out.append(("band", rect(hx, top + 3.4, 14, 2.2)))
-    cone = [(hx - 7, top + 2.4), (hx + 7, top + 2.4), (hx + 6, top + 9), (hx + 4.5, top + 15), (hx + 6.5, top + 20),
-            (hx + 11, top + 23), (hx + 8, top + 24.5), (hx + 2.5, top + 21), (hx - 1, top + 15), (hx - 4, top + 9)]
-    out.append(("hat", cone))
-    return [(tone, turn(p, (hx, hy - 4), t)) for tone, p in out]
+def hat(hx, top):
+    """Vanilla's witch hat at the head's scale: a brim about 1.3x the head, a cone in steps, the tip bent back."""
+    return [("hat", rect(hx, top + 1, 16, 2)), ("band", rect(hx, top + 2.9, 10.5, 1.8)),
+            ("hat", [(hx - 5.2, top + 2), (hx + 5.2, top + 2), (hx + 4.4, top + 7), (hx + 3.4, top + 11.5), (hx + 5, top + 15),
+                     (hx + 8.5, top + 17.5), (hx + 6.2, top + 18.6), (hx + 2, top + 16), (hx - 0.6, top + 11.5), (hx - 3, top + 7)])]
 
 
-def body(v, side=True):
-    """The robe from the hovering hem up over the hump, the folded sleeves on the chest, a herb bundle and a bone charm
-    hanging at the waist on twine."""
-    hem, zf, zb = v["hem"], v["hem_front"], v["hem_back"]
-    cz, cy = v["chest"]
-    sz, sy = v["shoulder"]
-    nz, ny = v["neck"]
-    hz, hy = v["hump"]
-    out = []
-    if v["flare"]:
-        # roots trailing out behind the bell as it hovers
-        for i, (dz, dy, ln, ang) in enumerate(((4, 2, 16, -8), (-2, 1, 12, -14), (8, 3, 10, -4))):
-            out.append(("root", rect(zb + dz, hem + dy - 1, ln, 2.2, ang)))
-    robe = [(zf, hem), (cz, cy), (sz, sy), (nz, ny), (hz, hy), (zb, hem + 10)] + ragged(zf, zb, hem, 3, 7)
-    out.append(("robe", robe))
-    out.append(("root", [(zf, hem), (zb, hem + 4), (zb, hem + 9), (zf + 2, hem + 4)]))      # the root-woven hem band
-    hx, hyy = v["head"]
-    out.append(("robe", [(sz - 1, sy - 3), (hx - 1, hyy - 8), (hx + 7, hyy - 3), (nz + 1, ny - 1), (hz, hy - 4)]))  # the hood/collar
-    out.append(("sleeve", rect(cz - 1.5, cy - 2, 10, 7, -10)))                              # the folded sleeves
-    out.append(("herb", rect(cz + 5, cy - 9, 3.5, 7, 8)))
-    out.append(("bone", rect(cz + 8.5, cy - 11, 2.2, 3.4)))
+def side_body():
+    """Side view, facing left (-z is the front)."""
+    out = [("robe", [(-6, HEM_TOP), (-6, SHOULDER - 2), (-3, SHOULDER + 4), (4, 47), (12, 44), (13, 36), (8, 26),
+                     (7, HEM_TOP)])]                       # straight front and back, the big hump over the shoulders
+    out.append(("hem", ragged_hem(-6, 7, HEM_TOP, 5, 4)))
+    out.append(("herb", rect(-3, 18, 3.5, 7, 6)))
+    out.append(("bone", rect(0.5, 15.5, 2.2, 3.4)))
+    hx, hy = HEAD
+    head = [("robe_dark", [(-4, SHOULDER + 3), (hx + 1, hy - 6), (hx + 7, hy - 3), (2, 44)]),     # the hood joining the hump
+            ("skin", rect(hx, hy, 12, 14.5)), ("brow", rect(hx - 4.5, hy + 3.6, 4, 1.8)),
+            ("eye", rect(hx - 5.4, hy + 1.6, 1.4, 2)),
+            ("nose", [(hx - 6, hy + 1.5), (hx - 12, hy - 5), (hx - 11, hy - 7), (hx - 6, hy - 3.5)]),
+            ("wart", rect(hx - 9.6, hy - 3, 1.8, 1.8))] + hat(hx, hy + 7.25)
+    out += [(t, turn(p, (hx, hy - 4), -TILT)) for t, p in head]
     return out
 
 
-def vessel(kind, v, role):
+def side_sleeve(shoulder, cuff, w=6.5):
+    return [("sleeve", segment(shoulder, cuff, w)), ("cuff", rect(cuff[0], cuff[1], w + 0.6, w * 0.7))]
+
+
+def side_sister(kind, role):
     glow, steam = ROLE[role]
-    cz, cy = v["chest"]
-    hz, hy = v["hump"]
+    G, M = ("glow", glow), ("steam", steam)
     out = []
     if kind == "cauldron":
-        # a big iron cauldron hanging from the folded sleeves on two chains, in front of the robe
-        x, y = cz - 8, cy - 13
-        out += [("chain", rect(x + 4, y + 9, 1.2, 8, -14)), ("chain", rect(x - 3, y + 9, 1.2, 8, 14))]
-        out += [("iron", octagon(x, y, 9.5, 6.5)), ("iron_dark", rect(x, y + 6, 21, 2.6))]
-        out += [("glow", rect(x, y + 7.7, 16, 1.4))]
-        out += [("steam", rect(x - 3, y + 11, 1.6, 4, 12)), ("steam", rect(x + 2, y + 12.5, 1.4, 5, -10))]
-    elif kind == "censer":
-        # a censer swung out on a long chain from the sleeves, trailing smoke
-        sx, sy = cz - 5, cy - 3
-        ex, ey = cz - 19, cy - 10
-        L = math.hypot(ex - sx, ey - sy)
-        out += [("chain", rect((sx + ex) / 2, (sy + ey) / 2, L, 1.2, math.degrees(math.atan2(ey - sy, ex - sx))))]
-        out += [("iron", octagon(ex, ey - 3, 7.5, 8.5)), ("iron_dark", rect(ex, ey + 5.5, 9, 3)), ("iron_dark", rect(ex, ey + 8.5, 3, 3))]
-        out += [("glow", rect(ex, ey - 1.5, 11, 2)), ("glow", rect(ex, ey - 5.5, 8, 1.6))]          # the lit vents
-        out += [("steam", rect(ex + 1, ey + 11, 1.8, 5, 10)), ("steam", rect(ex - 3, ey + 12, 1.5, 4, -14))]
+        # the extra-large cauldron rides the hump, roped round her middle; one sleeve raised to cast
+        out += [("iron", octagon(17, 32, 12, 11)), ("iron_dark", rect(15.5, 43, 22, 3, 12)), (G, rect(15, 44.8, 17, 1.6, 12))]
+        out += [(M, rect(13, 49, 1.8, 5, 8)), (M, rect(18, 50, 1.5, 4, -10))]
+        out += side_body()
+        out += [("rope", segment((-6.5, 25), (10, 30), 1.6)), ("rope", segment((-6.5, 30), (9, 37), 1.6)),
+                ("rope", rect(-6.4, 27.5, 1.6, 6))]
+        out += side_sleeve((-3, 31), (-17, 27))
+        out += [(G, octagon(-21, 27.5, 2.8))]                                  # magic gathering at her cuff
+    elif kind == "bottles":
+        out += side_body()
+        # the shoulder belt crosses her front; large bottles stand out from it, one more held up in her sleeve
+        out += [("strap", segment((-6.6, 33), (-6.6, 14), 2.2))]
+        for i, y in enumerate((30, 24, 18)):
+            out += [("glass", rect(-9.5, y, 4.5, 6)), (G, rect(-9.5, y - 0.8, 3.4, 3.6)), ("cork", rect(-9.5, y + 3.8, 2, 1.8))]
+        out += side_sleeve((-3, 31), (-18, 34))
+        out += [("glass", rect(-21.5, 38.5, 5, 7, 10)), (G, rect(-21.5, 37.5, 3.8, 4, 10)), ("cork", rect(-22.3, 42.8, 2.2, 2, 10))]
     else:
-        # a pot riding the hump, a long ladle from the sleeves over the shoulder into it
-        px, py = hz + 2, hy + 4
-        out += [("iron", octagon(px, py, 7.5, 6.5)), ("iron_dark", rect(px, py + 6, 16, 2.4)), ("glow", rect(px, py + 7.6, 12, 1.3))]
-        out += [("steam", rect(px + 2, py + 11, 1.6, 4.5, 10)), ("steam", rect(px - 2, py + 12, 1.4, 3.5, -12))]
-        sx, sy = cz - 4, cy - 1
-        ex, ey = px - 2, py + 9
-        L = math.hypot(ex - sx, ey - sy)
-        out += [("chain", rect((sx + ex) / 2, (sy + ey) / 2, L, 1.8, math.degrees(math.atan2(ey - sy, ex - sx))))]
-        out += [("iron", octagon(sx - 2, sy - 2, 2.6))]                               # the ladle's bowl end, held low
-    return [(tone if tone not in ("glow", "steam") else (tone, glow if tone == "glow" else steam), p) for tone, p in out]
-
-
-def front(v):
-    """The front view, the Root-Mother: the robe, the hump showing at the shoulders, folded sleeves, the head and nose,
-    the hat, the cauldron below."""
-    hem = v["hem"]
-    flare = 22 if v["flare"] else 15
-    cy = v["chest"][1]
-    sy = v["shoulder"][1]
-    hy = v["head"][1] - (4 if v["tilt"] > 20 else 2)
-    out = []
-    out.append(("robe", [(-flare, hem), (flare, hem), (11, sy - 4), (9, sy + 3), (-9, sy + 3), (-11, sy - 4)] ))
-    out.append(("robe", octagon(0, v["neck"][1] - 2, 15, 9)))                     # the hump rising round the head
-    out.append(("root", [(-flare, hem), (flare, hem), (flare - 1, hem + 4), (-flare + 1, hem + 4)]))
-    out.append(("sleeve", rect(0, cy - 2, 22, 7)))
-    out.append(("skin", rect(0, hy, 13, 15)))
-    out.append(("eye", rect(-3, hy + 2.5, 2, 1.6)))
-    out.append(("eye", rect(3, hy + 2.5, 2, 1.6)))
-    out.append(("skin", rect(0, hy + 4.4, 11, 1.6)))
-    out.append(("nose", rect(0.6, hy - 2.5, 3, 8, -6)))
-    out.append(("wart", rect(1.6, hy - 3.5, 1.8, 1.8)))
-    top = hy + 7.5
-    out.append(("hat", rect(0, top + 1.2, 25, 2.4)))
-    out.append(("band", rect(0, top + 3.4, 14, 2.2)))
-    out.append(("hat", [(-7, top + 2.4), (7, top + 2.4), (5, top + 12), (4.5, top + 18), (9, top + 23), (6, top + 24),
-                        (0.5, top + 19), (-2, top + 12)]))
-    glow, steam = ROLE["green"]
-    x, y = 0, cy - 13
-    out += [("chain", rect(-6, y + 9, 1.2, 8)), ("chain", rect(6, y + 9, 1.2, 8))]
-    out += [("iron", octagon(x, y, 11, 7)), ("iron_dark", rect(x, y + 6.5, 24, 2.6)), (("glow", glow), rect(x, y + 8.2, 18, 1.4))]
+        # a pot held out in front in both sleeves
+        out += side_body()
+        out += [("iron", octagon(-17, 21, 8.5, 7.5)), ("iron_dark", rect(-17, 28, 18, 2.6)), (G, rect(-17, 29.6, 14, 1.4))]
+        out += [(M, rect(-19, 33, 1.6, 4.5, 10)), (M, rect(-15, 34, 1.4, 3.5, -12))]
+        out += side_sleeve((-3, 33), (-11, 23))
     return out
 
 
-SISTERS = [("The Root-Mother", "cauldron", "green"), ("The Briar", "censer", "purple"), ("The Crook", "pot", "red")]
+def front_body():
+    out = [("robe", octagon(0, 42, 11.5, 6.5)),                                 # the hump rising behind the head
+           ("robe", [(-6.5, HEM_TOP), (6.5, HEM_TOP), (7.5, SHOULDER), (9, SHOULDER + 5), (-9, SHOULDER + 5), (-7.5, SHOULDER)])]
+    out.append(("hem", ragged_hem(-6.5, 6.5, HEM_TOP, 5, 4)))
+    hx, hy = 0, HEAD[1] - 3
+    out += [("skin", rect(hx, hy, 12, 14.5)), ("brow", rect(hx, hy + 3.6, 9, 1.8)),
+            ("eye", rect(-2.6, hy + 1.4, 2, 1.4)), ("eye", rect(2.6, hy + 1.4, 2, 1.4)),
+            ("nose", rect(0, hy - 3, 3, 8)), ("wart", rect(1, hy - 4.5, 1.8, 1.8))]
+    out += hat(hx, hy + 7.25)
+    return out
 
 
-def draw_row(v, mode):
-    W, H = 1520, 330
+def front_sleeves(left, right, w=6):
+    out = []
+    for sh, cuff in (((-8, 34), left), ((8, 34), right)):
+        out += [("sleeve", segment(sh, cuff, w)), ("cuff", rect(cuff[0], cuff[1], w + 0.6, w * 0.7))]
+    return out
+
+
+def front_sister(kind, role):
+    glow, steam = ROLE[role]
+    G, M = ("glow", glow), ("steam", steam)
+    out = []
+    if kind == "cauldron":
+        out += [("iron", octagon(0, 33, 14, 11)), ("iron_dark", rect(0, 43.5, 30, 3)), (G, rect(0, 45.2, 24, 1.6))]
+        out += front_body()
+        out += [("rope", rect(0, 26, 14.5, 1.6)), ("rope", rect(0, 31, 15, 1.6))]
+        out += front_sleeves((-14, 22), (13, 40))
+        out += [(G, octagon(15, 43, 2.6))]
+    elif kind == "bottles":
+        out += front_body()
+        out += [("strap", segment((-7.5, 34), (7, 13), 2.4))]
+        for i, t in enumerate((0.2, 0.45, 0.7)):
+            x, y = -7.5 + 14.5 * t, 34 - 21 * t
+            out += [("glass", rect(x, y, 4.5, 6)), (G, rect(x, y - 0.8, 3.4, 3.6)), ("cork", rect(x, y + 3.8, 2, 1.8))]
+        out += front_sleeves((-12, 20), (13, 40))
+        out += [("glass", rect(14, 45.5, 5, 7)), (G, rect(14, 44.5, 3.8, 4)), ("cork", rect(14, 49.8, 2.2, 2))]
+    else:
+        out += front_body()
+        out += front_sleeves((-9, 22), (9, 22))
+        out += [("iron", octagon(0, 19, 10, 7.5)), ("iron_dark", rect(0, 26, 22, 2.6)), (G, rect(0, 27.6, 17, 1.4))]
+        out += [(M, rect(-2, 31, 1.6, 4.5, 10)), (M, rect(2, 32, 1.4, 3.5, -12))]
+    return out
+
+
+SISTERS = [("cauldron", "green", "the cauldron"), ("bottles", "purple", "the bottles"), ("pot", "red", "the pot")]
+
+
+def draw_row(view, mode):
+    W, H = 1500, 330
     img = Image.new("RGB", (W, H), (52, 50, 60) if mode == "value" else (244, 241, 234))
     d = ImageDraw.Draw(img)
-    oy = H - 30
+    oy = H - 26
     if mode == "value":
         d.rectangle((0, oy, W, H), fill=(44, 42, 50))
     d.line((0, oy, W, oy), fill=(120, 116, 110), width=2)
-
-    def poly(points, ox, tone):
-        if mode == "sil":
-            col = SIL
-        elif isinstance(tone, tuple) and isinstance(tone[1], tuple):
-            col = tone[1]
-        else:
-            col = TONE[tone]
-        d.polygon([(ox + p[0] * S, oy - p[1] * S) for p in points], fill=col)
-
-    for i, (name, kind, role) in enumerate(SISTERS):
-        ox = 150 + i * 320
-        parts = []
-        if kind == "pot":
-            parts += body(v) + head_and_hat(v)
-            parts = vessel(kind, v, role)[:5] + parts + vessel(kind, v, role)[5:]   # the pot sits behind, the ladle in front
-        else:
-            parts += body(v) + head_and_hat(v) + vessel(kind, v, role)
+    for i, (kind, role, _) in enumerate(SISTERS):
+        ox = 190 + i * 400
+        parts = side_sister(kind, role) if view == "side" else front_sister(kind, role)
         for tone, p in parts:
-            poly(p, ox, tone)
-    ox = 1150
-    for tone, p in front(v):
-        poly(p, ox, tone)
-    # the player: 1.8 blocks
-    px, ph, pw = 1420, 28.8 * S, 7.2 * S
+            col = SIL if mode == "sil" else (tone[1] if isinstance(tone, tuple) else TONE[tone])
+            d.polygon([(ox + x * S, oy - y * S) for x, y in p], fill=col)
+    px, ph, pw = 1400, 28.8 * S, 7.2 * S
     d.rectangle((px - pw / 2, oy - ph * 0.75, px + pw / 2, oy), fill=PLAYER)
     d.rectangle((px - pw * 0.55, oy - ph, px + pw * 0.55, oy - ph * 0.75), fill=PLAYER)
     return img
@@ -227,26 +201,27 @@ def draw_row(v, mode):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    for old in OUT.glob("*.png"):
+        old.unlink()
     try:
-        font, small = (ImageFont.truetype("C:/Windows/Fonts/georgia.ttf", 28),
-                       ImageFont.truetype("C:/Windows/Fonts/georgia.ttf", 18))
+        font = ImageFont.truetype("C:/Windows/Fonts/georgia.ttf", 26)
     except OSError:
-        font = small = ImageFont.load_default()
-    pad, top, lab, rh = 12, 60, 36, 330
-    rows = [(k, m) for k in VARIANTS for m in ("sil", "value")]
-    sheet = Image.new("RGB", (1520 + 2 * pad, top + len(VARIANTS) * (lab + 2 * (rh + pad))), BG)
+        font = ImageFont.load_default()
+    pad, top, lab, rh = 12, 56, 34, 330
+    rows = [("side", "sil"), ("side", "value"), ("front", "sil"), ("front", "value")]
+    sheet = Image.new("RGB", (1500 + 2 * pad, top + len(rows) * (rh + pad) + 2 * lab), BG)
     dr = ImageDraw.Draw(sheet)
-    dr.text((pad, 14), "Witch Coven - the shared body, three takes (Root-Mother, Briar, Crook from the side; the front; a player)",
-            font=small, fill=INK)
+    dr.text((pad, 14), "Witch Coven - the three sisters (the cauldron, the bottles, the pot), side and front; a player",
+            font=font, fill=INK)
     y = top
-    for key, v in VARIANTS.items():
-        dr.text((pad, y + 4), f"{key}  {v['title']}", font=font, fill=INK)
-        y += lab
-        for mode in ("sil", "value"):
-            img = draw_row(v, mode)
-            img.save(OUT / f"{key}_{mode}.png")
-            sheet.paste(img, (pad, y))
-            y += rh + pad
+    for view, mode in rows:
+        if mode == "sil":
+            dr.text((pad, y + 2), "side" if view == "side" else "front", font=font, fill=INK)
+            y += lab
+        img = draw_row(view, mode)
+        img.save(OUT / f"{view}_{mode}.png")
+        sheet.paste(img, (pad, y))
+        y += rh + pad
     sheet.save(OUT / "lineup.png")
     print("wrote", OUT / "lineup.png")
 

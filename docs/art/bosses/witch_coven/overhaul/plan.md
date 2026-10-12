@@ -26,8 +26,8 @@ Rejected pitches: the Bottle Sisters (hard to read, easy to make goofy) and the 
 **Decided by the user (2026-10-11):**
 - **Body:** built like a vanilla witch or villager (the long robe, the head, the big nose, the sleeves folded across
   the chest), but with a **hunched back**, and **larger than a player** so they loom over you.
-- **No fingers, no visible hands.** The hands stay inside the folded sleeves, as a villager's do; whatever a sister
-  holds comes out of her sleeves.
+- **No fingers, no visible hands.** The sleeves end in dark cuffs; whatever a sister holds or throws comes out of
+  her sleeves.
 - **All three are the same size and build.** Only their vessels tell them apart.
 - **The hat is clearly a witch's hat** (vanilla's tall, bent, pointed hat), not woven thorns.
 - **They hover low**, the hem of the robe trailing a little above the ground.
@@ -35,15 +35,19 @@ Rejected pitches: the Bottle Sisters (hard to read, easy to make goofy) and the 
   purple curser, red bomber), and it changes on rotation.
 - **Faces:** the vanilla witch face (the big nose, the wart, the deep-set eyes), but made more interesting.
 
-| Sister | Vessel (her weapon) | How she does each role |
-|---|---|---|
-| **The Root-Mother** | a big iron **cauldron** hanging in front of her below the folded sleeves | heal: pours steam to her sister; curse: tips the cauldron so smoke rolls out over the marked floor; bomb: a potion flicked out of it |
-| **The Briar** | a **censer** on a long chain from her sleeves, swung | heal: a smoke stream to her sister; curse: the censer swung low, trailing smoke over the marked ground; bomb: the censer flung out and a potion thrown from it |
-| **The Crook** | a small **pot on her hunched back**, with a long **ladle** from her sleeves over her shoulder into it | heal: a ladle of brew splashed onto her sister; curse: drips from the ladle drawing the mark; bomb: a fast overhand ladle-fling |
+**The vessels (revised by the user after the first line-up):**
 
-**The rotation moment:** all three strike their vessels at once (a sleeve on the cauldron's rim, the censer
-knocked against the ground, the ladle rapped on the pot), and the brews change colour in a ripple from one sister to
-the next.
+| Sister | Vessel | How she works |
+|---|---|---|
+| **The cauldron** | an extra-large cauldron hung on her hunched back, tied on with ropes round her middle | her sleeves are free: she casts and throws with them, drawing from the cauldron |
+| **The bottles** | a diagonal shoulder belt of large potion bottles, and one held in her sleeve | she throws the bottles; the brew in all of them shows the role |
+| **The pot** | a pot held in front of her in both sleeves | she pours, tips and flings from it |
+
+The robe is straight like a villager's (no flare, not a dress). As she hovers, a flat ragged hem (a 2D plane with
+the rags in its texture) hangs below it.
+
+**The rotation moment:** all three strike their vessels at once (a sleeve on the cauldron's rim, the bottles
+clinked together, a sleeve rapped on the pot), and the brews change colour in a ripple from one sister to the next.
 
 **Death:** a witch slumps into a heap of robe and brambles, her hat falling, and her vessel tips over, spilling brew
 that fades. The survivors glance at it briefly, never during an attack.
@@ -55,12 +59,12 @@ that fades. The survivors glance at it briefly, never during an attack.
   - dried, desaturated herb greens;
   - bone and twine for the tier-0 family;
   - soot iron for the vessels;
-  - a small ember accent (coals under the cauldron, sparks in the censer);
+  - a small ember accent (coals glowing under the cauldron and the pot);
   - the role colour on the brew only.
 - **A vessel never covers the face or the torso.** That's the Volley arbalest lesson: it hangs in front below the
   chest, swings at the side, or rides the back. Each vessel stays within about 40% of its witch's silhouette.
-- **The three sisters share one body**, so the vessels must be large and placed differently (in front, swinging
-  at the side, on the back) for the sisters to differ at a glance. The hat and the hunch are the shared marks.
+- **The three sisters share one body**, so the vessels must be large and placed differently (on the back, across
+  the chest, held in front) for the sisters to differ at a glance. The hat and the hunch are the shared marks.
 - **Few parts:** the boss-modeling lessons say about 40-60 cubes per witch, so three witches stay near Brood
   Mother's 72 displays in total. The leaves, thorns, herb texture and twine are paint, not geometry.
 - **Faces:** the vanilla witch's face (big nose, wart, deep-set eyes) is the recognisable part, made more interesting.
@@ -81,7 +85,7 @@ that fades. The survivors glance at it briefly, never during an attack.
 
 1. **Silhouette line-up:** 2-3 flat 2D line-ups of all three sisters side by side with a player for scale. They
    differ in the shared body's proportion and hunch. You pick one.
-2. **Character study:** one sister, the Root-Mother, close up in 3D, to settle the face, the hat, how hedge meets iron,
+2. **Character study:** one sister, the cauldron witch, close up in 3D, to settle the face, the hat, how hedge meets iron,
    and the brew glow. You pick one, and that sets the language for all three.
 3. **One careful blockout** of all three, checked from a player's eye height before you see it.
 4. Then the usual sessions 2-8: design lock, rig, UV, paint, variants, animation, pack.
