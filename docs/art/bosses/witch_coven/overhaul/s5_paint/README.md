@@ -11,25 +11,53 @@ another's robe.
 ![The bottle witch](bottles/sheet.png)
 ![The pot witch](pot/sheet.png)
 
-**Vanilla's witch, aged:**
-- **Robe:** purple with deep folds, and vanilla's green stripe down its front.
-- **Hem:** a cut-out plane: torn teeth along its lower edge and a few moth holes, so it reads as rags as she hovers.
-- **Coat:** a brown coat with grime, worn top edges, its front opening, and a stitched patch.
-- **Sleeves and cuffs:** sleeves creased down their length, and dark cuffs fraying at the end.
-- **Face:**
-  - pale skin with forehead wrinkles under the hat, crow's feet and sagging cheeks;
-  - age spots;
-  - grey hair hanging from under the hat at the back and sides;
-  - bushy grey brows;
-  - purple eyes with a dark pupil and a catch-light;
-  - the brown mole.
-- **Hat:** vanilla's near-black felt, with a lit brim edge and the green band.
+## Take 2: more refined (after the user's review)
 
-**The vessels and kit:**
-- **Iron:** vanilla's cauldron greys, with a darker border round each panel, rust spots, soot low down and a bright lip.
-- **Rope:** twisted.
-- **Strap:** leather, stitched along its edges.
-- **Bottles:** glass with a highlight down one side, and cork stoppers.
+The user asked for more refined and detailed textures, especially the cauldrons, fabric and skin; brew colours that
+sit with the muted clothes; better potion bottles; and bubble textures. Every ramp now has 9-11 close shades instead
+of 4-6, so detail can be subtle rather than speckled.
+
+**Fabric:**
+- **Robe:** wool in soft rounded folds (a lit ridge, a shaded valley), darker towards the hem, a stitched trim above
+  it, and vanilla's green stripe down its front with a stitch every third row.
+- **Hem:** torn strips of different lengths, moth holes, a darker torn edge, and a lit seam where it hangs.
+- **Coat:** a fine diagonal twill, light grime, worn top edges, stitched side and back seams, horn buttons down the
+  front opening, and a stitched patch on one side.
+- **Sleeves and cuffs:** creases winding down the sleeves, each with a lit fold; cuffs with a seam and frayed threads.
+
+**Skin:**
+- forehead creases, each with a lit edge;
+- dark eye sockets and bags under the eyes, and crow's feet;
+- lit cheekbones over hollow cheeks, deep smile lines from the nose, and the jaw in shadow;
+- a wart on her cheek, and age spots;
+- the nose: a lit bridge, a faintly reddened tip and nostrils (first tried in a stronger red, which read as a
+  carrot);
+- grey hair in strands of three greys with lighter tips, and bushy grey brows with dark roots.
+
+**Hat:** felt with soft mottling, a dent down the cone, a lit brim edge, a woven green band and a brass buckle.
+
+**Cauldron and pot:**
+- hammered iron in vanilla's greys;
+- a lit top edge and a seamed border on each panel;
+- rivet rows, with rust running down from some of them, plus a few rust blooms;
+- soot rising from the base;
+- a rim worn bright on top, and a dark wet inner wall above the brew;
+- rivets on the band, and a rivet in each ear.
+
+**Bottles:**
+- the brew deeper towards the bottom, with a bright surface, a reflection down the glass and a glint;
+- darker, see-through glass shoulders and necks with bright edges (they first read as white lids);
+- corks with a darker ring.
+
+**Bubbles:** each bubble has a bright rim round a darker film and a highlight at its top corner, on the bubble cubes
+and painted into the brew's surface. Popping rings are painted into the surface too. As thin bars of geometry they
+drew bright lines across the brew, so those cubes are gone.
+
+**Rope and strap:** the rope is three twisted strands; the strap is leather with stitches along both edges.
+
+**Colour harmony:** the role colours are now potion tones, a mossy green, a heather purple and a brick red: (150,
+214, 108), (176, 124, 212) and (220, 112, 88), multiplied into the neutral brew. Take 1's near-neon colours fought
+the muted clothes. The robe and coat gained a little richness to meet them.
 
 ## The brew is painted neutral
 
@@ -52,7 +80,7 @@ sleeve. The coven now draws 51 displays (15, 22, 14).
 The renders and the in-game review rigs show each sister with her brew already tinted: green, purple and red. The
 shipped model will carry the neutral atlas ([occultech_coven.png](occultech_coven.png)), and session 6 wires the tint.
 
-**Fixed on the way:**
+**Fixed on the way (take 1):**
 - The grey hair started on the front of the head's sides: each side face's texture runs the other way.
 - Dark brows read as a moustache, so they became grey.
 - The brew's first pattern looked like a circuit board, and became soft blotches.

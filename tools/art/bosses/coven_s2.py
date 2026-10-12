@@ -130,16 +130,14 @@ def rim(v, name, y, cz, w, d, t, h):
 
 def brew(g, y, cz, w, d, role, drips):
     """A bubbling brew: a surface a texel under the lip, domed in the middle, bubbles of several sizes breaking out of
-    it, two popping rings, glowing drips over the lip, a few wisps of steam. All on the `glow_brew` bone."""
+    it, glowing drips over the lip, a few puffs of steam. All on the `glow_brew` bone. The popping rings are painted
+    into the surface (session 5): as thin bars they drew bright lines across the brew."""
     glow, hot, steam = f"glow_{role}", f"hot_{role}", f"steam_{role}"
     g.box("brew", (0, y, cz), (w, 1, d), glow)
     g.box("brew_dome", (0, y + 1, cz + 1), (w - 8, 1, d - 8), glow)
     for i, (x, z, s) in enumerate(((-w * 0.28, -d * 0.2, 3), (w * 0.22, d * 0.18, 2), (w * 0.05, -d * 0.3, 2),
                                    (-w * 0.12, d * 0.3, 1), (w * 0.34, -d * 0.05, 1))):
         g.box(f"bubble_{i}", (x, y + 0.5 + s / 2 + (i % 2), cz + z), (s, s, s), hot)
-    for i, (x, z, r) in enumerate(((w * 0.18, -d * 0.22, 5), (-w * 0.25, d * 0.12, 4))):     # popping rings
-        for a, (dx, dz, sx, sz) in enumerate(((0, -r / 2, r, 1), (0, r / 2, r, 1), (-r / 2, 0, 1, r), (r / 2, 0, 1, r))):
-            g.box(f"ring_{i}_{a}", (x + dx, y + 1, cz + z + dz), (sx, 1, sz), hot)
     for i, (x, z, ln) in enumerate(drips):                                                  # spilling over the lip
         g.box(f"drip_{i}", (x, y - ln / 2 - 1, cz + z), (1, ln, 1), glow)
         g.box(f"drip_{i}_top", (x, y + 0.5, cz + z - (1 if z < 0 else -1)), (2, 1, 2), glow)

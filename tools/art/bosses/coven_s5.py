@@ -1,18 +1,20 @@
 """Witch Coven redesign, session 5: texture painting (plan: docs/art/bosses/witch_coven/overhaul/plan.md).
 
-Paints the session 4 layout (one shared 256 x 256 atlas for the three sisters, same islands):
-- vanilla's witch in its own colours, aged: a purple robe with deep folds and vanilla's green stripe down its front,
-  a ragged hem (a cut-out plane: torn teeth and holes, so it reads as rags as she hovers), a brown coat with seams,
-  a patch and worn edges, sleeves creased at the elbow, frayed dark cuffs;
-- the face: pale skin with forehead wrinkles, crow's feet, sagging cheeks and age spots, grey hair hanging from under
-  the hat at the back and sides, a bristly brow, purple eyes with a dark pupil and a catch-light, the nose with a
-  nostril line, the brown mole;
-- vanilla's near-black felt hat with a lit brim edge and a green band with a buckle;
-- iron in vanilla's cauldron greys: a darker border round each panel, rust spots, soot low down, a bright lip;
-  twisted rope, a stitched leather strap, glass with a highlight, cork;
+Paints the session 4 layout (one shared 256 x 256 atlas for the three sisters, same islands), take 2 (more refined
+after the user's review: finer ramps of 9-11 close shades, so detail can be subtle):
+- fabric: the wool robe in soft rounded folds, darker to the hem, a stitched trim above it, vanilla's green stripe
+  down its front; a ragged cut-out hem (torn strips, moth holes); the coat in a fine twill with grime, worn edges,
+  stitched seams, horn buttons down its opening, a stitched patch; creases winding down the sleeves; frayed cuffs;
+- skin: forehead creases each with a lit edge, dark eye sockets and bags, crow's feet, lit cheekbones over hollow
+  cheeks, deep smile lines, a jaw in shadow, a wart, age spots, a reddened nose tip and nostrils; grey hair in strands;
+- iron: hammered, a lit top edge and a shadowed foot on each panel, rivet rows with rust running from them, soot
+  rising from the base, a worn rim and a dark wet inner wall; brass on the hat's band;
+- bottles: the brew deeper at the bottom with a meniscus and a reflection down the glass, clear glass necks with
+  bright edges, ringed corks;
+- bubbles: a bright rim round a darker film with a highlight, on the bubble cubes and painted into the brew's surface;
 - **the brew in neutral greys** (brew, foam, drips, steam, the bottles' liquid, the cast): in game the fight tints
-  those bones the role colour (BetterModel's per-bone tint multiplies the texture), so the greys carry only the
-  shading. Previews and the review rigs show each sister with her brew tinted;
+  those bones the role colour (BetterModel's per-bone tint multiplies the texture). The role colours are potion tones
+  that sit with the muted clothes (take 1's near-neon fought them);
 - form only, no painted light direction: ambient occlusion baked from the real geometry. Shared body islands take
   their occlusion from the body alone, so one sister's ropes or pot never print on another's robe.
 
@@ -37,39 +39,51 @@ from bosses import volley_crone_s3 as v3, volley_crone_s4 as v4, volley_crone_s5
 
 OUT = ROOT / "docs/art/bosses/witch_coven/overhaul/s5_paint"
 noise = v5.noise
-ROLE_TINT = {"green": (120, 235, 90), "purple": (176, 84, 230), "red": (232, 76, 60)}
+# The role colours BetterModel multiplies into the neutral brew: potion tones that sit with the muted clothes
+# (session 5 take 1 used near-neon colours that fought them).
+ROLE_TINT = {"green": (150, 214, 108), "purple": (176, 124, 212), "red": (220, 112, 88)}
 TINTED = ("brew", "foam", "steam")          # zones on the tinted glow bones, painted in neutral greys
 
-# Ramps, dark to light, hue-shifted (shadows cool or violet, lights warm). Session 4's flat colour is one level of each.
+
+def make_ramp(dark, mid, light, n):
+    """n shades from a cool dark through the zone's colour to a warm light: close steps, so detail can be subtle."""
+    m = (n - 1) // 2
+    out = []
+    for i in range(n):
+        a, b, t = (dark, mid, i / m) if i <= m else (mid, light, (i - m) / (n - 1 - m))
+        out.append(tuple(int(round(a[k] + (b[k] - a[k]) * t)) for k in range(3)))
+    return out
+
+
 RAMP = {
-    "robe": [(12, 3, 22), (24, 9, 38), (36, 15, 56), (52, 24, 78), (66, 34, 96), (86, 50, 114)],
-    "coat": [(26, 20, 14), (40, 32, 21), (56, 46, 30), (78, 64, 42), (98, 82, 56), (124, 106, 76)],
-    "cuff": [(12, 10, 9), (22, 18, 15), (30, 25, 20), (44, 37, 29)],
-    "skin": [(98, 86, 82), (124, 112, 102), (148, 136, 120), (171, 159, 141), (190, 180, 162), (210, 202, 186)],
-    "mole": [(66, 38, 28), (94, 56, 36), (117, 71, 47), (146, 96, 68)],
-    "brow": [(66, 62, 60), (102, 98, 94), (140, 136, 130), (180, 176, 168)],     # grey, bushy old brows
-    "eye": [(40, 18, 56), (92, 50, 118), (138, 84, 164), (186, 140, 206), (236, 220, 244)],
-    "hair": [(104, 102, 100), (140, 137, 132), (174, 170, 164), (208, 204, 196)],
-    "hat": [(10, 9, 14), (18, 17, 22), (30, 29, 35), (46, 44, 52), (62, 60, 70), (82, 80, 92)],
-    "band": [(24, 44, 24), (36, 64, 32), (52, 88, 44), (74, 116, 58), (112, 162, 82)],
-    "iron": [(28, 28, 34), (42, 42, 48), (56, 56, 62), (74, 74, 80), (94, 94, 100), (118, 118, 124), (146, 146, 152)],
-    "rust": [(84, 48, 34), (112, 70, 44), (140, 94, 60)],
-    "rope": [(80, 62, 38), (108, 88, 56), (146, 124, 82), (180, 158, 110)],
-    "strap": [(66, 44, 28), (94, 66, 40), (122, 88, 54), (152, 114, 74)],
-    "buckle": [(92, 84, 62), (150, 140, 110), (200, 190, 154)],
-    "glass": [(106, 132, 138), (146, 172, 178), (178, 202, 204), (224, 238, 238)],
-    "cork": [(80, 58, 36), (102, 76, 48), (126, 96, 62), (154, 122, 84)],
-    "herb": [(40, 50, 28), (60, 72, 40), (86, 98, 58), (114, 126, 78)],
-    "bone": [(136, 126, 104), (170, 160, 136), (200, 190, 164), (228, 220, 198)],
-    "neutral": [(118, 118, 118), (158, 158, 158), (194, 194, 194), (224, 224, 224), (248, 248, 248)],
+    "robe": make_ramp((12, 5, 24), (58, 28, 88), (124, 86, 142), 9),
+    "coat": make_ramp((22, 17, 13), (84, 68, 46), (158, 136, 100), 9),
+    "cuff": make_ramp((10, 8, 8), (32, 27, 22), (74, 64, 52), 5),
+    "skin": make_ramp((90, 76, 84), (171, 159, 141), (232, 222, 202), 9),
+    "nose": make_ramp((100, 82, 84), (166, 150, 134), (220, 204, 184), 7),
+    "mole": make_ramp((54, 30, 22), (117, 71, 47), (172, 124, 92), 5),
+    "hair": make_ramp((56, 54, 58), (150, 146, 140), (226, 222, 214), 7),
+    "eye": [(36, 16, 52), (92, 50, 118), (138, 84, 164), (186, 140, 206), (236, 220, 244)],
+    "hat": make_ramp((8, 8, 12), (46, 44, 52), (106, 102, 118), 9),
+    "band": make_ramp((20, 38, 20), (56, 92, 46), (134, 178, 100), 7),
+    "iron": make_ramp((20, 20, 28), (92, 92, 98), (182, 178, 172), 11),
+    "rust": make_ramp((66, 36, 24), (126, 76, 46), (178, 120, 76), 5),
+    "rope": make_ramp((66, 50, 32), (146, 124, 82), (206, 186, 140), 7),
+    "strap": make_ramp((52, 34, 20), (122, 88, 54), (180, 142, 98), 7),
+    "brass": make_ramp((80, 60, 30), (170, 138, 70), (238, 216, 152), 5),
+    "glass": make_ramp((44, 58, 66), (118, 146, 152), (226, 240, 240), 7),
+    "cork": make_ramp((70, 50, 30), (126, 96, 62), (186, 152, 110), 7),
+    "herb": make_ramp((32, 42, 24), (86, 98, 58), (142, 154, 100), 7),
+    "bone": make_ramp((124, 114, 96), (200, 190, 164), (242, 236, 218), 7),
+    "neutral": make_ramp((58, 58, 58), (150, 150, 150), (242, 242, 242), 9),
 }
-# zone -> (ramp, base level)
-ZONE = {"robe": ("robe", 3), "robe_hem": ("robe", 1), "coat": ("coat", 3), "coat_dark": ("coat", 1),
-        "cuff": ("cuff", 2), "skin": ("skin", 3), "nose": ("skin", 2), "mole": ("mole", 2), "brow": ("brow", 2),
-        "eye": ("eye", 2), "hat": ("hat", 3), "hat_tip": ("hat", 1), "band": ("band", 2), "iron": ("iron", 4),
-        "iron_dark": ("iron", 2), "rope": ("rope", 2), "strap": ("strap", 2), "buckle": ("buckle", 1),
-        "glass": ("glass", 2), "cork": ("cork", 2), "herb": ("herb", 2), "bone": ("bone", 2),
-        "brew": ("neutral", 2), "foam": ("neutral", 4), "steam": ("neutral", 3)}
+# zone -> (ramp, base shade)
+ZONE = {"robe": ("robe", 4), "robe_hem": ("robe", 3), "coat": ("coat", 4), "coat_dark": ("coat", 2),
+        "cuff": ("cuff", 2), "skin": ("skin", 4), "nose": ("nose", 3), "mole": ("mole", 2), "brow": ("hair", 3),
+        "eye": ("eye", 2), "hat": ("hat", 4), "hat_tip": ("hat", 2), "band": ("band", 3), "iron": ("iron", 5),
+        "iron_dark": ("iron", 3), "rope": ("rope", 3), "strap": ("strap", 3), "buckle": ("brass", 2),
+        "glass": ("glass", 3), "cork": ("cork", 3), "herb": ("herb", 3), "bone": ("bone", 3),
+        "brew": ("neutral", 5), "foam": ("neutral", 7), "steam": ("neutral", 6)}
 
 
 def zone_for(cube):
@@ -102,7 +116,500 @@ def is_body(cube):
     return not in_subtree(cube, {"vessel", "pot_carry", "bottle_held", "glow_cast"}) and not cube.name.startswith("rope_")
 
 
-# ---- painters: level maps on a ramp --------------------------------------------------------------------------------
+# ---- painters ------------------------------------------------------------------------------------------------------
+# Each painter returns (lv, over): a shade map on the zone's ramp, and overlay pixels [(y, x, ramp, shade)] painted from
+# another ramp (a stripe, rust, a button, a wart) after the ambient occlusion.
+
+def blank(cube, w, h):
+    return np.full((h, w), ZONE[zone_for(cube)][1], int), []
+
+
+def clusters(seed, x, y, lo=170, hi=830, cell=2):
+    r = noise(seed, x, y, cell)
+    return -1 if r < lo else (1 if r > hi else 0)
+
+
+def paint_robe(cube, face, w, h, seed):
+    """Wool robe: soft rounded folds (light ridge, shaded valley), darker towards the hem, a stitched trim above it,
+    vanilla's green stripe down the front."""
+    lv, over = blank(cube, w, h)
+    upright = face not in ("up", "down")
+    phase = seed % 6
+    for y in range(h):
+        for x in range(w):
+            if upright:
+                lv[y, x] += int(round(1.3 * np.cos(2 * np.pi * (x + phase) / 6)))
+                if y >= h - 3:
+                    lv[y, x] -= 1
+            lv[y, x] += clusters(seed + 3, x, y, 120, 900, 3)
+    if cube.name == "robe_lower_box" and upright and h > 6:
+        trim = h - 4
+        for x in range(w):
+            lv[trim, x] = 6 if x % 2 == 0 else 3                     # a stitched trim above the hem
+            lv[trim + 1, x] = 2
+        if face == "north":
+            cx = w // 2
+            for y in range(h):
+                over.append((y, cx, "band", 3 if y % 3 else 4))      # vanilla's green stripe, a stitch every third row
+                lv[y, cx - 1] -= 1
+                lv[y, cx + 1] -= 1
+    return lv, over
+
+
+def paint_hem(cube, face, w, h, seed):
+    """The hovering hem: torn strips of different lengths, moth holes, the seam where it hangs."""
+    lv, over = paint_robe(cube, face, w, h, seed)
+    lv -= 1
+    alpha = np.full((h, w), 255, np.uint8)
+    for x in range(w):
+        tear = noise(seed + 11, x, 0, 1) % 4
+        if tear:
+            alpha[h - tear:, x] = 0
+        if h - tear - 1 >= 0:
+            lv[h - tear - 1, x] -= 1                                 # the torn edge darkens
+    for y in range(1, h - 1):
+        for x in range(w):
+            if noise(seed + 13, x, y, 1) < 40:
+                alpha[y, x] = 0                                      # moth holes
+    lv[0, :] += 2                                                    # the seam where it hangs from the robe
+    return lv, over, alpha
+
+
+def paint_coat(cube, face, w, h, seed):
+    """A wool coat: a fine diagonal twill, grime in clusters, worn top edges; seams with stitches, buttons down the
+    opening, a stitched patch; creased sleeves."""
+    lv, over = blank(cube, w, h)
+    upright = face not in ("up", "down")
+    n = cube.name
+    for y in range(h):
+        for x in range(w):
+            if (x + y) % 4 == 0:
+                lv[y, x] -= 1                                        # twill
+            lv[y, x] += clusters(seed + 5, x, y, 70, 945, 3)
+    if upright:
+        lv[0, :] += 1                                                # worn top edge
+    if n.startswith("robe_upper") and upright and w > 6:
+        cx = w // 2
+        if face == "north":
+            lv[:, cx] -= 3                                           # the coat's front opening
+            for y in range(1, h - 1, 4):
+                over.append((y, cx + 1, "bone", 4))                  # horn buttons, each with its shadow
+                over.append((y + 1, cx + 1, "coat", 2))
+        elif face == "south":
+            lv[:, cx] -= 1                                           # the back seam
+            for y in range(0, h, 2):
+                lv[y, cx + 1] += 2
+        else:
+            lv[:, cx] -= 1                                           # the side seams, stitched
+            for y in range(1, h, 2):
+                lv[y, cx - 1] += 2
+        if n == "robe_upper_h" and face == "east" and h >= 8 and w >= 7:
+            for y in range(2, 7):
+                for x in range(1, 6):
+                    edge = y in (2, 6) or x in (1, 5)
+                    lv[y, x] = (6 if (x + y) % 2 else 2) if edge else 5   # a lighter patch, stitched on
+    if n.endswith("_sleeve") and upright:
+        for y in range(h):
+            for x in range(w):
+                if (y + x // 2) % 5 == 0:
+                    lv[y, x] -= 2                                    # creases winding down the sleeve
+                    if y > 0:
+                        lv[y - 1, x] += 1                            # each crease's lit fold above it
+    if n == "collar":
+        lv[0, :] += 1
+    return lv, over
+
+
+def paint_cuff(cube, face, w, h, seed):
+    lv, over = blank(cube, w, h)
+    for y in range(h):
+        for x in range(w):
+            lv[y, x] += clusters(seed, x, y, 150, 880)
+    if face not in ("up", "down"):
+        lv[0, :] += 1                                                # the cuff's seam
+        for x in range(w):
+            if noise(seed + 5, x, 0, 1) < 450:
+                lv[h - 1, x] += 2                                    # frayed threads
+    return lv, over
+
+
+def paint_head(cube, face, w, h, seed):
+    """An old face: forehead creases with a lit edge, dark eye sockets and bags, crow's feet, lit cheekbones over
+    hollow cheeks, deep smile lines, a jaw in shadow, a wart, age spots; grey hair in strands at the back and sides."""
+    lv, over = blank(cube, w, h)
+    hair = np.full((h, w), -1, int)
+    for y in range(h):
+        for x in range(w):
+            if noise(seed, x, y, 2) < 45:
+                lv[y, x] -= 1                                        # age spots
+    if face == "north":
+        L, R = 3, w - 4                                              # the eyes' columns
+        for y in range(h):
+            for x in range(w):
+                if y <= 3:
+                    lv[y, x] += 1                                    # the forehead catches more light
+                if x in (0, w - 1) and y <= 7:
+                    lv[y, x] -= 1                                    # temples
+        for y in (1, 3):
+            for x in range(2, w - 2):
+                if noise(seed + 1, x, y, 2) < 750:
+                    lv[y, x] -= 2                                    # forehead creases...
+                    lv[y - 1, x] += 1                                # ...each with its lit edge
+        for c in (L, R):
+            for y in (6, 7, 8):
+                for x in (c - 1, c, c + 1):
+                    lv[y, x] -= 1                                    # the eye sockets
+            for x in (c - 1, c, c + 1):
+                lv[9, x] -= 2                                        # bags under the eyes
+                lv[10, x] += 1
+        for (x, y) in ((0, 6), (1, 7), (0, 8)):
+            lv[y, x] -= 2                                            # crow's feet
+            lv[y, w - 1 - x] -= 2
+        for x in (0, 1, w - 2, w - 1):
+            lv[9, x] += 1                                            # lit cheekbones
+            lv[10, x] += 1
+            lv[11, x] -= 1                                           # hollow cheeks under them
+            lv[12, x] -= 1
+        for (x, y) in ((4, 10), (3, 11), (3, 12)):
+            lv[y, x] -= 2                                            # smile lines from the nose
+            lv[y, w - 1 - x] -= 2
+        lv[h - 2:, :] -= 1                                           # the jaw in shadow
+        lv[h - 1, :] -= 1
+        over += [(11, w - 3, "mole", 3), (10, w - 3, "mole", 4), (11, w - 2, "mole", 2)]   # a wart on her cheek
+    elif face in ("south", "east", "west"):
+        lv[h - 3:, :] -= 1
+        lv[h - 1, :] -= 1
+        for x in range(w):
+            back = face == "south" or (x < w // 2 if face == "east" else x >= w // 2)
+            if not back:
+                continue
+            length = 6 + noise(seed + 2, x, 0, 1) % 6
+            for y in range(min(h, length)):
+                shade = 3 + (x % 3 == 0) - (x % 4 == 2)              # strands of three greys
+                if y == length - 1:
+                    shade += 1                                       # lighter tips
+                hair[y, x] = max(0, shade - (1 if y == 0 else 0))
+    return lv, over, hair
+
+
+def paint_nose(cube, face, w, h, seed):
+    lv, over = blank(cube, w, h)
+    if face == "north":
+        lv[:, w // 2] += 1                                           # the bridge catches the light
+        lv[h - 2:, :] += 1                                           # a reddened tip
+    elif face == "down":
+        lv[:, :] -= 1
+        lv[h // 2, 0] = 0                                            # nostrils
+        lv[h // 2, w - 1] = 0
+    else:
+        lv[h - 2:, :] -= 1
+    return lv, over
+
+
+def paint_brow(cube, face, w, h, seed):
+    lv, over = blank(cube, w, h)
+    for y in range(h):
+        for x in range(w):
+            lv[y, x] += 1 if (x + y // 2) % 3 == 0 else (-1 if (x + y // 2) % 3 == 2 else 0)   # bristles
+    lv[0, :] += 1                                                    # lighter tips
+    lv[h - 1, :] -= 2                                                # dark roots under the shelf
+    return lv, over
+
+
+def paint_eye(cube, face, w, h, seed):
+    lv, over = blank(cube, w, h)
+    if face == "north":
+        lv[:, :] = 2
+        lv[:, max(0, w // 2 - 1):w // 2 + 1] = 0                     # the pupil
+        lv[0, 0] = 4                                                 # a catch-light
+    return lv, over
+
+
+def paint_mole(cube, face, w, h, seed):
+    lv, over = blank(cube, w, h)
+    lv[0, 0] += 2
+    lv[h - 1, :] -= 1
+    return lv, over
+
+
+def paint_hat(cube, face, w, h, seed):
+    """Felt: soft mottling, a dent down the cone, a lit brim edge."""
+    lv, over = blank(cube, w, h)
+    for y in range(h):
+        for x in range(w):
+            lv[y, x] += clusters(seed, x, y, 160, 880, 3)
+    n = cube.name
+    if n == "hat_brim":
+        if face == "up":
+            for y in range(h):
+                for x in range(w):
+                    e = min(x, y, w - 1 - x, h - 1 - y)
+                    lv[y, x] += 2 if e == 0 else (1 if e == 1 else 0)
+        elif face == "down":
+            lv[:, :] = 2
+        else:
+            lv[0, :] += 1
+    elif face not in ("up", "down"):
+        lv[:, w // 3] -= 1                                           # a dent down the cone
+        lv[h - 1, :] -= 1                                            # where the tier sits in the one below
+    return lv, over
+
+
+def paint_band(cube, face, w, h, seed):
+    lv, over = blank(cube, w, h)
+    for x in range(w):
+        lv[0, x] += 1 if x % 2 == 0 else 0                           # woven
+    lv[h - 1, :] -= 1
+    if face == "north" and w >= 5:
+        cx = w // 2                                                  # a brass buckle
+        over += [(0, cx - 1, "brass", 3), (0, cx + 1, "brass", 3), (0, cx, "brass", 4),
+                 (h - 1, cx - 1, "brass", 2), (h - 1, cx + 1, "brass", 2), (h - 1, cx, "band", 0)]
+    return lv, over
+
+
+def paint_iron(cube, face, w, h, seed):
+    """Hammered iron in vanilla's cauldron greys: a lit top edge and a shadowed foot on each panel, seams at the
+    corners, rivet rows with rust running from them, soot rising from the base, a worn rim, a dark wet inner wall."""
+    lv, over = blank(cube, w, h)
+    n = cube.name
+    upright = face not in ("up", "down")
+    for y in range(h):
+        for x in range(w):
+            lv[y, x] += clusters(seed, x, y, 180, 830)               # hammer marks
+    if n in ("cauldron", "pot") and upright:
+        lv[0, :] += 2
+        lv[1, :] += 1
+        lv[:, 0] -= 1
+        lv[:, w - 1] -= 1                                            # the seams where the plates meet
+        for y in range(h):
+            soot = (y - h * 0.55) / (h * 0.45)
+            if soot > 0:
+                for x in range(w):
+                    if noise(seed + 7, x, y, 2) < 1000 * min(1, soot):
+                        lv[y, x] -= 1 + (soot > 0.6)                 # soot rising from the fire
+        for ry in (2, h - 4):
+            for rx in range(2, w - 2, 4):
+                lv[ry, rx] = 8                                       # a rivet...
+                lv[ry + 1, rx] = 2                                   # ...and its shadow
+                if ry == 2 and noise(seed + 21, rx, 0, 1) < 500:
+                    run = 2 + noise(seed + 23, rx, 0, 1) % 5
+                    for t in range(run):
+                        if ry + 2 + t < h:
+                            over.append((ry + 2 + t, rx, "rust", 3 if t == 0 else (2 if t < run - 1 else 1)))
+        for y in range(h):
+            for x in range(w):
+                if noise(seed + 29, x, y, 2) < 25:
+                    over.append((y, x, "rust", 2))                   # a few rust blooms
+    elif n in ("cauldron", "pot") and face == "down":
+        lv[:, :] = 1
+    elif "lip" in n:
+        inner = {"_n": "south", "_s": "north", "_w": "east", "_e": "west"}.get(n[-2:])
+        if face == "up":
+            lv[:, :] += 2
+            for x in range(w):
+                if noise(seed + 3, x, 0, 1) < 350:
+                    lv[:, x] += 1                                    # worn bright where hands and ladles rub
+        elif face == inner:
+            lv[:, :] -= 3                                            # the dark, wet inner wall
+        else:
+            lv[0, :] += 1
+    elif "band" in n and upright:
+        for x in range(w):
+            if x % 3 == 1:
+                lv[0, x] = 7                                         # rivets along the band
+        lv[h - 1, :] -= 1
+    elif ("ear" in n or "handle" in n) and upright:
+        lv[0, :] += 1
+        if w >= 3 and h >= 3:
+            lv[h // 2, w // 2] = 8
+    elif "leg" in n or n == "pot_base":
+        lv[h - 1, :] -= 1
+    return lv, over
+
+
+def paint_rope(cube, face, w, h, seed):
+    lv, over = blank(cube, w, h)
+    for y in range(h):
+        for x in range(w):
+            lv[y, x] += (-1, 0, 1, 2)[(x + 2 * y) % 4]               # three twisted strands
+    return lv, over
+
+
+def paint_strap(cube, face, w, h, seed):
+    lv, over = blank(cube, w, h)
+    for y in range(h):
+        for x in range(w):
+            lv[y, x] += clusters(seed, x, y, 150, 900, 3)
+            if x in (0, w - 1) and w > 1:
+                lv[y, x] -= 1
+                if y % 2 == 0 and w >= 3:
+                    lv[y, 1 if x == 0 else w - 2] += 2               # stitches along each edge
+    return lv, over
+
+
+def paint_buckle(cube, face, w, h, seed):
+    lv = np.full((h, w), 3, int)
+    if w >= 3 and h >= 3:
+        lv[1:h - 1, 1:w - 1] = 0                                     # the buckle's opening
+        lv[0, 0] = 4
+    return lv, []
+
+
+def paint_glass(cube, face, w, h, seed):
+    """Bottle glass: clear (dark) in the middle, bright at the edges, a streak and a glint."""
+    lv, over = blank(cube, w, h)
+    lv[:, :] = 2
+    for y in range(h):
+        for x in range(w):
+            if min(x, y, w - 1 - x, h - 1 - y) == 0:
+                lv[y, x] = 3
+    lv[:, 0] = 4
+    if w >= 2 and h >= 2:
+        lv[0, 0] = 6
+    return lv, over
+
+
+def paint_cork(cube, face, w, h, seed):
+    lv, over = blank(cube, w, h)
+    if face == "up":
+        for y in range(h):
+            for x in range(w):
+                lv[y, x] = 2 if min(x, y, w - 1 - x, h - 1 - y) == 0 else 4
+    else:
+        lv[0, :] += 1
+        for y in range(h):
+            for x in range(w):
+                lv[y, x] += clusters(seed, x, y, 200, 950, 1)
+    return lv, over
+
+
+def paint_bottle_liquid(cube, face, w, h, seed):
+    """The brew in a bottle (neutral, tinted in game): deeper towards the bottom, a bright surface over a meniscus
+    line, a reflection streak down the glass and a glint."""
+    lv, over = blank(cube, w, h)
+    if face in ("up", "down"):
+        lv[:, :] = 6 if face == "up" else 3
+        return lv, over
+    for y in range(h):
+        lv[y, :] = 6 - (3 * y) // max(1, h)                          # deeper towards the bottom
+    lv[0, :] = 7                                                     # the bright surface
+    if w >= 3:
+        lv[1:h - 1, 1] += 1                                          # a reflection down the glass
+        lv[1, w - 2] = 8                                             # and a glint
+    return lv, over
+
+
+def paint_bubble(cube, face, w, h, seed):
+    """A bubble: a bright rim round a thin, darker film, a highlight at its top corner."""
+    if w >= 3 and h >= 3:
+        lv = np.full((h, w), 4, int)
+        for y in range(h):
+            for x in range(w):
+                if min(x, y, w - 1 - x, h - 1 - y) == 0:
+                    lv[y, x] = 7
+        lv[0, 0] = 8
+    elif w >= 2 and h >= 2:
+        lv = np.array([[8, 7], [7, 5]])[:h, :w]
+    else:
+        lv = np.full((h, w), 7 if (w == 1 and h == 1) else 5, int)  # a single bubble bright; a popping ring soft
+        if w > 1:
+            lv[:, ::3] = 6
+    return lv, []
+
+
+def paint_brew(cube, face, w, h, seed):
+    """The brew's surface: soft blotches, darker where it meets the iron, bubbles of a few sizes rising through it
+    (a bright rim, a darker film, a highlight); drips with a bright bead."""
+    lv, over = blank(cube, w, h)
+    n = cube.name
+    if n.startswith("drip_"):
+        lv[:, :] = 5
+        if h >= 2:
+            lv[h - 1, :] = 7
+            lv[0, :] = 6
+        return lv, over
+    if n == "cast":
+        for y in range(h):
+            for x in range(w):
+                lv[y, x] = 8 if min(x, y, w - 1 - x, h - 1 - y) > 0 else 6
+        return lv, over
+    if n.startswith(("bottle_",)):
+        return paint_bottle_liquid(cube, face, w, h, seed)
+    for y in range(h):
+        for x in range(w):
+            lv[y, x] += clusters(seed + 17, x, y, 160, 760, 3)
+            if min(x, y, w - 1 - x, h - 1 - y) == 0 and face == "up" and n in ("brew", "pot_brew"):
+                lv[y, x] -= 1                                        # darker where it meets the iron (not the dome)
+    if face == "up" and w >= 6 and h >= 6:
+        count = max(2, w * h // 70)
+        for k in range(count):
+            bx = 1 + noise(seed + 31, k, 0, 1) % (w - 3)
+            by = 1 + noise(seed + 37, k, 0, 1) % (h - 3)
+            if k % 3 == 0:                                           # a 3 x 3 bubble
+                for dy in range(3):
+                    for dx in range(3):
+                        if by + dy < h and bx + dx < w:
+                            lv[by + dy, bx + dx] = 6 if (dx in (0, 2) or dy in (0, 2)) else 4
+                lv[by, bx] = 7
+            else:                                                    # a 2 x 2 bubble
+                lv[by, bx], lv[by, bx + 1], lv[by + 1, bx], lv[by + 1, bx + 1] = 7, 6, 6, 5
+        for k in range(2 if w >= 10 else 1):                         # popping rings: a pale ring, the brew inside
+            rx = 1 + noise(seed + 41, k, 0, 1) % max(1, w - 6)
+            ry = 1 + noise(seed + 43, k, 0, 1) % max(1, h - 6)
+            for dy in range(5):
+                for dx in range(5):
+                    ring = dx in (0, 4) or dy in (0, 4)
+                    corner = dx in (0, 4) and dy in (0, 4)
+                    if ring and not corner and ry + dy < h and rx + dx < w:
+                        lv[ry + dy, rx + dx] = 6
+    return lv, over
+
+
+def paint_steam(cube, face, w, h, seed):
+    lv = np.full((h, w), 7, int)
+    if w >= 2 and h >= 2:
+        for y in range(h):
+            for x in range(w):
+                if x in (0, w - 1) and y in (0, h - 1):
+                    lv[y, x] = 5                                     # soft, rounded corners
+                elif min(x, y, w - 1 - x, h - 1 - y) == 0:
+                    lv[y, x] = 6
+    return lv, []
+
+
+def paint_herb(cube, face, w, h, seed):
+    lv, over = blank(cube, w, h)
+    for y in range(h):
+        for x in range(w):
+            lv[y, x] += clusters(seed, x, y, 220, 760, 1)
+    if face not in ("up", "down") and h >= 4:
+        for x in range(w):
+            over.append((h // 2, x, "rope", 4))                     # the twine binding the bundle
+    return lv, over
+
+
+def paint_bone(cube, face, w, h, seed):
+    lv, over = blank(cube, w, h)
+    lv[0, :] += 1
+    lv[h - 1, :] -= 1
+    return lv, over
+
+
+def painter_for(cube):
+    z, n = zone_for(cube), cube.name
+    if n == "head":
+        return paint_head
+    if n.startswith("hem_"):
+        return paint_hem
+    if n in ("bubble_0", "bubble_1", "bubble_2", "bubble_3", "bubble_4") or n.startswith("ring_"):
+        return paint_bubble
+    return {"robe": paint_robe, "robe_hem": paint_robe, "coat": paint_coat, "coat_dark": paint_coat, "cuff": paint_cuff,
+            "skin": paint_head, "nose": paint_nose, "mole": paint_mole, "brow": paint_brow, "eye": paint_eye,
+            "hat": paint_hat, "hat_tip": paint_hat, "band": paint_band, "iron": paint_iron, "iron_dark": paint_iron,
+            "rope": paint_rope, "strap": paint_strap, "buckle": paint_buckle, "glass": paint_glass, "cork": paint_cork,
+            "herb": paint_herb, "bone": paint_bone, "brew": paint_brew, "foam": paint_bubble,
+            "steam": paint_steam}[z]
+
 
 def from_levels(lv, ramp, alpha=None):
     lv = np.clip(lv, 0, len(ramp) - 1)
@@ -111,172 +618,30 @@ def from_levels(lv, ramp, alpha=None):
     return np.concatenate([rgb, a], -1)
 
 
-def paint_levels(cube, face, w, h, seed):
-    zone = zone_for(cube)
-    ramp, base = ZONE[zone]
-    lv = np.full((h, w), base, int)
-    upright = face not in ("up", "down")
-    n = cube.name
-    for y in range(h):
-        for x in range(w):
-            r = noise(seed, x, y)
-            edge = min(x, y, w - 1 - x, h - 1 - y)
-            if zone in ("robe", "robe_hem"):
-                fold = (x + seed % 3) % 4
-                if upright and fold == 0:
-                    lv[y, x] -= 1                                   # deep vertical folds
-                elif upright and fold == 2 and noise(seed + 3, x, y, 3) < 500:
-                    lv[y, x] += 1                                   # the lit ridge between them
-                if n == "robe_lower_box" and face == "north" and abs(x - (w - 1) / 2) < 1:
-                    lv[y, x] = -10                                  # vanilla's green stripe down the front
-            elif zone in ("coat", "coat_dark"):
-                if r < 70:
-                    lv[y, x] -= 1                                   # grime in clusters
-                elif r > 950:
-                    lv[y, x] += 1
-                if upright and y == 0:
-                    lv[y, x] += 1                                   # worn top edges
-                if n.startswith("robe_upper") and face == "north" and abs(x - (w - 1) / 2) < 1:
-                    lv[y, x] -= 2                                   # the coat's front opening
-                if n == "robe_upper_h" and face == "east" and 3 <= y <= 7 and 2 <= x <= 6:
-                    lv[y, x] = 4 if not (y in (3, 7) or x in (2, 6)) else (2 if (x + y) % 2 else 4)   # a patch, stitched
-                if n.endswith("_sleeve") and upright and y % 4 == 3:
-                    lv[y, x] -= 1                                   # creases down the sleeve
-            elif zone == "cuff":
-                if upright and y == h - 1 and noise(seed + 5, x, 0, 1) < 400:
-                    lv[y, x] += 1                                   # frayed threads at the end
-            elif zone in ("skin", "nose"):
-                if r < 60:
-                    lv[y, x] -= 1                                   # age spots
-            elif zone == "brow":
-                lv[y, x] += 1 if (x % 2 == 0 and y == 0) else (-1 if x % 3 == 1 else 0)   # bristles
-            elif zone == "mole":
-                lv[y, x] += 1 if y == 0 else 0
-            elif zone in ("hat", "hat_tip"):
-                if r < 90:
-                    lv[y, x] -= 1                                   # felt
-                elif r > 930:
-                    lv[y, x] += 1
-                if n == "hat_brim" and face == "up" and edge == 0:
-                    lv[y, x] += 2                                   # the brim's lit edge
-                if n == "hat_brim" and face == "down":
-                    lv[y, x] = 1
-            elif zone == "band":
-                if upright and y in (0, h - 1):
-                    lv[y, x] -= 1
-            elif zone in ("iron", "iron_dark"):
-                if edge == 0 and min(w, h) > 3:
-                    lv[y, x] -= 1                                   # a darker border round each panel
-                elif r < 50 and zone == "iron":
-                    lv[y, x] = -20                                  # rust (painted from the rust ramp)
-                elif r > 940:
-                    lv[y, x] += 1
-                if upright and h >= 8 and y >= h - 2:
-                    lv[y, x] -= 1                                   # soot low down
-                if "lip" in n and face == "up":
-                    lv[y, x] += 2                                   # the rim catches the light
-            elif zone == "rope":
-                lv[y, x] += -1 if (x + y) % 3 == 0 else (1 if (x + y) % 3 == 1 else 0)   # a twist
-            elif zone == "strap":
-                if upright and (x + y) % 2 == 0 and (x in (0, w - 1) or y in (0, h - 1)):
-                    lv[y, x] += 1                                   # stitches along the edges
-            elif zone == "glass":
-                lv[y, x] += 2 if x == 0 else (-1 if y == h - 1 else 0)     # a highlight down one side
-            elif zone in ("cork", "herb", "bone"):
-                lv[y, x] += 1 if r > 850 else (-1 if r < 150 else 0)
-            elif zone == "brew":
-                blot = noise(seed + 17, x, y, 3)
-                lv[y, x] += 1 if blot > 720 else (-1 if blot < 160 else 0)          # soft blotches in the brew
-            elif zone == "foam":
-                lv[y, x] -= 1 if edge == 0 and min(w, h) > 2 else 0
-            elif zone == "steam":
-                lv[y, x] += 1 if (face == "up" or y == 0) else 0
-    return lv
-
-
-def paint_head(face, w, h, seed):
-    """The face and head: wrinkles, crow's feet, sagging cheeks, age spots; grey hair from under the hat."""
-    lv = np.full((h, w), 3, int)
-    hair = np.zeros((h, w), bool)
-    for y in range(h):
-        for x in range(w):
-            if noise(seed, x, y) < 60:
-                lv[y, x] -= 1
-            if face == "north":
-                if y in (1, 3) and 2 <= x <= w - 3 and noise(seed + 1, x, y, 1) < 700:
-                    lv[y, x] -= 1                                   # forehead wrinkles under the hat
-                if 5 <= y <= 7 and x in (0, 1, w - 2, w - 1):
-                    lv[y, x] -= 1 if (y + x) % 2 else 0             # crow's feet beside the eyes
-                if 9 <= y <= 12 and (x <= 2 or x >= w - 3):
-                    lv[y, x] -= 1                                   # sagging cheeks
-                if y == h - 1:
-                    lv[y, x] -= 1
-            elif face in ("south", "east", "west"):
-                back = face == "south" or (x < w // 2 if face == "east" else x >= w // 2)
-                strand = noise(seed + 2, x, 0, 1)
-                if back and y < 6 + strand % 6:
-                    hair[y, x] = True                               # grey hair hanging from under the hat
-    out = from_levels(lv - 0, RAMP["skin"])
-    if hair.any():
-        hl = np.clip(2 + (np.arange(w)[None, :] % 3 == 0) - (np.arange(w)[None, :] % 3 == 2), 0, 3)
-        hl = np.broadcast_to(hl, (h, w))
-        hair_rgb = from_levels(hl, RAMP["hair"])
-        out[hair] = hair_rgb[hair]
-    return out
-
-
-def paint_eye(face, w, h):
-    lv = np.full((h, w), 2, int)
-    if face == "north":
-        lv[:, w // 2 - (w > 1): w // 2 + 1] = 0                     # the dark pupil
-        lv[0, 0] = 4                                                # a catch-light
-    return from_levels(lv, RAMP["eye"])
-
-
-def paint_hem(cube, face, w, h, seed):
-    """A ragged hem plane: torn teeth down its lower edge and a few holes, cut out with alpha."""
-    lv = paint_levels(cube, face, w, h, seed)
-    alpha = np.full((h, w), 255, np.uint8)
-    for x in range(w):
-        tear = noise(seed + 11, x, 0, 1) % 4                        # how far this strip is torn up from the bottom
-        alpha[h - tear:, x] = 0 if tear else 255
-    for y in range(1, h - 1):
-        for x in range(w):
-            if noise(seed + 13, x, y, 1) < 40:
-                alpha[y, x] = 0                                     # moth holes
-    lv[0, :] += 1                                                   # the seam where it hangs from the robe
-    return from_levels(lv, RAMP["robe"], alpha)
-
-
 def paint_face(model, i, face, w, h, solids_all, solids_body):
     cube = model.cubes[i]
     seed = zlib.crc32(f"{cube.name}/{face}".encode())
     zone = zone_for(cube)
+    result = painter_for(cube)(cube, face, w, h, seed)
+    alpha = hair = None
     if cube.name.startswith("hem_"):
-        return paint_hem(cube, face, w, h, seed)
-    if cube.name == "head":
-        out = paint_head(face, w, h, seed)
-    elif zone == "eye":
-        return paint_eye(face, w, h)
+        lv, over, alpha = result
+    elif cube.name == "head":
+        lv, over, hair = result
     else:
-        lv = paint_levels(cube, face, w, h, seed)
-        ramp = RAMP[ZONE[zone][0]]
-        stripe = lv == -10
-        rust = lv == -20
-        if zone not in TINTED:
-            ao = b5.occlusion(model, i, face, w, h, solids_body if is_body(cube) else solids_all)
-            lv = lv - (ao >= 0.34) - (ao >= 0.6)
-        out = from_levels(np.clip(lv, 0, len(ramp) - 1), ramp)
-        if stripe.any():
-            out[stripe] = from_levels(np.full((h, w), 1, int), RAMP["band"])[stripe]
-        if rust.any():
-            out[rust] = from_levels(np.full((h, w), 1, int), RAMP["rust"])[rust]
-        return out
-    ao = b5.occlusion(model, i, face, w, h, solids_body)
-    shade = (ao >= 0.34).astype(int) + (ao >= 0.6)
-    if shade.any():                                                 # the hat's brim and the nose shade the face
-        darker = from_levels(np.full((h, w), 2, int), RAMP["skin"])
-        out[shade > 0] = (out[shade > 0].astype(int) * 3 // 4 + darker[shade > 0].astype(int) // 4).astype(np.uint8)
+        lv, over = result
+    if zone not in TINTED:
+        ao = b5.occlusion(model, i, face, w, h, solids_body if is_body(cube) else solids_all)
+        lv = lv - (ao >= 0.3) - (ao >= 0.55)
+    ramp = RAMP[ZONE[zone][0]]
+    out = from_levels(lv, ramp, alpha)
+    if hair is not None and (hair >= 0).any():
+        hl = from_levels(np.maximum(hair, 0), RAMP["hair"])
+        out[hair >= 0] = hl[hair >= 0]
+    for y, x, rname, shade in over:
+        if 0 <= y < h and 0 <= x < w:
+            r = RAMP[rname]
+            out[y, x, :3] = r[max(0, min(len(r) - 1, shade))]
     return out
 
 
