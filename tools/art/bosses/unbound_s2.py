@@ -132,6 +132,11 @@ def rig(name):
     fire = torso.group("glow_chest", (0, 38, -9.8))
     for n in ("chest_fire", "chest_fire_hot"):
         move(cube(model, n), fire)
+    # flames licking up out of the grate: hidden at first, shown as the fire grows (session 6's stages)
+    flames = torso.group("glow_flames", (0, 43.5, -10.3))
+    flames.visible = False
+    for i, (x, h, wd) in enumerate(((-2.8, 6.5, 2.4), (0.0, 9.5, 2.6), (2.8, 5.5, 2.4))):
+        flames.box(f"flame_{i}", (x, 42.5 + h / 2, -10.4), (wd, h, 0.6), "fire")   # tongues rising off the grate
     tails = head.group("band_tails", tuple(cube(model, "knot").origin))
     for n in ("knot", "tail_a", "tail_b", "tail_c"):
         move(cube(model, n), tails)

@@ -30,7 +30,7 @@ OUT = ROOT / "docs/art/bosses/the_unbound/overhaul/s3_rig"
 SERVER_MODELS = ROOT / "run/plugins/BetterModel/models"
 MODEL_ID = "occultech_unbound_rig"
 GLOWING = ("fire", "eye")
-INTENDED_TAGS = {"hi_head": {"hi"}, "glow_eye": {"glow"}, "glow_chest": {"glow"}, "ob_hitbox": {"ob"}}
+INTENDED_TAGS = {"hi_head": {"hi"}, "glow_eye": {"glow"}, "glow_chest": {"glow"}, "glow_flames": {"glow"}, "ob_hitbox": {"ob"}}
 
 
 def scale_factor():

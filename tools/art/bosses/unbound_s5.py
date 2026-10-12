@@ -67,7 +67,7 @@ RAMP = {
     "wrap": mk((24, 14, 8), (66, 46, 30), (132, 100, 68), 5),
     "blood": [(26, 6, 6), (48, 10, 10), (72, 14, 14), (96, 20, 18), (124, 26, 22), (156, 38, 30), (196, 74, 60)],
     "hole": [(8, 7, 10), (24, 22, 26), (40, 38, 44)],
-    "fire": mk((150, 38, 8), (236, 92, 18), (255, 226, 140), 7),
+    "fire": mk((150, 120, 100), (232, 214, 190), (255, 252, 244), 7),   # neutral warm white: the stage tint colours it
     "eye": mk((16, 104, 146), (70, 210, 250), (226, 253, 255), 5),
     "eye_dim": mk((8, 34, 46), (26, 92, 116), (66, 158, 184), 5),
 }
@@ -490,9 +490,15 @@ def paint_plain(cube, face, w, h, seed, ctx):
 
 
 def paint_fire(cube, face, w, h, seed, ctx):
-    """Hot in the middle, orange at its edges, flickering tongues."""
+    """Hot in the middle, dimmer at its edges, flickering; a flame tongue brightest at its root. Painted near white:
+    the fight tints the fire bones its stage colour (session 6)."""
     lv = np.zeros((h, w), int)
     base = ZONE[s4.zone_for(cube)][1]
+    if cube.name.startswith("flame_"):
+        for y in range(h):
+            for x in range(w):
+                lv[y, x] = base - 1 + (y * 4) // max(1, h) - (1 if noise(seed, x, y, 1) > 750 else 0)   # dim tip, bright root
+        return lv, []
     for y in range(h):
         for x in range(w):
             r = max(abs(x - (w - 1) / 2) / max(1, w / 2), abs(y - (h - 1) / 2) / max(1, h / 2))
@@ -561,14 +567,18 @@ def context(model):
             "edge": (edge[order[:4]].mean(0), edge[order[4:]].mean(0))}
 
 
-def main():
-    if OUT.exists():
-        for old in OUT.iterdir():
-            if old.is_dir():
-                shutil.rmtree(old)
-            elif old.name != "README.md":
-                old.unlink()
-    OUT.mkdir(parents=True, exist_ok=True)
+def hidden(cube):
+    """In a bone that starts hidden (the flames)."""
+    g = cube.group
+    while g is not None:
+        if not g.visible:
+            return True
+        g = g.parent
+    return False
+
+
+def painted():
+    """The rig, its islands and the painted atlas."""
     k = s3.scale_factor()
     model = s2.build(s3.MODEL_ID)
     s2.finish(model, k)
@@ -586,6 +596,18 @@ def main():
         patch = Image.fromarray(paint_face(model, i, f, w, h, solids, ctx), "RGBA")
         atlas.paste(patch.resize((w + 2, h + 2), Image.NEAREST), (x - 1, y - 1))
         atlas.paste(patch, (x, y))
+    return k, model, keys, positions, used, height, atlas
+
+
+def main():
+    if OUT.exists():
+        for old in OUT.iterdir():
+            if old.is_dir():
+                shutil.rmtree(old)
+            elif old.name != "README.md":
+                old.unlink()
+    OUT.mkdir(parents=True, exist_ok=True)
+    k, model, keys, positions, used, height, atlas = painted()
     atlas_path = OUT / "occultech_unbound.png"
     atlas.save(atlas_path)
     atlas.resize((atlas.width * 2, atlas.height * 2), Image.NEAREST).save(OUT / "atlas_preview.png")
@@ -606,7 +628,7 @@ def main():
     out.mkdir()
     boxes = [{"corners": c.corners().tolist(), "from": c.frm, "to": c.to,
               "glow": s4.zone_for(c).startswith(GLOWING), "uv": bb["elements"][i]["faces"]}
-             for i, c in enumerate(model.cubes)]
+             for i, c in enumerate(model.cubes) if not hidden(c)]
     job_file = out / "render_job.json"
     job_file.write_text(json.dumps({"texture": str(atlas_path), "out": out.as_posix(), "boxes": boxes,
                                     "views": views, "player_at": (2.6, 1.0)}), encoding="utf-8")
