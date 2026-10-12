@@ -42,6 +42,20 @@ ARM_LEN = 14
 SISTERS = [("cauldron", "green", "the cauldron"), ("bottles", "purple", "the bottles"), ("pot", "red", "the pot")]
 
 
+def chamfered(g, name, c, size, mat, cham):
+    """A box with its four long (front-to-back) edges cut at 45 degrees, its cubes put straight on g (no extra bone):
+    a cross of two boxes and four diagonal plates filling the notches."""
+    (x, y, z), (w, h, d) = c, size
+    ch = cham * min(w, h)
+    t = ch / 2 ** 0.5
+    g.box(name + "_h", c, (w, h - 2 * ch, d), mat)
+    g.box(name + "_v", c, (w - 2 * ch, h, d - 1), mat)
+    for sa in (-1, 1):
+        for sb in (-1, 1):
+            g.box(f"{name}_c{sa}{sb}", (x + sa * (w / 2 - 0.75 * ch), y + sb * (h / 2 - 0.75 * ch), z),
+                  (ch * 2 ** 0.5, t, d - 0.5), mat, rotation=(0, 0, -45 * sa * sb))
+
+
 def arm(torso, side, rot, vessel, role):
     """A sleeve hanging from the shoulder (rest: straight down), the dark cuff at its end, and what it holds."""
     word = "right" if side > 0 else "left"
@@ -58,7 +72,7 @@ def arm(torso, side, rot, vessel, role):
     if side > 0 and vessel == "bottles":
         # the bottle comes out of the sleeve, its cork pointing away from it (upward when the sleeve is raised)
         held = a.group("bottle_held", (sx, end - 1, -0.5), (180, 0, 0))
-        bottle(held, "bottle_held_body", (sx, end + 4.5, -0.5), role, 1.1)
+        bottle(held, "bottle_held_body", (sx, end + 1.75, -0.5), role, 1.1)      # its base in the cuff
     return a
 
 
@@ -72,7 +86,7 @@ def build(vessel, role, pose=None):
     lower.box("herb", (-RW / 2 - 1, 15, -1), (2, 6, 3), "herb", rotation=(0, 0, 6))
     lower.box("charm", (-RW / 2 - 1, 11, 2), (2, 2, 2), "bone")
     torso = root.group("torso", WAIST, (pose.get("torso", STOOP), 0, 0))
-    m1.octo(torso, "robe_upper", (0, 29.5, 0), (RW, 17, RD), "robe", 0.22)
+    chamfered(torso, "robe_upper", (0, 29.5, 0), (RW, 17, RD), "robe", 0.22)
     torso.box("collar", (0, 37.5, -0.5), (RW - 2, 2, RD - 1), "robe_dark")
     if vessel == "pot":
         # two bones: the carry swings from the shoulders (lifting it for the throw), the vessel tips about the pot

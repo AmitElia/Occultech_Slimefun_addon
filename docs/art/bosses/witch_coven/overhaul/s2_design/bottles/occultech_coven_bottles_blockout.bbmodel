@@ -3990,12 +3990,12 @@
    "allow_mirror_modeling": true,
    "from": [
     6.5,
-    22.5,
+    19.75,
     -3.5
    ],
    "to": [
     12.5,
-    28.5,
+    25.75,
     2.5
    ],
    "autouv": 0,
@@ -4008,7 +4008,7 @@
    ],
    "origin": [
     9.5,
-    25.5,
+    22.75,
     -0.5
    ],
    "faces": {
@@ -4080,12 +4080,12 @@
    "allow_mirror_modeling": true,
    "from": [
     6.5,
-    27.42,
+    24.67,
     -3.5
    ],
    "to": [
     12.5,
-    28.42,
+    25.67,
     2.5
    ],
    "autouv": 0,
@@ -4098,7 +4098,7 @@
    ],
    "origin": [
     9.5,
-    27.92,
+    25.17,
     -0.5
    ],
    "faces": {
@@ -4170,12 +4170,12 @@
    "allow_mirror_modeling": true,
    "from": [
     8.5,
-    28.46,
+    25.71,
     -1.5
    ],
    "to": [
     10.5,
-    30.46,
+    27.71,
     0.5
    ],
    "autouv": 0,
@@ -4188,7 +4188,7 @@
    ],
    "origin": [
     9.5,
-    29.46,
+    26.71,
     -0.5
    ],
    "faces": {
@@ -4260,12 +4260,12 @@
    "allow_mirror_modeling": true,
    "from": [
     8.5,
-    30.11,
+    27.36,
     -1.5
    ],
    "to": [
     10.5,
-    32.11,
+    29.36,
     0.5
    ],
    "autouv": 0,
@@ -4278,7 +4278,7 @@
    ],
    "origin": [
     9.5,
-    31.11,
+    28.36,
     -0.5
    ],
    "faces": {
@@ -5756,27 +5756,6 @@
    "autouv": 0
   },
   {
-   "name": "robe_upper",
-   "origin": [
-    0.0,
-    29.5,
-    0.0
-   ],
-   "rotation": [
-    0.0,
-    0.0,
-    0.0
-   ],
-   "color": 0,
-   "uuid": "5615ff95-6d16-51da-be49-19e1594d8a32",
-   "export": true,
-   "mirror_uv": false,
-   "isOpen": false,
-   "locked": false,
-   "visibility": true,
-   "autouv": 0
-  },
-  {
    "name": "vessel",
    "origin": [
     0.0,
@@ -6072,35 +6051,12 @@
      "visibility": true,
      "autouv": 0,
      "children": [
-      {
-       "name": "robe_upper",
-       "origin": [
-        0.0,
-        29.5,
-        0.0
-       ],
-       "rotation": [
-        0.0,
-        0.0,
-        0.0
-       ],
-       "color": 0,
-       "uuid": "5615ff95-6d16-51da-be49-19e1594d8a32",
-       "export": true,
-       "mirror_uv": false,
-       "isOpen": false,
-       "locked": false,
-       "visibility": true,
-       "autouv": 0,
-       "children": [
-        "bcb7f08a-ee6d-55ae-bb0c-7d6e47b59f22",
-        "548b40d8-686b-52c2-ad3b-87ad1841d05f",
-        "dbb85405-884c-5e2d-9662-1f852b363a9b",
-        "48a189b1-5f65-555c-baba-3a92e793126d",
-        "ac9f77f8-d304-5d5a-aa9a-62fc5817ad15",
-        "9f9dcff9-d8df-594e-abc6-f9569d19c3ba"
-       ]
-      },
+      "bcb7f08a-ee6d-55ae-bb0c-7d6e47b59f22",
+      "548b40d8-686b-52c2-ad3b-87ad1841d05f",
+      "dbb85405-884c-5e2d-9662-1f852b363a9b",
+      "48a189b1-5f65-555c-baba-3a92e793126d",
+      "ac9f77f8-d304-5d5a-aa9a-62fc5817ad15",
+      "9f9dcff9-d8df-594e-abc6-f9569d19c3ba",
       "bb82df8e-d269-521f-9f24-e8ba7ef361d2",
       {
        "name": "vessel",
