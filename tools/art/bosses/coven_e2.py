@@ -19,10 +19,16 @@ stay session 7's (heal 0.8 s, curse 1.0 s, throw 0.65 s), so the fight's timing 
           pot       dips, heaves the pot out to her side and flings the wave at 0.65 s, the pot emptied, then refills
   flinch  0.4 s     hit: she recoils, her hat jolts (layered over whatever she is doing)
   cackle  1.6 s     her head thrown back, her shoulders shaking, the hat's tip flopping
-  glance  1.4 s     at a fallen sister: the server turns her towards the body; she lowers her head, her arms drop
+  glance  1.4 s     at a fallen sister: the server turns her towards the body; she bows, a sleeve to her chest
 
-The bottle witch's belt always stays full: the held bottle (bone `bottle_held`) scales to nothing as it leaves her
-sleeve and grows back as her sleeve comes away from the belt. The animation does it, no extra fight code.
+The bottle witch's belt always stays full: the held bottle (bone `bottle_held`) slides up into her sleeve as it
+leaves her hand and drops back out as her sleeve comes away from the belt. The animation does it, no extra fight
+code. (It used to shrink to nothing: a near-zero scale in game is not worth the risk.)
+
+The brew never moves on its own (fix after the in-game review): its bone also holds the drips down the vessel's
+sides and the steam above it, so any scale or tilt pulled the drips off the walls and pushed the liquid through
+them, and the bottles' liquid out of their glass. Every clip's brew keys are dropped; the sloshing is left to the
+fight's bubble and splash effects.
 
 Run from the repository root: python tools/art/bosses/coven_e2.py
 """
@@ -42,7 +48,7 @@ from bosses import coven_s2 as s2, coven_s3 as s3, coven_s7 as s7  # noqa: E402
 OUT = ROOT / "docs/art/bosses/witch_coven/overhaul/fx_clips"
 RIGS = ROOT / "docs/art/bosses/witch_coven/overhaul/s7_animation"
 ZERO, ONE = (0, 0, 0), (1, 1, 1)
-GONE = (0.01, 0.01, 0.01)
+SLEEVE, TUCKED = (0, 13, 0), (0.85, 0.85, 0.85)   # the held bottle put away in her sleeve
 rot = s7.rot
 RELEASE = dict(s7.RELEASE)
 PARTIAL = s7.PARTIAL + ("flinch", "cackle", "glance")
@@ -73,8 +79,11 @@ def secondary(bones, torso_keys):
 def belt_reach(vessel, t0, length):
     """The bottle witch draws a fresh bottle: her sleeve crosses to the belt, the bottle grows back as it leaves."""
     belt = arm(vessel, "right", (55, 0, -42))
+    # hidden up the sleeve: the bottle hangs below the cuff, so 13 px up (and a touch smaller) puts it inside
+    keys = lambda inside, out: rot((0, out), (t0 - 0.2, out), (t0 - 0.18, inside), (t0 + 0.2, inside),
+                                   (t0 + 0.32, out), (length, out), interp="linear")
     return (rot((t0, belt), (t0 + 0.25, belt), (length, ZERO)),
-            rot((0, ONE), (t0 - 0.2, ONE), (t0 - 0.18, GONE), (t0 + 0.2, GONE), (t0 + 0.32, ONE), (length, ONE)))
+            {"position": keys(SLEEVE, ZERO), "scale": keys(TUCKED, ONE)})
 
 
 def heal(vessel):
@@ -98,7 +107,7 @@ def heal(vessel):
         reach, bottle = belt_reach(vessel, 1.0, 1.7)
         b = {"arm_right": {"rotation": rot((0, ZERO), (0.3, low), (0.7, high), (r, tuple(x * 1.1 for x in high)),
                                            (0.9, high)) + reach},
-             "bottle_held": {"scale": bottle},
+             "bottle_held": bottle,
              "torso": {"rotation": torso},
              "h_head": {"rotation": rot((0, ZERO), (0.3, (-12, 0, 0)), (0.7, (14, 0, 0)), (r, (10, 0, 0)), (1.7, ZERO))}}
         return 1.7, secondary(b, torso)
@@ -142,7 +151,7 @@ def curse(vessel):
         reach, bottle = belt_reach(vessel, 1.2, 1.8)
         b = {"arm_right": {"rotation": rot((0, ZERO), (0.35, wind), *trem(wind, 5), (0.9, wind), (r, down),
                                            (1.1, down)) + reach},
-             "bottle_held": {"scale": bottle},
+             "bottle_held": bottle,
              "torso": {"rotation": torso},
              "h_head": {"rotation": rot((0, ZERO), (0.35, (-8, 0, 0)), (r, (-14, 0, 0)), (1.8, ZERO))}}
         return 1.8, secondary(b, torso)
@@ -181,7 +190,7 @@ def throw(vessel):
             return 1.3, secondary(b, torso)
         reach, bottle = belt_reach(vessel, 0.85, 1.4)
         b["arm_right"] = {"rotation": rot((0, ZERO), (0.5, wind), (r, follow), (0.75, follow)) + reach}
-        b["bottle_held"] = {"scale": bottle}
+        b["bottle_held"] = bottle
         b["torso"]["rotation"] = rot((0, ZERO), (0.25, (6, 10, 0)), (0.5, (8, 14, 0)), (r, (-10, -8, 0)),
                                      (0.85, (-8, -4, 0)), (1.4, ZERO))
         return 1.4, secondary(b, b["torso"]["rotation"])
@@ -216,10 +225,11 @@ def personality(vessel):
         "h_head": {"rotation": rot((0, ZERO), (0.3, (24, 0, 0)), *[(0.35 + 0.1 * i, (24 + (4 if i % 2 else -2), 0, 0))
                                                                   for i in range(9)], (1.6, ZERO))},
         "arm_left": {"rotation": rot((0, ZERO), (0.3, (30, 0, 10)), (1.3, (30, 0, 10)), (1.6, ZERO))}}, torso))
-    torso = rot((0, ZERO), (0.3, (4, 0, 0)), (1.1, (4, 0, 0)), (1.4, ZERO))
+    # a bow over the body, her free sleeve drawn to her chest (the server turns her to face it)
+    torso = rot((0, ZERO), (0.3, (8, 0, 0)), (1.1, (8, 0, 0)), (1.4, ZERO))
     b = {"torso": {"rotation": torso},
-         "h_head": {"rotation": rot((0, ZERO), (0.3, (-18, 0, 0)), (1.1, (-18, 0, 0)), (1.4, ZERO))},
-         "arm_left": {"rotation": rot((0, ZERO), (0.3, (-12, 0, 0)), (1.1, (-12, 0, 0)), (1.4, ZERO))}}
+         "h_head": {"rotation": rot((0, ZERO), (0.3, (-26, 0, 0)), (1.1, (-26, 0, 0)), (1.4, ZERO))},
+         "arm_left": {"rotation": rot((0, ZERO), (0.3, (-34, 0, 12)), (1.1, (-34, 0, 12)), (1.4, ZERO))}}
     if vessel != "pot":
         b["arm_right"] = {"rotation": rot((0, ZERO), (0.3, (-14, 0, 0)), (1.1, (-14, 0, 0)), (1.4, ZERO))}
     out["glance"] = (1.4, "once", secondary(b, torso))
@@ -232,6 +242,8 @@ def clips(vessel, role):
         length, bones = fn(vessel)
         base[name] = (length, "once", bones)
     base.update(personality(vessel))
+    for _, _, bones in base.values():
+        bones.pop("glow_brew", None)          # the brew stays put (see the module notes)
     return base
 
 

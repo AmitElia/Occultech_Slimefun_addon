@@ -60,6 +60,27 @@ change, so the texture layout stays the same. Sessions 2 to 7 and E2 were regene
 **Without Mythic** (vanilla bodies), the fight still works as before: the role shows as an aura over each witch's
 head, and the actions play their plain particles and sounds.
 
+## Fixes after the first in-game review
+
+- **The cauldron's liquid came loose in some clips.** The brew bone also holds the drips down the vessel's sides and
+  the steam above it, so the clips' brew scale (up to 1.1 wide, 1.3 tall) and the curse's 28 degree tilt pulled the
+  drips off the walls and pushed the liquid through them. The bottles had the same problem: one bone, one pivot, so
+  their liquid slid out of the glass. The brew no longer moves on its own in any clip (`coven_e2.clips`); the
+  sloshing is left to the bubble and splash effects.
+- **The bottle witch sometimes lost her robe.** Not reproduced: a server without a player can't show it, and her robe's
+  model is identical to the other two. Her one difference was the held bottle shrinking to 1% scale while she reaches
+  for the belt, so it now slides up into her sleeve at 85% instead (no near-zero scale anywhere). If the robe still
+  vanishes, note what she was doing.
+- **The death and the sisters' glance didn't show.** The game removes a dead mob after a second, and BetterModel
+  removes its model with it, cutting the 2.4 s death clip. A dying boss's model now hands over to a stand-in at the same
+  spot (`BossBody.corpse`) that plays the whole clip, lies still a moment and goes in a puff of smoke after 4.5 s
+  (the dead sister's brew spent grey). This applies to every boss with a model, so Volley's and the Brood Mother's
+  death clips play in full too. The glance only played if a sister happened to be idle, and her AI turned her away
+  at once: now every survivor glances as soon as her cast is done (within 3 s), and is held facing the body while it
+  plays. The clip is deeper (a bow, a sleeve to her chest) with a low sigh.
+
+The pack doesn't change (animations live on the server), so its sha1 stays `f6b941c6`. Self-test 547/0.
+
 ## Also fixed
 
 **The Mire Monarch's tongue pull** (added earlier the same day) graded at 9% of a tier-0 kit's health. Telegraphed

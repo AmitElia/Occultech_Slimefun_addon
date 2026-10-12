@@ -82,6 +82,7 @@ def skills():
                 f"{V}_CACKLE:", "  Skills:", f"  - state{{m={m};s=cackle}} @self",
                 "  - sound{s=entity.witch.celebrate;v=1.4;p=0.8} @self",
                 f"{V}_GLANCE:", "  Skills:", f"  - state{{m={m};s=glance}} @self",
+                "  - sound{s=entity.witch.ambient;v=1;p=0.6} @self",
                 f"{V}_DEATH:", "  Skills:", f"  - state{{m={m};s=death}} @self"] + tints(m, v, "606064")
         out += ["  - sound{s=entity.witch.death;v=1.2;p=0.8} @self",
                 "  - particles{p=large_smoke;a=16;hs=0.5;vs=0.6;y=1.6;s=0.02} @self",

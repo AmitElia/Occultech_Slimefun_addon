@@ -13,6 +13,9 @@ public interface Prop {
 
     void remove();
 
+    /** Tints the named bones (BetterModel names, tag prefix dropped: {@code glow_brew} is {@code brew}). */
+    default void tint(int rgb, String... parts) {}
+
     /** Called every fight step: shows the model to players who have come near since it appeared. */
     default void refresh() {}
 }

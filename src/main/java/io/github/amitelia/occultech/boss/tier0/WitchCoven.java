@@ -105,6 +105,11 @@ public final class WitchCoven extends BossBehavior {
     private int rotation;
     /** Ticks until a witch may start another clip (a glance or a cackle waits for her attacks). */
     private final Map<Witch, Integer> busyUntil = new HashMap<>();
+    /** Survivors still to mourn a fallen sister: where she fell, and until when they may still start the glance. */
+    private final Map<Witch, Location> mournAt = new HashMap<>();
+    private final Map<Witch, Integer> mournBy = new HashMap<>();
+    /** Survivors turned towards a fallen sister while their glance plays, and until when (fight ticks). */
+    private final Map<Witch, Integer> facingUntil = new HashMap<>();
 
     private Witch healer;
     private LivingEntity patient;
@@ -160,6 +165,7 @@ public final class WitchCoven extends BossBehavior {
         if (witches.isEmpty()) {
             return;
         }
+        mourn(now);
         if (!fallen.isEmpty()) {
             // roles are assigned by position, so a death reshuffles them: keep the names and brews truthful
             applyRoles(false);
@@ -389,13 +395,10 @@ public final class WitchCoven extends BossBehavior {
         if (dead == bomber) {
             throwAt = -1;
         }
+        // the others turn to her and look down: at once if they're free, else as soon as their cast is done
         for (Witch survivor : witches) {
-            if (idle(survivor, now)) {
-                Vector look = at.toVector().subtract(survivor.getLocation().toVector());
-                Location face = survivor.getLocation().setDirection(look);
-                survivor.setRotation(face.getYaw(), 0F);
-                act(survivor, "GLANCE", null, now, 30);
-            }
+            mournAt.put(survivor, at);
+            mournBy.put(survivor, now + 60);
         }
     }
 
@@ -413,6 +416,48 @@ public final class WitchCoven extends BossBehavior {
             org.bukkit.Bukkit.getScheduler().runTaskLater(org.bukkit.Bukkit.getPluginManager().getPlugin("Occultech"),
                 () -> streak.fire(from, to), 8L);
         }
+    }
+
+    /** The fallen sister's model stays for her whole death clip (the game removes a dead mob after a second). */
+    @Override
+    public void onBossDeath(LivingEntity boss) {
+        if (!(boss instanceof Witch witch) || !sisters.containsKey(witch)) {
+            return;
+        }
+        io.github.amitelia.occultech.boss.Prop corpse = fight.corpse(witch);
+        if (corpse != null) {
+            corpse.tint(SPENT.asRGB(), "brew", "brew_held", "cast");
+        }
+    }
+
+    /** Mourning survivors start their glance when free, then keep facing her body while it plays. */
+    private void mourn(int now) {
+        mournAt.keySet().removeIf(w -> !witches.contains(w) || now > mournBy.getOrDefault(w, 0));
+        for (Witch survivor : new ArrayList<>(mournAt.keySet())) {
+            if (idle(survivor, now)) {
+                act(survivor, "GLANCE", null, now, 30);
+                facingUntil.put(survivor, now + 28);
+                facing.put(survivor, mournAt.remove(survivor));
+            }
+        }
+    }
+
+    private final Map<Witch, Location> facing = new HashMap<>();
+
+    @Override
+    public void move() {
+        int now = fight.elapsed();
+        facing.keySet().removeIf(w -> !w.isValid() || now > facingUntil.getOrDefault(w, 0));
+        facing.forEach((witch, body) -> {
+            Vector look = body.toVector().subtract(witch.getLocation().toVector()).setY(0);
+            if (look.lengthSquared() > 1e-4) {
+                float yaw = witch.getLocation().setDirection(look).getYaw();
+                witch.getPathfinder().stopPathfinding();
+                witch.setRotation(yaw, 20F);
+                witch.setBodyYaw(yaw);
+                witch.lookAt(body.clone().add(0, 0.3, 0));
+            }
+        });
     }
 
     // ------------------------------------------------------------------ helpers

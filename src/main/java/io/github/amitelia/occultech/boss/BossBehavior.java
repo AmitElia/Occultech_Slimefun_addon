@@ -65,6 +65,9 @@ public abstract class BossBehavior {
         return 8;
     }
 
+    /** One of the fight's main bosses died (a multi-boss fight goes on while others live). */
+    public void onBossDeath(LivingEntity boss) {}
+
     /** An extra mob of this fight died ({@code killer} is the player responsible, if any). */
     public void onAddDeath(Entity entity, @Nullable Player killer) {}
 

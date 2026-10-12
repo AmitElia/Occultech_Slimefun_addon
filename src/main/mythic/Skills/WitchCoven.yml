@@ -95,6 +95,7 @@ WITCH_COVEN_CAULDRON_CACKLE:
 WITCH_COVEN_CAULDRON_GLANCE:
   Skills:
   - state{m=occultech_witch_coven_cauldron;s=glance} @self
+  - sound{s=entity.witch.ambient;v=1;p=0.6} @self
 WITCH_COVEN_CAULDRON_DEATH:
   Skills:
   - state{m=occultech_witch_coven_cauldron;s=death} @self
@@ -195,6 +196,7 @@ WITCH_COVEN_BOTTLES_CACKLE:
 WITCH_COVEN_BOTTLES_GLANCE:
   Skills:
   - state{m=occultech_witch_coven_bottles;s=glance} @self
+  - sound{s=entity.witch.ambient;v=1;p=0.6} @self
 WITCH_COVEN_BOTTLES_DEATH:
   Skills:
   - state{m=occultech_witch_coven_bottles;s=death} @self
@@ -285,6 +287,7 @@ WITCH_COVEN_POT_CACKLE:
 WITCH_COVEN_POT_GLANCE:
   Skills:
   - state{m=occultech_witch_coven_pot;s=glance} @self
+  - sound{s=entity.witch.ambient;v=1;p=0.6} @self
 WITCH_COVEN_POT_DEATH:
   Skills:
   - state{m=occultech_witch_coven_pot;s=death} @self

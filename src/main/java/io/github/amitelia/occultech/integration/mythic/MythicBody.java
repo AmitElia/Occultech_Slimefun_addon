@@ -114,6 +114,14 @@ public final class MythicBody implements BossBody {
     }
 
     @Override
+    public io.github.amitelia.occultech.boss.Prop corpse(LivingEntity dead) {
+        if (!plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")) {
+            return null;
+        }
+        return BetterModelVisuals.corpse(plugin, dead);
+    }
+
+    @Override
     public List<String> extraRewards(String id) {
         return MythicLoot.roll(id, plugin.getLogger());
     }

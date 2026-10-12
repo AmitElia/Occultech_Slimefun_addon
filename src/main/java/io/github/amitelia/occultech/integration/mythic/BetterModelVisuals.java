@@ -56,12 +56,53 @@ public final class BetterModelVisuals {
             }
 
             @Override
+            public void tint(int rgb, String... parts) {
+                java.util.List<String> names = java.util.List.of(parts);
+                if (!tracker.isClosed()) {
+                    tracker.update(TrackerUpdateAction.tint(rgb), bone -> names.contains(bone.name().name()));
+                }
+            }
+
+            @Override
             public void remove() {
                 if (!tracker.isClosed()) {
                     tracker.close();
                 }
             }
         };
+    }
+
+    /** How long a corpse stays: the longest death clip (2.8 s) and a moment lying still. */
+    private static final long CORPSE_TICKS = 90;
+
+    /** See {@link io.github.amitelia.occultech.boss.BossBody#corpse}. */
+    public static io.github.amitelia.occultech.boss.Prop corpse(org.bukkit.plugin.Plugin plugin, Entity dead) {
+        var registry = BetterModel.registry(dead.getUniqueId()).orElse(null);
+        if (registry == null || registry.trackers().isEmpty()) {
+            return null;
+        }
+        String modelId = registry.trackers().iterator().next().renderer().name();
+        org.bukkit.Location at = dead.getLocation();
+        at.setYaw(dead instanceof org.bukkit.entity.LivingEntity living ? living.getBodyYaw() : at.getYaw());
+        at.setPitch(0F);
+        io.github.amitelia.occultech.boss.Prop corpse = prop(modelId, at);
+        if (corpse == null) {
+            return null;
+        }
+        registry.trackers().forEach(tracker -> tracker.update(TrackerUpdateAction.togglePart(false)));
+        corpse.animate("death");
+        long[] age = {0};
+        org.bukkit.Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+            age[0] += 10;
+            if (age[0] >= CORPSE_TICKS) {
+                corpse.remove();
+                at.getWorld().spawnParticle(org.bukkit.Particle.LARGE_SMOKE, at.clone().add(0, 0.6, 0), 14, 0.4, 0.3, 0.4, 0.01);
+                task.cancel();
+            } else {
+                corpse.refresh();
+            }
+        }, 10L, 10L);
+        return corpse;
     }
 
     public static boolean available(String modelId) {

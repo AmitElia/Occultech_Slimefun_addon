@@ -26,4 +26,11 @@ public interface BossBody {
 
     /** A model at {@code at} (its feet on that spot) for a fight object, or null to keep the vanilla look. */
     default Prop prop(String modelId, Location at) { return null; }
+
+    /**
+     * Keeps a dying boss's model for its whole {@code death} clip: the game removes a dead mob after a second, and its
+     * model goes with it. Hides the carrier's model and plays the clip on a stand-in at the same spot, which goes
+     * by itself once the clip has played. Null when the boss has no model.
+     */
+    default Prop corpse(LivingEntity dead) { return null; }
 }

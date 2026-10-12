@@ -420,6 +420,11 @@ public final class BossFight {
 
     /** Spawns a non-living fight entity (display, cloud, projectile) that is removed when the fight ends. */
     @Nonnull
+    /** The dying boss's model, kept until its death clip has played (see {@link BossBody#corpse}); null without one. */
+    public @Nullable Prop corpse(LivingEntity dead) {
+        return service.body().corpse(dead);
+    }
+
     public <T extends Entity> T spawnExtra(Class<T> type, Location at, Consumer<T> setup) {
         T entity = at.getWorld().spawn(at, type, e -> {
             tag(e);
@@ -921,6 +926,9 @@ public final class BossFight {
     void onEntityDeath(Entity entity, @Nullable Player killer) {
         boolean boss = bosses.remove(entity);
         extras.remove(entity);
+        if (boss && entity instanceof LivingEntity living) {
+            behavior.onBossDeath(living);
+        }
         if (!boss && !ended) {
             if (entity instanceof LivingEntity) {
                 AirEffects.burst(this, entity.getLocation().add(0, entity.getHeight() / 2, 0), AirEffects.Burst.SOUL, Color.fromRGB(110, 220, 255), 2F);
