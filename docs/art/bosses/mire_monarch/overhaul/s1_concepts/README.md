@@ -1,5 +1,7 @@
 # Mire Monarch, session 1 (take 5): three directions for the radioactive toad king
 
+**Rejected 2026-10-11:** the eyes looked horrible, the proportions were goofy rather than intimidating, and it had too many parts. The redesign restarts from posture silhouettes: [../s1_silhouettes](../s1_silhouettes/README.md).
+
 **The brief (2026-10-11):**
 - a mutated version of vanilla's frog;
 - radioactive and toxic;
