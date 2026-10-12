@@ -31,24 +31,27 @@ PALETTE = dict(uf.PALETTE, boot=(40, 34, 32), steel=(156, 162, 168), spine=(104,
                haft=(88, 62, 40), wrap=(70, 50, 34), chain=(132, 132, 140), hole=(24, 22, 26))
 
 
+CHAIN_W = 4.8      # a link's width (pre-scale; 4 texels once scaled and snapped: room for its hole)
+
+
+def chain_planes(g, name, centre, length, axis):
+    """A run of chain as two crossed planes along axis ('y' hanging, 'z' lying), the way vanilla draws its chain:
+    the planes are painted with cut-out links that alternate between face-on rings and side-on links."""
+    x, y, z = centre
+    if axis == "y":
+        g.box(f"{name}_a", (x, y, z), (CHAIN_W, length, 0), "chain")
+        g.box(f"{name}_b", (x, y, z), (0, length, CHAIN_W), "chain")
+    else:
+        g.box(f"{name}_a", (x, y, z), (0, CHAIN_W, length), "chain")
+        g.box(f"{name}_b", (x, y - CHAIN_W / 2 + 0.3, z), (CHAIN_W, 0, length), "chain")
+
+
 def chain(g, name, top, drop, trail, step=2.8):
-    """Links hanging straight down from a shackle to the ground, then lying along it towards trail (x, z)."""
+    """A chain hanging from a shackle to the ground, then lying along it, trailing back (trail: its x, z lean)."""
     x, y, z = top
-    i = 0
-    while y - step / 2 > 0.8:
-        y -= step
-        size = (2.4, 3.2, 1.0) if i % 2 else (1.0, 3.2, 2.4)
-        g.box(f"{name}_{i}", (x, y + step / 2, z), size, "chain")
-        i += 1
-    tx, tz = trail
-    n = max(1, int(drop))
-    for j in range(n):
-        x += tx * step
-        z += tz * step
-        size = (3.2, 1.0, 2.4) if (i + j) % 2 else (3.2, 2.4, 1.0)
-        if abs(tz) > abs(tx):
-            size = (size[2], size[1], size[0])
-        g.box(f"{name}_ground_{j}", (x, 0.6 if size[1] < 2 else 1.2, z), size, "chain")
+    chain_planes(g, f"{name}_hang", (x, y / 2 + 0.3, z), max(1.0, y - 0.6), "y")
+    length = max(1, int(drop)) * step + 4
+    chain_planes(g, f"{name}_lie", (x + trail[0] * length / 2, CHAIN_W / 2, z + length / 2), length, "z")
 
 
 def shackle(g, name, c, size):

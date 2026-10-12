@@ -59,13 +59,13 @@ RAMP = {
     "heat": [(62, 56, 92), (90, 74, 98), (122, 90, 70), (150, 108, 60)],      # tempered iron: violet to bronze
     "rust": mk((54, 28, 18), (108, 60, 34), (158, 96, 58), 5),
     "chain": mk((36, 36, 42), (128, 128, 136), (222, 222, 230), 7),
-    "pants": mk((12, 12, 18), (48, 48, 58), (106, 106, 120), 7),
+    "pants": mk((12, 12, 18), (50, 50, 62), (118, 118, 134), 9),
     "dirt": [(44, 38, 32), (62, 54, 44), (82, 72, 58)],
     "boot": mk((5, 4, 4), (20, 17, 17), (72, 62, 58), 5),
     "steel": mk((56, 60, 68), (156, 162, 168), (242, 245, 247), 9),
     "spine": mk((30, 32, 38), (90, 94, 100), (172, 176, 182), 7),
     "wrap": mk((24, 14, 8), (66, 46, 30), (132, 100, 68), 5),
-    "blood": mk((32, 4, 4), (94, 18, 18), (152, 42, 36), 5),
+    "blood": [(26, 6, 6), (48, 10, 10), (72, 14, 14), (96, 20, 18), (124, 26, 22), (156, 38, 30), (196, 74, 60)],
     "hole": [(8, 7, 10), (24, 22, 26), (40, 38, 44)],
     "fire": mk((150, 38, 8), (236, 92, 18), (255, 226, 140), 7),
     "eye": mk((16, 104, 146), (70, 210, 250), (226, 253, 255), 5),
@@ -75,7 +75,7 @@ RAMP = {
 ZONE = {"skin": ("skin", 5), "skin_crease": ("skin", 3), "nose": ("skin", 4), "brow": ("brow", 2),
         "cloth": ("cloth", 4), "cloth_dark": ("cloth_dark", 3), "horn": ("horn", 4), "horn_root": ("horn_root", 3),
         "horn_tip": ("horn", 3), "strap": ("strap", 3), "stud": ("stud", 2), "iron": ("iron", 4),
-        "iron_lit": ("iron_lit", 3), "chain": ("chain", 3), "pants": ("pants", 3), "boot": ("boot", 2),
+        "iron_lit": ("iron_lit", 3), "chain": ("chain", 3), "pants": ("pants", 4), "boot": ("boot", 2),
         "steel": ("steel", 4), "spine": ("spine", 3), "wrap": ("wrap", 2), "blood": ("blood", 2), "hole": ("hole", 1),
         "fire": ("fire", 3), "fire_hot": ("fire", 6), "eye": ("eye", 2), "eye_hot": ("eye", 4), "eye_dim": ("eye_dim", 2)}
 GLOWING = ("fire", "eye")
@@ -326,27 +326,75 @@ def paint_iron_lit(cube, face, w, h, seed, ctx):
 
 
 def paint_chain(cube, face, w, h, seed, ctx):
-    lv, over = blank(cube, w, h)
-    lv[0, :] += 2
-    lv[h - 1, :] -= 2
-    if w >= 2:
-        lv[:, w - 1] -= 1
-    return lv, over
+    """A plane of chain, cut out, 4 texels wide: a face-on ring (rounded, its middle open) then a side-on link (2 wide),
+    every 7 texels; the crossed plane is offset half a link, so each ring sits on the other plane's side link."""
+    long_h = h >= w
+    n, across = (h, w) if long_h else (w, h)
+    lv = np.zeros((h, w), int)
+    alpha = np.zeros((h, w), int)
+    shift = 4 if cube.name.endswith("_b") else 0
+    c0, c1 = across // 2 - 1, across // 2                    # the two middle columns
+    for i in range(n):
+        p = (i + shift) % 7
+        for j in range(across):
+            if p in (0, 4):
+                on = j in (c0, c1)                           # the ring's rounded top and bottom
+            elif p in (1, 2, 3):
+                on = j in (c0 - 1, c1 + 1)                   # its sides, the middle open
+            else:
+                on = j in (c0, c1)                           # a side-on link
+            if on:
+                y, x = (i, j) if long_h else (j, i)
+                alpha[y, x] = 255
+                lit = j <= c0                                # lit on its left, as the iron rounds away
+                lv[y, x] = (5 if p in (0, 1) else (4 if p < 5 else 3)) + (1 if lit else -1)
+    return lv, [], alpha
 
 
 def paint_pants(cube, face, w, h, seed, ctx):
-    """A coarse weave, worn lighter at the knees (the shin's top), dirt rising from the boots."""
+    """Coarse dark trousers: seams with stitching down the sides; long soft folds, each a shadow with a lit edge;
+    creases bunched at the knees; the thighs worn lighter; frayed hems over the boots, with dirt."""
     lv, over = blank(cube, w, h)
+    n = cube.name
     for y in range(h):
         for x in range(w):
-            lv[y, x] += (-1 if x % 5 == 2 and noise(seed + 3, x, y // 3, 1) < 700 else 0) + clusters(seed, x, y, 30, 975, 2)   # folds
-    if cube.name.startswith("shin_") and face == "north":
-        lv[:2, :] += 1                                                # worn knees
-    if cube.name.startswith("shin_") and face not in ("up", "down"):
+            lv[y, x] += clusters(seed, x, y, 12, 990, 2)            # barely any noise: the folds carry the cloth
+    if face in ("east", "west") and w >= 3:
+        mid = w // 2
+        lv[:, mid] -= 1                                               # the side seam...
+        for y in range(0, h, 2):
+            lv[y, mid + 1 if mid + 1 < w else mid] += 1              # ...and its stitches
+    if face in ("north", "south") and w >= 5:
+        for x in range(w):
+            if x % 4 == 1 and noise(seed + 3, x, 0, 1) < 650:
+                top = noise(seed + 4, x, 0, 1) % max(1, h // 3)
+                for y in range(top, h):
+                    lv[y, x] -= 1                                     # a long fold's shadow...
+                    if x + 1 < w:
+                        lv[y, x + 1] += 1                             # ...and its lit edge
+    if n.startswith("thigh_") and face == "north":
+        cx, cy = (w - 1) / 2, h * 0.55
+        for y in range(h):
+            for x in range(w):
+                if ((x - cx) / (w * 0.4)) ** 2 + ((y - cy) / (h * 0.4)) ** 2 < 1:
+                    lv[y, x] += 1                                     # worn lighter over the thigh
+    if n.startswith("shin_") and face == "north":
+        for y in (1, 3):
+            for x in range(w):
+                if y < h and (x + y) % 5 != 0:
+                    lv[y, x] -= 1                                     # two creases bunched at the knee
+    if n.startswith("shin_") and face not in ("up", "down"):
+        for x in range(w):
+            if noise(seed + 9, x, 0, 1) < 450:
+                lv[h - 1, x] -= 2                                     # the frayed hem
         for y in range(h // 2, h):
             for x in range(w):
-                if noise(seed + 8, x, y, 2) < 300 * (y - h // 2 + 1) / (h // 2 + 1):
+                if noise(seed + 8, x, y, 2) < 260 * (y - h // 2 + 1) / (h // 2 + 1):
                     over.append((y, x, "dirt", 1 if y < h - 2 else 0))
+    if n in ("waist", "pelvis") and face in ("north", "south"):
+        lv[0, :] -= 1
+        for x in range(1, w, 3):
+            lv[1, x] -= 1                                             # gathered under the belt
     if face == "down":
         lv -= 2
     return lv, over
@@ -364,23 +412,47 @@ def paint_boot(cube, face, w, h, seed, ctx):
 
 
 def paint_steel(cube, face, w, h, seed, ctx):
-    """Brushed steel streaked along the blade, a bright honed bevel along the edge, blood dried onto the flat near it."""
+    """Brushed steel streaked along the blade and a bright honed bevel along the edge. The blood: dried thick on the
+    edge and heaviest towards the tip, runs dripping from the edge down the flat with a drop at each end, a smear
+    wiped along it, spatter in clusters; dark and dried, redder where it's fresh."""
     lv, over = blank(cube, w, h)
     world = ctx["world"]
     edge_a, edge_b = ctx["edge"]
     seg = edge_b - edge_a
     t = np.clip(((world - edge_a) @ seg) / (seg @ seg), 0, 1)
     d = np.linalg.norm(world - (edge_a + t[..., None] * seg), axis=-1)
+    along = t * np.linalg.norm(seg)                               # texels along the edge, from the handle end
+    span = np.linalg.norm(seg)
+    runs = [s for s in range(1, int(span)) if noise(seed + 41, s, 0, 1) < 330]
     for y in range(h):
         for x in range(w):
             lv[y, x] += 1 if noise(seed + (x if w > h else y), 0, 0, 1) < 330 else 0       # streaks along the length
             if d[y, x] < 1.6:
-                lv[y, x] += 3                                         # the honed bevel
+                lv[y, x] += 3                                     # the honed bevel
             elif d[y, x] < 2.6:
                 lv[y, x] += 1
-            elif d[y, x] < 6 and noise(seed + 13, x, y, 1) < 180 * (6 - d[y, x]) / 3:
-                over.append((y, x, "blood", 1 if noise(seed + 17, x, y, 1) < 500 else 2))   # spatter
+            tip = along[y, x] / max(1.0, span)                    # 0 at the handle, 1 at the tip
+            thick = 1.2 + 1.6 * tip                               # dried blood along the edge, heavier to the tip
+            if d[y, x] < thick and noise(seed + 43, int(along[y, x]), 0, 1) < 600 + 380 * tip:
+                over.append((y, x, "blood", 1 if d[y, x] < thick - 0.8 else 2))
+                continue
+            for s in runs:                                        # runs from the edge down the flat
+                length = 2 + noise(seed + 47, s, 0, 1) % 6
+                if abs(along[y, x] - s) < 0.55 and d[y, x] < thick + length:
+                    end = d[y, x] > thick + length - 1.2
+                    over.append((y, x, "blood", 4 if end else (2 if d[y, x] < thick + 1.5 else 3)))
+                elif end_drop(along[y, x], d[y, x], s, thick + length):
+                    over.append((y, x, "blood", 4))
+            if 5 < d[y, x] < 7 and 0.25 < tip < 0.7 and noise(seed + 51, x // 2, y // 2, 1) < 420:
+                over.append((y, x, "blood", 5 if noise(seed + 53, x, y, 1) < 300 else 3))   # a wiped smear
+            if d[y, x] < 9 and noise(seed + 13, x, y, 2) < 70 * (9 - d[y, x]) / 4 and noise(seed + 57, x, y, 1) < 500:
+                over.append((y, x, "blood", 3 if noise(seed + 17, x, y, 1) < 600 else 6))   # spatter, a few fresh
     return lv, over
+
+
+def end_drop(along, d, s, reach):
+    """The drop at the end of a run: a texel either side, just above its tip."""
+    return abs(along - s) < 1.3 and reach - 0.6 < d < reach + 0.4
 
 
 def paint_spine(cube, face, w, h, seed, ctx):
@@ -403,10 +475,13 @@ def paint_wrap(cube, face, w, h, seed, ctx):
 
 
 def paint_blood(cube, face, w, h, seed, ctx):
+    """The thick blood caked on the edge and in the runs: dried dark, with a few wet glints."""
     lv, over = blank(cube, w, h)
     for y in range(h):
         for x in range(w):
-            lv[y, x] += clusters(seed, x, y, 250, 900, 1)
+            lv[y, x] += clusters(seed, x, y, 300, 920, 1)
+            if noise(seed + 61, x, y, 1) < 60:
+                lv[y, x] = 6
     return lv, over
 
 
@@ -453,11 +528,15 @@ def paint_face(model, i, face, w, h, solids, ctx):
     seed = zlib.crc32(f"{cube.name}/{face}".encode())
     zone = s4.zone_for(cube)
     world, normal = world_points(cube, face, w, h)
-    lv, over = painter_for(cube)(cube, face, w, h, seed, dict(ctx, world=world, normal=normal))
-    if not zone.startswith(GLOWING):
+    result = painter_for(cube)(cube, face, w, h, seed, dict(ctx, world=world, normal=normal))
+    lv, over, alpha = result if len(result) == 3 else (*result, None)
+    if not zone.startswith(GLOWING) and alpha is None:
         ao = b5.occlusion(model, i, face, w, h, solids)
-        lv = lv - (ao >= 0.3) - (ao >= 0.55)
-    out = c5.from_levels(lv, RAMP[ZONE[zone][0]])
+        if zone == "pants":
+            lv = lv - (ao >= 0.6)        # cloth: only a real press darkens it (the thigh over the knee made blots)
+        else:
+            lv = lv - (ao >= 0.3) - (ao >= 0.55)
+    out = c5.from_levels(lv, RAMP[ZONE[zone][0]], alpha)
     for y, x, rname, shade in over:
         if 0 <= y < h and 0 <= x < w:
             if rname == "glow":
@@ -520,6 +599,8 @@ def main():
          "res": (640, 480)},
         {"name": "chest", "location": (1.2, 5.0, 2.4), "target": (0, 0.6, 2.2), "scale": 2.2, "player": False},
         {"name": "cleaver", "location": (4.0, -3.0, 2.0), "target": (1.0, -1.6, 0.2), "scale": 2.6, "player": False},
+        {"name": "legs", "location": (1.5, 5.0, 0.9), "target": (0, 0.2, 0.7), "scale": 2.2, "player": False},
+        {"name": "chain", "location": (-3.6, 3.6, 0.9), "target": (-1.1, 0.2, 0.5), "scale": 1.4, "player": False},
     ]
     out = OUT / "renders"
     out.mkdir()

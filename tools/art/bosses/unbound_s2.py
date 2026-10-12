@@ -110,9 +110,7 @@ def hanging_chain(parent, name, top, length):
     """A chain on its own bone, hanging from top (model space) along -y; aimed straight down in every pose."""
     g = parent.group(name, top)
     x, y, z = top
-    for i in range(int(length / 2.8)):
-        size = (2.4, 3.2, 1.0) if i % 2 else (1.0, 3.2, 2.4)
-        g.box(f"{name}_{i}", (x, y - 1.6 - i * 2.8, z), size, "chain")
+    s1.chain_planes(g, name, (x, y - length / 2, z), length, "y")
     return g
 
 
@@ -256,6 +254,13 @@ def build(name, key="idle"):
 def finish(model, k):
     s1.scale(model, k)
     v2.snap(model)
+    for c in model.cubes:                       # the chains' planes stay flat (snapping makes every size at least 1)
+        if c.mat == "chain" and c.name.endswith(("_a", "_b")):
+            lo, hi = np.array(c.frm), np.array(c.to)
+            mid = (lo + hi) / 2
+            flat = {"_a": 2, "_b": 0}[c.name[-2:]] if not "_lie" in c.name else {"_a": 0, "_b": 1}[c.name[-2:]]
+            lo[flat] = hi[flat] = mid[flat]
+            c.frm, c.to = lo.tolist(), hi.tolist()
 
 
 def in_subtree(c, names):
