@@ -35,7 +35,7 @@ Slimefun resources -> occult materials -> ritual components -> circle glyph bloc
 |------|------|-------:|-----------|------|
 | Brood Mother | giant Spider | 220 | Egg sacs hatch cave spiders unless smashed (3 hits); web zones slow; telegraphed pounce | Brood Silk; 15% Brood Egg |
 | Volley | Skeleton archer | 160 | Glowing 1s warning, then a 5-arrow volley (slowness/poison/spectral); ward crystals cut its damage taken by 70% until broken | Fletcher's Quill |
-| Witch Coven | 3 Witches | 3x80 | Roles rotate every 15s (healer green, curser purple, bomber red); kill the healer first | Coven Brew Base |
+| Witch Coven | 3 Witches | 3x80 | Three hedge witches (a cauldron, a bottle belt, a pot). Roles rotate every 15s, shown by their brew's colour (healer green, curser purple, bomber red); the curse marks the ground for 1s and only catches players still on it; a witch's cast fizzles if she falls or loses the role first; kill the healer first | Coven Brew Base |
 | Mire Monarch (was the Gelatinous Sovereign; a giant toad once its model ships) | Slime (size 7) | 600 | Ringed leap-slam with a jumpable shockwave; a laned tongue lash that pulls the first player in it to its mouth (step aside); at 66% three shards crawl to the altar and heal it 6% each; at 33% it shrinks, speeds up and leaves acid puddles | Sovereign Gel |
 
 **Brood Egg** (15% per contributor per Brood Mother win): placed, it's a sniffer egg that never hatches and spins 1 String

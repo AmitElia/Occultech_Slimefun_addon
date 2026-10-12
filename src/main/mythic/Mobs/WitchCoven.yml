@@ -1,0 +1,81 @@
+# The Witch Coven's three bodies: one hedge witch per vessel, each with her own model on a witch carrier.
+# Occultech still decides every heal, curse and throw, deals all damage (WitchCoven.java), turns the roles and
+# hands out loot. Health is the solo value; Occultech multiplies it for the group after the spawn.
+
+# the cauldron witch
+OCCULTECH_WITCH_COVEN_CAULDRON:
+  Type: WITCH
+  Display: '&5Coven Witch'
+  Health: 80
+  Damage: 4
+  Armor: 0
+  Options:
+    # Occultech rebuilds the coven from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    MovementSpeed: 0.25
+    KnockbackResistance: 0.4
+    FollowRange: 24
+    AlwaysShowName: true
+  Drops: []
+  # idle, walk, spawn and death play by themselves; her attacks, the role swaps, the flinch, cackle and glance
+  # come from WitchCoven.java (Skills/WitchCoven.yml). On death her brew goes spent grey.
+  Skills:
+  - model{m=occultech_witch_coven_cauldron} @self ~onSpawn
+  - bodyrotation{mh=40;mnh=-40;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=WITCH_COVEN_CAULDRON_DEATH} @self ~onDeath
+  - skill{s=WITCH_COVEN_CAULDRON_HOVER} @self ~onTimer:40
+
+# the bottle witch
+OCCULTECH_WITCH_COVEN_BOTTLES:
+  Type: WITCH
+  Display: '&5Coven Witch'
+  Health: 80
+  Damage: 4
+  Armor: 0
+  Options:
+    # Occultech rebuilds the coven from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    MovementSpeed: 0.25
+    KnockbackResistance: 0.4
+    FollowRange: 24
+    AlwaysShowName: true
+  Drops: []
+  # idle, walk, spawn and death play by themselves; her attacks, the role swaps, the flinch, cackle and glance
+  # come from WitchCoven.java (Skills/WitchCoven.yml). On death her brew goes spent grey.
+  Skills:
+  - model{m=occultech_witch_coven_bottles} @self ~onSpawn
+  - bodyrotation{mh=40;mnh=-40;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=WITCH_COVEN_BOTTLES_DEATH} @self ~onDeath
+  - skill{s=WITCH_COVEN_BOTTLES_HOVER} @self ~onTimer:40
+
+# the pot witch
+OCCULTECH_WITCH_COVEN_POT:
+  Type: WITCH
+  Display: '&5Coven Witch'
+  Health: 80
+  Damage: 4
+  Armor: 0
+  Options:
+    # Occultech rebuilds the coven from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    MovementSpeed: 0.25
+    KnockbackResistance: 0.4
+    FollowRange: 24
+    AlwaysShowName: true
+  Drops: []
+  # idle, walk, spawn and death play by themselves; her attacks, the role swaps, the flinch, cackle and glance
+  # come from WitchCoven.java (Skills/WitchCoven.yml). On death her brew goes spent grey.
+  Skills:
+  - model{m=occultech_witch_coven_pot} @self ~onSpawn
+  - bodyrotation{mh=40;mnh=-40;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=WITCH_COVEN_POT_DEATH} @self ~onDeath
+  - skill{s=WITCH_COVEN_POT_HOVER} @self ~onTimer:40

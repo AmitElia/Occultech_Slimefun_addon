@@ -299,6 +299,8 @@ public final class BossFight {
     private final Set<UUID> tainted = new HashSet<>();
 
     private int elapsed;
+    /** The body parts spawned with {@link #spawnBoss(String, Class, Location, Consumer)} (several bodies in one fight). */
+    private final java.util.Set<String> bodyParts = new java.util.LinkedHashSet<>();
     private int lastBossHit;
     private int lastBossDamaged = -1000;
     /** Ticks without a living player in the arena (Session P2: the away timer). */
@@ -342,7 +344,21 @@ public final class BossFight {
     /** Spawns a main boss entity (the fight is won when all of them are dead), scaled for the group size. */
     @Nonnull
     public <T extends LivingEntity> T spawnBoss(Class<T> type, Location at, Consumer<T> setup) {
-        T entity = service.body().spawn(spec.id(), type, at, e -> {
+        return spawnBody(spec.id(), type, at, setup);
+    }
+
+    /**
+     * Spawns a main boss entity with a body of its own, for a fight of several different bodies (the Witch Coven's
+     * three sisters): its Mythic carrier is {@code OCCULTECH_<BOSS>_<PART>} and its model {@code occultech_<boss>_<part>}.
+     */
+    @Nonnull
+    public <T extends LivingEntity> T spawnBoss(String part, Class<T> type, Location at, Consumer<T> setup) {
+        bodyParts.add(part);
+        return spawnBody(spec.id() + "_" + part, type, at, setup);
+    }
+
+    private <T extends LivingEntity> T spawnBody(String bodyId, Class<T> type, Location at, Consumer<T> setup) {
+        T entity = service.body().spawn(bodyId, type, at, e -> {
             prepare(e);
             setup.accept(e);
             scaleHealth(e);
@@ -368,7 +384,12 @@ public final class BossFight {
 
     /** Whether this boss currently uses a Mythic carrier; behaviors use this to avoid overriding its YAML stats. */
     public boolean usesMythicBody() {
-        return service.body().isMythic(spec.id());
+        return service.body().isMythic(spec.id()) || bodyParts.stream().anyMatch(this::usesMythicBody);
+    }
+
+    /** Whether the body {@code part} (see {@link #spawnBoss(String, Class, Location, Consumer)}) is a Mythic carrier. */
+    public boolean usesMythicBody(String part) {
+        return service.body().isMythic(spec.id() + "_" + part);
     }
 
     public boolean carrierMatchesMode() {

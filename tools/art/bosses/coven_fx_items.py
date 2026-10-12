@@ -30,6 +30,8 @@ AXES = "xyz"
 def item_model(name, model, keys, positions, atlas):
     m = blockkit.Model(f"coven_fx_{name}")
     m.part = True
+    # a thrown potion draws its item in the ground context, which the block parent shrinks to a quarter
+    m.display = {"ground": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.9, 0.9, 0.9]}}
     tex = m.texture("atlas", atlas)
     lo = np.min([np.min(c.corners(), 0) for c in model.cubes], 0)
     hi = np.max([np.max(c.corners(), 0) for c in model.cubes], 0)

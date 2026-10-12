@@ -72,7 +72,7 @@ vanilla frog's texture will go on the head at 4x.
 - **Target:** a random player 5-14 blocks away whom the boss can see.
 - **Tell:** a lime lane on the floor, 2 blocks wide, 14 long, pointed at that player and locked for 1.25 s. The
   frog croaks.
-- **Lash:** the tongue shoots down the same lane. The first player in it takes 5 (Tongue, `MELEE`) and is yanked to
+- **Lash:** the tongue shoots down the same lane. The first player in it takes 8 (Tongue, `MELEE`; raised from 5 in session 8 of the Witch Coven, when the self-test graded it below its band) and is yanked to
   about 2 blocks in front of the mouth. This is a capped pull (knockback, never a teleport) into its crush range.
 - **Dodge:** step out of the lane. Jumping does not help, which keeps it different from the shockwave.
 - On the models, the tongue shows as the long lime tongue with a sticky club in the `tongue_34` renders. Vanilla's

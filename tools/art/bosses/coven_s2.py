@@ -117,7 +117,57 @@ def build(vessel, role, pose=None):
     head.box("head", hc, (HW, HH, HW), "skin")
     face(head, hc, HW, HH, hc[2] - HW / 2)
     v2.snap(model)
+    separate(model, vessel, role, bool(pose))
     return model
+
+
+_NUDGES = {}
+
+
+def separate(model, vessel, role, posed):
+    """No two faces may share a plane: they z-fight in game (bosskit.checks.flicker_pairs). For each clash the smaller
+    part moves a fraction of a texel off the plane along the face normal, until nothing clashes (Brood Mother's
+    resolver). The nudges are found once per sister in her rest pose and kept in each cube's own space, so every pose
+    of her gets the same model; sizes don't change, so the texture layout doesn't either."""
+    if vessel not in _NUDGES:
+        _NUDGES[vessel] = {}                                # while resolving, builds get no nudges
+        rest = build(vessel, role) if posed else model
+        nudges = {}
+        _resolve(rest, nudges)                              # moves rest's cubes as it goes
+        _NUDGES[vessel] = nudges
+        if rest is model:
+            return
+    by_name = {c.name: c for c in model.cubes}
+    for name, d in _NUDGES[vessel].items():
+        c = by_name[name]
+        c.frm, c.to, c.origin = [(np.array(v) + d).tolist() for v in (c.frm, c.to, c.origin)]
+
+
+def _resolve(model, nudges):
+    from bosskit.checks import flicker_pairs
+    from bosskit.bbmodel import pivot_matrix
+    by_name = {c.name: c for c in model.cubes}
+    normals = {"north": (0, 0, -1), "south": (0, 0, 1), "west": (-1, 0, 0), "east": (1, 0, 0), "down": (0, -1, 0),
+               "up": (0, 1, 0)}
+    for rounds in range(40):
+        clashes = flicker_pairs(model.cubes)
+        if not clashes:
+            return
+        moved = set()
+        for _, a, face, b, _ in clashes:
+            ca, cb = by_name[a], by_name[b]
+            if ca.name in moved or cb.name in moved:
+                continue
+            size = lambda c: np.prod(np.maximum(np.array(c.to) - np.array(c.frm), 0.5))
+            small = ca if size(ca) <= size(cb) else cb
+            world_n = (ca.group.world_matrix() @ pivot_matrix(ca.origin, ca.rotation))[:3, :3] @ np.array(normals[face], float)
+            local = np.linalg.solve(small.group.world_matrix()[:3, :3], world_n)
+            step = 0.11 + 0.06 * ((sum(map(ord, small.name)) + rounds) % 5)   # uneven steps: no two parts land together
+            d = local * step
+            small.frm, small.to, small.origin = [(np.array(v) + d).tolist() for v in (small.frm, small.to, small.origin)]
+            nudges[small.name] = nudges.get(small.name, np.zeros(3)) + d
+            moved.update((ca.name, cb.name))
+    raise SystemExit(f"faces still share planes: {flicker_pairs(model.cubes)[:5]}")
 
 
 def rim(v, name, y, cz, w, d, t, h):

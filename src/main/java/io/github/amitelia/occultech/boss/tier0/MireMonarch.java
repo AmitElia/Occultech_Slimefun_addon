@@ -39,7 +39,7 @@ public final class MireMonarch extends BossBehavior {
     private static final io.github.amitelia.occultech.boss.Mechanic CRUSH = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Crush", 7, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, false);
     private static final io.github.amitelia.occultech.boss.Mechanic SHOCKWAVE = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Shockwave", 11, io.github.amitelia.occultech.boss.Mechanic.Kind.AREA, true);
     private static final io.github.amitelia.occultech.boss.Mechanic ACID_BURN = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Acid", 2, io.github.amitelia.occultech.boss.Mechanic.Kind.ZONE, false);
-    private static final io.github.amitelia.occultech.boss.Mechanic TONGUE = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Tongue", 5, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, true);
+    private static final io.github.amitelia.occultech.boss.Mechanic TONGUE = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Tongue", 8, io.github.amitelia.occultech.boss.Mechanic.Kind.MELEE, true);
     private static final io.github.amitelia.occultech.boss.Mechanic SHARD = io.github.amitelia.occultech.boss.Mechanic.of("MIRE_MONARCH", "Shard", 4, io.github.amitelia.occultech.boss.Mechanic.Kind.ADD, false);
 
     private static final Color LIME = Color.fromRGB(120, 230, 60);

@@ -937,6 +937,29 @@ final class SelfTest {
                 && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
                 carrier == null ? "no carrier" : "scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue());
         }
+        if ("WITCH_COVEN".equals(bossId) && currentFight.usesMythicBody()
+            && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_witch_coven_cauldron")) {
+            // three sisters, three bodies: each carrier wears its own sister's model, once, with its hitbox
+            java.util.Set<String> worn = new java.util.HashSet<>();
+            boolean each = currentFight.bosses().size() == 3;
+            for (LivingEntity witch : currentFight.bosses()) {
+                int models = 0;
+                for (String sister : List.of("cauldron", "bottles", "pot")) {
+                    String model = "occultech_witch_coven_" + sister;
+                    long n = io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.count(witch, model);
+                    if (n > 0) {
+                        models += (int) n;
+                        worn.add(sister);
+                        each &= io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(witch, model);
+                    }
+                }
+                each &= models == 1;
+            }
+            check("each coven witch wears one sister's model, with its hitbox", each,
+                currentFight.bosses().stream().map(io.github.amitelia.occultech.integration.mythic.BetterModelVisuals::trackerNames).toList().toString());
+            check("the coven's three sisters are three different models", worn.size() == 3, "worn " + worn);
+        }
         check(ContentRegistrar.title(bossId) + " is not scaled up for a solo summon", Math.abs(currentFight.healthMultiplier() - 1.0) < 0.001,
             "multiplier " + currentFight.healthMultiplier());
         check(ContentRegistrar.title(bossId) + " runs 3s without errors", !currentFight.isOver(),
