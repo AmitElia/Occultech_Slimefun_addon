@@ -120,6 +120,7 @@ def rig(name):
     model = Model(name)
     root = uf.bust(model, "MIX", "PIECE")
     torso, head = group(model, "torso"), group(model, "hi_head")
+    root.origin = [0.0, 21.0, 0.5]                          # the root turns (and sinks) at the hips
     for sx in (-1, 1):
         s1.drop_cube(model, f"upper_arm_{sx}")
     for helper in ("chest", "back", "hump"):

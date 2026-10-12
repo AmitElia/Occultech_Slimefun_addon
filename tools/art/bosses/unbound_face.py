@@ -20,6 +20,7 @@ Units are model pixels (16 = one block). The front is -z; his left is -x.
 Run from the repository root: python tools/art/bosses/unbound_face.py
 """
 import json
+import math
 import shutil
 import sys
 from pathlib import Path
@@ -64,7 +65,22 @@ def horn(g, name, points, widths, tilt=0.0, mats=("horn_root", "horn", "horn", "
         ext = widths[i] * 0.45 / n                              # run each piece into the next so the joints close
         a2 = tuple(a[j] - d[j] * ext for j in range(3))
         b2 = tuple(b[j] + d[j] * ext for j in range(3))
-        m1.beam(hg, f"{name}_{i}", a2, b2, widths[i], mats[min(i, len(mats) - 1)])
+        roll = math.degrees(math.atan2(b2[1] - a2[1], b2[0] - a2[0]))
+        roll = roll - 180 if roll > 90 else roll + 180 if roll <= -90 else roll      # a box is the same turned 180
+        length = math.hypot(b2[0] - a2[0], b2[1] - a2[1])
+        hg.box(f"{name}_{i}", tuple((a2[j] + b2[j]) / 2 for j in range(3)), (length, widths[i], widths[i]),
+               mats[min(i, len(mats) - 1)], rotation=(0, 0, round(roll, 3)))
+
+
+def horn_steps(g, name, root, sx, steps, widths, tilt=0.0):
+    """A horn from its root as (angle, length) steps, mirrored by side sx. Angles from BetterModel's free set
+    (0, 22.5, 45) keep the whole horn in one display."""
+    pts = [root]
+    for ang, ln in steps:
+        a = math.radians(ang)
+        x, y, z = pts[-1]
+        pts.append((x + sx * ln * math.cos(a), y + ln * math.sin(a), z))
+    horn(g, name, pts, widths, tilt)
 
 
 def bust(model, face, chest="C1"):
@@ -81,13 +97,13 @@ def bust(model, face, chest="C1"):
     m1.octo(torso, "back", (0, 39, 7.5), (27, 18, 10), "skin", 0.2)
     m1.octo(torso, "hump", (0, 47.5, 6.5), (22, 8, 11), "skin", 0.3)
     for sx in (-1, 1):
-        torso.box(f"delt_{sx}", (sx * 16.5, 45, 0.5), (10, 10, 12), "skin", rotation=(0, 0, sx * -10))
-        torso.box(f"trap_slope_{sx}", (sx * 11.5, 47.5, 2), (8, 4, 10), "skin", rotation=(0, 0, sx * -26))
+        torso.box(f"delt_{sx}", (sx * 16.5, 45, 0.5), (10, 10, 12), "skin", rotation=(0, 0, 0))
+        torso.box(f"trap_slope_{sx}", (sx * 11.5, 47.5, 2), (8, 4, 10), "skin", rotation=(0, 0, sx * -22.5))
         torso.box(f"upper_arm_{sx}", (sx * 18.5, 35, 0), (10, 15, 10.5), "skin_dark", rotation=(0, 0, sx * 6))
-        torso.box(f"pec_line_{sx}", (sx * 5.5, 35.6, -8.6), (9, 1.0, 0.6), "skin_dark", rotation=(0, 0, sx * 6))
+        torso.box(f"pec_line_{sx}", (sx * 5.5, 35.6, -8.6), (9, 1.0, 0.6), "skin_dark")
     # the straps crossing the chest, studded, and the burning chest piece where they cross
     for sx in (-1, 1):
-        a, b = (sx * 13.5, 47, -7.6), (-sx * 8.5, 29, -7.4)
+        a, b = (sx * 13.5, 47, -7.5), (-sx * 8.5, 25, -7.5)      # at 45 degrees: one display
         m1.beam(torso, f"strap_{sx}", a, b, 2.6, "strap")
         for i in range(6):
             t = (i + 0.5) / 6
@@ -125,10 +141,10 @@ def tails(h, hc, hw, y, long=False):
     back = z + hw / 2 + 0.6
     h.box("knot", (x, y, back + 0.6), (2.6, 2.6, 1.6), "cloth_dark")
     n = 9 if long else 5.5
-    h.box("tail_a", (x - 1.2, y - n / 2 - 0.6, back + 1.6), (2.2, n, 0.6), "cloth_dark", rotation=(-24, 0, 8))
-    h.box("tail_b", (x + 1.0, y - n / 2 - 1.4, back + 1.2), (1.8, n * 0.8, 0.6), "cloth_dark", rotation=(-16, 0, -10))
+    h.box("tail_a", (x - 1.2, y - n / 2 - 0.6, back + 1.6), (2.2, n, 0.6), "cloth_dark", rotation=(-22.5, 0, 0))
+    h.box("tail_b", (x + 1.0, y - n / 2 - 1.4, back + 1.2), (1.8, n * 0.8, 0.6), "cloth_dark", rotation=(-22.5, 0, 0))
     if long:
-        h.box("tail_c", (x - 4.5, y - 7, back - 1), (2.0, 10, 0.6), "cloth_dark", rotation=(-8, 30, 18))
+        h.box("tail_c", (x - 4.5, y - 7, back - 1), (2.0, 10, 0.6), "cloth_dark", rotation=(0, 0, 22.5))
 
 
 def face_blindfold(h, hc, hw, hh, f):
@@ -204,11 +220,11 @@ def face_mix(h, hc, hw, hh, f):
     bottom = vanilla_face(h, hc, hw, hh, f, brow=False)
     eye_y = bottom + 6 * K
     for sx in (-1, 1):
-        h.box(f"brow_{sx}", (sx * 2.6, eye_y + 3.4, f - 0.9), (5.6, 2.2, 1.8), "brow", rotation=(0, 0, sx * 14))
+        h.box(f"brow_{sx}", (sx * 2.6, eye_y + 3.4, f - 0.9), (5.6, 2.2, 1.8), "brow", rotation=(0, 0, sx * 22.5))
     h.box("nose_wide", (x, bottom + 2.2, f - 1.2), (3.6, 4.4, 2.4), "nose")
     band(h, hc, hw, eye_y, 4.4, tilt=7)
     tails(h, hc, hw, eye_y, long=True)
-    h.box("rag", (2.6, eye_y - 2.6, f - 0.5), (3.0, 1.8, 0.4), "cloth", rotation=(0, 0, 12))   # a torn flap hanging
+    h.box("rag", (2.6, eye_y - 2.6, f - 0.5), (3.0, 1.8, 0.4), "cloth", rotation=(0, 0, 22.5))   # a torn flap hanging
     h.box("halo", (-2.4 * K, eye_y + 0.1, f - 0.55), (4.2, 2.2, 0.3), "eye_dim")
     h.box("eye", (-2.4 * K, eye_y + 0.1, f - 0.7), (2.6, 0.8, 0.3), "eye")
     h.box("eye_core", (-2.4 * K, eye_y + 0.1, f - 0.85), (0.8, 0.6, 0.2), "eye_hot")
@@ -218,9 +234,8 @@ def face_mix(h, hc, hw, hh, f):
     h.box("ring_b", (0, bottom - 2.9, nz), (4.2, 0.8, 0.8), "iron_lit")
     h.box("boss", (x, y + hh / 2 + 0.6, z + 0.4), (hw + 1.4, 2.4, 6.4), "horn_root")
     for sx in (-1, 1):
-        horn(h, f"horn_{sx}", [(sx * (hw / 2 - 0.5), y + hh / 2 + 0.2, z + 0.4), (sx * (hw / 2 + 5), y + hh / 2 - 1.2, z),
-                               (sx * (hw / 2 + 8.5), y + hh / 2, z - 0.4), (sx * (hw / 2 + 10.5), y + hh / 2 + 4, z - 1.2),
-                               (sx * (hw / 2 + 9.6), y + hh / 2 + 7.4, z - 2)], [5.4, 4.4, 3.2, 2.2], tilt=-8)
+        horn_steps(h, f"horn_{sx}", (sx * (hw / 2 - 0.5), y + hh / 2 + 0.2, z + 0.4), sx,
+                   [(-22.5, 5.6), (0, 3.6), (45, 4.6), (45, 3.0)], [5.4, 4.4, 3.2, 2.2], tilt=-8)
 
 
 # ---- the chest: burning from the inside (take 2) --------------------------------------------------------------------
