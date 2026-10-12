@@ -265,6 +265,12 @@ def main():
                         views=("flat_34", "flat_front", "sil_side", "clay_34"))
     (OUT / "parts.md").write_text("".join(parts), encoding="utf-8")
     (OUT / "stats.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    from PIL import Image
+    a, b = (Image.open(OUT / "hitbox" / f"hitbox_{v}.png") for v in ("front", "side"))
+    both = Image.new("RGB", (a.width + b.width + 10, a.height), sheet.BG)
+    both.paste(a, (0, 0))
+    both.paste(b, (a.width + 10, 0))
+    both.save(OUT / "hitbox.png")
 
 
 if __name__ == "__main__":
