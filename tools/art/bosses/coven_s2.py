@@ -42,6 +42,20 @@ ARM_LEN = 14
 SISTERS = [("cauldron", "green", "the cauldron"), ("bottles", "purple", "the bottles"), ("pot", "red", "the pot")]
 
 
+def regroup(parent, name, pred):
+    """Move the cubes of parent that match pred into a new child bone, pivoting at their centre: the brew in a bottle
+    gets a bone of its own, so the fight can tint it without tinting the glass, cork and strap."""
+    cubes = [c for c in parent.children if not hasattr(c, "children") and pred(c)]
+    lo = np.min([c.frm for c in cubes], 0)
+    hi = np.max([c.to for c in cubes], 0)
+    g = parent.group(name, ((lo + hi) / 2).tolist())
+    for c in cubes:
+        parent.children.remove(c)
+        g.children.append(c)
+        c.group = g
+    return g
+
+
 def chamfered(g, name, c, size, mat, cham):
     """A box with its four long (front-to-back) edges cut at 45 degrees, its cubes put straight on g (no extra bone):
     a cross of two boxes and four diagonal plates filling the notches."""
@@ -73,6 +87,7 @@ def arm(torso, side, rot, vessel, role):
         # the bottle comes out of the sleeve, its cork pointing away from it (upward when the sleeve is raised)
         held = a.group("bottle_held", (sx, end - 1, -0.5), (180, 0, 0))
         bottle(held, "bottle_held_body", (sx, end + 1.75, -0.5), role, 1.1)      # its base in the cuff
+        regroup(held, "glow_brew_held", lambda c: c.mat.startswith("glow_"))
     return a
 
 
@@ -159,6 +174,7 @@ def bottles(torso, v, role):
     v.box("buckle", (0, 29, fz - 0.5), (3, 3, 1), "buckle", rotation=(0, 0, -38))
     for i, t in enumerate((-0.55, 0.0, 0.55)):
         bottle(v, f"bottle_{i}", (8 * t, 28 - 9.5 * t, fz - 3), role, 1.05, rot=(0, 0, -10 + i * 8))
+    regroup(v, "glow_brew", lambda c: c.mat.startswith("glow_"))
 
 
 def pot(torso, v, role):

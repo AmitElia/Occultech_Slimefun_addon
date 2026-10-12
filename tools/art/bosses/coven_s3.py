@@ -29,7 +29,8 @@ from bosses import coven_s2 as s2, volley_crone_s2 as v2, volley_crone_s3 as v3 
 OUT = ROOT / "docs/art/bosses/witch_coven/overhaul/s3_rig"
 SERVER_MODELS = ROOT / "run/plugins/BetterModel/models"
 GLOWING = ("glow_", "hot_", "steam_")
-INTENDED_TAGS = {"h_head": {"h"}, "glow_brew": {"glow"}, "glow_cast": {"glow"}, "ob_hitbox": {"ob"}}
+INTENDED_TAGS = {"h_head": {"h"}, "glow_brew": {"glow"}, "glow_brew_held": {"glow"}, "glow_cast": {"glow"},
+                 "ob_hitbox": {"ob"}}
 
 
 def model_id(vessel):

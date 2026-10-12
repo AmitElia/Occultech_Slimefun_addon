@@ -5777,6 +5777,27 @@
    "autouv": 0
   },
   {
+   "name": "glow_brew",
+   "origin": [
+    0.0,
+    28.0,
+    -8.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "color": 0,
+   "uuid": "8dc7f866-0401-524b-9eb5-6129318c0ab8",
+   "export": true,
+   "mirror_uv": false,
+   "isOpen": false,
+   "locked": false,
+   "visibility": true,
+   "autouv": 0
+  },
+  {
    "name": "arm_right",
    "origin": [
     9.5,
@@ -5811,6 +5832,27 @@
    ],
    "color": 0,
    "uuid": "b140648e-2521-5a2e-a729-ae928fdabc6f",
+   "export": true,
+   "mirror_uv": false,
+   "isOpen": false,
+   "locked": false,
+   "visibility": true,
+   "autouv": 0
+  },
+  {
+   "name": "glow_brew_held",
+   "origin": [
+    9.5,
+    22.75,
+    -0.5
+   ],
+   "rotation": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "color": 0,
+   "uuid": "c2bfb050-33b9-514c-926b-3e5029c7c790",
    "export": true,
    "mirror_uv": false,
    "isOpen": false,
@@ -6082,18 +6124,41 @@
         "4438c00e-2ee1-5c24-a130-1f06b979483f",
         "4d23e482-0411-5e24-bda0-ca134525e1a2",
         "e70fd3d1-083a-5771-9f27-ded1573d9ba9",
-        "725bd2a6-7fa5-5430-b2d9-aab91cb9f7b8",
         "3f0c06ab-943a-5006-81fe-ba5e0a59933a",
         "b3ee6852-843e-50f9-a1ab-84a1a659bb4d",
         "fb0749f6-41fa-573a-be7e-8656a9bdf951",
-        "364deb63-a114-5c66-9e2c-d5fe7a2413d0",
         "f639b0c4-a8ed-54f3-83c7-e3564306f66e",
         "a6896fa0-53b1-5df2-a93d-80906fb839fd",
         "372d64d3-e1df-5e61-b84a-99c24ddb2b8a",
-        "1a232f26-6c81-575c-97da-e6f43250c80c",
         "6a48b4dd-f644-5fad-bbad-b2766052a762",
         "222b4902-4509-5167-a441-2bff3e30bf1f",
-        "e52dec8e-00f4-540b-a824-c37136b75e6c"
+        "e52dec8e-00f4-540b-a824-c37136b75e6c",
+        {
+         "name": "glow_brew",
+         "origin": [
+          0.0,
+          28.0,
+          -8.5
+         ],
+         "rotation": [
+          0.0,
+          0.0,
+          0.0
+         ],
+         "color": 0,
+         "uuid": "8dc7f866-0401-524b-9eb5-6129318c0ab8",
+         "export": true,
+         "mirror_uv": false,
+         "isOpen": false,
+         "locked": false,
+         "visibility": true,
+         "autouv": 0,
+         "children": [
+          "725bd2a6-7fa5-5430-b2d9-aab91cb9f7b8",
+          "364deb63-a114-5c66-9e2c-d5fe7a2413d0",
+          "1a232f26-6c81-575c-97da-e6f43250c80c"
+         ]
+        }
        ]
       },
       {
@@ -6141,10 +6206,33 @@
          "visibility": true,
          "autouv": 0,
          "children": [
-          "847308b7-9447-581b-be5e-4ff81e73507b",
           "6c036228-8aa5-573e-aa75-df94836f730c",
           "ce6f6eff-d2cd-552c-8df5-bc85177b0b59",
-          "85181eb3-d866-5524-b470-c54d54782ca2"
+          "85181eb3-d866-5524-b470-c54d54782ca2",
+          {
+           "name": "glow_brew_held",
+           "origin": [
+            9.5,
+            22.75,
+            -0.5
+           ],
+           "rotation": [
+            0.0,
+            0.0,
+            0.0
+           ],
+           "color": 0,
+           "uuid": "c2bfb050-33b9-514c-926b-3e5029c7c790",
+           "export": true,
+           "mirror_uv": false,
+           "isOpen": false,
+           "locked": false,
+           "visibility": true,
+           "autouv": 0,
+           "children": [
+            "847308b7-9447-581b-be5e-4ff81e73507b"
+           ]
+          }
          ]
         }
        ]

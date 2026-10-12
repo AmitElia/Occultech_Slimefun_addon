@@ -38,7 +38,9 @@ This makes the approved design lock ([../s2_design](../s2_design/README.md)) rea
   - `glow_brew` and `glow_cast` are drawn full-bright;
   - `ob_hitbox` is the invisible hitbox.
 - **Drawing cost:** 11-12 bones with cubes per sister (62-91 cubes), drawn as **15, 18 and 14 display entities**: 47
-  for the coven.
+  for the coven. (Session 5 gave the bottle witch's liquid two glow bones of its own, so the role tint can colour it
+  alone: 15, 22 and 14, 51 for the coven. Her `bottle_held` bone now holds only the glass and cork, so its pivot,
+  still at the cuff where the bottle swings, sits a few texels from its own cubes.)
   - That's more than session 2's estimate of 37: a cube turned on two axes needs a display of its own.
   - Brood Mother alone draws 71, Volley 56.
 - **Load test:** on the second test server, BetterModel loaded the three rigs with the shipped models and no

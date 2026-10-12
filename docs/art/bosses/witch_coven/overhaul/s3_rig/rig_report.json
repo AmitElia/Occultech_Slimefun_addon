@@ -44,12 +44,20 @@
     ]
   },
   "bottles": {
-    "bones": 13,
-    "bones_with_cubes": 11,
+    "bones": 15,
+    "bones_with_cubes": 13,
     "cubes": 62,
-    "displays": 18,
-    "pivots_to_check": [],
+    "displays": 22,
+    "pivots_to_check": [
+      "bottle_held"
+    ],
     "tags": {
+      "glow_brew": [
+        "glow"
+      ],
+      "glow_brew_held": [
+        "glow"
+      ],
       "h_head": [
         "h"
       ],
@@ -60,11 +68,13 @@
     "unintended_tags": {},
     "displays_per_bone": {
       "vessel": 5,
+      "glow_brew": 3,
       "h_head": 3,
       "robe_lower": 2,
       "torso": 1,
       "arm_right": 1,
       "bottle_held": 1,
+      "glow_brew_held": 1,
       "arm_left": 1,
       "hat": 1,
       "hat_t2": 1,
