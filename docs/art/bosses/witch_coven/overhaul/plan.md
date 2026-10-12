@@ -99,3 +99,32 @@ manageable.
 - **Faces:** the vanilla witch face, made more interesting.
 - **Height:** larger than a player, so they loom over you.
 - **Movement:** they hover low.
+
+## Effects and deeper attacks (agreed 2026-10-11, after session 7)
+
+**The user's decisions:**
+1. **A different throwable per witch:**
+   - the cauldron witch hurls a **glob of brew** scooped over her shoulder;
+   - the bottle witch throws a **potion bottle** that tumbles and shatters;
+   - the pot witch heaves out a **wave of brew** from the pot.
+
+   The real splash potion stays the invisible carrier, so the hit logic doesn't change. Each throwable is a small
+   model painted in neutral greys like the brew, so it takes the role tint.
+2. **Particles:** vanilla's potion particles tinted to the role, combined with a few custom animated sprites in the
+   pack (a bubble pop, a brew droplet, a glass shard).
+3. **The bottle witch's belt always stays full.** On a throw, the held bottle hides on release and her sleeve draws
+   a fresh one from the belt.
+4. **Personality clips:** a hit flinch, a cackle, and the survivors glancing at a fallen sister.
+
+**The work, in order (each with a review gate):**
+- **E1. Models:** the three throwables and the dropped-hat prop for the death, painted and tinted.
+- **E2. Clips:**
+  - heal, curse and throw reworked per sister: anticipation, contact, follow-through, sloshing brew, the hat and
+    robe swinging;
+  - the bottle witch's reach to her belt;
+  - the flinch, the cackle and the glance.
+- **E3. Particles and effects:**
+  - the custom sprites;
+  - the Mythic cosmetic skills: the heal stream, the curse spill and fog, the swap ripple, each throwable's trail
+    and impact, the ambient bubbles and steam, the hem dust, and the death spill.
+- **Then session 8:** ship it all, with the fight's timing, the re-tint, and the dodgeable curse.
