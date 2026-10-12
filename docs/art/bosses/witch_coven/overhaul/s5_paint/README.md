@@ -53,7 +53,9 @@ of 4-6, so detail can be subtle rather than speckled.
 and painted into the brew's surface. Popping rings are painted into the surface too. As thin bars of geometry they
 drew bright lines across the brew, so those cubes are gone.
 
-**Rope and strap:** the rope is three twisted strands; the strap is leather with stitches along both edges.
+**Rope and strap:** the rope is three twisted strands; the strap is leather with stitches along both edges. After
+the user's review the cauldron's two ropes became full loops round the whole cauldron (they used to cut through it, so
+only its back showed them).
 
 **Colour harmony:** the role colours are now potion tones, a mossy green, a heather purple and a brick red: (150,
 214, 108), (176, 124, 212) and (220, 112, 88), multiplied into the neutral brew. Take 1's near-neon colours fought

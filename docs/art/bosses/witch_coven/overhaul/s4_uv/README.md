@@ -5,9 +5,9 @@ On top of the session 3 rigs ([../s3_rig](../s3_rig/README.md)):
   Every visible face is at one texel per model unit (16 per block, the vanilla density), with a 1-pixel border on
   each island against seams.
 - **Shared where truly identical:** the body, head, hat and sleeves are the same cubes on all three sisters, so they
-  use the same islands; a left sleeve shares its right twin's. The vessels get islands of their own. That's 802
-  islands for the coven: 501, 344 and 427 used by the cauldron, the bottles and the pot.
-- **Buried faces left out:** 29, 12 and 13 faces that sit inside another cube of the same bone get no texture and are
+  use the same islands; a left sleeve shares its right twin's. The vessels get islands of their own. That's 774
+  islands for the coven: 514, 347 and 383 used by the cauldron, the bottles and the pot.
+- **Buried faces left out:** 16, 9 and 9 faces that sit inside another cube of the same bone get no texture and are
   never drawn.
 - **A flat colour per material zone, tied to vanilla's witch:**
   - a purple robe under a brown coat and sleeves;
@@ -58,6 +58,9 @@ Every sister takes every role, so the brew must switch between green, purple and
 each vessel's brew is painted in one role colour for review. Session 6 picks how it changes in game. Either the brew
 is painted neutral and tinted per role (if BetterModel can tint one bone), or each vessel carries three brew bones,
 one per colour, and the fight shows the right one. The second always works.
+
+(Counts after the session 5 fixes: the popping-ring bars were replaced by painted rings, and the cauldron's ropes
+now wrap the whole cauldron.)
 
 Regenerate with `python tools/art/bosses/coven_s4.py`. It also copies the review rigs to your server.
 

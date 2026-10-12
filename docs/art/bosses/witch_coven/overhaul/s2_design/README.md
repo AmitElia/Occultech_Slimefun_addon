@@ -12,7 +12,8 @@ sisters:
 - a ragged hem hanging as she hovers.
 
 They differ only by their vessels:
-- **the cauldron:** vanilla's cauldron grown to 24 x 20 x 22, roped to her back;
+- **the cauldron:** vanilla's cauldron grown to 24 x 20 x 22, roped to her back (each rope a loop round her middle and
+  the whole cauldron: across her chest, along her sides, down the cauldron's sides through its handles, across its back);
 - **the bottles:** a shoulder belt of three bottles and one in her sleeve;
 - **the pot:** an iron pot held at her waist in both sleeves.
 
@@ -48,7 +49,7 @@ and hat; renamed to the `hi` tag at ship time, as the other bosses' heads were),
 - **The pot witch** has two vessel bones: `pot_carry` swings from the shoulders (to lift the pot for the throw), and
   `vessel` tips about the pot itself (to pour).
 
-**Counts:** 62-88 cubes and 12-13 bones with geometry per witch, still about 37 displays for the coven, since the new brew detail shares its bones (Brood Mother is
+**Counts:** 62-91 cubes and 12-13 bones with geometry per witch, still about 37 displays for the coven, since the new brew detail shares its bones (Brood Mother is
 72). Full list: [parts.md](parts.md).
 
 ## Key poses

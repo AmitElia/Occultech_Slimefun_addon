@@ -158,11 +158,17 @@ def cauldron(torso, v, role):
     # the brew fills the whole mouth inside the rim, a texel under its top
     g = v.group("glow_brew", (0, 36, cz))
     brew(g, 36, cz, 22, 20, role, drips=((-7, -12.5, 7), (5, 12.5, 5), (13.5, 3, 6)))
-    for i, y in enumerate((23, 30)):                       # two ropes round her middle and the cauldron
+    # two ropes, each a loop round her middle and the whole cauldron: across her chest, along her sides, out along
+    # the cauldron's front edge, down both its sides (through its handles), across its back
+    front, back = cz - 11, cz + 11                         # the cauldron's front and back faces
+    for i, y in enumerate((23, 30)):
         torso.box(f"rope_front_{i}", (0, y, -RD / 2 - 0.5), (RW + 2, 1, 1), "rope")
         for sd in (-1, 1):
-            torso.box(f"rope_side_{i}_{sd}", (sd * (RW / 2 + 0.5), y, cz / 2 - 0.5), (1, 1, cz + RD / 2 + 3), "rope")
-        torso.box(f"rope_back_{i}", (0, y, cz + 11.5), (25, 1, 1), "rope")
+            torso.box(f"rope_side_{i}_{sd}", (sd * (RW / 2 + 0.5), y, 0), (1, 1, RD + 2), "rope")
+            torso.box(f"rope_cross_{i}_{sd}", (sd * (RW / 2 + 12.5) / 2 + sd * 0.5, y, front - 0.5),
+                      (13 - RW / 2, 1, 1), "rope")
+            torso.box(f"rope_flank_{i}_{sd}", (sd * 12.5, y, cz), (1, 1, back - front + 2), "rope")
+        torso.box(f"rope_back_{i}", (0, y, back + 0.5), (26, 1, 1), "rope")
 
 
 def bottles(torso, v, role):
