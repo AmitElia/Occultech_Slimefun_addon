@@ -42,7 +42,7 @@ bone that holds other parts.
 
 **Counts:** 122 cubes and 21 bones with geometry, so about 21 displays. Full list: [parts.md](parts.md).
 
-**How the cleaver is held:** its edge faces where the swing carries it in every pose:
+**How the cleaver is held** (flipped after the user's review: the first take led the sweep with the spine): its edge faces where the swing carries it in every pose:
 - up while he drags it;
 - up behind his shoulder in the wind-up;
 - down and forward at the end of the sweep.

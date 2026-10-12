@@ -89,7 +89,10 @@ def swing_edge(handle):
     """The edge faces where the overhead chop carries it: in his front-back plane, at right angles to the handle,
     turning from behind his shoulder over the top to the front and down (front is -z)."""
     hx, hy, hz = handle
-    return (0.0, -hz, hy)          # (forward, up) = (-hz, hy) turned a quarter forward: up becomes forward
+    # in his (forward, up) plane the handle points (f, u) = (-hz, hy); the chop turns it up -> forward -> down, so
+    # the blade moves (u, -f): forward = hy, up = hz, which is (y, z) = (hz, -hy) in model space (front is -z).
+    # (Session 2's first take had this sign backwards: the spine led the sweep.)
+    return (0.0, hz, -hy)
 
 
 def translate(model, d):
