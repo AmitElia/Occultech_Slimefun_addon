@@ -10,7 +10,9 @@ The direction approved after step 3 (s3_set, 2026-10-11) is rebuilt here as a ri
 - lists every part.
 
 A sleeve's rest pose hangs straight down from the shoulder. Its rotation swings it: +x forward, and +z outward for
-the right sleeve (-z for the left).
+the right sleeve (-z for the left) while it hangs low. The x turn is applied first, so once a sleeve points up the z
+turn swings it the other way: a raised right sleeve goes outward with -z (the throw used +z and swung the bottle
+through the face).
 
 Run from the repository root: python tools/art/bosses/coven_s2.py
 """
@@ -30,7 +32,8 @@ from bosses.coven_study import K, hat, ragged_hem  # noqa: E402
 from bosses.coven_set import PALETTE as SET_PALETTE, bottle, face  # noqa: E402
 
 OUT = ROOT / "docs/art/bosses/witch_coven/overhaul/s2_design"
-PALETTE = dict(SET_PALETTE, hitbox=(220, 60, 60))
+PALETTE = dict(SET_PALETTE, hitbox=(220, 60, 60),
+               hot_green=(210, 255, 170), hot_purple=(232, 190, 255), hot_red=(255, 196, 150))
 RW, RD = 13, 10                   # the villager robe (8x20x6, inflated 0.5) at 1.45x, in whole texels
 HW, HH = 12, 14                   # the villager head (8x10x8) at 1.45x, in whole texels
 WAIST, SHOULDER_Y = (0, 21, 0), 35
@@ -73,7 +76,7 @@ def build(vessel, role, pose=None):
     torso.box("collar", (0, 37.5, -0.5), (RW - 2, 2, RD - 1), "robe_dark")
     if vessel == "pot":
         # two bones: the carry swings from the shoulders (lifting it for the throw), the vessel tips about the pot
-        carry = torso.group("pot_carry", (0, SHOULDER_Y, 0), (pose.get("carry", 0), 0, 0))
+        carry = torso.group("pot_carry", (0, SHOULDER_Y, 0), pose.get("carry", (0, 0, 0)))
         v = carry.group("vessel", (0, 18.5, -14), (pose.get("pot", 0), 0, 0))
     else:
         v = torso.group("vessel", VESSEL_PIVOT[vessel])
@@ -88,6 +91,26 @@ def build(vessel, role, pose=None):
     return model
 
 
+def brew(g, y, cz, w, d, role, drips):
+    """A bubbling brew: a surface a texel under the lip, domed in the middle, bubbles of several sizes breaking out of
+    it, two popping rings, glowing drips over the lip, a few wisps of steam. All on the `glow_brew` bone."""
+    glow, hot, steam = f"glow_{role}", f"hot_{role}", f"steam_{role}"
+    g.box("brew", (0, y, cz), (w, 1, d), glow)
+    g.box("brew_dome", (0, y + 1, cz + 1), (w - 8, 1, d - 8), glow)
+    for i, (x, z, s) in enumerate(((-w * 0.28, -d * 0.2, 3), (w * 0.22, d * 0.18, 2), (w * 0.05, -d * 0.3, 2),
+                                   (-w * 0.12, d * 0.3, 1), (w * 0.34, -d * 0.05, 1))):
+        g.box(f"bubble_{i}", (x, y + 0.5 + s / 2 + (i % 2), cz + z), (s, s, s), hot)
+    for i, (x, z, r) in enumerate(((w * 0.18, -d * 0.22, 5), (-w * 0.25, d * 0.12, 4))):     # popping rings
+        for a, (dx, dz, sx, sz) in enumerate(((0, -r / 2, r, 1), (0, r / 2, r, 1), (-r / 2, 0, 1, r), (r / 2, 0, 1, r))):
+            g.box(f"ring_{i}_{a}", (x + dx, y + 1, cz + z + dz), (sx, 1, sz), hot)
+    for i, (x, z, ln) in enumerate(drips):                                                  # spilling over the lip
+        g.box(f"drip_{i}", (x, y - ln / 2 - 1, cz + z), (1, ln, 1), glow)
+        g.box(f"drip_{i}_top", (x, y + 0.5, cz + z - (1 if z < 0 else -1)), (2, 1, 2), glow)
+    for i, (x, z) in enumerate(((-w * 0.22, -d * 0.1), (w * 0.2, d * 0.15))):             # steam puffs rising
+        for k, (dy, s, dx) in enumerate(((4, 3, 0), (8, 2, 1), (11, 1, 2))):
+            g.box(f"steam_{i}_{k}", (x + dx * (1 if i else -1), y + dy, cz + z), (s, s, s), steam)
+
+
 def cauldron(torso, v, role):
     cz = RD / 2 + 12
     v.box("cauldron", (0, 25, cz), (24, 20, 22), "iron")
@@ -97,10 +120,8 @@ def cauldron(torso, v, role):
         v.box(f"cauldron_ear_{sx}", (sx * 12.5, 30, cz), (2, 4, 6), "iron_dark")
         for sz in (-1, 1):
             v.box(f"cauldron_leg_{sx}{sz}", (sx * 9.5, 13.5, cz + sz * 8.5), (4, 3, 4), "iron_dark")
-    g = v.group("glow_brew", (0, 36.5, cz))
-    g.box("brew", (0, 36.5, cz), (21, 1, 19), f"glow_{role}")
-    for i, (x, h, lean) in enumerate(((-4, 5, 10), (3, 7, -8), (8, 4, 12))):
-        g.box(f"steam_{i}", (x, 37 + h / 2, cz + (i - 1) * 4), (1, h, 1), f"steam_{role}", rotation=(0, 0, lean))
+    g = v.group("glow_brew", (0, 36, cz))
+    brew(g, 36, cz, 21, 19, role, drips=((-7, -12.5, 7), (5, 12.5, 5), (13.5, 3, 6)))
     for i, y in enumerate((23, 30)):                       # two ropes round her middle and the cauldron
         torso.box(f"rope_front_{i}", (0, y, -RD / 2 - 0.5), (RW + 2, 1, 1), "rope")
         for sd in (-1, 1):
@@ -113,8 +134,8 @@ def bottles(torso, v, role):
     v.box("strap_front", (0, 29, fz), (2, 22, 1), "strap", rotation=(0, 0, -38))
     v.box("strap_back", (0, 29, RD / 2 + 0.5), (2, 22, 1), "strap", rotation=(0, 0, 38))
     v.box("buckle", (0, 29, fz - 0.5), (3, 3, 1), "buckle", rotation=(0, 0, -38))
-    for i, t in enumerate((-0.62, -0.2, 0.22, 0.64)):
-        bottle(v, f"bottle_{i}", (8 * t, 28 - 9.5 * t, fz - 3), role, 1.0, rot=(0, 0, -12 + i * 6))
+    for i, t in enumerate((-0.55, 0.0, 0.55)):
+        bottle(v, f"bottle_{i}", (8 * t, 28 - 9.5 * t, fz - 3), role, 1.05, rot=(0, 0, -10 + i * 8))
 
 
 def pot(torso, v, role):
@@ -125,10 +146,8 @@ def pot(torso, v, role):
     v.box("pot_base", (0, 13.5, pz), (10, 2, 8), "iron_dark")
     for sd in (-1, 1):
         v.box(f"pot_handle_{sd}", (sd * 8, 21.5, pz), (2, 2, 5), "iron_dark")
-    g = v.group("glow_brew", (0, 24.5, pz))
-    g.box("pot_brew", (0, 24.5, pz), (12, 1, 10), f"glow_{role}")
-    for i, (x, h, lean) in enumerate(((-3, 4, 10), (2, 6, -8))):
-        g.box(f"steam_{i}", (x, 25 + h / 2, pz + (i - 0.5) * 3), (1, h, 1), f"steam_{role}", rotation=(0, 0, lean))
+    g = v.group("glow_brew", (0, 24, pz))
+    brew(g, 24, pz, 12, 10, role, drips=((-3, -7, 5), (4, -7, 3)))
 
 
 VESSEL_BUILD = {"cauldron": cauldron, "bottles": bottles, "pot": pot}
@@ -140,25 +159,25 @@ REST = {"cauldron": ((72, 0, 6), (18, 0, -6)), "bottles": ((105, 0, 10), (16, 0,
 POSES = {
     "idle": ("idle", {}),
     "rotation": ("the role rotation: she strikes her vessel", {
-        "cauldron": {"right": (-150, 0, 10), "head": 6},
+        "cauldron": {"right": (-150, 0, -16), "head": 6},
         "bottles": {"right": (55, 0, -42), "left": (55, 0, 30)},
         "pot": {"right": (88, 0, -20), "pot": -8}}),
     "heal": ("heal: brew poured towards her sister", {
         "cauldron": {"right": (70, 0, 75), "left": (40, 0, -40)},
-        "bottles": {"right": (165, 0, 25), "head": 10},
-        "pot": {"carry": 18, "pot": -40, "right": (80, 0, -12), "left": (80, 0, 12), "torso": -14}}),
+        "bottles": {"right": (160, 0, -38), "head": 10},
+        "pot": {"carry": (18, 0, 0), "pot": -40, "right": (80, 0, -12), "left": (80, 0, 12), "torso": -14}}),
     "curse": ("curse: cast down onto the marked floor", {
         "cauldron": {"torso": -26, "right": (38, 0, 4), "left": (38, 0, -4), "head": -10},
         "bottles": {"torso": -22, "right": (40, 0, 4), "head": -10},
-        "pot": {"torso": -24, "carry": 10, "pot": -80, "right": (72, 0, -12), "left": (72, 0, 12), "head": -10}}),
-    "throw": ("the throw (bomber): wound up overhead", {
-        "cauldron": {"torso": -2, "right": (172, 0, 34), "head": 8},
-        "bottles": {"torso": -2, "right": (172, 0, 34), "head": 8},
-        "pot": {"torso": 0, "carry": 118, "right": (150, 0, -14), "left": (150, 0, 14), "head": 12}}),
+        "pot": {"torso": -24, "carry": (10, 0, 0), "pot": -80, "right": (72, 0, -12), "left": (72, 0, 12), "head": -10}}),
+    "throw": ("the throw (bomber): wound up to hurl (the pot heaved up beside her head)", {
+        "cauldron": {"torso": -2, "right": (176, 0, -42), "head": 8},
+        "bottles": {"torso": -2, "right": (176, 0, -42), "head": 8},
+        "pot": {"torso": -4, "carry": (70, -75, 0), "right": (110, -53, 0), "left": (100, -75, 0), "head": 6}}),
     "death": ("death: she slumps", {
         "cauldron": {"torso": -52, "head": -28, "right": (8, 0, 4), "left": (8, 0, -4)},
         "bottles": {"torso": -52, "head": -28, "right": (8, 0, 4), "left": (8, 0, -4)},
-        "pot": {"torso": -52, "head": -28, "right": (14, 0, 4), "left": (14, 0, -4), "carry": -24, "pot": 28}}),
+        "pot": {"torso": -52, "head": -28, "right": (14, 0, 4), "left": (14, 0, -4), "carry": (-24, 0, 0), "pot": 28}}),
 }
 
 
