@@ -1,5 +1,7 @@
 # Witch Coven redesign, session 2: design lock
 
+**Approved by the user on 2026-10-11**, after the last fix: the cauldron's brew now fills its whole mouth.
+
 The direction approved after the set ([../s3_set](../s3_set/README.md)) is rebuilt as a rig, one body for all three
 sisters:
 - the face: F1's eyes, F2's drooping brow, F3's long nose with its mole;
@@ -18,7 +20,8 @@ They differ only by their vessels:
 
 ## The brew
 
-Both the cauldron and the pot bubble. The brew sits a texel under the lip and is domed in the middle. Bubbles of
+Both the cauldron and the pot bubble. Each vessel's lip is an open iron rim (2 texels on the cauldron), and the brew
+fills the whole mouth inside it, a texel under the rim's top, domed in the middle. Bubbles of
 three sizes break out of it, two popping rings sit on its surface, and glowing drips run over the lip and down the
 side. Small puffs of steam rise, shrinking as they go. All of it is on the `glow_brew` bone, so it glows in game and
 changes colour with the role.

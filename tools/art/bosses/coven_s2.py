@@ -91,6 +91,14 @@ def build(vessel, role, pose=None):
     return model
 
 
+def rim(v, name, y, cz, w, d, t, h):
+    """A lip round the vessel's mouth: four bars t texels thick, open in the middle so the brew fills the mouth."""
+    v.box(f"{name}_n", (0, y, cz - d / 2 + t / 2), (w, h, t), "iron_dark")
+    v.box(f"{name}_s", (0, y, cz + d / 2 - t / 2), (w, h, t), "iron_dark")
+    v.box(f"{name}_w", (-w / 2 + t / 2, y, cz), (t, h, d - 2 * t), "iron_dark")
+    v.box(f"{name}_e", (w / 2 - t / 2, y, cz), (t, h, d - 2 * t), "iron_dark")
+
+
 def brew(g, y, cz, w, d, role, drips):
     """A bubbling brew: a surface a texel under the lip, domed in the middle, bubbles of several sizes breaking out of
     it, two popping rings, glowing drips over the lip, a few wisps of steam. All on the `glow_brew` bone."""
@@ -114,14 +122,15 @@ def brew(g, y, cz, w, d, role, drips):
 def cauldron(torso, v, role):
     cz = RD / 2 + 12
     v.box("cauldron", (0, 25, cz), (24, 20, 22), "iron")
-    v.box("cauldron_lip", (0, 35.5, cz), (26, 3, 24), "iron_dark")
+    rim(v, "cauldron_lip", 35.5, cz, 26, 24, 2, 3)
     v.box("cauldron_band", (0, 21, cz), (25, 2, 23), "iron_dark")
     for sx in (-1, 1):
         v.box(f"cauldron_ear_{sx}", (sx * 12.5, 30, cz), (2, 4, 6), "iron_dark")
         for sz in (-1, 1):
             v.box(f"cauldron_leg_{sx}{sz}", (sx * 9.5, 13.5, cz + sz * 8.5), (4, 3, 4), "iron_dark")
+    # the brew fills the whole mouth inside the rim, a texel under its top
     g = v.group("glow_brew", (0, 36, cz))
-    brew(g, 36, cz, 21, 19, role, drips=((-7, -12.5, 7), (5, 12.5, 5), (13.5, 3, 6)))
+    brew(g, 36, cz, 22, 20, role, drips=((-7, -12.5, 7), (5, 12.5, 5), (13.5, 3, 6)))
     for i, y in enumerate((23, 30)):                       # two ropes round her middle and the cauldron
         torso.box(f"rope_front_{i}", (0, y, -RD / 2 - 0.5), (RW + 2, 1, 1), "rope")
         for sd in (-1, 1):
@@ -142,12 +151,12 @@ def pot(torso, v, role):
     """The pot, held at her waist in both sleeves."""
     pz = -14
     v.box("pot", (0, 18.5, pz), (14, 9, 12), "iron")
-    v.box("pot_lip", (0, 23.5, pz), (15, 2, 13), "iron_dark")
+    rim(v, "pot_lip", 23.5, pz, 15, 13, 1.5, 2)
     v.box("pot_base", (0, 13.5, pz), (10, 2, 8), "iron_dark")
     for sd in (-1, 1):
         v.box(f"pot_handle_{sd}", (sd * 8, 21.5, pz), (2, 2, 5), "iron_dark")
     g = v.group("glow_brew", (0, 24, pz))
-    brew(g, 24, pz, 12, 10, role, drips=((-3, -7, 5), (4, -7, 3)))
+    brew(g, 23.5, pz, 12, 10, role, drips=((-3, -7, 5), (4, -7, 3)))
 
 
 VESSEL_BUILD = {"cauldron": cauldron, "bottles": bottles, "pot": pot}
