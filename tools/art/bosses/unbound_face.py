@@ -49,7 +49,7 @@ TAKES = {"C1": ("Head: F2 + F3. Chest: the fissure", "C1"), "C2": ("Head: F2 + F
 # take 3 (user, 2026-10-12): none of the burning chests; back to the chest piece. The locked head and chest.
 FINAL = ("The head (F2 + F3) and the burning chest piece", "PIECE")
 OUT3 = ROOT / "docs/art/bosses/the_unbound/overhaul/s1_face3"
-HUNCH = -20                                       # the upper body leans forward over the hips
+HUNCH = -12                                       # the upper body leans forward over the hips
 
 
 def horn(g, name, points, widths, tilt=0.0, mats=("horn_root", "horn", "horn", "horn_dark")):
@@ -76,6 +76,10 @@ def bust(model, face, chest="C1"):
     m1.octo(torso, "chest", (0, 40, 0), (30, 20, 17), "skin", 0.12)
     torso.box("abdomen", (0, 31, 0), (21, 9, 13), "skin")
     torso.box("traps", (0, 49, 2.5), (20, 5, 11), "skin")
+    # the heavy back: lats and a hump of traps behind the low head, so the hunch reads from the side and balances
+    # over the legs (C's side posture)
+    m1.octo(torso, "back", (0, 39, 7.5), (27, 18, 10), "skin", 0.2)
+    m1.octo(torso, "hump", (0, 47.5, 6.5), (22, 8, 11), "skin", 0.3)
     for sx in (-1, 1):
         torso.box(f"delt_{sx}", (sx * 16.5, 45, 0.5), (10, 10, 12), "skin", rotation=(0, 0, sx * -10))
         torso.box(f"trap_slope_{sx}", (sx * 11.5, 47.5, 2), (8, 4, 10), "skin", rotation=(0, 0, sx * -26))
@@ -91,9 +95,9 @@ def bust(model, face, chest="C1"):
             torso.box(f"stud_{sx}_{i}", (p[0], p[1], p[2] - 1.2), (1.0, 1.0, 0.6), "stud")
     CHESTS[chest](torso)
     # the head, low and forward between the traps, lifted so he looks ahead
-    head = torso.group("hi_head", (0, 49, -4), (-HUNCH - 6, 0, 0))
+    head = torso.group("hi_head", (0, 47.5, -7), (-HUNCH - 4, 0, 0))
     hw, hh = 8 * K, 10 * K
-    hc = (0, 49 + hh / 2, -5)
+    hc = (0, 47.5 + hh / 2, -8)
     head.box("head", hc, (hw, hh, hw), "skin")
     HEADS[face](head, hc, hw, hh, hc[2] - hw / 2)
     return root
@@ -305,26 +309,35 @@ VIEWS = [
 GLOW = {"fire", "fire_hot", "eye", "eye_hot", "eye_dim"}
 
 
-def render_glowing(model, out):
-    """The study views, with the fire and the eye glowing: a normal render, then an unlit pass where everything but
-    the glowing parts is black (the same geometry, so it's hidden where it should be), laid over it with a bloom."""
-    from PIL import Image, ImageChops, ImageFilter
-    v2.run_blender(model.render_json(PALETTE), out, VIEWS)
-    dark = {k: (v if k in GLOW else (0, 0, 0)) for k, v in PALETTE.items()}
-    glow_dir = out / "glow"
-    job = model.render_json(dark)
-    views = [dict(v, light="FLAT") for v in VIEWS]
+def _blender(boxes, out, views, extra=None):
     import json as _json
-    glow_dir.mkdir(parents=True, exist_ok=True)
-    (glow_dir / "job.json").write_text(_json.dumps({"boxes": job, "out": glow_dir.as_posix(), "views": views,
-                                                    "res": [900, 700], "ground": [0, 0, 0], "sky": [0, 0, 0]}))
     import subprocess
+    out.mkdir(parents=True, exist_ok=True)
+    job_file = out / "render_job.json"
+    job_file.write_text(_json.dumps(dict({"boxes": boxes, "out": out.as_posix(), "views": views, "res": [900, 700]},
+                                         **(extra or {}))), encoding="utf-8")
     r = subprocess.run([str(v2.BLENDER), "-b", "--factory-startup", "--python",
-                        str(ROOT / "tools/art/bosskit/blender_render.py"), "--", str(glow_dir / "job.json")],
+                        str(ROOT / "tools/art/bosskit/blender_render.py"), "--", str(job_file)],
                        capture_output=True, text=True)
     if r.returncode or "RENDER_DONE" not in r.stdout:
         raise SystemExit(r.stdout[-2000:] + r.stderr[-2000:])
-    for v in VIEWS:
+    job_file.unlink()
+
+
+def render_glowing(model, out, views=None, extra=None):
+    """The study views, with the fire and the eye glowing: a normal render, then an unlit pass where everything but
+    the glowing parts is black (the same geometry, so it's hidden where it should be), laid over it with a bloom.
+    extra: more job settings for both passes (player_at: where the scale player stands, in blocks)."""
+    from PIL import Image, ImageChops, ImageFilter
+    views = views or VIEWS
+    _blender(model.render_json(PALETTE), out, views, extra)
+    dark = {k: (v if k in GLOW else (0, 0, 0)) for k, v in PALETTE.items()}
+    glow_dir = out / "glow"
+    _blender(model.render_json(dark), glow_dir, [dict(v, light="FLAT") for v in views],
+             dict(extra or {}, ground=[0, 0, 0], sky=[0, 0, 0], player_color=[0, 0, 0]))
+    for v in views:
+        if v["mode"] != "flat":                     # silhouettes and clay show shape only
+            continue
         base = Image.open(out / f"{v['name']}.png").convert("RGB")
         mask = Image.open(glow_dir / f"{v['name']}.png").convert("RGB")
         lit = mask.convert("L").point(lambda x: 255 if x > 24 else 0)

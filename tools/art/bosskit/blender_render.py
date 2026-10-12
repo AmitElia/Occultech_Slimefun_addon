@@ -79,7 +79,7 @@ PLAYER = [((-4, 0, -2), (0, 12, 2)), ((0, 0, -2), (4, 12, 2)), ((-4, 12, -2), (4
 player_obj = None
 if job.get("player", True):
     pv, pf = [], []
-    px, py = lo.x * 0.62, hi.y + 1.2
+    px, py = job.get("player_at", (lo.x * 0.62, hi.y + 1.2))      # default: in front, off to one side
     for f, t in PLAYER:
         base = len(pv)
         for xi in (f[0], t[0]):
@@ -92,7 +92,7 @@ if job.get("player", True):
     pm.update()
     player_obj = bpy.data.objects.new("player", pm)
     scene.collection.objects.link(player_obj)
-    player_obj.data.materials.append(material((0.42, 0.55, 0.72)))
+    player_obj.data.materials.append(material(tuple(job.get("player_color", (0.42, 0.55, 0.72)))))
 
 # ground plane for clay renders
 bpy.ops.mesh.primitive_plane_add(size=200, location=(center.x, center.y, -0.001))
