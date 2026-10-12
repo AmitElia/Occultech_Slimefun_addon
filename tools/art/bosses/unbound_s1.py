@@ -28,7 +28,7 @@ from bosses import monarch_s1 as m1, unbound_face as uf  # noqa: E402
 OUT = ROOT / "docs/art/bosses/the_unbound/overhaul/s1_blockout"
 HEAD_TOP = 3.25 * 16                       # where the top of his head should land (model pixels)
 PALETTE = dict(uf.PALETTE, boot=(40, 34, 32), steel=(156, 162, 168), spine=(104, 108, 114), blood=(100, 22, 20),
-               haft=(88, 62, 40), wrap=(70, 50, 34), chain=(132, 132, 140))
+               haft=(88, 62, 40), wrap=(70, 50, 34), chain=(132, 132, 140), hole=(24, 22, 26))
 
 
 def chain(g, name, top, drop, trail, step=2.8):
@@ -58,26 +58,58 @@ def shackle(g, name, c, size):
     g.box(f"{name}_lip", (c[0], c[1] + h / 2 - 0.4, c[2]), (w + 3.0, 0.8, d + 3.0), "iron_lit")
 
 
-def cleaver(g, grip, rise=6.0, k=1.2):
-    """The Frenzy Cleaver dragged behind him on its edge: the haft runs back from his fist, rising a little, and the
-    blade hangs below it, upright, its bloody edge's front corner dragging on the ground. In its own frame the haft
-    runs up +y and the blade hangs off it along +z; the group turns that so the haft points back (+z)."""
-    c = g.group("cleaver", grip, (90 - rise, 0, 0))
+def cleaver(g, grip, rot, k=1.15):
+    """The Frenzy Cleaver at his size: a butcher's cleaver, not a plate on a stick. A wrapped handle with a pommel and
+    a bolster; then a long rectangular blade (about 1.6 blocks long, 0.8 tall) whose thick spine runs on in line
+    with the handle, the bloody edge along the far side, the hanging hole near the tip.
+    In its own frame the handle runs up +y from the grip (the origin) and the blade's edge faces -z. rot turns it:
+    rot x = 90 + a lays it back and a degrees down (the drag: spine on the ground, edge up); rot x = 90 - a, back
+    and a degrees up (over the shoulder: edge up, so the chop comes down edge first)."""
+    c = g.group("cleaver", grip, rot)
     x, y, z = grip
-    c.box("pommel", (x, y - 3.5 * k, z), (3 * k, 2 * k, 3 * k), "spine")
-    c.box("grip", (x, y, z), (2.2 * k, 5 * k, 2.2 * k), "wrap")
-    c.box("haft", (x, y + 15 * k, z), (2.2 * k, 25 * k, 2.2 * k), "haft")
-    c.box("blade", (x, y + 18.5 * k, z + 9 * k), (1.2 * k, 17 * k, 17 * k), "steel")
-    c.box("spine", (x, y + 18.5 * k, z + 0.6 * k), (1.8 * k, 18 * k, 2.2 * k), "spine")
-    c.box("edge_blood", (x, y + 18.5 * k, z + 17.2 * k), (1.4 * k, 17 * k, 1.6 * k), "blood")
-    c.box("blood_run", (x, y + 14 * k, z + 13 * k), (1.4 * k, 5 * k, 4 * k), "blood")
-    c.box("collar", (x, y + 27.2 * k, z), (3.2 * k, 2.4 * k, 3.2 * k), "spine")
+    L, H, y0 = 26 * k, 13 * k, y + 10.5 * k                # blade length and height; where the blade starts
+    c.box("pommel", (x, y - 1.6 * k, z), (3.2 * k, 2.2 * k, 3.2 * k), "spine")
+    c.box("handle", (x, y + 4.2 * k, z), (2.6 * k, 10 * k, 2.6 * k), "wrap")
+    c.box("bolster", (x, y + 9.8 * k, z), (3.0 * k, 1.8 * k, 3.4 * k), "spine")
+    c.box("blade", (x, y0 + L / 2, z + 1.2 * k - H / 2), (1.2 * k, L, H), "steel")
+    c.box("spine", (x, y0 + L / 2, z + 0.3 * k), (2.2 * k, L, 2.2 * k), "spine")
+    c.box("tip", (x, y0 + L - 1.0 * k, z + 1.2 * k - H / 2 - 0.5 * k), (1.3 * k, 2.4 * k, H + 0.6 * k), "spine")
+    c.box("edge_blood", (x, y0 + L / 2 + 1 * k, z + 1.2 * k - H + 0.6 * k), (1.4 * k, L - 2 * k, 1.4 * k), "blood")
+    for i, (t, ln, w) in enumerate(((0.38, 4.5, 3.2), (0.7, 2.5, 1.6))):    # two uneven runs in from the edge
+        c.box(f"blood_run_{i}", (x, y0 + L * t, z + 1.2 * k - H + ln * k / 2), (1.4 * k, w * k, ln * k), "blood")
+    c.box("hole", (x, y0 + L - 4.5 * k, z - 2.4 * k), (1.4 * k, 2.6 * k, 2.6 * k), "hole")
     return c
 
 
-def build(model):
+def arm(torso, name, sx, upper_rot, fore_rot):
+    """An arm from the shoulder: the upper arm, then the forearm, fist and wrist shackle at the elbow."""
+    sh = torso.group(f"arm_{name}", (sx * 16.5, 43, 0.5), upper_rot)
+    sh.box(f"upper_arm_{name}", (sx * 18.5, 35, 0), (10, 15, 10.5), "skin_dark")
+    fore = sh.group(f"forearm_{name}", (sx * 19.3, 28, 0), fore_rot)
+    fore.box(f"forearm_{name}_box", (sx * 19.6, 20, -0.4), (10.5, 15, 10.5), "skin")
+    fore.box(f"fist_{name}", (sx * 19.8, 10.2, -0.8), (10, 7, 10), "skin_dark")
+    shackle(fore, f"wrist_shackle_{name}", (sx * 19.6, 15.6, -0.4), (10.5, 4, 10.5))
+
+
+def drop_cube(model, name):
+    cube = next(c for c in model.cubes if c.name == name)
+    model.cubes.remove(cube)
+    cube.group.children.remove(cube)
+
+
+def center(model, name):
+    pts = next(c for c in model.cubes if c.name == name).corners()
+    return tuple(float(v) for v in pts.mean(0))
+
+
+ATTACK_ARM = ((100, 0, 40), (130, 0, -30))          # the wind-up: upper arm, forearm
+
+
+def build(model, pose="walk"):
     root = uf.bust(model, "MIX", "PIECE")
     torso = next(g for g in model.groups if g.name == "torso")
+    for sx in (-1, 1):
+        drop_cube(model, f"upper_arm_{sx}")                  # the arms are rebuilt below, posable
     # hips, legs, boots; shackles and chains on the ankles
     root.box("pelvis", (0, 20, 0.5), (19, 7, 12.5), "pants")
     for sx, name in ((-1, "left"), (1, "right")):
@@ -89,33 +121,32 @@ def build(model):
         shin.box(f"boot_{name}", (sx * 5.8, 1.5, -1.0), (9.4, 3, 11.5), "boot")
         shackle(shin, f"ankle_shackle_{name}", (sx * 5.8, 5.2, 0.2), (8.4, 3.2, 8.6))
         chain(root, f"ankle_chain_{name}", (sx * 7.5, 4.5, 5.2), 3, (sx * 0.15, 0.95))
-    # the forearms hang straight down from the elbows (the hunch undone at the elbow)
-    for sx, name in ((-1, "left"), (1, "right")):
-        elbow = (sx * 19.3, 28, 0)
-        # the left hangs; the right reaches back, dragging the cleaver
-        swing = -uf.HUNCH + 4 if sx < 0 else -uf.HUNCH - 42
-        fore = torso.group(f"forearm_{name}", elbow, (swing, 0, sx * 3))
-        fore.box(f"forearm_{name}_box", (sx * 19.6, 20, -0.4), (10.5, 15, 10.5), "skin")
-        fore.box(f"fist_{name}", (sx * 19.8, 10.2, -0.8), (10, 7, 10), "skin_dark")
-        shackle(fore, f"wrist_shackle_{name}", (sx * 19.6, 15.6, -0.4), (10.5, 4, 10.5))
-    # chains from the wrist shackles to the ground (world space: they hang straight)
+    # the left arm hangs (the hunch undone so it hangs straight)
+    arm(torso, "left", -1, (-uf.HUNCH, 0, -6), (4, 0, -3))
+    if pose == "walk":
+        arm(torso, "right", 1, (-uf.HUNCH - 14, 0, 6), (-6, 0, 3))          # a little back, dragging
+    else:
+        # the cleave's wind-up: the elbow out at his side, the forearm up, the cleaver over his shoulder
+        arm(torso, "right", 1, *ATTACK_ARM)
+    # chains from the wrist shackles: hanging to the ground (world space); none from the raised wrist
     for name in ("left", "right"):
+        if pose != "walk" and name == "right":
+            continue
         cuff = next(c for c in model.cubes if c.name == f"wrist_shackle_{name}").corners()
         x, z = cuff[:, 0].mean(), cuff[:, 2].mean()
         chain(root, f"wrist_chain_{name}", (x, cuff[:, 1].min(), z), 4, (0.2 if name == "right" else -0.2, 0.95))
-    # the cleaver in his right fist, its blade's lower corner on the ground
-    fist = next(c for c in model.cubes if c.name == "fist_right").corners()
-    grip = (fist[:, 0].mean() + 0.5, fist[:, 1].mean(), fist[:, 2].mean())
-    c = cleaver(root, grip)
-    low = min(cube.corners()[:, 1].min() for cube in model.cubes if cube.group is c)
-    c.origin[1] -= 0                                         # (kept: the grip stays in the fist)
-    if low < 0 or low > 2:
-        # tilt the haft until the blade's lower corner just meets the ground
-        for rise in [r / 2 for r in range(-40, 60)]:
-            c.rotation[0] = 90 - rise
+    grip = center(model, "fist_right")
+    if pose == "walk":
+        # dragged behind: back and down, its spine on the ground, the bloody edge up
+        c = cleaver(root, grip, (100, 0, 0))
+        for down in [d / 2 for d in range(0, 120)]:
+            c.rotation[0] = 90 + down
             low = min(cube.corners()[:, 1].min() for cube in model.cubes if cube.group is c)
-            if 0 <= low <= 0.8:
+            if low <= 0.6:
                 break
+    else:
+        # over the shoulder: back and up, the blade behind his head, its edge up, ready to come down edge first
+        cleaver(root, grip, (62, -28, 0))
     return root
 
 
@@ -145,6 +176,9 @@ VIEWS = [
 ]
 
 
+POSES = {"walk": "walking: the cleaver dragged, spine down", "attack": "the cleave's wind-up: over his shoulder"}
+
+
 def main():
     if OUT.exists():
         for old in OUT.iterdir():
@@ -152,22 +186,26 @@ def main():
                 shutil.rmtree(old)
             elif old.name != "README.md":
                 old.unlink()
-    out = OUT / "blockout"
-    out.mkdir(parents=True, exist_ok=True)
-    model = Model("occultech_unbound_blockout")
-    build(model)
-    head = next(c for c in model.cubes if c.name == "head")
-    k = HEAD_TOP / float(head.corners()[:, 1].max())
-    scale(model, k)
-    model.write_bbmodel(out / f"{model.name}.bbmodel")
     uf.PALETTE.update(PALETTE)
-    uf.render_glowing(model, out, VIEWS, {"player_at": [-2.6, 0.0]})       # beside him, to his left
-    stats = dict(model.stats(), scale=round(k, 3))
-    (out / "stats.json").write_text(json.dumps(stats, indent=2) + "\n", encoding="utf-8")
-    print(stats)
-    sheet.compare_sheet(OUT, [("blockout", "walking, the cleaver dragged")], OUT / "views_a.png",
-                        heading="The Unbound - blockout (session 1, step 3)", views=("front", "three_quarter", "side", "back"))
-    sheet.compare_sheet(OUT, [("blockout", "")], OUT / "views_b.png", heading="The Unbound - blockout, more views",
+    k = None
+    for pose in POSES:
+        out = OUT / pose
+        out.mkdir(parents=True, exist_ok=True)
+        model = Model(f"occultech_unbound_blockout_{pose}")
+        build(model, pose)
+        if k is None:                                   # the same scale for both poses, set by the walking head
+            head = next(c for c in model.cubes if c.name == "head")
+            k = HEAD_TOP / float(head.corners()[:, 1].max())
+        scale(model, k)
+        model.write_bbmodel(out / f"{model.name}.bbmodel")
+        uf.render_glowing(model, out, VIEWS, {"player_at": [-2.6, 0.0]})       # the player beside him, to his left
+        stats = dict(model.stats(), scale=round(k, 3))
+        (out / "stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
+        print(pose, stats)
+    items = list(POSES.items())
+    sheet.compare_sheet(OUT, items, OUT / "views_a.png", heading="The Unbound - blockout (session 1, step 3)",
+                        views=("front", "three_quarter", "side", "back"))
+    sheet.compare_sheet(OUT, items, OUT / "views_b.png", heading="The Unbound - blockout, more views",
                         views=("player_eye", "clay", "sil_front", "sil_side"))
 
 
