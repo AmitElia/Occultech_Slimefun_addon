@@ -34,7 +34,7 @@ from bosses import volley_crone_s2 as v2, volley_s1 as v1  # noqa: E402
 OUT = ROOT / "docs/art/bosses/night_matriarch/overhaul/s1_blockout"
 PALETTE = {
     "hide": (66, 78, 122), "hide_dark": (48, 56, 92), "belly": (168, 170, 158), "flesh": (92, 48, 54),
-    "bone": (214, 206, 182), "membrane": (58, 62, 96), "feather": (92, 94, 124), "feather_dark": (64, 66, 94),
+    "bone": (214, 206, 182), "membrane": (58, 62, 96), "membrane_dark": (40, 42, 70), "feather": (92, 94, 124), "feather_dark": (64, 66, 94),
     "sculk": (16, 46, 58), "sculk_glow": (50, 225, 240), "eye": (140, 255, 120),
 }
 U = 4.5                                         # one PhantomModel pixel
@@ -110,21 +110,38 @@ def head_parts(head):
                   "sculk_glow")
 
 
-# ---- the wings: vanilla's two panels, whole (the tears are painted), a bone spar along the front -------------------------
+# ---- the wings: take 2's torn wings - a ragged trailing edge, a bone spar along the front, finger bones fanning across;
+# the holes and the bare stretches are cut out in the texture -------------------------------------------------------------
 
 def wing(parent, side, rot, elbow_rot):
     sx = side
     word = "left" if sx < 0 else "right"
     x0, y0, z0 = sx * W / 2, 3.0, FRONT + 2
     chord = 9 * U
+    # (strip width, chord): the strips' uneven lengths make the torn trailing edge; each side is torn differently
+    if sx > 0:
+        inner = [(9, 40), (9, 34), (9, 38)]
+        outer = [(8, 36), (8, 24), (7, 15), (8, 31), (7, 16), (7, 11), (6, 6), (7.5, 7)]
+    else:
+        inner = [(9, 39), (9, 26), (9, 37)]
+        outer = [(8, 33), (8, 20), (7, 28), (8, 18), (7, 10), (7, 22), (6, 9), (7.5, 5)]
     g = parent.group(f"wing_{word}", (x0, y0, z0), rot)
     span = 0.0
-    for part, (length, spar) in enumerate(((6 * U, 4), (13 * U, 3))):
+    for part, (length, spar, strips) in enumerate(((6 * U, 4, inner), (13 * U, 3, outer))):
         if part == 1:
             g = g.group(f"wing_{word}_tip", (x0 + sx * span, y0, z0), elbow_rot)
-        cx = x0 + sx * (span + length / 2)
-        g.box(f"wing_{word}_{part}_membrane", (cx, y0, z0 + chord / 2), (length, 1, chord), "membrane")
-        g.box(f"wing_{word}_{part}_spar", (cx, y0 + 0.5, z0 + spar / 2 - 0.5), (length, spar, spar), "bone")
+        a = (x0 + sx * span, y0, z0)
+        v1.beam(g, f"wing_{word}_{part}_spar", a, (x0 + sx * (span + length), y0, z0), spar, "bone")
+        x = span
+        for j, (w, c) in enumerate(strips):
+            g.box(f"wing_{word}_{part}_m{j}", (x0 + sx * (x + w / 2), y0, z0 + c / 2), (w, 1, c),
+                  "membrane" if j % 2 else "membrane_dark")
+            x += w
+        if part == 0:
+            v1.beam(g, f"wing_{word}_inner_finger", a, (x0 + sx * (span + length), y0, z0 + chord * 0.85), 2.2, "bone")
+        else:
+            for k, (f, c) in enumerate(((0.3, 36), (0.62, 30), (0.95, 18))):
+                v1.beam(g, f"wing_{word}_finger_{k}", a, (x0 + sx * (span + length * f), y0, z0 + c), 2.2, "bone")
         span += length
 
 
