@@ -9,9 +9,10 @@ away from the rest pose. Kneeling sinks the hips (a position key); a dropped cle
   walk     1.6 s loop   a heavy stride, the hips bobbing, the free arm swinging, the cleaver dragging behind
   run      1.0 s loop   enraged (below 1/3 health): head down, horns first, a long stride, arms back
   spawn    2.0 s once   rising from a kneel to a roar (the ritual arrival)
-  swing    0.8 s once   the axe swing (melee): a short chop, contact at 0.35 s
-  cleave   2.2 s once   the cleave: wound up over his shoulder through the 1.25 s warning (trembling), then the
-                        sweep, contact at 1.3 s, a heavy recovery
+  swing    0.8 s once   the axe swing (melee): the same overhead arc, quicker and shallower, contact at 0.35 s
+  cleave   2.2 s once   the cleave: an anticipation crouch, the cleaver raised above his shoulder with the blade
+                        behind his back through the 1.25 s warning (breathing, trembling), over the top and down in a
+                        lunge, contact at 1.3 s, an overshoot and a heavy settle
   call     1.8 s once   calling the thralls: he crouches, then roars, arms spread
   devour   1.6 s once   seizing a thrall and gorging, fist to his mouth (the bite at 0.8 s)
   sated    3.0 s once   the 3 s opening: down on one knee at 0.4 s, panting, back up at the end
@@ -79,8 +80,28 @@ def clips():
         "left": ((-24 - 10 * f, 0, -10), (-8, 0, 0)), "right": ((-20 + 6 * f, 0, 8), (-4, 0, 0))})
     kneel = spec(P["sated"], torso=-30, head=-20, cleaver="flat")
     windup, sweep, call = P["windup"], P["sweep"], P["call"]
-    chop_up = spec(REST, torso=4, head=-2, arms={"right": ((70, 0, 30), (70, 0, -12))}, cleaver=(0.25, 0.55, 0.8))
-    chop_down = spec(REST, torso=-8, head=6, arms={"right": ((44, 0, 10), (12, 0, 0))}, cleaver=(0.1, -0.5, -0.86))
+    # the overhead chop (take 2: the arm goes above the shoulder and the blade comes over the top; anticipation, a
+    # lunge with a twist, the free arm swinging back, an overshoot, a heavy settle)
+    lunge = {"left": ((26, 0, 4), (-24, 0, 0)), "right": ((-24, 0, -4), (14, 0, 0))}
+    braced = {"left": ((16, 0, 6), (-12, 0, 0)), "right": ((-16, 0, -6), (18, 0, 0))}
+    antic = spec(REST, torso=-6, head=4, hips=-1.0, arms={"right": ((60, 0, 20), (40, 0, 0))}, cleaver=(0.2, 0.2, 0.95),
+                 legs=braced)
+    wind = spec(windup, hips=-1.5, legs=braced)
+    wind_max = spec(wind, torso=9, arms={"right": ((182, 0, 22), (55, 0, 0))}, extra={"torso": (0, -4, 0)})
+    top = spec(REST, torso=-4, head=4, hips=-1.0, legs=braced, cleaver=(0.05, 0.85, -0.5),
+               arms={"right": ((178, 0, 10), (8, 0, 0)), "left": ((10, 0, -22), (16, 0, 0))}, extra={"torso": (0, -4, 0)})
+    strike = spec(sweep, torso=-24, head=16, hips=-3.0, legs=lunge, cleaver=(0.08, -0.62, -0.78),
+                  arms={"right": ((58, 0, 12), (14, 0, 0)), "left": ((-36, 0, -16), (-8, 0, 0))},
+                  extra=dict(SWAY(-6), torso=(0, 10, 0)))
+    follow = spec(strike, torso=-30, head=20, hips=-3.6, cleaver=(0.05, -0.88, -0.45),
+                  arms={"right": ((40, 0, 8), (8, 0, 0))}, extra=dict(SWAY(-4), torso=(0, 4, 0)))
+    settle = spec(REST, torso=-14, head=8, hips=-1.4, cleaver=(0.0, -0.6, 0.8), extra=SWAY(5),
+                  arms={"right": ((10, 0, 6), (0, 0, 0)), "left": ((-H - 8, 0, -8), (4, 0, -3))})
+    # the lighter melee chop: the same arc, quicker and shallower
+    s_wind = spec(wind, torso=4, arms={"right": ((150, 0, 20), (60, 0, 0))}, hips=-0.8)
+    s_top = spec(top, torso=-2)
+    s_strike = spec(strike, torso=-14, head=10, hips=-1.6, arms={"right": ((60, 0, 10), (12, 0, 0))}, legs=braced)
+    s_follow = spec(follow, torso=-18, hips=-1.8, legs=braced)
     crouch = spec(REST, torso=-18, head=-8, arms={"left": ((-H + 10, 0, -4), (14, 0, -3)), "right": ((-H - 4, 0, 4), (6, 0, 3))},
                   legs={"left": ((14, 0, 3), (-20, 0, 0)), "right": ((10, 0, -3), (-16, 0, 0))})
     grab = spec(REST, torso=-24, head=-2, arms={"left": ((44, 0, -10), (22, 0, 0))})
@@ -93,10 +114,11 @@ def clips():
         "run": (1.0, "loop", [(0, run(1)), (0.25, spec(run(0), hips=-1.2)), (0.5, run(-1)),
                               (0.75, spec(run(0), hips=-1.2)), (1.0, run(1))]),
         "spawn": (2.0, "once", [(0, kneel), (0.9, spec(crouch, drop=3, cleaver="flat")), (1.4, roar), (2.0, REST)]),
-        "swing": (0.8, "once", [(0, REST), (0.2, chop_up), (0.35, chop_down), (0.8, REST)]),
-        "cleave": (2.2, "once", [(0, REST), (0.6, windup), (0.9, spec(windup, torso=windup["torso"] + 2)),
-                                 (1.1, spec(windup, arms={"right": ((106, 0, 40), (130, 0, -30))})),
-                                 (1.3, sweep), (1.6, spec(sweep, torso=sweep["torso"] - 4)), (2.2, REST)]),
+        "swing": (0.8, "once", [(0, REST), (0.06, spec(antic, hips=-0.6)), (0.15, s_wind), (0.26, s_top), (0.35, s_strike), (0.46, s_follow),
+                                (0.62, settle), (0.8, REST)]),
+        "cleave": (2.2, "once", [(0, REST), (0.18, antic), (0.5, wind), (0.75, spec(wind, torso=wind["torso"] + 1)),
+                                 (0.95, spec(wind, extra={"torso": (1, 0, 1), "arm_right": (2, 0, 0)})), (1.12, wind_max),
+                                 (1.22, top), (1.3, strike), (1.42, follow), (1.75, settle), (2.2, REST)]),
         "call": (1.8, "once", [(0, REST), (0.4, crouch), (0.9, call), (1.4, roar), (1.8, REST)]),
         "devour": (1.6, "once", [(0, REST), (0.4, grab), (0.8, P["devour"]),
                                  (1.0, spec(P["devour"], head=P["devour"]["head"] - 12)), (1.2, P["devour"]), (1.6, REST)]),
@@ -133,10 +155,14 @@ def tracks(clip, k, rest_rot):
                 moving.add(g.name)
     bones = {}
     for name in sorted(moving):
-        rot = []
+        rot, prev = [], None
         for t, _, m in poses:
             g = s2.group(m, name)
-            rot.append((t, tuple(round(wrap(g.rotation[i] - rest_rot[name][i]), 2) for i in range(3)), "catmullrom"))
+            d = [wrap(g.rotation[i] - rest_rot[name][i]) for i in range(3)]
+            if prev is not None:                      # keep the track continuous: never the long way round
+                d = [d[i] + 360 * round((prev[i] - d[i]) / 360) for i in range(3)]
+            prev = d
+            rot.append((t, tuple(round(v, 2) for v in d), "catmullrom"))
         bones[name] = {"rotation": rot}
     hips = [(t, (0.0, round((-sp.get("drop", 0) + sp.get("hips", 0)) * k, 3), 0.0), "catmullrom") for t, sp, _ in poses]
     if any(abs(v[1]) > 1e-6 for _, v, _ in hips):

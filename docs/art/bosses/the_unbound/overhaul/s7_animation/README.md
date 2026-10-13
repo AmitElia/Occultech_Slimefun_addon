@@ -11,8 +11,8 @@ floor with another.
 | walk | 1.6 s | loop | a heavy stride, the hips bobbing, the free arm swinging, the cleaver dragging behind |
 | run | 1.0 s | loop | enraged (below 1/3 health): head down, horns first, a long stride, arms back |
 | spawn | 2.0 s | once | rising from a kneel to a roar (the ritual arrival) |
-| swing | 0.8 s | once | the axe swing (melee): a short chop, **contact at 0.35 s** |
-| cleave | 2.2 s | once | wound up over his shoulder through the 1.25 s warning, trembling, then the sweep over the top, **contact at 1.3 s**, a heavy recovery |
+| swing | 0.8 s | once | the axe swing (melee): the same overhead arc as the cleave, quicker and shallower, **contact at 0.35 s** |
+| cleave | 2.2 s | once | an anticipation crouch; the cleaver raised **above his shoulder**, the blade hanging behind his back, through the 1.25 s warning (breathing, trembling); then up over the top and down in a lunge with a twist, the free arm swinging back, **contact at 1.3 s**; an overshoot and a heavy settle |
 | call | 1.8 s | once | calling the thralls: he crouches, then roars, arms spread |
 | devour | 1.6 s | once | seizing a thrall and gorging, fist to his mouth (**the bite at 0.8 s**) |
 | sated | 3.0 s | once | the 3 s opening: down on one knee by 0.4 s, panting, back up at the end |
@@ -25,10 +25,22 @@ goes on underneath.
 
 ![Key frames of every clip](keyframes.png)
 
-**The cleave, from the side** (0.6 to 1.6 s): the blade waits behind his shoulder, edge up, then comes over the top
-and down in front, edge first.
+**Take 2 of the attacks** (after the user's review in game: the arm went under the shoulder, and the motion was stiff):
+- **Above the shoulder:** the wind-up now raises his arm above his shoulder with the blade hanging behind his back.
+- **Over the top:** a key at the very top of the swing makes the chop come over his head and down in front.
+- **A bug fixed:** a rotation passing 180 degrees wrapped to -180, so the arm spun the long way round, under and
+  backwards. Every track is now kept continuous from key to key.
+- **Less stiff:** anticipation, a crouch into the strike, a torso twist, the free arm counterbalancing, an overshoot
+  and a heavy settle, with the chains and the band's tails lagging behind.
 
-![The cleave's sweep from the side](cleave_side.png)
+**The cleave, from the side** (0.18 to 2.0 s): the crouch, the wind-up above the shoulder, over the top, the strike, the
+overshoot, the settle.
+
+![The cleave from the side](cleave_side.png)
+
+**The swing, from the side** (0.06 to 0.62 s): the same arc, quicker.
+
+![The swing from the side](swing_side.png)
 
 The GIFs in `gifs/` show each clip moving (flat zone colours, the fire at its burning stage).
 

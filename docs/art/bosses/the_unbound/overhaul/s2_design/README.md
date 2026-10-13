@@ -55,7 +55,8 @@ round backwards.
 The fight's moments, posed from the rig. They are silhouettes for the design, not animation.
 
 - **Idle and walking:** the cleaver dragged behind him, spine down.
-- **The cleave, wind-up:** the cleaver over his right shoulder, the edge up, while the red wedge shows.
+- **The cleave, wind-up:** the cleaver raised above his right shoulder, the blade hanging behind his back, while the
+  red wedge shows (changed in session 7's take 2: it was held beside his head, and the swing went under the shoulder).
 - **The cleave, sweep:** a lunge, the cleaver down and through in front of him.
 - **Calling the thralls:** a roar, head thrown back, arms spread.
 - **Devouring a thrall:** hunched over, his fist to his mouth.

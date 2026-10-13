@@ -168,9 +168,9 @@ REST_LEGS = {"left": ((-8, 0, 3), (12, 0, 0)), "right": ((-8, 0, -3), (12, 0, 0)
 POSES = {
     "idle": ("idle and walking: the cleaver dragged", {
         "arms": {"left": ((-H, 0, -6), (4, 0, -3)), "right": ((-H - 14, 0, 6), (-6, 0, 3))}, "cleaver": "drag"}),
-    "windup": ("the cleave: wound up over his shoulder (the red wedge shows)", {
-        "torso": 6, "head": -4,
-        "arms": {"left": ((-H + 4, 0, -16), (10, 0, -6)), "right": ((100, 0, 40), (130, 0, -30))},
+    "windup": ("the cleave: wound up above his shoulder, the blade behind his back (the red wedge shows)", {
+        "torso": 6, "head": -2, "extra": {"torso": (0, -14, 0)},
+        "arms": {"left": ((40, 0, -20), (30, 0, 0)), "right": ((170, 0, 22), (55, 0, 0))},
         "legs": {"left": ((14, 0, 6), (-10, 0, 0)), "right": ((-14, 0, -6), (14, 0, 0))}, "cleaver": "windup"}),
     "sweep": ("the cleave: the sweep lands", {
         "torso": -20, "head": 16,
@@ -228,7 +228,7 @@ def pose(model, spec):
             if min(c.corners()[:, 1].min() for c in model.cubes if c.group is cl) <= 0.6:
                 break
     elif kind == "windup":
-        h = np.array((-0.32, 0.5, 0.8))
+        h = np.array((0.1, -0.75, 0.65))           # hanging down behind his back, his fist above his shoulder
         aim(cl, frame(h, swing_edge(h / np.linalg.norm(h))))
     elif kind == "sweep":
         h = np.array((0.08, -0.62, -0.78))
