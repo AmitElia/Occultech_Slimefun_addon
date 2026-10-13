@@ -1,0 +1,28 @@
+# The Unbound's body: the horned, blindfolded vindicator with his restraints, chains, burning chest piece and the
+# Frenzy Cleaver, on a vindicator carrier. Occultech still decides every attack, deals all damage (TheUnbound.java)
+# and hands out loot. Health is the solo value; Occultech multiplies it for the group after the spawn.
+OCCULTECH_THE_UNBOUND:
+  Type: VINDICATOR
+  Display: '&cThe Unbound'
+  Health: 320
+  Damage: 8
+  Armor: 0
+  Options:
+    # Occultech rebuilds the body from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    MovementSpeed: 0.30
+    KnockbackResistance: 0.5
+    FollowRange: 32
+    AlwaysShowName: true
+  Drops: []
+  # The carrier stays at normal size and the model is drawn as authored (about 3.25 blocks to the top of his head);
+  # its ob_hitbox bone covers his body and arms and passes hits on to the carrier. idle, walk, spawn and death play by
+  # themselves; the swing plays on each of his melee hits; the rest come from TheUnbound.java (Skills/TheUnbound.yml).
+  Skills:
+  - model{m=occultech_the_unbound} @self ~onSpawn
+  - bodyrotation{mh=35;mnh=-35;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=THE_UNBOUND_SWING} @self ~onAttack
+  - skill{s=THE_UNBOUND_DEATH} @self ~onDeath

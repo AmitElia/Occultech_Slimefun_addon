@@ -72,7 +72,7 @@ Essence of Afterlife, talismans...).
 
 | Boss | Base | Health | Mechanics | Drop |
 |------|------|-------:|-----------|------|
-| The Unbound | Vindicator ("Johnny") | 320 | Speeds up as it's hurt; red-wedge telegraphed cleave; husk thralls every 20s - it attacks thralls near it and is **sated** (stunned, +50% damage taken) for 3s after devouring one | Frenzied Edge; 15% Frenzy Idol |
+| The Unbound | Vindicator ("Johnny") | 320 | Speeds up as it's hurt, the fire in its chest growing with it (embers, burning, inferno); red-wedge telegraphed cleave, its origin and facing locked when the wedge appears and held through the wind-up; husk thralls every 14s to its roar - it attacks thralls near it and is **sated** (stunned, +50% damage taken) for 3s after killing and devouring one itself (thralls its cleave cuts down, or anything else kills, don't count), and being sated cancels an unfinished cleave | Frenzied Edge; 15% Frenzy Idol |
 | Night Matriarch | giant Phantom | 260 | Dark-circle telegraphed dives, then **stunned 2s on the ground**; small phantoms join; +20% damage and faster dives at night; never burns | Dusk Membrane; 15% Phantom Roost |
 | Mirrored Magus | Illusioner | 220 | Every 15s 3 decoys (can't cast) and a blink; the real one sparkles; hitting a decoy makes you glow and it blinks again | Mirror Dust; 15% Scrying Mirror |
 | Archevoker | Evoker (gate) | 700 | Fang patterns (ring / line / spiral) drawn 1s ahead, faster below 50%; its vexes are adopted, capped and leashed; 3 phylacteries let it cheat death once at 40% - break them first | Evoker's Sigil |

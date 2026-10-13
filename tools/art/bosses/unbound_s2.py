@@ -266,7 +266,32 @@ def build(name, key="idle"):
 
 # ---- size, snap, hitbox -----------------------------------------------------------------------------------------------
 
+_NUDGES = None
+
+
 def finish(model, k):
+    """Scaled, snapped to whole texels, and the flicker fix: no two faces share a plane (they z-fight in game). The
+    smaller part of each clash moves a fraction of a texel off the plane (the Witch Coven's resolver); the nudges are
+    found once in the rest pose and kept in each cube's own space, so every pose gets the same model, and sizes don't
+    change, so the texture layout doesn't either."""
+    global _NUDGES
+    _finish_base(model, k)
+    if _NUDGES is None:
+        _NUDGES = {}
+        rest = build("nudge_rest")
+        _finish_base(rest, k)
+        from bosses.coven_s2 import _resolve
+        nudges = {}
+        _resolve(rest, nudges)
+        _NUDGES = nudges
+    by_name = {c.name: c for c in model.cubes}
+    for name, d in _NUDGES.items():
+        if name in by_name:
+            c = by_name[name]
+            c.frm, c.to, c.origin = [(np.array(v) + d).tolist() for v in (c.frm, c.to, c.origin)]
+
+
+def _finish_base(model, k):
     s1.scale(model, k)
     v2.snap(model)
     for c in model.cubes:                       # the chains' planes stay flat (snapping makes every size at least 1)
