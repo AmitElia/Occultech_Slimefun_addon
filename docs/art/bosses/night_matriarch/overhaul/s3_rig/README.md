@@ -7,12 +7,12 @@ the gills are full-bright.
 
 - **Tags:** only the intended bones carry a BetterModel tag. That's `hi_head`, `ob_hitbox`, and the glow bones:
   `glow_eye`, `glow_tendrils` and the six `glow_gill_*`. None are missing and there are no strays.
-- **Displays:** 19, one per bone. No cube is turned in a way that costs an extra display. 113 cubes.
+- **Displays:** 17, one per bone. No cube is turned in a way that costs an extra display. 117 cubes.
 - **Pivots:** see [pivots.md](pivots.md) and the markers below (red, from above and from the side).
   - **Joints:** every moving bone pivots in its joint: the head at the neck, each wing at the shoulder and the elbow,
     the tail at its root, and each gill at its base.
-  - **Not joints:** the four crown bones pivot on top of her head, away from their own horns. That's intended: they
-    never move on their own. Each one only holds horn segments at its own rake, and turns with the head.
+  - **Not joints:** the two crown bones pivot on her brow. That's intended: they never move on their own. Each one
+    only holds shards at its own rake, and turns with the head.
 
 ![Pivots](pivots.png)
 

@@ -79,32 +79,40 @@ def _pivot(c):
 
 # ---- the head --------------------------------------------------------------------------------------------------------
 
-CROWN_PIVOT = (0, HH / 2, ZF + 10)
-# rows of horns: (z, [(x, lean, segment length)], rake of the first segment, segments); each later segment bends 22.5
-# further back
-CROWN = ((ZF + 3.5, ((-10, 22.5, 4), (-5, 0, 6), (0, 0, 8), (5, 0, 6), (10, -22.5, 4)), 22.5, 1),
-         (ZF + 10, ((-12.5, 22.5, 7), (-4.5, 0, 8), (4.5, 0, 8), (12.5, -22.5, 7)), 45, 2),
-         (ZF + 16.5, ((-6, 22.5, 9), (6, -22.5, 9)), 45, 3))
+CROWN_PIVOT = (0, HH / 2, ZF + 5)
+# The crown (take 2 of the blockout's crown, back to the scarier take-2 study at the user's request): jagged bone shards
+# broken out through her brow, tallest in the middle, fanning out and raked back like a crown; the big ones have a
+# narrower point and a spur. (x, z from the face, height, rake back, lean out, width, spur)
+CROWN = ((0, 2.0, 18, 22.5, 0, 3.6, True),
+         (-6.5, 2.8, 13, 22.5, 22.5, 3.2, True), (6.5, 2.8, 13, 22.5, -22.5, 3.2, True),
+         (-12, 4.5, 8, 45, 45, 2.8, False), (12, 4.5, 8, 45, -45, 2.8, False),
+         (-3.2, 8.0, 7, 45, 22.5, 2.4, False), (3.2, 8.5, 6, 45, -22.5, 2.4, False),
+         (-9, 9.5, 5, 45, 45, 2.2, False), (9, 9.5, 5, 45, -45, 2.2, False))
 
 
 def crown(head):
-    """Each horn segment goes on the crown bone raked as far back as it is (22.5, 45, 67.5 or 90 degrees); inside
-    that bone it only leans out (a turn about z), so no cube is turned on two axes."""
+    """Each shard goes on the crown bone raked back as far as it is (22.5 or 45 degrees); inside that bone it only
+    leans out (a turn about z, by 22.5 or 45), so no cube is turned on two axes."""
     bones = {}
     p = np.array(CROWN_PIVOT, float)
-    for r, (z, horns, rake, segs) in enumerate(CROWN):
-        for i, (x, lean, seg) in enumerate(horns):
-            base = np.array([x, HH / 2 - 0.5, z], float)
-            for k in range(segs):
-                a = rake + 22.5 * k
-                if a not in bones:
-                    bones[a] = head.group(f"crown_{int(a * 10)}", tuple(p), (a, 0, 0))
-                R = rotation_matrix((a, 0, 0)) @ rotation_matrix((0, 0, lean))
-                wd = (3.6 if r else 3.0) - k * 0.9
-                centre = base + R @ np.array([0, seg / 2, 0])
-                local = rotation_matrix((a, 0, 0)).T @ (centre - p) + p          # into the raked bone's frame
-                bones[a].box(f"crown_{r}_{i}_{k}", tuple(local), (wd, seg, wd), "bone", rotation=(0, 0, lean))
-                base = base + R @ np.array([0, seg - 0.6, 0])
+
+    def put(name, base, length, width, rake, lean):
+        if rake not in bones:
+            bones[rake] = head.group(f"crown_{int(rake * 10)}", tuple(p), (rake, 0, 0))
+        R = rotation_matrix((rake, 0, 0)) @ rotation_matrix((0, 0, lean))
+        centre = base + R @ np.array([0, length / 2, 0])
+        local = rotation_matrix((rake, 0, 0)).T @ (centre - p) + p
+        bones[rake].box(name, tuple(local), (width, length, width), "bone", rotation=(0, 0, lean))
+        return base + R @ np.array([0, length, 0])
+
+    for i, (x, z, h, rake, lean, width, spur) in enumerate(CROWN):
+        base = np.array([x, HH / 2 - 0.5, ZF + z], float)
+        top = put(f"crown_{i}", base, h * 0.72, width, rake, lean)
+        put(f"crown_{i}_point", top - (rotation_matrix((rake, 0, 0)) @ rotation_matrix((0, 0, lean)))
+            @ np.array([0, 0.5, 0]), h * 0.32, width * 0.55, rake, lean)
+        if spur:                                         # a shorter shard split off its base, leaning further out
+            out = lean + (22.5 if x <= 0 else -22.5)
+            put(f"crown_{i}_spur", base + np.array([0, 0, 1.2]), h * 0.42, width * 0.6, rake, out)
 
 
 GILLS = ((5, 45, 14, 7), (0.5, 0, 17, 8), (-4, -45, 12, 6))      # (height, fan, length, width)
@@ -135,13 +143,17 @@ def head_parts(head, preview):
     head.box("skull", (-HW / 4 + 0.5, -0.5, zc + 0.5), (HW / 2 - 1, HH - 1, HL - 1), "bone")
     for i, (y, h, d) in enumerate(((4, 4, 5), (-1, 6, 3), (-4.5, 3, 6))):
         head.box(f"hide_tatter_{i}", (-1.2, y, ZF + d / 2 + 0.6), (2.4, h, d), "hide")
-    head.box("brow_right", (8, 4.4, ZF - 0.2), (14, 3, 3), "hide_dark", rotation=(0, 0, -22.5))
-    head.box("brow_left", (-8, 4.2, ZF + 0.2), (14, 2.5, 3), "bone", rotation=(0, 0, 22.5))
-    head.box("socket_left", (-8.5, 0.8, ZF + 0.9), (8, 5, 1.6), "hole")
-    head.box("cheekbone_left", (-11, -3.2, ZF + 0.2), (7, 2, 2), "bone")
+    # a menacing face: a heavy brow pressed down in a V (inner ends low); the phantom's long green eye slanting the same
+    # way, sunk in a dark pit; on the skull side a deep empty socket under a bare brow ridge, a sculk light far inside
+    head.box("brow_right", (7.8, 4.2, ZF - 0.4), (15, 3.4, 3.6), "hide_dark", rotation=(0, 0, 22.5))
+    head.box("brow_left", (-7.8, 4.0, ZF - 0.1), (15, 3, 3.2), "bone", rotation=(0, 0, -22.5))
+    head.box("eye_pit", (8.6, 0.6, ZF + 0.15), (11, 4.6, 0.6), "hole", rotation=(0, 0, 22.5))
+    head.box("socket_left", (-8.6, 0.4, ZF + 0.9), (9, 6.5, 1.6), "hole")
+    head.box("nose_pit", (0, -2.2, ZF + 0.2), (3, 3.5, 0.6), "hole")
+    head.box("cheekbone_left", (-11, -3.4, ZF + 0.2), (7, 2, 2), "bone")
     eye = head.group("glow_eye", (9, 1, ZF))
-    eye.box("eye_right", (9, 1.0, ZF - 0.3), (8, 2.4, 0.6), "eye", rotation=(0, 0, -22.5))
-    eye.box("socket_light", (-8.5, 0.8, ZF + 0.5), (1.6, 1.6, 0.6), "sculk_glow")
+    eye.box("eye_right", (8.6, 0.6, ZF - 0.3), (9, 2.2, 0.6), "eye", rotation=(0, 0, 22.5))
+    eye.box("socket_light", (-8.6, 0.4, ZF + 0.5), (1.6, 1.6, 0.6), "sculk_glow")
     crown(head)
     gills(head, preview)
 

@@ -17,8 +17,8 @@ snapped to whole texels, the hitbox is set, and she's posed for the fight's mome
 - `body`: the hide, the open ribcage, the spine and the sensor tendrils' stalks;
 - `hi_head`: the head (half hide, half sunken skull, torn hide over the split, the brows, the empty socket), which
   turns with its children;
-- the crown, on four bones `crown_225`, `crown_450`, `crown_675` and `crown_900`. Each holds the horn segments raked
-  back 22.5, 45, 67.5 or 90 degrees. Inside its bone a segment only leans out, so no cube is turned on two axes.
+- the crown, on two bones, `crown_225` and `crown_450`, holding the shards raked back 22.5 or 45 degrees. Inside its
+  bone a shard only leans out, so no cube is turned on two axes.
 - `wing_left` and `wing_right`, the inner panel; `wing_left_tip` and `wing_right_tip`, the outer panel. These are take
   2's torn shape. The finger bones are snapped to 22.5 and 45 degrees.
 - `tail`: the short tail and its owl's fan.
@@ -28,12 +28,26 @@ snapped to whole texels, the hitbox is set, and she's posed for the fight's mome
 - `glow_tendrils`: the tips of the sensor tendrils on her back;
 - `glow_gill_left_0` to `_2` and `glow_gill_right_0` to `_2`: one bone per gill, so each can flick on its own.
 
-**Counts:** 113 cubes and 19 bones with geometry, so 19 displays. Every turned cube is turned once, by 22.5 or 45
+**Counts:** 117 cubes and 17 bones with geometry, so 17 displays. Every turned cube is turned once, by 22.5 or 45
 degrees, so none costs an extra display. Full list: [parts.md](parts.md).
 
 **The gills** are each one flat plane, like vanilla's axolotl gills and warden horns. Their fronds are cut out of the
 texture in session 5. The renders here draw the frond (a glowing stalk with filaments) in place of the plane. **The
 wings' tears** and holes are cut-outs in the texture too, and **the sculk** is painted.
+
+## Take 2 of the face and crown
+
+After session 4 the user found the face a little goofy: the brows made her look sad, not menacing. They asked for the
+scarier face and the real crown of the first take-2 study.
+- **The brows:** they were tilted the wrong way, inner ends up, which reads as sad. Now they press down in a V, inner
+  ends low.
+- **The eye:** the phantom's green eye slants the same way, sunk in a dark pit.
+- **The skull side:** a bigger, deeper empty socket. She has a nose pit too.
+- **The crown:** jagged bone shards broken out through her brow, back to the study's crown.
+  - **Front row:** the tallest in the middle, fanning out to both sides, and raked back. The big ones have a narrower
+    point and a spur split off the base.
+  - **Behind:** a second, lower row.
+- **Still no mouth.**
 
 ## Key poses
 
