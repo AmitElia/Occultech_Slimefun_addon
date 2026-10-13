@@ -1,0 +1,26 @@
+# The Night Matriarch's body: the sculk-infested phantom queen (half rotted to the bone, a crown of bone, warden horns
+# round her head, torn wings, an owl's tail), on a phantom carrier. Occultech still decides every attack, deals all
+# damage (NightMatriarch.java) and hands out loot. Health is the solo value; Occultech multiplies it for the group
+# after the spawn.
+OCCULTECH_NIGHT_MATRIARCH:
+  Type: PHANTOM
+  Display: '&5Night Matriarch'
+  Health: 380
+  Damage: 8
+  Armor: 0
+  Options:
+    # Occultech rebuilds the body from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    PreventSunburn: true
+    FollowRange: 40
+    AlwaysShowName: true
+  Drops: []
+  # The carrier stays at normal size and the model is drawn as authored (about 12 blocks across the wings); its
+  # ob_hitbox bone covers her body, head and inner wings and passes hits on to the carrier. idle and walk (flying),
+  # spawn and death play by themselves; the rest come from NightMatriarch.java (Skills/NightMatriarch.yml).
+  Skills:
+  - model{m=occultech_night_matriarch} @self ~onSpawn
+  - skill{s=NIGHT_MATRIARCH_DEATH} @self ~onDeath

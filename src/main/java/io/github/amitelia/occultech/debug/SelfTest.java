@@ -953,6 +953,20 @@ final class SelfTest {
                 carrier == null ? "no carrier" : "scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue()
                     + ", holding " + carrier.getEquipment().getItemInMainHand().getType());
         }
+        if ("NIGHT_MATRIARCH".equals(bossId) && currentFight.usesMythicBody()
+            && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_night_matriarch")) {
+            LivingEntity carrier = currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+            check("The Night Matriarch has one BetterModel tracker", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(carrier, "occultech_night_matriarch"),
+                carrier == null ? "no carrier" : io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier));
+            check("The Night Matriarch's model has its hitbox", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_night_matriarch"),
+                "no hitbox entity");
+            check("The Night Matriarch's Mythic carrier stays unscaled under the model", carrier != null
+                && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
+                carrier == null ? "no carrier" : "scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue());
+        }
         if ("WITCH_COVEN".equals(bossId) && currentFight.usesMythicBody()
             && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
             && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_witch_coven_cauldron")) {

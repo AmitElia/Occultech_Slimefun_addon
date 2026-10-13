@@ -239,7 +239,32 @@ def translate(model, d):
         c.origin = [c.origin[i] + d[i] for i in range(3)]
 
 
+_NUDGES = None
+
+
 def finish(model):
+    """Whole-texel sizes, flat cut-out planes, and the flicker fix: no two faces share a plane (they z-fight in game).
+    The smaller part of each clash moves a fraction of a texel off the plane (the Witch Coven's resolver); the nudges
+    are found once in the rest pose and kept per cube, so every pose gets the same model, and sizes don't change, so
+    the texture layout doesn't either."""
+    global _NUDGES
+    _finish_base(model)
+    if _NUDGES is None:
+        _NUDGES = {}
+        rest = build("nudge_rest")
+        _finish_base(rest)
+        from bosses.coven_s2 import _resolve
+        nudges = {}
+        _resolve(rest, nudges)
+        _NUDGES = nudges
+    by_name = {c.name: c for c in model.cubes}
+    for name, d in _NUDGES.items():
+        if name in by_name:
+            c = by_name[name]
+            c.frm, c.to, c.origin = [(np.array(v) + d).tolist() for v in (c.frm, c.to, c.origin)]
+
+
+def _finish_base(model):
     """Whole-texel sizes; the cut-out planes stay flat (snapping makes every size at least 1): the gills and the
     tufts' first planes across z, the tufts' second planes across x."""
     v2.snap(model)
