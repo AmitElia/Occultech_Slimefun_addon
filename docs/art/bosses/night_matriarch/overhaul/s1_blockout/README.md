@@ -1,6 +1,10 @@
 # The Night Matriarch redesign, session 1: the full blockout
 
 The user skipped the face study (2026-10-12) and asked for these changes to take 2 of the Phantom Queen:
+Take 1 of the blockout was reviewed too: the wings looked better; the crown looked worse; the tendrils swept
+forward (a sign error) and should sweep back like an axolotl's gills; the face should be more menacing, with no mouth
+and more rot. This page shows take 2.
+
 1. the sculk is mostly texture;
 2. the tendrils round her head look like the warden's horns, smaller and many, like feathers round a bird's face;
 3. the bones on her head stand in several rows and arch backwards;
@@ -9,16 +13,26 @@ The user skipped the face study (2026-10-12) and asked for these changes to take
 
 ![The full blockout](blockout.png)
 
-- **Size:** vanilla's phantom model at 4.5x, about 12 blocks across the wings and 7.5 long, 128 cubes. Her right side
+- **Size:** vanilla's phantom model at 4.5x, about 12 blocks across the wings and 7.5 long, 133 cubes. Her right side
   keeps its hide; her left flank is rotted open to the ribs. In the texture, half her head becomes bare skull.
 - **Sculk:** painted in session 5. Only three small sensor tendrils with glowing tips stay modelled, on her back.
-- **Face:** vanilla's phantom head with its long green eyes at the corners, with no jaw and no fangs.
-- **The ruff:** four small warden-horn tendrils on each side of her face.
-  - **Shape:** broad and tapering, overlapping like an owl's facial feathers.
-  - **Fan:** spread round the face from the brow to the chin, and swept back.
-  - **Glow:** each glows in its inner part, like the warden's.
-- **The crown:** three staggered rows of bone from her brow back over her head (3, 4, then 5), longer row by row.
-  Each bone leans back from its base and bends further back at its tip, and the outer ones lean out.
+- **Face** (take 2 of the blockout, after the user's notes: more menacing, no mouth, more rotted):
+  - the phantom's head, with hide on her right and a sunken bare skull on her left, torn hide hanging over the split;
+  - a heavy brow pressed down in a V over the phantom's green eye, slanting in;
+  - on the skull side, a deep empty socket under a bare brow ridge, a sculk light far inside, and a bare cheekbone.
+  More rot comes in the texture.
+- **The gills** (the user: sweep back, like dragon feathers or an axolotl's gills, smaller): three sculk fronds a side
+  from the back of her head, fanned up, out and down, and swept back.
+  - **Vanilla reference:** the axolotl's gills (`AdultAxolotlModel`) and the warden's horns (`WardenModel`). Both are
+    flat zero-thickness planes, with the frond's shape cut out of the texture.
+  - **Here:** each frond will be one such plane. The blockout draws its cut-out as a glowing stalk with filaments
+    along both edges.
+- **The crown** (the user: the first rows looked a lot worse): fewer, bigger bones, each tapering in segments that
+  bend further back one by one:
+  - a band of five short jagged shards along her brow;
+  - four horns behind them;
+  - two long horns arching back over her head;
+  - the outer ones lean out.
 - **The wings:** take 2's torn wings, kept at the user's request.
   - **Shape:** a ragged trailing edge, made of strips of uneven length and torn differently on each side.
   - **Bones:** a bone spar along each leading edge, and finger bones fanning across.

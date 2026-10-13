@@ -35,7 +35,7 @@ OUT = ROOT / "docs/art/bosses/night_matriarch/overhaul/s1_blockout"
 PALETTE = {
     "hide": (66, 78, 122), "hide_dark": (48, 56, 92), "belly": (168, 170, 158), "flesh": (92, 48, 54),
     "bone": (214, 206, 182), "membrane": (58, 62, 96), "membrane_dark": (40, 42, 70), "feather": (92, 94, 124), "feather_dark": (64, 66, 94),
-    "sculk": (16, 46, 58), "sculk_glow": (50, 225, 240), "eye": (140, 255, 120),
+    "sculk": (16, 46, 58), "sculk_glow": (50, 225, 240), "eye": (140, 255, 120), "hole": (14, 12, 18),
 }
 U = 4.5                                         # one PhantomModel pixel
 ALTITUDE = {"glide": 150, "grounded": 0}
@@ -76,38 +76,52 @@ def body_parts(body):
 
 def head_parts(head):
     zc = FRONT - HL / 2
-    head.box("head", (0, 0, zc), (HW, HH, HL), "hide")
-    for sx in (-1, 1):                                   # the phantom's eyes, at the corners of its face
-        head.box(f"eye_{sx}", (sx * (HW / 2 - 5), 1.2, ZF - 0.3), (7, 2.5, 0.6), "eye")
-    # the crown: three rows of bones from her brow back over her head, staggered, longer row by row, each one arching
-    # back (its base leans back, its tip bends further back), the outer ones leaning out
-    rows = ((ZF + 4, ((-7, 0), (0, 0), (7, 0)), 4, 4),
-            (ZF + 10, ((-11, 22.5), (-3.5, 0), (3.5, 0), (11, -22.5)), 6, 6),
-            (ZF + 16.5, ((-13, 22.5), (-6.5, 0), (0, 0), (6.5, 0), (13, -22.5)), 7, 9))
-    for r, (z, bones, h1, h2) in enumerate(rows):
-        for i, (x, lean) in enumerate(bones):
+    # the phantom's head, half rotted: hide on her right, bare skull on her left (a little sunken), torn hide hanging
+    # over the split; no mouth
+    head.box("head", (HW / 4, 0, zc), (HW / 2, HH, HL), "hide")
+    head.box("skull", (-HW / 4 + 0.5, -0.5, zc + 0.5), (HW / 2 - 1, HH - 1, HL - 1), "bone")
+    for i, (y, h, d) in enumerate(((4, 4, 5), (-1, 6, 3), (-4.5, 3, 6))):            # ragged edge of the hide
+        head.box(f"hide_tatter_{i}", (-1.2, y, ZF + d / 2 + 0.6), (2.4, h, d), "hide")
+    # a menacing face: a heavy brow pressed down in a V; the phantom's green eye slanting on her hide side; on the
+    # skull side a deep empty socket under a bare brow ridge, a sculk light far inside it
+    head.box("brow_right", (8, 4.4, ZF - 0.2), (14, 3, 3), "hide_dark", rotation=(0, 0, -22.5))
+    head.box("brow_left", (-8, 4.2, ZF + 0.2), (14, 2.5, 3), "bone", rotation=(0, 0, 22.5))
+    head.box("eye_right", (9, 1.0, ZF - 0.3), (8, 2.4, 0.6), "eye", rotation=(0, 0, -22.5))
+    head.box("socket_left", (-8.5, 0.8, ZF + 0.9), (8, 5, 1.6), "hole")
+    head.box("socket_light", (-8.5, 0.8, ZF + 0.5), (1.6, 1.6, 0.6), "sculk_glow")
+    head.box("cheekbone_left", (-11, -3.2, ZF + 0.2), (7, 2, 2), "bone")
+    # the crown: bone horns broken out of her head in three rows, arching back over it. Each horn tapers in segments
+    # that bend further back one by one; short jagged shards along the brow, longer horns behind, the longest last,
+    # the outer ones leaning out
+    rows = ((ZF + 3.5, ((-10, 22.5, 4), (-5, 0, 6), (0, 0, 8), (5, 0, 6), (10, -22.5, 4)), 22.5, 1),
+            (ZF + 10, ((-12.5, 22.5, 7), (-4.5, 0, 8), (4.5, 0, 8), (12.5, -22.5, 7)), 45, 2),
+            (ZF + 16.5, ((-6, 22.5, 9), (6, -22.5, 9)), 45, 3))
+    for r, (z, horns, rake, segs) in enumerate(rows):
+        for i, (x, lean, seg) in enumerate(horns):
             name = f"crown_{r}_{i}"
-            base = (x, HH / 2, z)
-            g = head.group(name, base, (45, 0, lean))
-            blade(g, f"{name}_base", base, (2.6, h1, 2.6), "bone")
-            tip = (x, HH / 2 + h1 - 0.4, z)
-            t = g.group(f"{name}_arch", tip, (45, 0, 0))
-            blade(t, f"{name}_tip", tip, (1.8, h2, 1.8), "bone")
-    # the ruff: small warden-horn tendrils round the sides of her face like an owl's facial feathers - broad, tapering,
-    # overlapping, fanned round the face and swept back; each glows in its inner part, like the warden's
+            base = [x, HH / 2 - 0.5, z]
+            g = head.group(name, tuple(base), (rake, 0, lean))
+            for k in range(segs):
+                wd = (3.6 if r else 3.0) - k * 0.9
+                if k:
+                    g = g.group(f"{name}_{k}", tuple(base), (22.5, 0, 0))
+                blade(g, f"{name}_seg{k}", tuple(base), (wd, seg, wd), "bone")
+                base = [base[0], base[1] + seg - 0.6, base[2]]
+    # the gills: three sculk fronds a side from the back of her head, like an axolotl's gills (or the warden's
+    # tendrils): flat planes facing forward, swept back, fanned up, out and down. In the model each is one plane with
+    # its frond cut out of the texture; here the frond is drawn as a glowing stalk with filaments along both edges
     for sx in (-1, 1):
         word = "left" if sx < 0 else "right"
-        for i, (y, fan, length, width) in enumerate(((4.5, 45, 8, 6), (1.5, 22.5, 10, 7), (-1.5, 0, 10, 7),
-                                                     (-4.5, -22.5, 8, 6))):
-            name = f"ruff_{word}_{i}"
-            base = (sx * (HW / 2 - 1), y, ZF + 2.5 + i * 0.6)
+        for i, (y, fan, length) in enumerate(((5, 45, 14), (0.5, 0, 17), (-4, -45, 12))):
+            name = f"gill_{word}_{i}"
+            base = (sx * (HW / 2 - 0.5), y, ZF + HL - 7 + i)
             g = head.group(name, base, (0, 0, sx * fan))
-            f = g.group(f"{name}_sweep", base, (0, sx * 45, 0))
-            x0 = base[0] + sx * length * 0.35
-            f.box(f"{name}_blade", (x0, y, base[2]), (length * 0.7, width, 1), "sculk")
-            f.box(f"{name}_tip", (base[0] + sx * length * 0.85, y, base[2]), (length * 0.3, width * 0.55, 1), "sculk")
-            f.box(f"{name}_glow", (base[0] + sx * length * 0.3, y, base[2] - 0.6), (length * 0.4, width * 0.45, 0.4),
-                  "sculk_glow")
+            f = g.group(f"{name}_sweep", base, (0, -sx * 22.5, 0))
+            f.box(f"{name}_stalk", (base[0] + sx * length / 2, y, base[2]), (length, 1.6, 0.4), "sculk_glow")
+            for k in range(int(length // 4)):
+                fx = base[0] + sx * (3 + k * 4)
+                reach = 1.4 + 1.6 * (1 - abs(k - length / 8) / (length / 8))
+                f.box(f"{name}_filament_{k}", (fx, y, base[2]), (1.2, 1.6 + 2 * reach, 0.4), "sculk")
 
 
 # ---- the wings: take 2's torn wings - a ragged trailing edge, a bone spar along the front, finger bones fanning across;
