@@ -199,6 +199,7 @@ def wing(body, sx):
 # sculk sensor tufts across her back: (x, z, size)
 TUFTS = ((5, -14, 7), (-6, -9, 6), (8.5, -3, 6), (-4, 2, 7), (6, 8, 6), (-8, 12, 5), (3, 16, 6), (9.5, 14, 5),
          (-2, -16, 5))
+BELLY_TUFTS = ((5, -12, 6), (-3, -4, 5), (7, 4, 6), (1, 12, 5), (-6, 15, 5), (9, -18, 4))
 
 
 def build(name, preview=False):
@@ -213,6 +214,11 @@ def build(name, preview=False):
         # sculk sensor tendrils growing out of her back: two crossed planes, the tendrils cut out of the texture
         tufts.box(f"sensor_{i}_a", (x, H / 2 + size / 2, z), (size, size, 0), "sculk")
         tufts.box(f"sensor_{i}_b", (x, H / 2 + size / 2, z), (0, size, size), "sculk")
+    for i, (x, z, size) in enumerate(BELLY_TUFTS):
+        # and hanging from her belly, where players look up at her
+        y = -H / 2 - 1.5 - size / 2
+        tufts.box(f"sensor_h{i}_a", (x, y, z), (size, size, 0), "sculk")
+        tufts.box(f"sensor_h{i}_b", (x, y, z), (0, size, size), "sculk")
     head = body.group("hi_head", (0, 0, FRONT))
     head_parts(head, preview)
     tail = body.group("tail", (0, 0, L / 2))

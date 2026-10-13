@@ -47,6 +47,12 @@ any sculk, and the head tendrils were the wrong colour and didn't look like scul
   - **Shape:** broad at her head, tapering to a point that curls up, darkest at its edge.
   - **Glow:** a cyan core glows inside near the base, and fades out along the blade.
 
+**Take 3** (the user: much more sculk on her underside, which is what players see most):
+- **Her underside:** everything facing down now grows sculk nearly as thickly as her back: belly, head, tail and wing
+  roots.
+- **The wings:** patches reach out along their undersides.
+- **Hanging tufts:** six more sculk sensor tufts hang from her belly, grown downwards, their tips glowing.
+
 **In game:** the review rig on your server has the painted texture.
 
 ```

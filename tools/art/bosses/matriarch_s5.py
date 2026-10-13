@@ -106,6 +106,8 @@ def sculk_amount(p, normal=None):
     v += 0.1 if x < 0 else 0
     if normal is not None and normal[1] > 0.5:
         v += 0.32                                                    # her back: the sculk has taken it
+    elif normal is not None and normal[1] < -0.5:
+        v += 0.28                                                    # her underside too: what players see most
     elif y > LIFT + 2:
         v += 0.12
     return v
@@ -196,7 +198,7 @@ def paint_belly(cube, face, w, h, seed, ctx):
             lv[y, x] += clusters(seed, x, y, 150, 870, 2)
             if y % 4 == 0:
                 lv[y, x] -= 1                                          # the phantom's banded underside
-    infest(lv, over, ctx["world"], seed, 0.7, ctx["normal"])
+    infest(lv, over, ctx["world"], seed, 0.66, ctx["normal"])
     return lv, over
 
 
@@ -290,6 +292,8 @@ def paint_membrane(cube, face, w, h, seed, ctx):
                 lv[y, x] -= 2                                          # the frayed rim of a tear
     if abs(world[0, 0][0]) < W / 2 + 30:
         infest(lv, over, world, seed, 0.66, ctx["normal"])             # over the wing's root
+    elif ctx["normal"][1] < -0.5:
+        infest(lv, over, world, seed, 0.72, ctx["normal"])             # patches out along the wing's underside
     return lv, over, alpha
 
 
@@ -364,6 +368,8 @@ def paint_sensor(cube, face, w, h, seed, ctx):
     for y in range(h):
         for x in range(w):
             rise = (world[y, x][1] - base) / max(1.0, cube.to[1] - base)  # 0 at her back, 1 at the top
+            if cube.name.startswith("sensor_h"):
+                rise = 1 - rise                                           # hanging from her belly: grown downwards
             for c in cols:
                 sway = int(round(0.8 * math.sin(rise * 3.2 + c)))
                 if x == c + sway and rise <= heights[c]:
