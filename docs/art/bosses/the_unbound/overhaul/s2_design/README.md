@@ -13,10 +13,11 @@ It is scaled to the planned size, and every cube is snapped to whole texels.
 
 ## Size and hitbox
 
-- **Model:** about 3.25 blocks to the top of the head and 3.8 to the horn tips. He's 3.2 wide with his arms hanging
-  past his knees; the player is 1.8.
-- **Hitbox:** one invisible `ob_hitbox` bone, 3.25 x 3.4 x 1.8 blocks: a column over his body and arms, from the floor
+- **Model:** 4.5 blocks to the top of the head and about 5 to the horn tips. He's 4.4 wide with his arms hanging past
+  his knees; the player is 1.8. (Take 2: the user asked for him far bigger and looming; he was 3.25 blocks.)
+- **Hitbox:** one invisible `ob_hitbox` bone, 4.5 x 4.7 x 2.6 blocks: a column over his body and arms, from the floor
   to the top of his head.
+- **The chest:** take 2 makes the chest piece a bigger furnace front (session 6 has the details).
   - The horns, the band's tails, the chains and the cleaver stay outside it, so nothing loose is a free target and
     the dragged cleaver can't be hit from behind.
   - It's one box, so a sweep can't hit him twice.

@@ -196,7 +196,7 @@ def blockbench_animations(model_id, clip_set):
 
 # ---- preview: the rest model in its painted zone colours, posed per frame --------------------------------------------
 
-def frame(model, bones, t, yaw=-40, pitch=12, size=(380, 420), scale=3.6):
+def frame(model, bones, t, yaw=-40, pitch=12, size=(380, 420), scale=2.7):
     mats = v7.matrices(model, bones, t)
     a, b = math.radians(yaw), math.radians(-pitch)
     ry = np.array([[math.cos(a), 0, math.sin(a)], [0, 1, 0], [-math.sin(a), 0, math.cos(a)]])
@@ -215,7 +215,7 @@ def frame(model, bones, t, yaw=-40, pitch=12, size=(380, 420), scale=3.6):
         ramp, shade = s5.ZONE[zone]
         base = np.array(s5.RAMP[ramp][min(shade, len(s5.RAMP[ramp]) - 1)], float)
         if zone.startswith("fire"):
-            base = base * np.array((255, 150, 60)) / 255
+            base = base * np.array((255, 150, 24)) / 255
         for face, idx in v7.QUADS.items():
             light = 1.0 if glow else v7.SHADE[face]
             col = tuple(int(min(255, x * light)) for x in base)

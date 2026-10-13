@@ -2,13 +2,14 @@
 
 His variants are the fire's stages. He speeds up as he loses health, and the fire in his chest grows with him. The
 fire is painted near white (session 5), and BetterModel's per-bone tint multiplies a stage colour into it (no
-texture swap). Flames licking up out of the grate are their own bone, `glow_flames`, hidden until the fire grows:
-  embers    (230, 96, 40)    above 2/3 health: a low red-orange glow behind the grate, no flames
-  burning   (255, 150, 60)   below 2/3: orange, the flames shown
-  inferno   (255, 236, 200)  below 1/3, enraged: white-hot, the flames shown
-  sated     (150, 60, 36)    the 3 s after he devours a thrall: dull coals, the flames hidden
-  dead      (52, 40, 38)     the fire goes out as he falls
-The tinted bones are `glow_chest` (the fire behind the grate) and `glow_flames`.
+texture swap). Flames rising out of the furnace's mouth are their own bone, `glow_flames`, hidden until the fire grows:
+  embers    (200, 44, 14)    above 2/3 health: a deep red glow in the furnace, no flames
+  burning   (255, 150, 24)   below 2/3: bright orange, the flames shown
+  inferno   (80, 214, 255)   below 1/3, enraged: spirit fire, the tier's cyan like his eye, the flames shown
+  sated     (110, 36, 20)    the 3 s after he devours a thrall: dull coals, the flames hidden
+  dead      (40, 30, 28)     the fire goes out as he falls
+Take 2 (user, 2026-10-12: make the change more apparent): three hues far apart (red, orange, cyan) instead of three
+shades of orange. The tinted bones are `glow_chest` (the furnace's fire, lit walls and coals) and `glow_flames`.
 
 Readability is checked at night (light level ~4: everything but the full-bright fire and eye dims) and under
 BetterModel's red damage tint, applied the way BetterModel applies it: the colour multiplies the texture.
@@ -30,8 +31,8 @@ from bosskit import sheet  # noqa: E402
 from bosses import unbound_s3 as s3, unbound_s4 as s4, unbound_s5 as s5, volley_crone_s4 as v4  # noqa: E402
 
 OUT = ROOT / "docs/art/bosses/the_unbound/overhaul/s6_variants"
-STAGES = {"embers": (230, 96, 40), "burning": (255, 150, 60), "inferno": (255, 236, 200), "sated": (150, 60, 36),
-          "dead": (52, 40, 38)}
+STAGES = {"embers": (200, 44, 14), "burning": (255, 150, 24), "inferno": (80, 214, 255), "sated": (110, 36, 20),
+          "dead": (40, 30, 28)}
 FLAMES = {"embers": False, "burning": True, "inferno": True, "sated": False, "dead": False}
 FIRE_ZONES = ("fire", "fire_hot")
 TINT_BONES = ("glow_chest", "glow_flames")
@@ -58,6 +59,7 @@ VIEWS = [
     {"name": "player_eye", "location": (-2.4, 5.5, 1.62), "target": (0, 0, 2.4), "scale": 4.8, "player": False},
     {"name": "chest", "location": (1.2, 5.0, 2.4), "target": (0, 0.6, 2.2), "scale": 2.2, "player": False},
 ]
+VIEWS = s4.grown(VIEWS)
 
 
 def render(model, bb, atlas_path, flames, out):

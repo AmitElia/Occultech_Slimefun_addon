@@ -26,7 +26,7 @@ from bosskit import sheet  # noqa: E402
 from bosses import monarch_s1 as m1, unbound_face as uf  # noqa: E402
 
 OUT = ROOT / "docs/art/bosses/the_unbound/overhaul/s1_blockout"
-HEAD_TOP = 3.25 * 16                       # where the top of his head should land (model pixels)
+HEAD_TOP = 4.5 * 16                        # where the top of his head lands (model pixels; 3.25 blocks until the user asked for him far bigger)
 PALETTE = dict(uf.PALETTE, boot=(40, 34, 32), steel=(156, 162, 168), spine=(104, 108, 114), blood=(100, 22, 20),
                haft=(88, 62, 40), wrap=(70, 50, 34), chain=(132, 132, 140), hole=(24, 22, 26))
 

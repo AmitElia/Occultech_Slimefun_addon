@@ -63,6 +63,11 @@ public final class TheUnbound extends BossBehavior {
     /** At most one axe swing every 1.2s: vanilla's pace (one a second) was too fast for most players, 1.5s too easy for groups. */
     private static final int SWING_COOLDOWN = 24;
     private static final double CLEAVE_RANGE = 4.5;
+    /** The Mythic body is 4.5 blocks tall: he stops at arm's length and swings from there (horizontal, from his feet). */
+    private static final double REACH = 3.2;
+    private static final double HOLD = 2.6;
+    /** The swing clip's blade lands 0.35s in. */
+    private static final int SWING_CONTACT = 7;
 
     /** The fire's stages: above 2/3 health, below 2/3, below 1/3 (enraged). */
     private enum Stage { EMBERS, BURNING, INFERNO }
@@ -78,6 +83,9 @@ public final class TheUnbound extends BossBehavior {
     private int cleaveAt = -1;
     private int thrallsAt = -1;
     private int satedUntil = -1;
+    private int swingAt = -1;
+    private int nextSwing;
+    private Vector swingDirection;
     private Stage stage = Stage.EMBERS;
 
     public TheUnbound(BossFight fight) {
@@ -87,6 +95,12 @@ public final class TheUnbound extends BossBehavior {
     @Override
     public int meleeCooldownTicks() {
         return SWING_COOLDOWN;
+    }
+
+    /** With the Mythic body he swings from his own reach (see {@link #swing}); the vanilla body keeps vanilla melee. */
+    @Override
+    public boolean vanillaMelee() {
+        return !mythic();
     }
 
     @Override
@@ -133,10 +147,24 @@ public final class TheUnbound extends BossBehavior {
         }
     }
 
-    /** Holds him still and facing the locked wedge through the cleave's wind-up (every tick). */
+    /**
+     * Every tick: holds him still and facing the locked wedge through the cleave's wind-up; otherwise (Mythic body) he
+     * stops at arm's length from the player he's after, and his swing lands on its contact frame.
+     */
     @Override
     public void move() {
-        if (unbound == null || !unbound.isValid() || cleaveAt < 0 || cleaveOrigin == null) {
+        if (unbound == null || !unbound.isValid()) {
+            return;
+        }
+        if (swingAt >= 0 && fight.elapsed() >= swingAt) {
+            swingAt = -1;
+            landSwing();
+        }
+        if (cleaveAt < 0 || cleaveOrigin == null) {
+            if (mythic() && unbound.getTarget() instanceof Player target && horizontal(target) < HOLD) {
+                unbound.getPathfinder().stopPathfinding();
+                unbound.setVelocity(new Vector(0, unbound.getVelocity().getY(), 0));
+            }
             return;
         }
         Location hold = cleaveOrigin.clone();
@@ -208,6 +236,11 @@ public final class TheUnbound extends BossBehavior {
             }
         }
 
+        if (mythic() && cleaveAt < 0 && swingAt < 0 && now >= nextSwing && unbound.getTarget() instanceof Player target
+                && horizontal(target) <= REACH) {
+            swing(target, now);
+        }
+
         if (cleaveAt < 0 && every(CLEAVE_INTERVAL)) {
             Player target = fight.nearestPlayer(unbound.getLocation());
             if (target != null) {
@@ -219,6 +252,7 @@ public final class TheUnbound extends BossBehavior {
                 }
                 cleaveDirection.normalize();
                 cleaveAt = now + CLEAVE_WARNING;
+                swingAt = -1;                                // the cleave's wind-up takes over from a swing
                 act("CLEAVE", target);
                 unbound.getWorld().playSound(cleaveOrigin, Sound.ENTITY_VINDICATOR_CELEBRATE, 1.5F, 0.6F);
                 FloorDecals.wedge(fight, cleaveOrigin, cleaveDirection, CLEAVE_RANGE, CLEAVE_WARNING, WEDGE.getColor());
@@ -233,17 +267,71 @@ public final class TheUnbound extends BossBehavior {
         }
     }
 
-    /** Embers streaming off his chest, more at each stage. */
+    private double horizontal(Entity other) {
+        return other.getLocation().toVector().subtract(unbound.getLocation().toVector()).setY(0).length();
+    }
+
+    /** The axe swing (Mythic body): the clip starts now, the blade lands {@link #SWING_CONTACT} ticks later. */
+    private void swing(Player target, int now) {
+        swingDirection = target.getLocation().toVector().subtract(unbound.getLocation().toVector()).setY(0);
+        if (swingDirection.lengthSquared() < 0.01) {
+            swingDirection = unbound.getLocation().getDirection().setY(0);
+        }
+        swingDirection.normalize();
+        swingAt = now + SWING_CONTACT;
+        nextSwing = now + SWING_COOLDOWN;
+        act("SWING", target);
+    }
+
+    /** Everyone in front of him within reach when the blade comes down (a step back after the wind-up dodges it). */
+    private void landSwing() {
+        if (swingDirection == null || isSated()) {
+            return;
+        }
+        Location at = unbound.getLocation();
+        for (Player player : fight.players()) {
+            Vector to = player.getLocation().toVector().subtract(at.toVector());
+            double dy = to.getY();
+            to.setY(0);
+            boolean inFront = to.lengthSquared() < 0.25 || Math.toDegrees(to.angle(swingDirection)) <= 60;
+            if (to.length() <= REACH + 0.4 && Math.abs(dy) < 3 && inFront) {
+                fight.hit(player, SWING, unbound);
+                Vector push = to.lengthSquared() < 0.01 ? swingDirection.clone() : to.normalize();
+                player.setVelocity(push.multiply(0.5).setY(0.3));
+            }
+        }
+        at.getWorld().playSound(at, Sound.ENTITY_PLAYER_ATTACK_STRONG, 1.4F, 0.6F);
+    }
+
+    /** Fire pouring out of the furnace in his chest: more at each stage, spirit fire when he's enraged. */
     private void embers() {
         Vector facing = unbound.getLocation().getDirection().setY(0);
         if (facing.lengthSquared() < 1e-4) {
             facing = new Vector(0, 0, 1);
         }
-        Location chest = unbound.getLocation().add(facing.normalize().multiply(0.6)).add(0, 2.0, 0);
-        int count = stage == Stage.EMBERS ? 1 : stage == Stage.BURNING ? 3 : 6;
-        unbound.getWorld().spawnParticle(Particle.SMALL_FLAME, chest, count, 0.25, 0.2, 0.25, 0.01);
-        if (stage != Stage.EMBERS) {
-            unbound.getWorld().spawnParticle(Particle.LAVA, chest, stage == Stage.INFERNO ? 2 : 1, 0.2, 0.1, 0.2, 0);
+        facing.normalize();
+        Location furnace = mythic() ? unbound.getLocation().add(facing.clone().multiply(1.0)).add(0, 2.75, 0)
+            : unbound.getLocation().add(facing.clone().multiply(0.6)).add(0, 2.0, 0);
+        var world = unbound.getWorld();
+        switch (stage) {
+            case EMBERS -> {
+                world.spawnParticle(Particle.SMALL_FLAME, furnace, 3, 0.35, 0.2, 0.2, 0.01);
+                world.spawnParticle(Particle.SMOKE, furnace.clone().add(0, 0.4, 0), 2, 0.3, 0.1, 0.2, 0.01);
+            }
+            case BURNING -> {
+                world.spawnParticle(Particle.FLAME, furnace, 6, 0.4, 0.25, 0.25, 0.02);
+                world.spawnParticle(Particle.SMALL_FLAME, furnace, 4, 0.5, 0.3, 0.3, 0.03);
+                world.spawnParticle(Particle.LAVA, furnace, 1, 0.3, 0.1, 0.2, 0);
+                world.spawnParticle(Particle.SMOKE, furnace.clone().add(0, 0.6, 0), 4, 0.4, 0.2, 0.3, 0.02);
+            }
+            case INFERNO -> {
+                world.spawnParticle(Particle.SOUL_FIRE_FLAME, furnace, 10, 0.45, 0.3, 0.3, 0.04);
+                world.spawnParticle(Particle.FLAME, furnace, 4, 0.5, 0.3, 0.3, 0.03);
+                world.spawnParticle(Particle.LAVA, furnace, 2, 0.4, 0.2, 0.3, 0);
+                world.spawnParticle(Particle.LARGE_SMOKE, furnace.clone().add(0, 0.8, 0), 3, 0.4, 0.2, 0.3, 0.02);
+                // the spirit fire spills round his feet as he stalks
+                world.spawnParticle(Particle.SOUL_FIRE_FLAME, unbound.getLocation().add(0, 0.1, 0), 4, 1.0, 0.05, 1.0, 0.01);
+            }
         }
     }
 
@@ -257,6 +345,7 @@ public final class TheUnbound extends BossBehavior {
         if (killer == null && last instanceof EntityDamageByEntityEvent byEntity && byEntity.getDamager().equals(unbound)) {
             satedUntil = fight.elapsed() + SATED_TICKS;
             cleaveAt = -1;                                   // sated: an unfinished cleave never lands
+            swingAt = -1;
             act("SATED", null);
             unbound.getWorld().playSound(unbound.getLocation(), Sound.ENTITY_PLAYER_BURP, 2F, 0.5F);
             fight.broadcast("&7The Unbound gorges on its thrall - &fstrike now!");

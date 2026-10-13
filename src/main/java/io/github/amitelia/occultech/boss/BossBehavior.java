@@ -56,6 +56,14 @@ public abstract class BossBehavior {
         return 0;
     }
 
+    /**
+     * Whether this fight's creatures may hit players with vanilla melee. A boss drawn far bigger than its carrier swings
+     * from its own reach instead (vanilla's reach is the carrier's, about a block), so its vanilla hits are cancelled.
+     */
+    public boolean vanillaMelee() {
+        return true;
+    }
+
     public boolean usesAntiPillar() {
         return true;
     }

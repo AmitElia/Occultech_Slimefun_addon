@@ -103,7 +103,7 @@ def clusters(seed, x, y, lo=170, hi=830, cell=2):
 
 def paint_skin(cube, face, w, h, seed, ctx):
     """Grey skin, mottled; light on the tops of the masses, shadow under them; old welts where the restraints bit;
-    the fire's warm light round the chest piece; the abs on the stomach."""
+    the abs on the stomach."""
     lv, over = blank(cube, w, h)
     n = cube.name
     for y in range(h):
@@ -139,15 +139,7 @@ def paint_skin(cube, face, w, h, seed, ctx):
                     lv[yy, x0 + t] -= 1
                     if yy - 1 >= 0:
                         lv[yy - 1, x0 + t] += 1
-    # the chest piece's fire, spilling onto the skin round it
-    world, normal = ctx["world"], ctx["normal"]
-    d = np.linalg.norm(world - ctx["fire"], axis=-1)
-    facing = float(np.dot(normal, ctx["fire_normal"]))
-    if facing > 0.3:
-        for y in range(h):
-            for x in range(w):
-                if d[y, x] < 10:
-                    over.append((y, x, "glow", 0.55 * (1 - d[y, x] / 10) ** 1.5))   # firelight, blended in
+    # (no painted firelight round the furnace: it stayed orange whatever colour the stage tinted the fire)
     return lv, over
 
 
@@ -311,6 +303,11 @@ def paint_iron(cube, face, w, h, seed, ctx):
                 r = max(abs(x - cx) / (w / 2), abs(y - cy) / (h / 2))
                 if 0.45 < r < 0.9:
                     over.append((y, x, "heat", int((0.9 - r) / 0.45 * 3.9)))
+    if cube.name == "furnace_door" and face in ("north", "south") and w >= 6 and h >= 6:
+        for y in range(2, h - 2, 2):                                 # the door's draught vent: dark slits
+            lv[y, 2:w - 2] -= 3
+        for y, x in ((1, 1), (1, w - 2), (h - 2, 1), (h - 2, w - 2)):
+            lv[y, x] += 3                                            # rivets at its corners
     return lv, over
 
 
@@ -494,6 +491,11 @@ def paint_fire(cube, face, w, h, seed, ctx):
     the fight tints the fire bones its stage colour (session 6)."""
     lv = np.zeros((h, w), int)
     base = ZONE[s4.zone_for(cube)][1]
+    if cube.name.startswith("furnace_coal"):
+        for y in range(h):
+            for x in range(w):                                       # glowing coals, dark where they've crusted
+                lv[y, x] = base + (1 if noise(seed, x, y, 1) > 600 else -3 if noise(seed + 1, x, y, 1) > 650 else 0)
+        return lv, []
     if cube.name.startswith("flame_"):
         for y in range(h):
             for x in range(w):
@@ -616,14 +618,14 @@ def main():
     path.write_text(json.dumps(bb, indent=1) + "\n", encoding="utf-8")
     if s3.SERVER_MODELS.is_dir():
         shutil.copyfile(path, s3.SERVER_MODELS / path.name)
-    views = s4.VIEWS + [
+    views = s4.VIEWS + s4.grown([
         {"name": "ten_blocks", "location": (-3, 11, 1.62), "target": (0, 0, 1.9), "scale": 8, "player": False,
          "res": (640, 480)},
         {"name": "chest", "location": (1.2, 5.0, 2.4), "target": (0, 0.6, 2.2), "scale": 2.2, "player": False},
         {"name": "cleaver", "location": (4.0, -3.0, 2.0), "target": (1.0, -1.6, 0.2), "scale": 2.6, "player": False},
         {"name": "legs", "location": (1.5, 5.0, 0.9), "target": (0, 0.2, 0.7), "scale": 2.2, "player": False},
         {"name": "chain", "location": (-3.6, 3.6, 0.9), "target": (-1.1, 0.2, 0.5), "scale": 1.4, "player": False},
-    ]
+    ])
     out = OUT / "renders"
     out.mkdir()
     boxes = [{"corners": c.corners().tolist(), "from": c.frm, "to": c.to,

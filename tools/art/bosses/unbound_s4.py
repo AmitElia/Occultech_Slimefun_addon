@@ -141,6 +141,23 @@ def rig_bbmodel(model, keys, positions, atlas_path, height, poses):
     return bb, culled
 
 
+GROW = s2.s1.HEAD_TOP / 52.0          # the views were framed for him at 3.25 blocks
+
+
+def grown(views):
+    """Views framed for the 3.25-block Unbound, moved back and widened for his size now (a camera at a player's eye
+    height stays there)."""
+    out = []
+    for v in views:
+        v = dict(v)
+        for key in ("location", "target"):
+            x, y, z = v[key]
+            v[key] = (x * GROW, y * GROW, z if key == "location" and z == 1.62 else z * GROW)
+        v["scale"] = v["scale"] * GROW
+        out.append(v)
+    return out
+
+
 VIEWS = [
     {"name": "hero", "location": (6.0, 7.0, 4.4), "target": (0, -0.3, 1.7), "scale": 6.2, "player": True},
     {"name": "front", "location": (0, 10, 1.9), "target": (0, 0, 1.9), "scale": 4.6, "player": False},
@@ -149,6 +166,7 @@ VIEWS = [
     {"name": "back", "location": (4.5, -9, 4.2), "target": (0, -0.8, 1.6), "scale": 5.6, "player": False},
     {"name": "face", "location": (1.4, 6, 3.0), "target": (0, 0.4, 2.95), "scale": 1.6, "player": False},
 ]
+VIEWS = grown(VIEWS)
 
 
 def render(model, bb, atlas_path, out):

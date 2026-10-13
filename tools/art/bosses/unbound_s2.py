@@ -3,8 +3,8 @@
 The approved blockout (unbound_s1.py) rebuilt as a rig:
 - every part on a named bone (BetterModel names): the legs and shins, the torso (the hunch), `hi_head`, both arms
   and forearms, the cleaver in his right fist, the chains (they swing), the band's tails;
-- the glow on its own bones: `glow_eye` (the cyan eye through the band) and `glow_chest` (the fire behind the grate);
-- scaled to the planned size (3.25 blocks to the top of the head) and every cube snapped to whole texels;
+- the glow on its own bones: `glow_eye` (the cyan eye through the band) and `glow_chest` (the furnace's fire);
+- scaled to the planned size (4.5 blocks to the top of the head; 3.25 until the user asked for him far bigger) and every cube snapped to whole texels;
 - the hitbox (`ob_hitbox`): a column over his body and arms, never the horns, chains or cleaver;
 - the fight's key poses, posed from the rig.
 
@@ -116,7 +116,7 @@ def hanging_chain(parent, name, top, length):
 
 def rig(name):
     model = Model(name)
-    root = uf.bust(model, "MIX", "PIECE")
+    root = uf.bust(model, "MIX", "FURNACE")
     torso, head = group(model, "torso"), group(model, "hi_head")
     root.origin = [0.0, 21.0, 0.5]                          # the body turns (and sinks) at the hips
     root.name = "hips"                                      # (not "root": that is the model's own top)
@@ -130,14 +130,15 @@ def rig(name):
     eye = head.group("glow_eye", tuple(cube(model, "eye").origin))
     for n in ("halo", "eye", "eye_core"):
         move(cube(model, n), eye)
-    fire = torso.group("glow_chest", (0, 38, -9.8))
-    for n in ("chest_fire", "chest_fire_hot"):
-        move(cube(model, n), fire)
-    # flames licking up out of the grate: hidden at first, shown as the fire grows (session 6's stages)
-    flames = torso.group("glow_flames", (0, 43.5, -10.3))
+    fire = torso.group("glow_chest", (0, 38, -10.1))
+    for c in [c for c in model.cubes if c.mat in ("fire", "fire_hot") and c.group is torso]:
+        move(c, fire)                                       # the furnace's fire, lit walls and coals
+    # flames rising off the coals and licking out over the lintel: hidden at first, shown as the fire grows (session
+    # 6's stages); they stop below the chest band, clear of his face
+    flames = torso.group("glow_flames", (0, 35.8, -11.4))
     flames.visible = False
-    for i, (x, h, wd) in enumerate(((-2.8, 6.5, 2.4), (0.0, 9.5, 2.6), (2.8, 5.5, 2.4))):
-        flames.box(f"flame_{i}", (x, 42.5 + h / 2, -10.4), (wd, h, 0.6), "fire")   # tongues rising off the grate
+    for i, (x, h, wd) in enumerate(((-3.8, 5.6, 2.6), (0.0, 6.8, 3.0), (3.8, 5.0, 2.6))):
+        flames.box(f"flame_{i}", (x, 35.8 + h / 2, -11.6 - 0.25 * h), (wd, h, 0.6), "fire")
     tails = head.group("band_tails", tuple(cube(model, "knot").origin))
     for n in ("knot", "tail_a", "tail_b", "tail_c"):
         move(cube(model, n), tails)
@@ -334,14 +335,14 @@ def parts_list(model):
 
 
 MAIN_VIEWS = [
-    {"name": "flat_34", "mode": "flat", "camera": "persp", "yaw": 35, "height": 3.2, "dist": 8.5, "target_z": 1.6},
-    {"name": "flat_front", "mode": "flat", "camera": "persp", "yaw": 0, "height": 2.2, "dist": 8, "target_z": 1.7},
+    {"name": "flat_34", "mode": "flat", "camera": "persp", "yaw": 35, "height": 4.4, "dist": 11.5, "target_z": 2.2},
+    {"name": "flat_front", "mode": "flat", "camera": "persp", "yaw": 0, "height": 3.0, "dist": 11, "target_z": 2.4},
     {"name": "sil_side", "mode": "silhouette", "camera": "ortho_side"},
-    {"name": "clay_34", "mode": "clay", "camera": "persp", "yaw": -30, "height": 2.8, "dist": 8, "target_z": 1.6,
+    {"name": "clay_34", "mode": "clay", "camera": "persp", "yaw": -30, "height": 3.9, "dist": 11, "target_z": 2.2,
      "player": False},
 ]
 POSE_VIEWS = [
-    {"name": "flat_34", "mode": "flat", "camera": "persp", "yaw": 40, "height": 3.0, "dist": 8.5, "target_z": 1.5,
+    {"name": "flat_34", "mode": "flat", "camera": "persp", "yaw": 40, "height": 4.2, "dist": 11.5, "target_z": 2.1,
      "player": False},
     {"name": "sil_side", "mode": "silhouette", "camera": "ortho_side", "player": False},
 ]

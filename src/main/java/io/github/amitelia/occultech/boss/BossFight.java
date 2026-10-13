@@ -168,6 +168,9 @@ public final class BossFight {
 
     /** False if {@code attacker}'s vanilla melee hit comes before its behavior's cooldown is over (the hit is cancelled). */
     boolean meleeReady(Entity attacker) {
+        if (!behavior.vanillaMelee()) {
+            return false;
+        }
         int cooldown = behavior.meleeCooldownTicks();
         if (cooldown <= 0) {
             return true;

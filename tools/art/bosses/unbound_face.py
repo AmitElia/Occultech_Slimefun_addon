@@ -345,7 +345,32 @@ def chest_piece(t):
     t.box("chest_rim", (0, 43.4, -9.2), (11.6, 1.2, 1.6), "iron_lit")
 
 
-CHESTS = {"C1": chest_fissure, "C2": chest_veins, "C3": chest_heart, "PIECE": chest_piece}
+def furnace(t):
+    """The chest piece take 2 (user, 2026-10-12: bigger, and plainly a furnace's mouth): an iron furnace front filling
+    his chest between the two bands. A square mouth framed by heavy jambs, a lintel and a jutting hearth, the fire at
+    its back and glowing coals on the hearth, the door hanging open on its hinge at his left. Its flames rise out of the
+    mouth and stay below the chest band, clear of his face (take 1's flames rose over his chin)."""
+    z0 = -8.5                                                                       # the chest's front
+    t.box("chest_piece", (0, 38.5, z0 - 0.7), (19.6, 11.6, 1.4), "iron")              # the back plate, band to band
+    t.box("chest_fire", (0, 38.1, z0 - 1.6), (12.4, 7.0, 0.4), "fire")              # the fire at the back of the mouth
+    t.box("chest_fire_hot", (0, 36.6, z0 - 1.9), (8.0, 2.4, 0.3), "fire_hot")       # its hot heart, low over the coals
+    for sx in (-1, 1):
+        t.box(f"furnace_jamb_{sx}", (sx * 7.4, 38.1, z0 - 2.6), (2.4, 7.0, 2.4), "iron")
+        t.box(f"furnace_wall_{sx}", (sx * 6.0, 38.1, z0 - 2.4), (0.4, 7.0, 1.8), "fire")    # the lit inner walls
+        t.box(f"furnace_rivet_{sx}", (sx * 7.4, 40.2, z0 - 4.1), (1.0, 1.0, 0.6), "stud")
+        t.box(f"furnace_rivet_low_{sx}", (sx * 7.4, 36.0, z0 - 4.1), (1.0, 1.0, 0.6), "stud")
+    t.box("furnace_lintel", (0, 42.85, z0 - 2.0), (17.6, 2.5, 3.0), "iron_lit")     # over the mouth
+    t.box("furnace_hearth", (0, 33.65, z0 - 2.3), (18.4, 1.9, 3.6), "iron_lit")     # the hearth jutting out below
+    for i, x in enumerate((-4.0, 0.0, 4.0)):                                        # the coals on the hearth
+        t.box(f"furnace_coal_{i}", (x, 35.15, z0 - 2.6), (3.2, 1.2, 2.0), "fire_hot")
+    # the door, hung on its hinge at his left jamb and swung right open (Blockbench's 45 degrees: no extra display)
+    hinge, half = (-8.6, 38.1, z0 - 3.8), 4.4 * math.sqrt(0.5)
+    t.box("furnace_door", (hinge[0] - half, hinge[1], hinge[2] - half), (8.8, 7.6, 0.8), "iron", rotation=(0, -45, 0))
+    for y in (35.6, 40.6):
+        t.box(f"furnace_hinge_{y:.0f}", (hinge[0], y, hinge[2]), (1.2, 1.4, 1.2), "iron_lit")
+
+
+CHESTS = {"C1": chest_fissure, "C2": chest_veins, "C3": chest_heart, "PIECE": chest_piece, "FURNACE": furnace}
 HEADS = {"F1": face_blindfold, "F2": face_scowl, "F3": face_bull, "MIX": face_mix}
 VIEWS = [
     {"name": "face", "mode": "flat", "camera": "persp", "yaw": -24, "height": 3.25, "dist": 2.9, "target_z": 3.35, "player": False},

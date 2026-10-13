@@ -13,6 +13,25 @@ The nudges are found once in the rest pose and kept in each cube's own space, so
 gets the same model; sizes don't change, so the texture layout stays the same. Sessions 2 to 7 were regenerated with
 it.
 
+## Take 2 (after the user's review in game)
+
+- **Far bigger and looming:** 4.5 blocks to the top of his head (was 3.25). Every session from 2 on was regenerated
+  at the new size. He keeps the vanilla texel density (16 per block), so his atlas grew from 137 to 237 rows of 256,
+  and he still draws 22 displays.
+- **The furnace:** a bigger furnace front with a square mouth, lintel, hearth, coals and the door hanging open. Its
+  flames stay clear of his face. Stage colours are red, orange, then spirit cyan. See session 6.
+- **More fire:** sparks, flames, lava and smoke pour out of the furnace, more at each stage. Stage changes burst
+  bigger, in spirit fire for the inferno.
+- **His own reach:** a vanilla vindicator only reaches about a block, so the huge body would walk into you before it
+  could hit. With the Mythic body, he now:
+  - stops at arm's length (2.6 blocks);
+  - plays the swing on anyone within 3.2 blocks;
+  - lands it on the swing's contact frame (0.35 s), on everyone in front of him within reach.
+
+  Stepping back out of the wind-up dodges it. Vanilla melee on players is cancelled for him
+  (`BossBehavior.vanillaMelee`), and he still kills thralls with vanilla blows, so devour works as before. The
+  vanilla body (no Mythic) is unchanged.
+
 ## Shipped
 
 - **The model:** `src/main/models/occultech_the_unbound.bbmodel`:
@@ -22,10 +41,10 @@ it.
   - it is installed into BetterModel's models folder at startup and merged into the Occultech resource pack.
 - **Mythic:**
   - `src/main/mythic/Mobs/TheUnbound.yml`: the carrier `OCCULTECH_THE_UNBOUND`, a vindicator. The swing plays on
-    each melee hit, the death on death.
+    each melee hit, the death on death. (Take 2: the swing is played by the plugin, from his own reach.)
   - `Skills/TheUnbound.yml`: 12 cosmetic skills (`tools/art/bosses/unbound_mythic_skills.py`).
   - Both are installed into the Occultech Mythic pack.
-- **The pack:** sha1 `2685388b`. BetterModel's output for the seven shipped models is merged in, and the jar carries
+- **The pack:** sha1 `8d3cf60a` (take 2; was `2685388b`). BetterModel's output for the seven shipped models is merged in, and the jar carries
   the same zip.
 
 ## How the fight uses them (TheUnbound.java)
@@ -49,9 +68,9 @@ cleaver). Without Mythic, the fight plays as before: a 1.3x vindicator with an i
 | every 14 s: the thralls | `CALL`, then the thralls rise 18 ticks later | he crouches and roars; the husks rise on the roar |
 | a thrall comes within his reach | `DEVOUR` (target: the thrall) | he lunges and gorges, fist to his mouth (once per thrall) |
 | he kills a thrall himself | `SATED` | down on one knee, panting; the fire drops to dull coals and the flames go out for the 3 s opening |
-| a melee hit | `SWING` (mob file) | the short chop |
+| a player within his reach (3.2 blocks) | `SWING` | the chop; it lands 0.35 s in |
 | he's hit | `FLINCH` | a jolt (not during the cleave or the sated opening) |
-| always | (the plugin) | embers stream off his chest: a few at first, more when burning, a shower with lava when inferno |
+| always | (the plugin) | fire pours out of the furnace: sparks and smoke, then flames and lava, then spirit fire and heavy smoke |
 | death | `DEATH` (mob file) | to his knees and folding forward, the fire out; the model hands over to the stand-in so the whole clip plays |
 
 ## Tests
@@ -67,7 +86,7 @@ cleaver). Without Mythic, the fight plays as before: a 1.3x vindicator with an i
 ## In game
 
 1. Push the pack repository (`occultech_texture_pack_v1.0`) and the addon repository.
-2. Restart your server with the run-server script, so it gets the new jar (pack sha1 `2685388b`).
+2. Restart your server with the run-server script, so it gets the new jar (pack sha1 `8d3cf60a`).
 3. Summon The Unbound at a tier 1 circle, or use `/occultech showcase`.
 
 Please check:

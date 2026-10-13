@@ -18,11 +18,11 @@ OCCULTECH_THE_UNBOUND:
     FollowRange: 32
     AlwaysShowName: true
   Drops: []
-  # The carrier stays at normal size and the model is drawn as authored (about 3.25 blocks to the top of his head);
+  # The carrier stays at normal size and the model is drawn as authored (4.5 blocks to the top of his head);
   # its ob_hitbox bone covers his body and arms and passes hits on to the carrier. idle, walk, spawn and death play by
-  # themselves; the swing plays on each of his melee hits; the rest come from TheUnbound.java (Skills/TheUnbound.yml).
+  # themselves. He swings from his own reach, not vanilla's (TheUnbound.java plays the swing and lands it), like the
+  # rest of his skills (Skills/TheUnbound.yml).
   Skills:
   - model{m=occultech_the_unbound} @self ~onSpawn
   - bodyrotation{mh=35;mnh=-35;rde=0;rdu=3} @self ~onSpawn
-  - skill{s=THE_UNBOUND_SWING} @self ~onAttack
   - skill{s=THE_UNBOUND_DEATH} @self ~onDeath
