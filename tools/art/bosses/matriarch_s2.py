@@ -139,7 +139,7 @@ def head_parts(head, preview):
     head.box("brow_left", (-8, 4.2, ZF + 0.2), (14, 2.5, 3), "bone", rotation=(0, 0, 22.5))
     head.box("socket_left", (-8.5, 0.8, ZF + 0.9), (8, 5, 1.6), "hole")
     head.box("cheekbone_left", (-11, -3.2, ZF + 0.2), (7, 2, 2), "bone")
-    eye = head.group("glow_eye", (0, 1, ZF))
+    eye = head.group("glow_eye", (9, 1, ZF))
     eye.box("eye_right", (9, 1.0, ZF - 0.3), (8, 2.4, 0.6), "eye", rotation=(0, 0, -22.5))
     eye.box("socket_light", (-8.5, 0.8, ZF + 0.5), (1.6, 1.6, 0.6), "sculk_glow")
     crown(head)
@@ -188,7 +188,7 @@ def build(name, preview=False):
     model = Model(name)
     body = model.group("body", (0, 0, 0))
     s1.body_parts(body)
-    tips = body.group("glow_tendrils", (0, H / 2, 0))
+    tips = body.group("glow_tendrils", (6, H / 2 + 6.9, -8))
     for c in [c for c in body.children if not hasattr(c, "children") and c.name.startswith("tendril_tip")]:
         body.children.remove(c)
         tips.children.append(c)
