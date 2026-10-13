@@ -196,15 +196,23 @@ def wing(body, sx):
 
 # ---- the rig ---------------------------------------------------------------------------------------------------------
 
+# sculk sensor tufts across her back: (x, z, size)
+TUFTS = ((5, -14, 7), (-6, -9, 6), (8.5, -3, 6), (-4, 2, 7), (6, 8, 6), (-8, 12, 5), (3, 16, 6), (9.5, 14, 5),
+         (-2, -16, 5))
+
+
 def build(name, preview=False):
     model = Model(name)
     body = model.group("body", (0, 0, 0))
     s1.body_parts(body)
-    tips = body.group("glow_tendrils", (6, H / 2 + 6.9, -8))
-    for c in [c for c in body.children if not hasattr(c, "children") and c.name.startswith("tendril_tip")]:
-        body.children.remove(c)
-        tips.children.append(c)
-        c.group = tips
+    for c in [c for c in body.children if not hasattr(c, "children") and c.name.startswith("tendril")]:
+        body.children.remove(c)                         # the blockout's box tendrils: replaced by the tufts below
+        model.cubes.remove(c)
+    tufts = body.group("glow_tendrils", (TUFTS[0][0], H / 2, TUFTS[0][1]))
+    for i, (x, z, size) in enumerate(TUFTS):
+        # sculk sensor tendrils growing out of her back: two crossed planes, the tendrils cut out of the texture
+        tufts.box(f"sensor_{i}_a", (x, H / 2 + size / 2, z), (size, size, 0), "sculk")
+        tufts.box(f"sensor_{i}_b", (x, H / 2 + size / 2, z), (0, size, size), "sculk")
     head = body.group("hi_head", (0, 0, FRONT))
     head_parts(head, preview)
     tail = body.group("tail", (0, 0, L / 2))
@@ -226,13 +234,16 @@ def translate(model, d):
 
 
 def finish(model):
-    """Whole-texel sizes; the gill planes stay flat (snapping makes every size at least 1)."""
+    """Whole-texel sizes; the cut-out planes stay flat (snapping makes every size at least 1): the gills and the
+    tufts' first planes across z, the tufts' second planes across x."""
     v2.snap(model)
     for c in model.cubes:
-        if c.name.endswith("_plane"):
+        flat = 2 if c.name.endswith("_plane") or (c.name.startswith("sensor_") and c.name.endswith("_a")) else \
+            0 if c.name.startswith("sensor_") and c.name.endswith("_b") else None
+        if flat is not None:
             lo, hi = np.array(c.frm), np.array(c.to)
-            mid = (lo[2] + hi[2]) / 2
-            lo[2] = hi[2] = mid
+            mid = (lo[flat] + hi[flat]) / 2
+            lo[flat] = hi[flat] = mid
             c.frm, c.to = lo.tolist(), hi.tolist()
 
 

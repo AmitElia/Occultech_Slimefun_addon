@@ -52,8 +52,9 @@ ZONES = {
     "eye": (150, 255, 110),          # the phantom's green eye
     "sculk_glow": (40, 214, 232),
     "gill": (22, 96, 116),           # the gill planes: dark sculk fronds, cyan where they glow (session 5)
+    "sensor": (16, 60, 72),          # the sculk sensor tufts on her back (cut out, their tips glowing)
 }
-GLOWING = ("eye", "sculk_glow", "gill")
+GLOWING = ("eye", "sculk_glow", "gill", "sensor")
 NEIGHBOURS = [("hide", "bone"), ("hide", "belly"), ("hide", "hide_dark"), ("bone", "flesh"), ("hide", "flesh"),
               ("membrane", "bone"), ("hide", "membrane"), ("feather", "hide"), ("bone", "hole"), ("hide", "sculk"),
               ("sculk", "sculk_glow"), ("hide", "eye")]
@@ -63,6 +64,8 @@ def zone_for(cube):
     m = cube.mat
     if cube.name.startswith("gill_"):
         return "gill"
+    if cube.name.startswith("sensor_"):
+        return "sensor"
     return {"hide": "hide", "hide_dark": "hide_dark", "belly": "belly", "flesh": "flesh", "bone": "bone",
             "membrane": "membrane", "membrane_dark": "membrane", "feather": "feather", "feather_dark": "feather",
             "sculk": "sculk", "sculk_glow": "sculk_glow", "eye": "eye", "hole": "hole"}[m]

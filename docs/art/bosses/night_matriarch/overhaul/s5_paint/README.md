@@ -25,16 +25,27 @@ painted light direction.
     of a strip.
 - **Owl's tail:** grey feathers with soft, wide bars across them like an owl's, darker at the tips, each feather's
   edge drawn so the fan reads. One feather is broken off partway.
-- **Gills:** each plane is cut out into a frond like an axolotl's gill. A glowing cyan stalk runs down the middle,
-  with dark sculk filaments fringing both edges, raked back and shorter towards the tip. Each pair shares one frond,
-  mirrored.
+- **Gills:** warden horns (see take 2 below). Each pair shares one horn, mirrored.
 - **Glow:** the phantom's green eye with a pale core, and the sculk light deep in the empty socket.
 
-**Fixed in this pass:**
-- the sculk had blotched the crown and the wing bones like camouflage; it now stays off the crown and the outer
-  wings;
-- the tail's bars were tight enough to read as a target; they're now soft and wide;
-- the gill fronds were thin; they're now denser.
+**Take 2** (after the user's review: the tears looked too square, the tail was a different shade, there was barely
+any sculk, and the head tendrils were the wrong colour and didn't look like sculk horns):
+- **Wings filled in:** the tears are redone.
+  - **Rips:** narrow ones running in from the trailing edge and tapering to a point, each leaning its own way.
+  - **Punctures:** a few small ones.
+  - **The edge:** a finely frayed trailing edge, every tear rimmed dark where it frays.
+- **The tail:** in her hide's blue, a shade deeper, with sculk reaching onto it in patches.
+- **Sculk all over her back:**
+  - **Coverage:** anything facing up is taken: her body, head, wing roots and tail.
+  - **Colours:** vanilla sculk's range, from black-blue at the heart of a patch through teal towards its edge.
+  - **Veins:** pale veins run through the growth and creep out beyond it over the hide, like sculk veins.
+  - **Light:** sparse points of cyan.
+- **2D sculk growth:** nine tufts of sculk sensor tendrils across her back. Like vanilla's sculk sensor, each is two
+  crossed flat planes with the tendrils cut out of the texture: thin dark teal stalks, swaying, each tipped with a
+  glowing cyan point. They replace the blockout's box tendrils.
+- **The head tendrils as warden horns:** each plane is now cut into a dark sculk blade.
+  - **Shape:** broad at her head, tapering to a point that curls up, darkest at its edge.
+  - **Glow:** a cyan core glows inside near the base, and fades out along the blade.
 
 **In game:** the review rig on your server has the painted texture.
 

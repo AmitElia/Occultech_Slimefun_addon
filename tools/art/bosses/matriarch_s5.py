@@ -51,17 +51,21 @@ RAMP = {
     "flesh": mk((20, 6, 10), (74, 30, 38), (142, 72, 74), 7),
     "bone": mk((66, 58, 44), (206, 198, 172), (250, 246, 230), 9),
     "membrane": mk((8, 8, 20), (38, 42, 74), (104, 112, 152), 9),
-    "feather": mk((36, 34, 46), (122, 120, 146), (214, 210, 222), 9),
-    "sculk": mk((4, 16, 22), (16, 46, 58), (44, 104, 118), 7),
+    "feather": mk((16, 20, 40), (58, 70, 112), (136, 152, 194), 9),   # her hide's blue, a shade deeper
+    "sculk": [(3, 9, 14), (6, 18, 26), (9, 29, 38), (12, 42, 52), (16, 56, 66), (22, 74, 84), (30, 96, 104),
+              (44, 122, 128), (66, 152, 156)],                           # vanilla sculk: black-blue to teal
     "spark": [(36, 150, 170), (60, 200, 220), (150, 246, 255)],        # sculk's points of light
+    "sensor": [(3, 10, 16), (8, 30, 40), (14, 52, 62), (22, 78, 88), (40, 170, 188), (120, 240, 250),
+               (220, 255, 255)],
     "hole": [(4, 4, 8), (14, 12, 18), (28, 26, 34)],
     "eye": mk((40, 110, 20), (150, 255, 110), (240, 255, 220), 5),
     "sculk_glow": mk((10, 90, 110), (40, 214, 232), (220, 255, 255), 5),
-    "gill": mk((4, 22, 30), (22, 96, 116), (170, 250, 255), 9),
+    "gill": [(3, 10, 16), (6, 22, 30), (10, 38, 48), (14, 54, 64), (20, 72, 82), (28, 110, 124),
+             (40, 170, 188), (90, 226, 238), (200, 252, 255)],   # warden horns: dark sculk, a cyan core
 }
 ZONE = {"hide": ("hide", 5), "hide_dark": ("hide_dark", 3), "belly": ("belly", 4), "flesh": ("flesh", 3),
-        "bone": ("bone", 4), "membrane": ("membrane", 4), "feather": ("feather", 4), "sculk": ("sculk", 3),
-        "hole": ("hole", 1), "eye": ("eye", 2), "sculk_glow": ("sculk_glow", 2), "gill": ("gill", 4)}
+        "bone": ("bone", 4), "membrane": ("membrane", 4), "feather": ("feather", 4), "sculk": ("sculk", 4),
+        "hole": ("hole", 1), "eye": ("eye", 2), "sculk_glow": ("sculk_glow", 2), "gill": ("gill", 3), "sensor": ("sensor", 2)}
 GLOWING = s4.GLOWING
 
 
@@ -94,31 +98,44 @@ def smooth(seed, u, v, cell):
     return ((a * (1 - fu) + b * fu) * (1 - fv) + (c * (1 - fu) + d * fu) * fv) / 999
 
 
-def sculk_amount(p):
-    """How thick the sculk grows at a world point: blotches over her, heavier on her left (her rotten side) and on
-    her back."""
+def sculk_amount(p, normal=None):
+    """How thick the sculk grows at a world point: blotches all over her back (anything facing up, on her body, head,
+    wing roots and tail), patchier down her sides, heavier on her rotten left side."""
     x, y, z = p
-    v = 0.6 * smooth(7, x, z, 9) + 0.25 * smooth(11, x + y, z - y, 4) + 0.15 * smooth(13, y, x + z, 3)
-    v += 0.12 if x < 0 else 0
-    v += 0.06 if y > LIFT + 4 else 0
+    v = 0.55 * smooth(7, x, z, 8) + 0.25 * smooth(11, x + y, z - y, 4) + 0.2 * smooth(13, y, x + z, 2.5)
+    v += 0.1 if x < 0 else 0
+    if normal is not None and normal[1] > 0.5:
+        v += 0.32                                                    # her back: the sculk has taken it
+    elif y > LIFT + 2:
+        v += 0.12
     return v
 
 
-def infest(lv, over, world, seed, threshold=0.66):
-    """Sculk over a face: its own ramp where it's thick, a dark rim where it thins, points of light here and there."""
+def infest(lv, over, world, seed, threshold=0.66, normal=None):
+    """Sculk over a face: thick growth in its darkest shades at the heart of a patch, lighter teal towards its edge,
+    pale veins creeping out beyond it (like vanilla's sculk veins), points of cyan light; the hide darkens where it
+    creeps in."""
     h, w = lv.shape
     for y in range(h):
         for x in range(w):
-            a = sculk_amount(world[y, x])
+            p = world[y, x]
+            a = sculk_amount(p, normal)
+            ridge = abs(smooth(31, p[0] * 1.3 + p[1], p[2] * 1.3, 3) - 0.5)      # thin lines: sculk veins
             if a > threshold:
+                depth = a - threshold
                 spark = noise(seed + 17, x, y, 1)
-                if a > threshold + 0.08 and spark > 965:
-                    over.append((y, x, "spark", 1 + (spark > 990)))
+                if depth > 0.08 and spark > 988:
+                    over.append((y, x, "spark", 1 + (spark > 996)))
+                elif ridge < 0.035:
+                    over.append((y, x, "sculk", 5 + (spark > 800)))            # a paler vein through the growth
                 else:
-                    over.append((y, x, "sculk", 3 + (1 if noise(seed + 19, x, y, 2) > 700 else 0)
-                                 - (1 if a < threshold + 0.03 else 0)))
+                    shade = 5 - min(4, int(depth * 22)) + (1 if noise(seed + 19, x, y, 1) > 760 else 0) \
+                        - (1 if noise(seed + 21, x, y, 2) < 160 else 0)
+                    over.append((y, x, "sculk", max(0, shade)))
+            elif a > threshold - 0.1 and ridge < 0.03:
+                over.append((y, x, "sculk", 4))                                # a vein creeping out over the hide
             elif a > threshold - 0.04:
-                lv[y, x] -= 1                                          # the hide darkens where it's creeping in
+                lv[y, x] -= 1
 
 
 # ---- painters (each returns a shade map on the zone's ramp, overlay pixels [(y, x, ramp, shade)], and an alpha map
@@ -158,7 +175,7 @@ def paint_hide(cube, face, w, h, seed, ctx):
                     over.append((y, x, "flesh", 2 + (noise(seed + 62, x, y, 1) > 600)))
                 elif d < 2.5 + rag:
                     lv[y, x] -= 2
-    infest(lv, over, world, seed)
+    infest(lv, over, world, seed, normal=ctx["normal"])
     return lv, over
 
 
@@ -168,7 +185,7 @@ def paint_hide_dark(cube, face, w, h, seed, ctx):
         for x in range(w):
             lv[y, x] += clusters(seed, x, y, 200, 860, 2)
     lv[0, :] += 1
-    infest(lv, over, ctx["world"], seed)
+    infest(lv, over, ctx["world"], seed, normal=ctx["normal"])
     return lv, over
 
 
@@ -179,7 +196,7 @@ def paint_belly(cube, face, w, h, seed, ctx):
             lv[y, x] += clusters(seed, x, y, 150, 870, 2)
             if y % 4 == 0:
                 lv[y, x] -= 1                                          # the phantom's banded underside
-    infest(lv, over, ctx["world"], seed, 0.7)
+    infest(lv, over, ctx["world"], seed, 0.7, ctx["normal"])
     return lv, over
 
 
@@ -205,7 +222,7 @@ def paint_bone(cube, face, w, h, seed, ctx):
         for y in range(h):
             lv[y, mid + (noise(seed + 7, 0, y, 2) % 3) - 1] -= 2       # the suture down her bare forehead
     if cube.group.name in ("body", "hi_head") and not cube.name.startswith("crown"):
-        infest(lv, over, ctx["world"], seed, 0.8)      # sculk only creeps onto her skull and ribs, sparingly
+        infest(lv, over, ctx["world"], seed, 0.8, ctx["normal"])      # sculk only creeps onto her skull and ribs, sparingly
     return lv, over
 
 
@@ -221,30 +238,42 @@ def paint_flesh(cube, face, w, h, seed, ctx):
     return lv, over
 
 
-# the tears: (along the span, along the chord, radius) in wing units, per side
-HOLES = {1: [(13.5, 19, 4.5), (39, 13, 3.5), (46.5, 9, 6), (54, 22, 4), (75, 4, 5), (66, 12, 3)],
-         -1: [(22.5, 25, 5), (31, 17, 3.5), (39, 11, 6), (61.5, 6, 4.5), (68.5, 10, 3.5), (49, 20, 3)]}
+# the tears (take 2: the first take's round holes and bites read as square; the user asked for the wings filled in and
+# the tears redone): rips running in from the trailing edge, narrowing to a point, each with its lean (span units per
+# chord unit); a few small punctures; and a finely ragged trailing edge
+RIPS = {1: [(19, 15, 0.18), (44, 11, -0.22), (63, 13, 0.12), (78, 6, -0.1)],
+        -1: [(13, 17, -0.12), (37, 12, 0.24), (57, 10, -0.16), (71, 7, 0.08)]}
+PUNCTURES = {1: [(31, 22, 1.8), (53, 25, 1.5), (9, 30, 1.4)], -1: [(24, 21, 1.8), (47, 15, 1.6), (66, 18, 1.3)]}
 
 
 def torn(world, side, seed, trailing):
-    """1 where the membrane is torn away (a hole, or a bite out of its trailing edge), so the sky shows through."""
+    """True where the membrane is torn through (the sky shows): a rip, a puncture or the ragged trailing edge."""
     x, y, z = world
     s, c = abs(x) - W / 2, z - (FRONT + 2)
     if c < 3:
         return False                                                   # the leading edge along the spar holds
-    for hs, hc, r in HOLES[side]:
-        rag = 0.75 + 0.5 * smooth(seed, s * 2, c * 2, 2)
-        if (s - hs) ** 2 + (c - hc) ** 2 < (r * rag) ** 2:
+    e = trailing - z                                                   # how far in from the trailing edge
+    if e < 0.6 + 1.6 * smooth(seed + 3, s * 1.7, 0, 1.3):
+        return True                                                    # the frayed edge, finely jagged
+    for rs, rl, lean in RIPS[side]:
+        if e < rl:
+            half = 1.7 * (1 - e / rl) ** 0.8 + 0.5 * (smooth(seed + 5, s * 2, e * 2, 1) - 0.5)
+            if abs(s - (rs + lean * e)) < half:
+                return True
+    for hs, hc, r in PUNCTURES[side]:
+        if (s - hs) ** 2 + (c - hc) ** 2 < (r * (0.7 + 0.6 * smooth(seed + 7, s * 3, c * 3, 1))) ** 2:
             return True
-    return trailing - z < 2.2 * smooth(seed + 3, s, 0, 3) + 0.3
+    return False
 
 
 def paint_membrane(cube, face, w, h, seed, ctx):
-    """Dark membrane, paler veins fanning from the shoulder, mottled; sculk at the wing's root; torn through."""
+    """Dark membrane, paler veins fanning from the shoulder, mottled; sculk over the wing's root; torn through, each
+    tear rimmed dark where it frays."""
     lv, over = blank(cube, w, h)
     world = ctx["world"]
     side = 1 if world[0, 0][0] > 0 else -1
     trailing = cube.corners()[:, 2].max()
+    tear_seed = 101 if side > 0 else 202
     alpha = np.full((h, w), 255, int)
     for y in range(h):
         for x in range(w):
@@ -254,13 +283,13 @@ def paint_membrane(cube, face, w, h, seed, ctx):
             ang = math.degrees(math.atan2(c, s + 6))
             if abs((ang % 11) - 5.5) > 4.7:
                 lv[y, x] += 1                                          # a vein
-            if torn(world[y, x], side, 101 if side > 0 else 202, trailing):
+            if torn(world[y, x], side, tear_seed, trailing):
                 alpha[y, x] = 0
-            elif torn((px + 0.8 * side, py, pz), side, 101 if side > 0 else 202, trailing) or \
-                    torn((px, py, pz + 0.8), side, 101 if side > 0 else 202, trailing):
-                lv[y, x] -= 2                                          # the ragged edge of a tear, dark and frayed
-    if abs(world[0, 0][0]) < W / 2 + 20:
-        infest(lv, over, world, seed, 0.72)                            # only at the wing's root
+            elif any(torn((px + dx * side, py, pz + dz), side, tear_seed, trailing)
+                     for dx, dz in ((0.9, 0), (-0.9, 0), (0, 0.9), (0, -0.9))):
+                lv[y, x] -= 2                                          # the frayed rim of a tear
+    if abs(world[0, 0][0]) < W / 2 + 30:
+        infest(lv, over, world, seed, 0.66, ctx["normal"])             # over the wing's root
     return lv, over, alpha
 
 
@@ -283,12 +312,14 @@ def paint_feather(cube, face, w, h, seed, ctx):
                 lv[y, x] -= 1                                          # the darker tip
             if broken and d > 22 + 3 * smooth(seed, x, y, 2):
                 alpha[y, x] = 0
+    infest(lv, over, world, seed, 0.86, ctx["normal"])                 # the sculk reaches onto the fan, in patches
     return lv, over, alpha
 
 
 def paint_gill(cube, face, w, h, seed, ctx):
-    """An axolotl's gill cut out of the plane: a glowing stalk down the middle, filaments fringing both edges, each
-    raked back towards the tip, shorter as they go."""
+    """A warden's horn cut out of the plane (take 2: the user found the glowing fronds the wrong colour and not like
+    sculk horns): a dark sculk blade, broad at her head and tapering to a point that curls up, its edge darkest; a
+    cyan core glowing inside it near the base, fading out along it, and a few points of light."""
     lv = np.zeros((h, w), int)
     alpha = np.zeros((h, w), int)
     if face not in ("north", "south"):
@@ -296,19 +327,48 @@ def paint_gill(cube, face, w, h, seed, ctx):
     world = ctx["world"]
     pivot = v3.world_pivot(cube.group)
     length = float(cube.to[0] - cube.frm[0])
-    mid = (h - 1) / 2
     for y in range(h):
         for x in range(w):
             t = float(np.linalg.norm(world[y, x] - pivot)) / length       # 0 at her head, 1 at the tip
-            off = abs(y - mid)
-            if off <= 0.6 + 0.4 * (1 - t):
-                alpha[y, x], lv[y, x] = 255, 7 - int(2 * t)               # the stalk, brightest near the head
+            up = (h - 1) / 2 - y                                          # across the blade, in texels
+            centre = 0.45 * h * t * t                                     # the blade curls up towards its tip
+            half = (h / 2) * (1 - t) ** 0.75 + 0.35
+            off = abs(up - centre)
+            if off > half or t > 1.0:
                 continue
-            reach = (mid + 0.5) * (1.05 - 0.6 * t)
-            k = int(round(t * length * 2 - off))                          # filaments rake back along the stalk
-            if off <= reach and k % 2 == 0 and t > 0.08:
-                alpha[y, x] = 255
-                lv[y, x] = 3 + (1 if off < reach * 0.5 else 0) + (1 if noise(seed, x, y, 1) > 800 else 0)
+            alpha[y, x] = 255
+            if off > half - 1.0:
+                lv[y, x] = 1                                              # the dark edge
+            elif off < half * 0.22 + 0.3 and t < 0.6:
+                lv[y, x] = 6 - int(t * 3) + (1 if t < 0.2 else 0)   # the glowing core, near her head
+            else:
+                lv[y, x] = 2 + (1 if noise(seed, x, y, 1) > 700 else 0) - (1 if noise(seed + 1, x, y, 2) < 200 else 0)
+                if noise(seed + 2, x, y, 1) > 990:
+                    lv[y, x] = 7                                          # a point of light
+    return lv, [], alpha
+
+
+def paint_sensor(cube, face, w, h, seed, ctx):
+    """A tuft of sculk sensor tendrils (vanilla's sensor is crossed planes like these): three or four thin dark teal
+    stalks rising from her back, swaying, each tipped with a glowing cyan point."""
+    lv = np.zeros((h, w), int)
+    alpha = np.zeros((h, w), int)
+    if not w or not h:
+        return lv, [], alpha
+    world = ctx["world"]
+    base = cube.frm[1]
+    cols = [1, w // 2, w - 2] if w >= 5 else [w // 2]
+    if w >= 7:
+        cols.insert(2, w // 2 + 2)
+    heights = {c: 0.55 + 0.45 * (noise(seed, c, 0, 1) / 999) for c in cols}
+    for y in range(h):
+        for x in range(w):
+            rise = (world[y, x][1] - base) / max(1.0, cube.to[1] - base)  # 0 at her back, 1 at the top
+            for c in cols:
+                sway = int(round(0.8 * math.sin(rise * 3.2 + c)))
+                if x == c + sway and rise <= heights[c]:
+                    alpha[y, x] = 255
+                    lv[y, x] = 5 if rise > heights[c] - 0.18 else 2 + int(rise * 2)   # the glowing tip, or the stalk
     return lv, [], alpha
 
 
@@ -337,7 +397,8 @@ def paint_plain(cube, face, w, h, seed, ctx):
 def painter_for(cube):
     return {"hide": paint_hide, "hide_dark": paint_hide_dark, "belly": paint_belly, "flesh": paint_flesh,
             "bone": paint_bone, "membrane": paint_membrane, "feather": paint_feather, "sculk": paint_sculk,
-            "hole": paint_plain, "eye": paint_glow, "sculk_glow": paint_glow, "gill": paint_gill}[s4.zone_for(cube)]
+            "hole": paint_plain, "eye": paint_glow, "sculk_glow": paint_glow, "gill": paint_gill,
+            "sensor": paint_sensor}[s4.zone_for(cube)]
 
 
 def paint_face(model, i, face, w, h, solids):
