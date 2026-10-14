@@ -160,17 +160,60 @@ def bow(fore):
 
 # ---- the head ----------------------------------------------------------------------------------------------------------
 
-def head_parts(head):
-    head.box("head", (0, YH, 0), (11, 16, 11), "skin")
-    head.box("mask_centre", (0, YH - 0.5, ZF - 0.8), (8, 18, 1), "porcelain")      # wide enough for the grin
+# The mask (session 5: the user loves the body, arms, legs and hat, and disliked the panelled porcelain mask entirely;
+# three new masks are studied on the same body - s5_masks). Each sits in front of the face (its front 1.1 texels out,
+# just behind the eye glints), its features painted in session 5.
+MASK = "volto"
+
+
+def mask_panels(head):
+    """Take 1 (rejected): a centre panel and two turned side panels, a brow, cheekbones, a short nose and chin."""
+    head.box("mask_centre", (0, YH - 0.5, ZF - 0.8), (8, 18, 1), "porcelain")
     for sx in (-1, 1):
         head.box(f"mask_side_{sx}", (sx * 5.6, YH - 0.5, ZF + 0.4), (3, 16, 1), "porcelain", rotation=(0, -sx * 22.5, 0))
         head.box(f"mask_socket_{sx}", (sx * 3.1, YH + 2.2, ZF - 1.15), (4, 2, 1), "socket", rotation=(0, 0, -sx * 22.5))
         head.box(f"mask_cheek_{sx}", (sx * 3.4, YH - 2.2, ZF - 1.7), (3, 2, 1), "porcelain", rotation=(0, 0, sx * 22.5))
     head.box("mask_brow", (0, YH + 4.4, ZF - 1.9), (10, 2, 2), "porcelain")
     head.box("mask_peak", (0, YH + 7.4, ZF - 1.1), (2, 3, 1), "porcelain", rotation=(0, 0, 45))
-    head.box("mask_nose", (0, YH - 2.8, -7.2), (3, 6, 3), "porcelain")             # short and sharp: room below it
+    head.box("mask_nose", (0, YH - 2.8, -7.2), (3, 6, 3), "porcelain")
     head.box("mask_chin", (0, YH - 10, ZF - 0.6), (3, 3, 1), "porcelain", rotation=(0, 0, 45))
+
+
+def mask_volto(head):
+    """A clean one-piece porcelain face: a smooth plate over the whole face, a low brow, a small nose, a pointed chin.
+    Everything else is painted: a black harlequin diamond through one eye, a black tear under the other, small
+    blood-red lips in a thin grin, a hairline crack."""
+    head.box("mask_face", (0, YH - 0.5, ZF - 0.6), (12, 17, 1), "porcelain")
+    head.box("mask_brow", (0, YH + 4.6, ZF - 1.4), (10, 1, 1), "porcelain")
+    head.box("mask_nose", (0, YH - 1.6, ZF - 1.6), (2, 5, 2), "porcelain")
+    head.box("mask_chin", (0, YH - 9.2, ZF - 0.6), (3, 3, 1), "porcelain", rotation=(0, 0, 45))
+
+
+def mask_colombina(head):
+    """A black domino mask over his eyes only, its wings swept up and out, trimmed in gold (painted); below it the
+    illager's own long nose and grey face, a grin stitched across it (painted)."""
+    head.box("nose", (0, YH - 5, -7), (3, 6, 3), "nose")
+    head.box("mask_band", (0, YH + 2.2, ZF - 0.6), (13, 6, 1), "porcelain")
+    for sx in (-1, 1):
+        head.box(f"mask_wing_{sx}", (sx * 7.4, YH + 4.4, ZF - 0.4), (4, 2, 1), "porcelain", rotation=(0, 0, sx * 22.5))
+
+
+def mask_comedy(head):
+    """The theatre's comedy mask: a porcelain face with brows arched high, raised cheeks; painted, crescent eyes that
+    smile and a huge grinning mouth, a black void."""
+    head.box("mask_face", (0, YH - 0.5, ZF - 0.6), (12, 17, 1), "porcelain")
+    for sx in (-1, 1):
+        head.box(f"mask_brow_{sx}", (sx * 3, YH + 5.2, ZF - 1.4), (5, 1, 1), "porcelain", rotation=(0, 0, -sx * 22.5))
+        head.box(f"mask_cheek_{sx}", (sx * 3.6, YH - 2.6, ZF - 1.4), (3, 2, 1), "porcelain")
+    head.box("mask_nose", (0, YH - 0.8, ZF - 1.6), (2, 4, 2), "porcelain")
+
+
+MASKS = {"panels": mask_panels, "volto": mask_volto, "colombina": mask_colombina, "comedy": mask_comedy}
+
+
+def head_parts(head):
+    head.box("head", (0, YH, 0), (11, 16, 11), "skin")
+    MASKS[MASK](head)
     eyes = head.group("glow_eyes", (0, YH + 2.2, ZF - 1))
     for sx in (-1, 1):                                     # a cold glint deep in each socket
         eyes.box(f"glint_{sx}", (sx * 3.1, YH + 2.2, ZF - 1.3), (1, 1, 0.4), "eye_glint")

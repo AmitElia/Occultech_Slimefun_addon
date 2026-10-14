@@ -185,47 +185,80 @@ def paint_skin(cube, face, w, h, seed, ctx):
     for y in range(h):
         for x in range(w):
             lv[y, x] += clusters(seed, x, y, 160, 860, 2)
+    if cube.name == "head" and face == "north" and s2.MASK == "colombina":
+        paint_face_skin(lv, over, ctx["world"], seed)
     return lv, over
-
-
-def grin_y(x):
-    """The stitched grin (take 3): below the mask's short nose, wide across his face and curling up into the cheeks."""
-    return YH - 8.4 + 0.16 * x * x
 
 
 def paint_porcelain(cube, face, w, h, seed, ctx):
-    """Clean old porcelain, barely mottled; a fine gold arc over each eye; on the front, a stitched grin - a thin black
-    line from cheek to cheek with stitches across it - two thin cracks past the left eye, a thin dark drip from each
-    socket."""
+    """Clean porcelain; the mask's features painted on its front (paint_mask)."""
     lv, over = blank(cube, w, h)
     world, normal = ctx["world"], ctx["normal"]
-    front = normal[2] < -0.5
+    if normal[2] < -0.5:
+        paint_mask(lv, over, world, seed)
+    return lv, over
+
+
+def _eye(px, py, sx, wide=2.0, tall=0.8):
+    """Inside an almond eye hole, slanting up and out."""
+    ex, ey = sx * 3.1, YH + 2.2
+    dx, dy = px - ex, py - ey - 0.35 * (px - ex) * sx
+    return abs(dx) / wide + abs(dy) / tall < 1.0
+
+
+def paint_mask(lv, over, world, seed):
+    h, w = lv.shape
     for y in range(h):
         for x in range(w):
-            if noise(seed + 5, x, y, 3) > 930:
-                lv[y, x] -= 1
-            if not front:
-                continue
             px, py, pz = world[y, x]
-            for sx in (-1, 1):
-                ex, ey = sx * 3.1, YH + 2.2
-                rel = (px - ex) * sx                                   # outward from the nose
-                arc = ey + 1.8 + 0.25 * rel - 0.06 * rel * rel
-                if abs(py - arc) < 0.5 and -2.2 < rel < 3.0:
-                    over.append((y, x, "gold", 4))                     # a fine gold arc, sweeping up and out
-                if abs(px - (ex + sx * 0.6)) < 0.5 and ey - 4.2 - (sx > 0) < py < ey - 1.1:
-                    over.append((y, x, "stain", 0))                    # a thin dark drip
-            gy = grin_y(px)
-            if abs(px) < 6.2:
-                if abs(py - gy) < 0.5:
-                    over.append((y, x, "ink", 0))
-                elif abs(py - gy) < 1.5 and int(round(px)) % 2 == 0 and abs(px) < 4.6:
-                    over.append((y, x, "ink", 1))                      # the stitches across it
-            for k, (cx0, slope, top, bottom) in enumerate(((-1.7, -0.3, YH + 8, YH + 0.5), (-4.6, 0.2, YH + 6, YH + 1))):
-                cx = cx0 + slope * (top - py) + 0.4 * math.sin(py * 1.9 + k)
-                if bottom < py < top and abs(px - cx) < 0.4:
-                    over.append((y, x, "ink", 1))
-    return lv, over
+            mark = None
+            if s2.MASK == "volto":
+                if _eye(px, py, -1) or _eye(px, py, 1):
+                    mark = ("ink", 0)
+                elif abs(px + 3.1) / 1.7 + abs(py - (YH + 2.2)) / 5.2 < 1.0:
+                    mark = ("ink", 0)                                   # the harlequin's diamond through his left eye
+                elif math.hypot((px - 3.4) / 0.7, (py - (YH - 1.6)) / 1.3) < 1.0:
+                    mark = ("ink", 0)                                   # a black tear under the right
+                elif abs(px) < 3.6:
+                    gy = YH - 6 + 0.13 * px * px
+                    if abs(py - gy) < 0.5:
+                        mark = ("ink", 0)
+                    elif 0.5 <= py - gy < 1.4 and abs(px) < 2.6 or -1.4 < py - gy <= -0.5 and abs(px) < 2.2:
+                        mark = ("crimson", 4)                           # small blood-red lips
+                if mark is None and 0 < px < 4.5 and YH + 3 < py < YH + 8.4:
+                    cx = 1.2 + 0.45 * (YH + 8.4 - py) + 0.3 * math.sin(py * 2.1)
+                    if abs(px - cx) < 0.4:
+                        mark = ("ink", 1)                               # a hairline crack
+            elif s2.MASK == "colombina":
+                if _eye(px, py, -1, 2.2, 1.0) or _eye(px, py, 1, 2.2, 1.0):
+                    mark = ("ink", 0)
+                elif py > YH + 4.6 or py < YH - 0.2 or abs(px) > 6.0:
+                    mark = ("gold", 4)                                  # the gold trim round its edge
+                else:
+                    mark = ("black", 3)
+            elif s2.MASK == "comedy":
+                for sx in (-1, 1):                                       # crescent eyes that smile (a ^ shape)
+                    ex, ey = sx * 3.1, YH + 2.0
+                    if math.hypot((px - ex) / 2.2, (py - ey) / 1.6) < 1 and math.hypot((px - ex) / 2.2, (py - ey + 1.2) / 1.6) > 1:
+                        mark = ("ink", 0)
+                top, bottom = YH - 5.2 + 0.1 * px * px, YH - 8.4 + 0.06 * px * px
+                if abs(px) < 5.0 and bottom < py < top:
+                    mark = ("ink", 0) if py < top - 0.6 else ("crimson", 3)    # the grinning void, a crimson rim
+            if mark:
+                over.append((y, x) + mark)
+
+
+def paint_face_skin(lv, over, world, seed):
+    """Under the colombina, the illager's own face: a grin stitched across it."""
+    h, w = lv.shape
+    for y in range(h):
+        for x in range(w):
+            px, py, pz = world[y, x]
+            gy = YH - 6.6 + 0.12 * px * px
+            if abs(px) < 5 and abs(py - gy) < 0.5:
+                over.append((y, x, "ink", 0))
+            elif abs(px) < 4.2 and abs(py - gy) < 1.5 and int(round(px)) % 2 == 0:
+                over.append((y, x, "ink", 1))
 
 
 def paint_socket(cube, face, w, h, seed, ctx):
@@ -275,7 +308,7 @@ def paint_face(model, i, face, w, h, solids):
     zone = s4.zone_for(cube)
     world, normal = world_points(cube, face, w, h)
     lv, over = painter_for(cube)(cube, face, w, h, seed, {"world": world, "normal": normal})
-    if not zone.startswith(GLOWING):
+    if not zone.startswith(GLOWING) and zone != "porcelain":         # the mask stays clean (no shading blotches)
         ao = b5.occlusion(model, i, face, w, h, solids)
         lv = lv - (ao >= 0.3) - (ao >= 0.55)
     out = c5.from_levels(lv, RAMP[ZONE[zone][0]], None)
