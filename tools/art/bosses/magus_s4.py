@@ -64,6 +64,14 @@ NEIGHBOURS = [("black", "white"), ("black", "crimson"), ("white", "crimson"), ("
               ("face", "rednose"), ("teeth", "lips"), ("face", "hair"), ("face", "skin")]
 
 
+HEAD_DENSITY = 4          # texels per model unit on his head and face (the user: a higher resolution there)
+
+
+def density(cube):
+    """Texels per model unit: 4 on his head, his face and his eyes (64 per block), 1 everywhere else (vanilla's 16)."""
+    return HEAD_DENSITY if cube.group.name in ("hi_head", "glow_eyes") else 1
+
+
 def zone_for(cube):
     return cube.mat
 
@@ -71,7 +79,7 @@ def zone_for(cube):
 def twin(name):
     """A left part's right twin: arms, fingers and the hat are built mirrored by name. His legs are split black and
     white by side (session 5), so they keep their own texture."""
-    if name.startswith(("thigh_", "shin_")):
+    if name.startswith(("thigh_", "shin_", "eye_")):            # the eyes each look a little inward
         return name
     return name.replace("_left", "_right").replace("_-1", "_1")
 
@@ -84,6 +92,7 @@ def island_keys(model):
             w, h = v4.face_size(c, f)
             if not w or not h or b4.hidden(c, f):
                 continue
+            w, h = w * density(c), h * density(c)
             t = twin(c.name)
             if t != c.name and t in names and v4.face_size(names[t], f) == (w, h) and zone_for(names[t]) == zone_for(c):
                 keys[(i, f)] = (t, f, w, h, zone_for(c))

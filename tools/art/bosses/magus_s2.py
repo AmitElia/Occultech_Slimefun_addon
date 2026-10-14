@@ -229,20 +229,9 @@ def mask_clown(head):
     head.box("nose", (0, YH - 0.4, ZF - 2.4), (3.4, 3.4, 3.4), "rednose")
     head.box("nose_round_x", (0, YH - 0.4, ZF - 2.2), (4.4, 2.4, 2.6), "rednose")
     head.box("nose_round_y", (0, YH - 0.4, ZF - 2.2), (2.4, 4.4, 2.6), "rednose")
-    # the lips, cube by cube along the grin; teeth hanging from the upper lip and rising from the lower, recessed
-    # behind the lips' front; fangs at the corners
-    for i in range(12):
-        x = -5.5 + i
-        c, half = mouth_curve(x)
-        head.box(f"lip_upper_{i}", (x, c + half + 0.6, ZF - 0.8), (1.2, 1.4, 1.6), "lips")
-        head.box(f"lip_lower_{i}", (x, c - half - 0.6, ZF - 0.8), (1.2, 1.4, 1.6), "lips")
-        if half > 0.5:
-            fang = abs(abs(x) - 3.5) < 0.6
-            up = min(2 * half - 0.4, (2.4 if fang else 1.0 + (i * 7 % 5) * 0.25))
-            head.box(f"tooth_upper_{i}", (x, c + half - up / 2, ZF - 0.4), (0.8, up, 0.8), "teeth")
-            low = min(2 * half - up - 0.2, 0.8 + (i * 3 % 4) * 0.2)
-            if low > 0.3:
-                head.box(f"tooth_lower_{i}", (x, c - half + low / 2, ZF - 0.4), (0.8, low, 0.8), "teeth")
+    # the grin is painted (take 2: the lips built cube by cube and the cube teeth looked blocky and busy): a low muzzle
+    # under the nose carries it, the cheeks its curling corners
+    head.box("muzzle", (0, YH - 6.2, ZF - 0.5), (11, 6, 1), "face")
     head.box("chin", (0, YH - 9.2, ZF - 0.6), (4, 3, 2), "face")
     head.box("chin_point", (0, YH - 10.6, ZF - 0.6), (2.4, 2.4, 1.6), "face", rotation=(0, 0, 45))
     # wild tufts of hair sticking out from under the hat
@@ -261,8 +250,10 @@ def head_parts(head):
     eyes = head.group("glow_eyes", (0, YH + 2.2, ZF - 1))
     deep = MASK == "clown"                                 # the clown's sockets are deep: the glint sits far back
     for sx in (-1, 1):                                     # a cold glint deep in each socket
-        eyes.box(f"glint_{sx}", (sx * 3.1, YH + 2.2, ZF - (0.3 if deep else 1.3)), (1.6 if deep else 1, 1, 0.4),
-                 "eye_glint")
+        if deep:                                           # an illager's eye: white, a cyan iris, a dark pupil (painted)
+            eyes.box(f"eye_{sx}", (sx * 3.1, YH + 2.2, ZF - 0.3), (2.6, 1.4, 0.4), "eye_glint")
+        else:
+            eyes.box(f"glint_{sx}", (sx * 3.1, YH + 2.2, ZF - 1.3), (1, 1, 0.4), "eye_glint")
     # the hat: band and cap on the head, three floppy points of three bones each (they flop)
     top = YH + 8
     head.box("hat_band", (0, top + 1.2, 0), (12, 3, 12), "crimson")
