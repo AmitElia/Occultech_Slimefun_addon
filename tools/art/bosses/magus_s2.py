@@ -281,6 +281,7 @@ def pose(model, key):
         c.frm[1] -= d
         c.to[1] -= d
         c.origin[1] -= d
+    return d
 
 
 def parts_list(model):
