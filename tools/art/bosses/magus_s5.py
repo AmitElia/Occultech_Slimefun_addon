@@ -406,7 +406,7 @@ def paint_clown_head(lv, over, world, seed):
         for x in range(w):
             px, py, pz = world[y, x]
             c, half = s2.mouth_curve(px)
-            if abs(px) < 6.6 and abs(py - c) < half + 0.9:
+            if abs(px) < s2.MOUTH_W + 0.4 and abs(py - c) < half + 0.9:
                 deep = abs(py - c) < half * 0.6 and abs(px) < 4.5
                 over.append((y, x, "mouth", 0 if deep else 1))
             elif near_socket(px, py) > 0.12:
@@ -437,10 +437,10 @@ def paint_face_paint(cube, face, w, h, seed, ctx):
             if near_socket(px, py) > 0.12 and not n.startswith(("chin", "jaw")):
                 over.append((y, x, "ink", 0 if near_socket(px, py) > 0.3 else 1))
             if n.startswith(("mouth_cheek", "jaw_side")):
-                c, half = s2.mouth_curve(min(abs(px), 6.2) * (1 if px > 0 else -1))
+                c, half = s2.mouth_curve(px)
                 if abs(py - c) < half + 1.6:
                     over.append((y, x, "makeup", 3))                   # the clown's red spreading past his lips
-                if abs(abs(px) - 5.9) < 0.25 and py < c:
+                if abs(abs(px) - (s2.MOUTH_W + 0.4)) < 0.25 and py < c:
                     over.append((y, x, "lips", 2))                     # a drip down from each corner
     return lv, over
 

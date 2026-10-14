@@ -206,15 +206,18 @@ def mask_comedy(head):
     head.box("mask_nose", (0, YH - 0.8, ZF - 1.6), (2, 4, 2), "porcelain")
 
 
+MOUTH_W = 5.0              # half the grin's width (take 4d: a little smaller overall)
+
+
 def mouth_edges(x):
-    """The gaping grin's edges at x: the upper lip's gentle curve and the lower lip's deep U, meeting at the corners up
-    in his cheeks (take 4b: a big mouth)."""
-    return YH - 4.2 + 0.07 * x * x, YH - 9.0 + 0.195 * x * x
+    """The grin's edges at x: the upper lip's gentle curve and the lower lip's deep U, meeting at the corners up in his
+    cheeks."""
+    return YH - 3.9 + 0.08 * x * x, YH - 7.0 + 0.2 * x * x
 
 
 def mouth_curve(x):
     """The grin's centre line and half-height at x (from its edges)."""
-    x = max(-6.2, min(6.2, x))
+    x = max(-MOUTH_W, min(MOUTH_W, x))
     up, low = mouth_edges(x)
     return (up + low) / 2, max(0.0, (up - low) / 2)
 
@@ -234,59 +237,63 @@ def _lip(head, name, x0, x1, upper):
     angle = _snap_angle(math.degrees(math.atan2(yb - ya, x1 - x0)))
     length = math.hypot(x1 - x0, yb - ya) + 1.1
     xm, ym = (x0 + x1) / 2, (ya + yb) / 2
-    off = 0.9 if upper else -0.9
+    off = 0.8 if upper else -0.8
     nx, ny = -math.sin(math.radians(angle)), math.cos(math.radians(angle))
-    head.box(name, (xm + nx * off, ym + ny * off, ZF - 1.4), (length, 1.9, 2.4), "lips", rotation=(0, 0, angle))
+    head.box(name, (xm + nx * off, ym + ny * off, ZF - 1.4), (length, 1.6, 2.4), "lips", rotation=(0, 0, angle))
 
 
 def mouth(head):
-    """His mouth, built (take 4: the painted grin wrapped round blocky shapes and read as a texture on a mask): a big
+    """His mouth, built (take 4: the painted grin wrapped round blocky shapes and read as a texture on a mask): a
     gaping grin - a gently curved upper lip, a deep U of a lower lip, thick and red, in segments turned along it;
     inside, real teeth, each a block with a pointed tip, crooked and uneven, fangs among them, hanging from the upper
-    lip and rising from the lower, set back behind the lips' front; behind them a dark throat; a long jaw hanging
-    below, its sides, the chin and the cheeks built round it."""
-    for upper, tag, cuts in ((True, "upper", (0.0, 2.2, 4.0, 5.2, 5.9)),
-                             (False, "lower", (0.0, 1.4, 2.6, 3.6, 4.5, 5.3, 5.9))):
+    lip and rising from the lower, set back behind the lips' front; behind them a dark throat. Round it (take 4d: the
+    long, wide jaw looked out of proportion): white flesh under the lower lip, cheeks rounding over the corners, and a
+    jaw of angled blocks narrowing in a V to a small chin."""
+    for upper, tag, cuts in ((True, "upper", (0.0, 1.8, 3.2, 4.3, 4.9)),
+                             (False, "lower", (0.0, 1.1, 2.1, 3.0, 3.8, 4.4, 4.9))):
         _lip(head, f"lip_{tag}_0", -cuts[1], cuts[1], upper)
         for i in range(1, len(cuts) - 1):
             for sx in (-1, 1):
                 a, b = sorted((sx * cuts[i], sx * cuts[i + 1]))
                 _lip(head, f"lip_{tag}_{i}_{sx}", a, b, upper)
-    head.box("throat", (0, YH - 6.2, ZF + 0.3), (12.4, 8, 0.8), "throat")      # the dark behind the teeth
-    for row, (upper, xs) in enumerate(((True, [-4.8, -3.7, -2.6, -1.4, -0.3, 0.8, 1.9, 3.0, 4.1]),
-                                       (False, [-3.9, -2.9, -1.9, -0.8, 0.3, 1.4, 2.4, 3.4]))):
+    head.box("throat", (0, YH - 5.4, ZF + 0.3), (10, 4.8, 0.8), "throat")      # the dark behind the teeth
+    for row, (upper, xs) in enumerate(((True, [-3.8, -2.95, -2.1, -1.15, -0.25, 0.65, 1.5, 2.4, 3.3]),
+                                       (False, [-3.1, -2.3, -1.5, -0.65, 0.25, 1.1, 1.9, 2.7]))):
         for k, x in enumerate(xs):
             up, low = mouth_edges(x)
             gap = up - low
-            if gap < 1.4:
+            if gap < 1.2:
                 continue
-            fang = (abs(x - 3.0) < 0.2 or abs(x + 2.6) < 0.2) if upper else abs(abs(x) - 2.9) < 0.3
+            fang = (abs(x - 2.4) < 0.2 or abs(x + 2.1) < 0.2) if upper else abs(abs(x) - 2.3) < 0.3
             length = (0.5 if fang else 0.24 + 0.12 * ((k * 7 + row * 3) % 5) / 4) * gap
-            wide = 0.9 if fang else 0.65 + 0.3 * ((k * 5 + row) % 3) / 2
+            wide = 0.85 if fang else 0.6 + 0.25 * ((k * 5 + row) % 3) / 2
             root = up if upper else low
             sign = -1 if upper else 1
-            body = max(0.35, length - wide * 0.45)
+            body = max(0.3, length - wide * 0.45)
             name = f"tooth_{'upper' if upper else 'lower'}_{k}"
             head.box(name, (x, root + sign * body / 2, ZF - 0.9), (wide, body, 0.9), "teeth")
             head.box(f"{name}_tip", (x, root + sign * (body + wide * 0.12), ZF - 0.9), (wide * 0.7, wide * 0.7, 0.9),
                      "teeth", rotation=(0, 0, 45))
-    # under the lower lip, white flesh following its U down to the jaw (take 4c: the throat's black showed below the
-    # lips where the U rises); cheeks rounding out over the corners, and the jaw's sides
-    low_cuts = (1.4, 2.6, 3.6, 4.5, 5.3, 6.2, 7.0)
+    # the jaw: angled blocks narrowing in a V from below his cheeks to a small chin
+    head.box("jaw", (0, YH - 9.4, ZF - 0.6), (4, 2, 2), "face")
+    for sx in (-1, 1):
+        head.box(f"jaw_mid_{sx}", (sx * 3.2, YH - 8.7, ZF - 0.5), (3.6, 2, 1.9), "face", rotation=(0, 0, sx * 22.5))
+        head.box(f"jaw_corner_{sx}", (sx * 5.3, YH - 6.9, ZF - 0.3), (3, 2, 1.7), "face", rotation=(0, 0, sx * 45))
+        head.box(f"jaw_side_{sx}", (sx * 6.1, YH - 4.8, ZF - 0.1), (2, 3.2, 1.6), "face", rotation=(0, -sx * 22.5, 0))
+    head.box("chin", (0, YH - 10.6, ZF - 0.5), (2.6, 1.4, 1.6), "face")
+    # under the lower lip, white flesh following its U down to the jaw (the throat's black shows only in the mouth)
+    low_cuts = (1.1, 2.1, 3.0, 3.8, 4.4, 5.0)
     for i in range(len(low_cuts) - 1):
         a, b = low_cuts[i], low_cuts[i + 1]
-        top = min(mouth_edges(min(a, 6.2))[1], mouth_edges(min(b, 6.2))[1]) - 1.6 if a < 6.2 else YH - 2.4
-        bottom = YH - 10.2
+        top = min(mouth_edges(a)[1], mouth_edges(b)[1]) - 1.4
+        bottom = YH - 8.6 + 0.45 * a
         if top - bottom > 0.4:
             for sx in (-1, 1):
                 head.box(f"lower_cheek_{i}_{sx}", (sx * (a + b) / 2, (top + bottom) / 2, ZF - 0.9),
                          (b - a + 0.3, top - bottom, 1.8), "face")
     for sx in (-1, 1):
-        head.box(f"mouth_cheek_{sx}", (sx * 5.0, YH - 1.7, ZF - 1.3), (3.8, 3, 2.4), "face")       # round, high
-        head.box(f"cheek_round_{sx}", (sx * 6.5, YH - 3.0, ZF - 0.7), (2.2, 2.4, 1.8), "face")
-        head.box(f"jaw_side_{sx}", (sx * 7.0, YH - 7.4, ZF + 0.2), (2, 8, 1.6), "face", rotation=(0, -sx * 22.5, 0))
-    head.box("jaw", (0, YH - 11.0, ZF - 0.4), (11, 2.4, 2.2), "face")
-    head.box("chin", (0, YH - 12.6, ZF - 0.3), (6, 1.6, 1.8), "face")
+        head.box(f"mouth_cheek_{sx}", (sx * 4.6, YH - 1.5, ZF - 1.3), (3.6, 3, 2.4), "face")       # round, high
+        head.box(f"cheek_round_{sx}", (sx * 6.0, YH - 2.9, ZF - 0.7), (2.2, 2.4, 1.8), "face")
 
 
 def mask_clown(head):
@@ -357,7 +364,7 @@ def build(name):
     collar(torso)
     arms(torso)
     neck = torso.group("neck", (0, NECK, 0), (6, 0, 0))
-    neck.box("neck_box", (0, NECK + 3, 0), (3, 7, 3), "skin")
+    neck.box("neck_box", (0, NECK + 3, 0), (4, 7, 4), "face")   # his white greasepaint goes on down
     head = neck.group("hi_head", (0, NECK + 6, 0))
     head_parts(head)
     return model

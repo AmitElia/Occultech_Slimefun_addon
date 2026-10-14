@@ -97,4 +97,12 @@ better):
 - **The hair:** the angled tufts are back, and more of them: five a side tilted out and down at different heights and
   depths, and three angled down at the back.
 
+**Take 4d** (the user: the bottom of the face and the neck looked out of proportion; angled blocks for the jaw, and a
+little smaller mouth):
+- **The mouth:** smaller - narrower (corners at about 5 instead of 6.2 from the middle), not as deep, with thinner lips -
+  so it no longer hangs far below the head.
+- **The jaw:** no long, wide bar and chin any more. Angled blocks narrow in a V from under the cheeks (corners turned 45
+  degrees, the sides beside the chin 22.5) down to a small chin, just below the head.
+- **The neck:** thicker (4 instead of 3) and white like his face, so it doesn't read as a grey stalk under a white head.
+
 Regenerate with `python tools/art/bosses/magus_clown.py`.
