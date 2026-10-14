@@ -88,7 +88,7 @@ public final class MythicBody implements BossBody {
 
     /**
      * The model a carrier wears: {@code occultech_<id>}, except that a {@code <BOSS>_DECOY} carrier wears its boss's own
-     * model (the Mirrored Magus's reflections must look exactly like him).
+     * model (the Masquerade's reflections must look exactly like him).
      */
     static String modelFor(String id) {
         String model = "occultech_" + id.toLowerCase(java.util.Locale.ROOT);

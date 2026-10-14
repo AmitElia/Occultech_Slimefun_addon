@@ -66,7 +66,7 @@ Essence of Afterlife, talismans...).
 - Balanced for basic diamond gear; tuned for **solo first**, groups handled by health scaling.
 - 7x7 circle wrapping the tier-0 circle (8 bowls, 8 candles, 16 chalk + 16 bound glyphs). The Initiate's Altar is
   upgraded in place by ritual into the Bound Altar.
-- Mini-bosses: The Unbound, Night Matriarch (**any time**, never burns, ~20% stronger at night), Mirrored Magus.
+- Mini-bosses: The Unbound, Night Matriarch (**any time**, never burns, ~20% stronger at night), Masquerade.
   Gate: Archevoker. Bonus drops (15%): Frenzy Idol, Phantom Roost, Scrying Mirror.
 - Both the Servitor Shrine and the Bone Scepter (necromancy) ship in tier 1.
 
@@ -74,7 +74,7 @@ Essence of Afterlife, talismans...).
 |------|------|-------:|-----------|------|
 | The Unbound | Vindicator ("Johnny") | 320 | Speeds up as it's hurt, the fire in its chest growing with it (embers, burning, inferno); red-wedge telegraphed cleave, its origin and facing locked when the wedge appears and held through the wind-up; husk thralls every 14s to its roar - it attacks thralls near it and is **sated** (stunned, +50% damage taken) for 3s after killing and devouring one itself (thralls its cleave cuts down, or anything else kills, don't count), and being sated cancels an unfinished cleave | Frenzied Edge; 15% Frenzy Idol |
 | Night Matriarch | giant Phantom | 260 | Dark-circle telegraphed dives (the mark stays until the dive resolves; a dive that can't reach its mark is abandoned - she pulls up, nothing is hit), then **stunned 1.5s on the ground**; a rake whose bite lands 6 ticks after its lunge; small phantoms join; +20% damage and faster dives at night; never burns | Dusk Membrane; 15% Phantom Roost |
-| Mirrored Magus | Illusioner | 220 | Every 15s 3 decoys (can't cast) and a blink; the real one sparkles; hitting a decoy makes you glow and it blinks again | Mirror Dust; 15% Scrying Mirror |
+| Masquerade | Illusioner (pillager under the model) | 220 | Card fans every 3s (a 12-tick wind-up); every 15s 3 reflections that copy his every move, and a blink; the real one sparkles; hitting a reflection makes you glow and he blinks again; every 20s 2-4 Jack-in-the-Boxes that throw dodgeable cards (3 hits, 15s) | Mirror Dust; 15% Scrying Mirror |
 | Archevoker | Evoker (gate) | 700 | Fang patterns (ring / line / spiral) drawn 1s ahead, faster below 50%; its vexes are adopted, capped and leashed; 3 phylacteries let it cheat death once at 40% - break them first | Evoker's Sigil |
 
 - **Servitor Shrine** is the tier-1 capstone: a Bound-circle ritual that needs 2 Evoker's Sigils (~6.7k raw). At most 4

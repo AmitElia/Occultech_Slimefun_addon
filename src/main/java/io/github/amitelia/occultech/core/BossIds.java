@@ -12,7 +12,8 @@ public final class BossIds {
 
     /** old id -> current id */
     private static final Map<String, String> RENAMED = Map.of(
-        "GELATINOUS_SOVEREIGN", "MIRE_MONARCH"   // 2026-10-11: the slime became a toad
+        "GELATINOUS_SOVEREIGN", "MIRE_MONARCH",  // 2026-10-11: the slime became a toad
+        "MIRRORED_MAGUS", "MASQUERADE"           // 2026-10-14: the illusionist became a horror clown
     );
 
     private BossIds() {}

@@ -59,7 +59,7 @@ The **MC** column shows the Minecraft version that added the mob. The local test
 | Name | Base | Gimmick | Unique drop and its purpose | MC |
 |---|---|---|---|---|
 | Archevoker | Evoker, scaled up | Fangs in circle-shaped patterns (lines, rings, spirals). Tethered vexes that can't leave the arena. Survives death once while its phylacteries (display entities) stand, so players must break those first | *Evoker's Sigil*: used in ritual upgrades. It does NOT drop a vanilla Totem | any |
-| Mirrored Magus | **Illusioner** (never spawns in survival) | Spawns decoy clones (tagged entities, no drops). Hitting a clone makes the player glow briefly and lets the real Magus reposition | *Mirror Dust*: used in illusion or utility items | any |
+| Masquerade (was Mirrored Magus) | **Illusioner** (never spawns in survival; a pillager carrier under the model) | A towering horror clown. Spawns decoy reflections (tagged entities, no drops) that copy his every move; hitting one makes the player glow briefly and lets him reposition. Throws card fans; summons Jack-in-the-Boxes | *Mirror Dust*: used in illusion or utility items | any |
 | Warband Captain | Pillager captain riding a Ravager | *Reworked for rule 1:* no block breaking. Telegraphed ravager charges that knock back and stun, plus crossbow volleys from pillager extras | *Warband Standard*: used in group-support items | any |
 | The Unbound | Vindicator named "Johnny" | Attacks everything, including its own extras, so players can bait it. Speeds up as its HP drops | *Frenzied Edge*: used in berserker weapons | any |
 | Witch Coven | 3 Witches | One heals, one curses, one throws splash potions; their roles rotate. Potions only affect players | *Coven Brew Base*: used in potion or charm items | any |

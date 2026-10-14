@@ -1,4 +1,4 @@
-"""The Mirrored Magus: a hero shot of the fight - the Magus with his reflections round him in different poses, and
+"""The Masquerade: a hero shot of the fight - the Magus with his reflections round him in different poses, and
 Jack-in-the-Boxes popped up on the ground in front.
 
 Every figure is a posed copy of the shipped models (his session 5 paint, the jack's), placed in one scene: each copy's

@@ -17,7 +17,9 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Illager;
 import org.bukkit.entity.Illusioner;
+import org.bukkit.entity.Pillager;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
@@ -35,8 +37,11 @@ import io.github.amitelia.occultech.boss.BossService;
 import io.github.amitelia.occultech.boss.Mechanic;
 
 /**
- * Tier-1 mini-boss (diamond gear). An Illusioner (a mob that never spawns in survival): the horror clown magician.
+ * Tier-1 mini-boss (diamond gear): the Masquerade, a towering horror clown magician. With the Mythic body he is a
+ * pillager carrier under his model (an invisible illusioner would still draw its mirror images); without it, an
+ * illusioner (a mob that never spawns in survival).
  * <ul>
+ * <li>He stalks his target from 6 to 13 blocks, staring at it, and stands still for every gesture.</li>
  * <li>Every 3s he throws a fan of three playing cards at his target: his arm winds back first (12 ticks), then the
  * cards fly, slow enough to sidestep.</li>
  * <li>Every 10s a prism burst: a ring under a player that bursts with light 30 ticks later.</li>
@@ -51,13 +56,15 @@ import io.github.amitelia.occultech.boss.Mechanic;
  * reflections never target anyone, so they can't cast, and they never throw a damaging card. Ranged, so the
  * anti-pillar teleport is off.
  */
-public final class MirroredMagus extends BossBehavior {
+public final class Masquerade extends BossBehavior {
 
-    private static final Mechanic CARD = Mechanic.of("MIRRORED_MAGUS", "Card fan", 20, Mechanic.Kind.PROJECTILE, true);
-    private static final Mechanic JACK_CARD = Mechanic.of("MIRRORED_MAGUS", "Jack card", 8, Mechanic.Kind.ADD, true);
-    private static final Mechanic PRISM = Mechanic.of("MIRRORED_MAGUS", "Prism burst", 12, Mechanic.Kind.MAGIC, true);
+    private static final Mechanic CARD = Mechanic.of("MASQUERADE", "Card fan", 20, Mechanic.Kind.PROJECTILE, true);
+    private static final Mechanic JACK_CARD = Mechanic.of("MASQUERADE", "Jack card", 8, Mechanic.Kind.ADD, true);
+    private static final Mechanic PRISM = Mechanic.of("MASQUERADE", "Prism burst", 12, Mechanic.Kind.MAGIC, true);
     private static final Color PRISM_COLOR = Color.fromRGB(120, 170, 255);
 
+    /** His walking pace: a long stride (the walk clip covers about 3 blocks a second). */
+    private static final double SPEED = 0.3;
     private static final int FAN_INTERVAL = 60;
     /** The throw clip's wind-up: the cards leave his palm this long after it starts. */
     private static final int FAN_WINDUP = 12;
@@ -87,13 +94,18 @@ public final class MirroredMagus extends BossBehavior {
     private static final double JACK_CARD_SPEED = 0.7;
     private static final int JACK_HITS = 3;
     private static final int MAX_JACKS = 4;
-    private static final String JACK_MODEL = "occultech_mirrored_magus_jack";
+    private static final String JACK_MODEL = "occultech_masquerade_jack";
 
-    private final List<Illusioner> decoys = new ArrayList<>();
+    private final List<Illager> decoys = new ArrayList<>();
     private final List<Jack> jacks = new ArrayList<>();
     /** Things set to happen on a later tick (the clips' release moments), run from {@link #move()}. */
     private final List<Timed> timeline = new ArrayList<>();
-    private Illusioner magus;
+    private Illager magus;
+    /** Who each body (him, each reflection) is facing and stalking, picked every step. */
+    private final java.util.Map<Illager, Player> focus = new java.util.HashMap<>();
+    /** Where each body drifts while it keeps its range, and until when. */
+    private final java.util.Map<Illager, Location> drift = new java.util.HashMap<>();
+    private final java.util.Map<Illager, Integer> driftUntil = new java.util.HashMap<>();
     private Location prismAt;
     private int prismStrike = -1;
     /** Until this tick he is in the middle of a gesture (a prism, a bow, a snap, a blink): no card fan starts. */
@@ -101,7 +113,7 @@ public final class MirroredMagus extends BossBehavior {
     private int lastFlinch = -100;
     private int ticks;
 
-    public MirroredMagus(BossFight fight) {
+    public Masquerade(BossFight fight) {
         super(fight);
     }
 
@@ -110,12 +122,15 @@ public final class MirroredMagus extends BossBehavior {
     /** One Jack-in-the-Box: its fight object (model, hitbox, hits) and its clock. */
     private static final class Jack {
         final BossFight.FightObject object;
+        /** Where it stands, turned the way it faces. */
+        final Location feet;
         final int popAt;
         final int endAt;
         int nextThrow;
 
-        Jack(BossFight.FightObject object, int popAt) {
+        Jack(BossFight.FightObject object, Location feet, int popAt) {
             this.object = object;
+            this.feet = feet;
             this.popAt = popAt;
             this.endAt = popAt + JACK_LIFE;
             this.nextThrow = popAt + 20;
@@ -124,8 +139,9 @@ public final class MirroredMagus extends BossBehavior {
 
     @Override
     public void spawn(Location at) {
-        magus = fight.spawnBoss(Illusioner.class, at, m -> {
+        magus = fight.spawnBoss(carrier(), at, m -> {
             dress(m);
+            BossFight.setAttribute(m, Attribute.MOVEMENT_SPEED, SPEED);
             BossFight.setAttribute(m, Attribute.MAX_HEALTH, 220);
             BossFight.setAttribute(m, Attribute.KNOCKBACK_RESISTANCE, 0.3);
             BossFight.setAttribute(m, Attribute.FOLLOW_RANGE, 32);
@@ -144,6 +160,14 @@ public final class MirroredMagus extends BossBehavior {
         return fight.usesMythicBody();
     }
 
+    /**
+     * His carrier: a pillager under the model (it draws nothing when invisible; an invisible illusioner draws its
+     * mirror images, which showed through the model), an illusioner without one.
+     */
+    private Class<? extends Illager> carrier() {
+        return mythic() ? Pillager.class : Illusioner.class;
+    }
+
     private void act(LivingEntity body, String action, @Nullable Entity target) {
         if (mythic()) {
             fight.playAction(body, action, target);
@@ -153,7 +177,7 @@ public final class MirroredMagus extends BossBehavior {
     /** A gesture he makes, and every reflection with him, at the same moment (only the sparkle tells them apart). */
     private void perform(String action, @Nullable Entity target) {
         act(magus, action, target);
-        for (Illusioner decoy : decoys) {
+        for (Illager decoy : decoys) {
             if (decoy.isValid()) {
                 act(decoy, action, target);
             }
@@ -172,6 +196,10 @@ public final class MirroredMagus extends BossBehavior {
     @Override
     public void move() {
         ticks++;
+        face(magus);
+        for (Illager decoy : decoys) {
+            face(decoy);
+        }
         if (timeline.isEmpty()) {
             return;
         }
@@ -194,6 +222,11 @@ public final class MirroredMagus extends BossBehavior {
             return;
         }
         decoys.removeIf(d -> d.isDead() || !d.isValid());
+        focus.keySet().removeIf(b -> !b.isValid());
+        stalk(magus);
+        for (Illager decoy : decoys) {
+            stalk(decoy);
+        }
         magus.getWorld().spawnParticle(Particle.END_ROD, magus.getLocation().add(0, 0.1, 0), 1, 0.2, 0, 0.2, 0);
 
         attack(fight.elapsed());
@@ -207,6 +240,79 @@ public final class MirroredMagus extends BossBehavior {
         }
     }
 
+    /**
+     * Turns {@code body} to stare at the fighter it stalks, every tick, head and body (the model's head bone follows the
+     * carrier's head, its body the carrier's body).
+     */
+    private void face(Illager body) {
+        Player target = body == null ? null : focus.get(body);
+        if (target == null || !body.isValid() || !target.isValid()) {
+            return;
+        }
+        Vector look = target.getLocation().toVector().subtract(body.getLocation().toVector());
+        float yaw = (float) Math.toDegrees(Math.atan2(-look.getX(), look.getZ()));
+        body.setBodyYaw(yaw);
+        body.lookAt(target.getEyeLocation());
+    }
+
+    /**
+     * Keeps {@code body} at its range from the nearest fighter: closes in past 13 blocks, backs off inside 6, and in
+     * between drifts sideways round it; it stands still while a gesture plays. Him and every reflection alike.
+     */
+    private void stalk(Illager body) {
+        Player target = fight.nearestPlayer(body.getLocation());
+        if (target == null) {
+            focus.remove(body);
+            return;
+        }
+        focus.put(body, target);
+        if (ticks < busyUntil) {
+            body.getPathfinder().stopPathfinding();
+            return;
+        }
+        Location from = body.getLocation();
+        Vector to = target.getLocation().toVector().subtract(from.toVector()).setY(0);
+        double d = to.length();
+        if (d > 13) {
+            body.getPathfinder().moveTo(target.getLocation(), 1.0);
+        } else if (d < 6) {
+            body.getPathfinder().moveTo(inArena(from.clone().subtract(to.normalize().multiply(5))), 1.15);
+        } else {
+            Location aim = drift.get(body);
+            if (aim == null || ticks >= driftUntil.getOrDefault(body, 0) || aim.distanceSquared(from) < 1.5) {
+                Vector side = new Vector(-to.getZ(), 0, to.getX()).normalize().multiply(ThreadLocalRandom.current().nextBoolean() ? 4 : -4);
+                aim = inArena(from.clone().add(side));
+                drift.put(body, aim);
+                driftUntil.put(body, ticks + 40);
+            }
+            body.getPathfinder().moveTo(aim, 0.8);
+        }
+    }
+
+    /** {@code at}, pulled back inside the arena (3 blocks from its edge). */
+    private Location inArena(Location at) {
+        Location c = fight.center();
+        Vector off = at.toVector().subtract(c.toVector()).setY(0);
+        double max = fight.radius() - 3;
+        if (off.length() > max) {
+            off.normalize().multiply(max);
+        }
+        Location out = c.clone().add(off);
+        out.setY(at.getY());
+        return out;
+    }
+
+    /**
+     * A point on a model standing at {@code feet} turned to {@code yawDegrees}: {@code right}, {@code up} and
+     * {@code forward} blocks from its feet (his hand at the moment of a throw).
+     */
+    private static Location point(Location feet, float yawDegrees, double right, double up, double forward) {
+        double yaw = Math.toRadians(yawDegrees);
+        Vector facing = new Vector(-Math.sin(yaw), 0, Math.cos(yaw));
+        Vector toRight = new Vector(-Math.cos(yaw), 0, -Math.sin(yaw));
+        return feet.clone().add(toRight.multiply(right)).add(facing.multiply(forward)).add(0, up, 0);
+    }
+
     /** The bow: his reflections step out of him on the curtsey's release, and he blinks away among them. */
     private void conjure() {
         busyUntil = ticks + 40;
@@ -216,13 +322,15 @@ public final class MirroredMagus extends BossBehavior {
                 return;
             }
             for (int i = decoys.size(); i < DECOY_COUNT; i++) {
-                Illusioner decoy = fight.spawnLookalike("DECOY", Illusioner.class, fight.randomPoint(3, fight.radius() - 3), d -> {
+                Illager decoy = fight.spawnLookalike("DECOY", carrier(), fight.randomPoint(3, fight.radius() - 3), d -> {
                     dress(d);
+                    BossFight.setAttribute(d, Attribute.MOVEMENT_SPEED, SPEED);
                     BossFight.setAttribute(d, Attribute.MAX_HEALTH, 1);
                     d.setHealth(1);
                 });
                 if (decoy != null) {
-                    // reflections wander but never pick a target, so they can't cast spells or throw
+                    // reflections never pick a target of their own, so they can't cast spells or throw: the fight
+                    // moves them and turns them to the nearest fighter, as it does him
                     Bukkit.getMobGoals().removeAllGoals(decoy, GoalType.TARGET);
                     if (mythic()) {
                         decoy.getEquipment().setItemInMainHand(new ItemStack(Material.AIR));
@@ -235,7 +343,7 @@ public final class MirroredMagus extends BossBehavior {
                 }
             }
             blink();
-            fight.broadcast("&9The Magus splits into reflections. &7Find the one that sparkles.");
+            fight.broadcast("&9The Masquerade splits into reflections. &7Find the one that sparkles.");
         });
     }
 
@@ -266,7 +374,7 @@ public final class MirroredMagus extends BossBehavior {
                 Jack[] self = new Jack[1];
                 BossFight.FightObject object = fight.spawnObject(at, JACK_MODEL, Material.JACK_O_LANTERN, 1F, 0.9F, 2.0F,
                     JACK_HITS, () -> broke(self[0]));
-                self[0] = new Jack(object, ticks + JACK_WARNING);
+                self[0] = new Jack(object, at.clone(), ticks + JACK_WARNING);
                 jacks.add(self[0]);
             }
             magus.getWorld().playSound(magus.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1.2F, 0.5F);
@@ -322,7 +430,7 @@ public final class MirroredMagus extends BossBehavior {
                     jack.object.animate("throw");
                     later(JACK_THROW_WINDUP, () -> {
                         if (jack.object.isAlive() && target.isValid()) {
-                            Location hand = jack.object.location().clone().add(0, 1.3, 0);
+                            Location hand = point(jack.feet, jack.feet.getYaw(), 0.25, 1.05, 0.45);
                             Vector aim = target.getEyeLocation().toVector().subtract(hand.toVector()).normalize();
                             throwCard(hand, aim.multiply(JACK_CARD_SPEED), JACK_CARD, 60);
                             hand.getWorld().playSound(hand, Sound.ITEM_BOOK_PAGE_TURN, 1F, 1.6F);
@@ -401,9 +509,10 @@ public final class MirroredMagus extends BossBehavior {
 
     @Override
     public void onAddDeath(Entity entity, @Nullable Player killer) {
-        if (!(entity instanceof Illusioner decoy) || !decoys.remove(decoy)) {
+        if (!(entity instanceof Illager decoy) || !decoys.remove(decoy)) {
             return;
         }
+        focus.remove(decoy);
         // the mirror flash, then the reflection is gone at once: no corpse and no model left standing behind it
         act(decoy, "SHATTER", null);
         entity.getWorld().spawnParticle(Particle.BLOCK, entity.getLocation().add(0, 1, 0), 30, 0.3, 0.6, 0.3, Material.GLASS.createBlockData());
@@ -415,7 +524,7 @@ public final class MirroredMagus extends BossBehavior {
         });
         if (killer != null) {
             killer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0));
-            killer.sendMessage(ChatColor.GRAY + "You shattered an illusion - the Magus sees you!");
+            killer.sendMessage(ChatColor.GRAY + "You shattered a reflection - the Masquerade sees you!");
             act(magus, "LAUGH", killer);
             busyUntil = Math.max(busyUntil, ticks + 20);
             later(16, this::blink);
@@ -478,8 +587,9 @@ public final class MirroredMagus extends BossBehavior {
         if (target == null) {
             return;
         }
-        // the model's hand is up at his shoulder, 3.6 blocks up (the carrier under it is an ordinary illusioner)
-        Location hand = mythic() ? magus.getLocation().add(0, 3.6, 0) : magus.getEyeLocation().add(0, -0.4, 0);
+        // from the model's hand where the throw pose flings it: 2.2 blocks to his right, 3.9 up, 1.7 ahead
+        Location hand = mythic() ? point(magus.getLocation(), magus.getBodyYaw(), 2.2, 3.9, 1.7)
+            : magus.getEyeLocation().add(0, -0.4, 0);
         Vector aim = target.getEyeLocation().toVector().subtract(hand.toVector()).normalize();
         for (int i = -1; i <= 1; i++) {
             throwCard(hand, aim.clone().rotateAroundY(Math.toRadians(10 * i)).multiply(CARD_SPEED), CARD, CARD_LIFE);
@@ -497,7 +607,7 @@ public final class MirroredMagus extends BossBehavior {
             return;
         }
         busyUntil = Math.max(busyUntil, ticks + BLINK_WINDUP + 8);
-        Illusioner swap = !decoys.isEmpty() && ThreadLocalRandom.current().nextBoolean()
+        Illager swap = !decoys.isEmpty() && ThreadLocalRandom.current().nextBoolean()
             ? decoys.get(ThreadLocalRandom.current().nextInt(decoys.size())) : null;
         act(magus, "BLINK", null);
         if (swap != null) {
@@ -521,8 +631,10 @@ public final class MirroredMagus extends BossBehavior {
         });
     }
 
-    private static void dress(Illusioner illusioner) {
-        illusioner.setCustomName(ChatColor.BLUE + "Mirrored Magus");
-        illusioner.setCustomNameVisible(true);
+    private static void dress(Illager illager) {
+        illager.setCustomName(ChatColor.BLUE + "Masquerade");
+        illager.setCustomNameVisible(true);
+        illager.setCanJoinRaid(false);
+        illager.setPatrolLeader(false);
     }
 }

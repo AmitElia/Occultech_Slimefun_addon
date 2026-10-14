@@ -50,7 +50,7 @@ final class SelfTest {
     private static final String CATALYST = ItemKeys.slimefunId("SOVEREIGN_CATALYST");
     private static final String ACTIVE_KEY = "occultech_active_fight";
     private static final List<String> BOSSES = List.of("BROOD_MOTHER", "VOLLEY", "WITCH_COVEN", "MIRE_MONARCH");
-    private static final List<String> TIER1_BOSSES = List.of("THE_UNBOUND", "NIGHT_MATRIARCH", "MIRRORED_MAGUS", "ARCHEVOKER");
+    private static final List<String> TIER1_BOSSES = List.of("THE_UNBOUND", "NIGHT_MATRIARCH", "MASQUERADE", "ARCHEVOKER");
     private static final List<String> TIER2_BOSSES = List.of("ABYSSAL_WARDEN", "TIDEBREAKER", "BLAZE_CHOIR", "TEMPEST", "DROWNED_ELDER");
     private static final List<String> TIER3_BOSSES = List.of("HOLLOW_WARLORD", "HEARTWOOD_HORROR", "DREAD_RIDERS", "CORRUPTED_COLOSSUS", "DOPPELGANGER");
 
@@ -967,23 +967,23 @@ final class SelfTest {
                 && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
                 carrier == null ? "no carrier" : "scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue());
         }
-        if ("MIRRORED_MAGUS".equals(bossId) && currentFight.usesMythicBody()
+        if ("MASQUERADE".equals(bossId) && currentFight.usesMythicBody()
             && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
-            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_mirrored_magus")) {
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_masquerade")) {
             LivingEntity carrier = currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
-            check("The Mirrored Magus has one BetterModel tracker", carrier != null
-                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(carrier, "occultech_mirrored_magus"),
+            check("The Masquerade has one BetterModel tracker", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(carrier, "occultech_masquerade"),
                 carrier == null ? "no carrier" : io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier));
-            check("The Mirrored Magus's model has its hitbox", carrier != null
-                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_mirrored_magus"),
+            check("The Masquerade's model has its hitbox", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_masquerade"),
                 "no hitbox entity");
-            check("The Mirrored Magus's Mythic carrier stays unscaled and holds nothing under the model", carrier != null
+            check("The Masquerade's Mythic carrier stays unscaled and holds nothing under the model", carrier != null
                 && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001
                 && carrier.getEquipment() != null && carrier.getEquipment().getItemInMainHand().getType().isAir(),
                 carrier == null ? "no carrier" : "scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue()
                     + ", holding " + carrier.getEquipment().getItemInMainHand().getType());
             check("The Jack-in-the-Box model is loaded",
-                io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_mirrored_magus_jack"), "missing");
+                io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_masquerade_jack"), "missing");
         }
         if ("WITCH_COVEN".equals(bossId) && currentFight.usesMythicBody()
             && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")

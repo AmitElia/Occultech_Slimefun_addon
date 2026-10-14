@@ -1,4 +1,4 @@
-"""The Mirrored Magus, session 8: his thrown playing card as a resource-pack item model (occultech:magus_card).
+"""The Masquerade, session 8: his thrown playing card as a resource-pack item model (occultech:magus_card).
 
 The card fans (his and the Jack-in-the-Boxes') fly as snowballs carrying this item, which the game draws facing the
 camera: a white card with a thin dark edge, a big red diamond and its corner pips, on both sides (a thrown card is

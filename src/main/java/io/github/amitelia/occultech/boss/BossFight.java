@@ -413,7 +413,7 @@ public final class BossFight {
     }
 
     /**
-     * Spawns an extra mob that wears the boss's own look (the Mirrored Magus's reflections): its Mythic carrier is
+     * Spawns an extra mob that wears the boss's own look (the Masquerade's reflections): its Mythic carrier is
      * {@code OCCULTECH_<BOSS>_<PART>}, which wears the boss's model; without one it is a plain {@code type}. It counts
      * as an extra mob (the cap, no drops, removed at the end), or null when the cap is reached.
      */

@@ -34,7 +34,7 @@ public enum HaloStyle {
         List.of(Part.ring(Material.IRON_AXE, 4, 0.34, 0.26, 2))),
     MOON_AND_STARS("&9Moon and Stars", "NIGHT_MATRIARCH", Material.PHANTOM_MEMBRANE, Particle.END_ROD,
         List.of(Part.text("&e☽", 1, 0.0, 1.2, 0), Part.ring(Material.GLOWSTONE_DUST, 4, 0.38, 0.14, -0.8))),
-    MIRROR_HALO("&bMirror Halo", "MIRRORED_MAGUS", Material.GLASS_PANE, Particle.END_ROD,
+    MIRROR_HALO("&bMirror Halo", "MASQUERADE", Material.GLASS_PANE, Particle.END_ROD,
         List.of(Part.ring(Material.GLASS_PANE, 6, 0.34, 0.24, 2.4))),
     SOUL_CROWN("&3Soul Crown", "ARCHEVOKER", Material.SOUL_LANTERN, Particle.SOUL_FIRE_FLAME,
         List.of(Part.ring(Material.SOUL_LANTERN, 4, 0.34, 0.2, 0.6))),

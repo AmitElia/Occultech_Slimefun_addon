@@ -1,7 +1,7 @@
-"""The Mirrored Magus redesign, session 7: animation - his clips and the Jack-in-the-Box's.
+"""The Masquerade redesign, session 7: animation - his clips and the Jack-in-the-Box's.
 
 His clips are built from session 2's key poses (each bone's turn away from rest; the hips sink with a position key
-where a pose sits him lower). Timings follow MirroredMagus.java and the jack's design (overhaul/jack/README.md).
+where a pose sits him lower). Timings follow Masquerade.java and the jack's design (overhaul/jack/README.md).
 Animation is cosmetic: every hit and telegraph comes from the server, and session 8 starts each action clip so its
 release lands on the server's real moment.
 
@@ -9,7 +9,7 @@ The Magus (`occultech_mirrored_magus_rig`), take 2 - a marionette that isn't qui
 each clip): idle 4.0 s loop, walk 2.0 s loop, spawn 3.4 s, throw 1.4 s (release 0.6), prism 2.4 s (1.5), curtsey 2.0 s
 (1.0), blink 0.9 s (0.45), laugh 1.8 s, snap 1.2 s (0.6), flinch 0.6 s, death 3.0 s hold.
 
-The Jack-in-the-Box (`occultech_mirrored_magus_jack`, its own model, built at half size). Its clips carry the names
+The Jack-in-the-Box (`occultech_masquerade_jack`, its own model, built at half size). Its clips carry the names
 the fight engine plays on a fight object's model (session 8):
   rise     once 2.0 s   the pop: the box shut, rattling, its crank turning through the 1.5 s warning; the lid flies
                         open at 1.5 s and the clown shoots up past full stretch, wobbling to a stop
@@ -46,7 +46,7 @@ from bosses import volley_crone_s7 as v7  # noqa: E402
 
 OUT = ROOT / "docs/art/bosses/mirrored_magus/overhaul/s7_animation"
 RIG = ROOT / "docs/art/bosses/mirrored_magus/overhaul/s5_paint" / f"{s3.MODEL_ID}.bbmodel"
-JACK_ID = "occultech_mirrored_magus_jack"
+JACK_ID = "occultech_masquerade_jack"
 PARTIAL = ("throw", "snap", "flinch")
 ZERO = (0, 0, 0)
 ONE = (1, 1, 1)
@@ -182,7 +182,9 @@ def magus_clips():
         "forearm_right": {"rotation": rot((0, (20, 0, 0)), (0.5, (6, 0, 0)), (1.4, (28, 0, 0)), (2.0, (20, 0, 0)))},
     }
     flop(walk, 2.0, 10, lag=0.1, beats=2)
-    out["walk"] = (2.0, "loop", walk)
+    pace = 0.8                                     # the cycle in 1.6 s: the stride keeps up with his walking pace
+    walk = {b: {ch: [(t * pace, v, i) for t, v, i in keys] for ch, keys in chans.items()} for b, chans in walk.items()}
+    out["walk"] = (2.0 * pace, "loop", walk)
     # ---- spawn: crumpled on the floor, pulled up by his strings in jerks - the body, the legs, the arms yanked
     # overhead with the wrists dangling, the head last; it snaps sideways, holds, snaps upright; a too-deep bow
     death, death_drop = pose_deltas("death")
@@ -224,7 +226,7 @@ def magus_clips():
                                       (1.05, scale3(v, 0.45), C), (1.4, ZERO, C))}
     throw["neck"] = {"rotation": track((0, ZERO, C), (0.45, (0, -24, 26), L), (r, (-6, 40, -10), S),
                                        (0.95, (-6, 40, -10), L), (1.0, (6, 30, 24), C), (1.4, ZERO, C))}
-    throw["cards"] = {"scale": rot((0, ONE), (r, ONE), (r + 0.05, (0.2, 0.2, 0.2)), (1.15, (0.2, 0.2, 0.2)),
+    throw["cards"] = {"scale": rot((0, ONE), (r, ONE), (r + 0.05, (0.35, 0.35, 0.35)), (1.15, (0.35, 0.35, 0.35)),
                                    (1.4, ONE))}
     out["throw"] = (1.4, "once", throw)
     # ---- prism: he rises off the floor, toes dangling, arms lifting slowly with the cards, his head lolled back and
@@ -265,7 +267,7 @@ def magus_clips():
     bl["hi_head"] = {"rotation": track((0, ZERO, L), (r, (0, 180, 0), L), (r + 0.001, (0, -180, 0), L),
                                        (0.9, ZERO, C))}
     bl["hips"] = {"position": rot((0, ZERO), (r, (0, blink_drop, 0)), (0.9, ZERO)),
-                  "scale": rot((0, ONE), (r - 0.1, (0.6, 0.6, 0.6)), (r, (0.05, 0.05, 0.05)),
+                  "scale": rot((0, ONE), (r - 0.1, (0.6, 0.6, 0.6)), (r, (0.3, 0.3, 0.3)),
                                (r + 0.1, (0.6, 0.6, 0.6)), (0.75, (1.06, 1.06, 1.06)), (0.9, ONE))}
     out["blink"] = (0.9, "once", bl)
     # ---- laugh: his head thrown back, convulsing - shoulders jerking, the head bobbing, a hand clutching his belly;
@@ -340,7 +342,7 @@ def spring_keys(*keys, interp="catmullrom"):
 def jack_clips():
     out = {}
     closed = (-135, 0, 0)                      # the lid shut: from standing open (tilted back) down over the box
-    hidden = (0.01, 0.01, 0.01)
+    under = (0, -20, 0)                        # the clown pushed down below the floor, out of sight under the box
     # ---- rise (the pop): shut, rattling, cranked; the lid flies open, the clown shoots up and wobbles. Named for the
     # engine: a fight object's model plays `rise` when it appears, `hit` per hit and `shatter` when broken
     r = JACK_RELEASE["rise"]
@@ -355,8 +357,8 @@ def jack_clips():
         "lid": {"rotation": rot((0, closed), (r, closed), (r + 0.08, (18, 0, 0)), (r + 0.25, (-8, 0, 0)),
                                 (r + 0.4, ZERO), (2.0, ZERO))},
         "spring": sp,
-        "body": {"position": body_pos,
-                 "scale": rot((0, hidden), (r, hidden), (r + 0.06, ONE), (2.0, ONE), interp="linear"),
+        "body": {"position": [(0, add(body_pos[0][1], under), "linear"), (r, add(body_pos[0][1], under), "linear")]
+                             + body_pos[2:],
                  "rotation": rot((0, ZERO), (r + 0.1, (-14, 0, 0)), (r + 0.22, (12, 0, 0)), (r + 0.34, (-5, 0, 0)),
                                  (r + 0.5, ZERO))},
         "hat_left": {"rotation": rot((0, ZERO), (r + 0.15, (0, 0, -24)), (r + 0.3, (0, 0, 14)), (2.0, ZERO))},
@@ -388,7 +390,8 @@ def jack_clips():
                                  (0.9, ZERO), (1.05, (-18, 0, 0)), (r, (16, 0, 0)), (1.3, (6, 0, 0)), (1.5, ZERO))},
         "arm_right": {"rotation": rot((0, ZERO), (0.9, (10, 0, 0)), (1.05, (60, 0, 0)), (r, (-80, 0, 0)),
                                       (1.3, (-60, 0, 0)), (1.5, ZERO))},
-        "cards": {"scale": rot((0, ONE), (r, ONE), (r + 0.04, hidden), (1.4, hidden), (1.5, ONE), interp="linear")},
+        "cards": {"scale": rot((0, ONE), (r, ONE), (r + 0.04, (0.35, 0.35, 0.35)), (1.4, (0.35, 0.35, 0.35)), (1.5, ONE),
+                               interp="linear")},
         "hat_left": {"rotation": rot((0, ZERO), (1.05, (0, 0, 20)), (r + 0.1, (0, 0, -18)), (1.5, ZERO))},
         "hat_right": {"rotation": rot((0, ZERO), (1.05, (0, 0, -20)), (r + 0.1, (0, 0, 18)), (1.5, ZERO))},
     })
@@ -396,9 +399,9 @@ def jack_clips():
     sp, body_pos = spring_keys((0, 1.0), (0.4, 0.8), (1.0, 0.3), (1.1, 0.05), (1.4, 0.05))
     out["wind"] = (1.4, "hold", {
         "spring": sp,
-        "body": {"position": body_pos,
-                 "rotation": rot((0, ZERO), (0.5, (20, 0, 6)), (1.0, (45, 0, 10)), (1.4, (45, 0, 10))),
-                 "scale": rot((0, ONE), (1.05, ONE), (1.1, hidden), (1.4, hidden), interp="linear")},
+        "body": {"position": body_pos[:3] + [(1.1, add(body_pos[3][1], under), "catmullrom"),
+                                             (1.4, add(body_pos[4][1], under), "catmullrom")],
+                 "rotation": rot((0, ZERO), (0.5, (20, 0, 6)), (1.0, (45, 0, 10)), (1.4, (45, 0, 10)))},
         "hi_head": {"rotation": rot((0, ZERO), (0.8, (24, 0, 16)), (1.4, (24, 0, 16)))},
         "hat_left": {"rotation": rot((0, ZERO), (0.8, (0, 0, -30)), (1.4, (0, 0, -30)))},
         "hat_right": {"rotation": rot((0, ZERO), (0.8, (0, 0, 30)), (1.4, (0, 0, 30)))},
@@ -419,8 +422,8 @@ def jack_clips():
         "body": {"position": body_pos, "rotation": rot((0, ZERO), (0.38, (40, 0, 30)), (0.7, (40, 0, 30)))},
         "hi_head": {"position": rot((0, ZERO), (0.2, (0, 14, 0)), (0.38, (0, 22, 0))),
                     "rotation": lin((0, ZERO), (0.38, (0, 0, 220))),
-                    "scale": rot((0, ONE), (0.3, ONE), (0.38, hidden), (0.7, hidden), interp="linear")},
-        "jack_box": {"scale": rot((0, ONE), (0.42, ONE), (0.52, (1.25, 1.25, 1.25)), (0.62, hidden), (0.7, hidden))},
+                    },
+        "jack_box": {"scale": rot((0, ONE), (0.42, ONE), (0.52, (1.25, 1.25, 1.25)), (0.7, (0.9, 0.9, 0.9)))},
         "lid": {"rotation": rot((0, ZERO), (0.45, (30, 0, 0)), (0.7, (30, 0, 0)))},
     })
     return out
@@ -562,7 +565,7 @@ def main():
     path.write_text(json.dumps(rig, indent=1) + "\n", encoding="utf-8")
     if s3.SERVER_MODELS.is_dir():
         shutil.copyfile(path, s3.SERVER_MODELS / path.name)
-    previews(model, clip_set, OUT / "magus", "Mirrored Magus", RELEASE, (300, 420), 3.3, 2.3)
+    previews(model, clip_set, OUT / "magus", "Masquerade", RELEASE, (300, 420), 3.3, 2.3)
     summary["magus"] = {k: {"length": v[0], "loop": v[1], "bones": len(v[2])} for k, v in clip_set.items()}
     # the jack
     jack_out = OUT / "jack"

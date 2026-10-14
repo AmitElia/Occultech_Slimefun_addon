@@ -208,7 +208,7 @@ final class CodexMenu {
             case "MIRE_MONARCH" -> Material.FROG_SPAWN_EGG;
             case "THE_UNBOUND" -> Material.VINDICATOR_SPAWN_EGG;
             case "NIGHT_MATRIARCH" -> Material.PHANTOM_SPAWN_EGG;
-            case "MIRRORED_MAGUS" -> Material.PILLAGER_SPAWN_EGG;
+            case "MASQUERADE" -> Material.PILLAGER_SPAWN_EGG;
             case "ARCHEVOKER" -> Material.EVOKER_SPAWN_EGG;
             case "ABYSSAL_WARDEN" -> Material.GUARDIAN_SPAWN_EGG;
             case "TIDEBREAKER" -> Material.DROWNED_SPAWN_EGG;

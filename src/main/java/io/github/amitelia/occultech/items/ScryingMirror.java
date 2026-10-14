@@ -33,7 +33,7 @@ import me.mrCookieSlime.Slimefun.Objects.handlers.BlockTicker;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
 
 /**
- * Scrying Mirror: a rare drop from the Mirrored Magus. Right-click an altar while holding it to link it; placed, its
+ * Scrying Mirror: a rare drop from the Masquerade. Right-click an altar while holding it to link it; placed, its
  * hologram shows that circle's state from afar (circle complete?, ritual running, boss and its health).
  */
 public class ScryingMirror extends SlimefunItem {
