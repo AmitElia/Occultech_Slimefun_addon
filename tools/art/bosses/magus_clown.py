@@ -33,8 +33,12 @@ LABELS = {"face": "his face", "face_34": "three-quarter", "face_side": "side", "
 
 def main():
     if OUT.exists():
-        shutil.rmtree(OUT)
-    OUT.mkdir(parents=True)
+        for old in OUT.iterdir():
+            if old.is_dir():
+                shutil.rmtree(old)
+            elif old.name != "README.md":
+                old.unlink()
+    OUT.mkdir(parents=True, exist_ok=True)
     s2.MASK = "clown"
     model, keys, positions, used, height, atlas = s5.painted()
     atlas_path = OUT / "atlas.png"
