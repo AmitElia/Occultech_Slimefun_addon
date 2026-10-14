@@ -5,19 +5,9 @@ where a pose sits him lower). Timings follow MirroredMagus.java and the jack's d
 Animation is cosmetic: every hit and telegraph comes from the server, and session 8 starts each action clip so its
 release lands on the server's real moment.
 
-The Magus (`occultech_mirrored_magus_rig`):
-  idle     loop 3.0 s   hunched, swaying from the hips, his head tilting side to side, the hat's points flopping
-  walk     loop 1.6 s   a long-legged stalk: high knees, the arms swinging loose, a bob on each step
-  spawn    once 2.4 s   unfolding out of himself (the blink's fold), rising into a deep curtsey, then up
-  throw    once 1.2 s   the card fan: the arm drawn back, flung out at 0.55 s (the cards leave his palm), follow-through
-  prism    once 2.2 s   PRISM_WARNING is 30 ticks: his arms rise with the cards overhead, trembling through the warning;
-                        the burst at 1.5 s
-  curtsey  once 1.8 s   conjuring the decoys: the bow, the decoys appear at 0.9 s
-  blink    once 0.8 s   folding into himself and shrinking; the teleport at 0.4 s, unfolding where he lands
-  laugh    once 1.4 s   a decoy struck: his head thrown back, shaking with the laugh
-  snap     once 1.0 s   the jacks' summons: his left hand raised, the snap at 0.5 s
-  flinch   once 0.4 s   hit: a jolt (layered over whatever he's doing)
-  death    hold 2.6 s   the strings cut: he crumples and sits slumped, his head lolling, the hat's points flopping
+The Magus (`occultech_mirrored_magus_rig`), take 2 - a marionette that isn't quite alive (magus_clips() describes
+each clip): idle 4.0 s loop, walk 2.0 s loop, spawn 3.4 s, throw 1.4 s (release 0.6), prism 2.4 s (1.5), curtsey 2.0 s
+(1.0), blink 0.9 s (0.45), laugh 1.8 s, snap 1.2 s (0.6), flinch 0.6 s, death 3.0 s hold.
 
 The Jack-in-the-Box (`occultech_mirrored_magus_jack`, its own model, built at half size):
   pop      once 2.0 s   the box shut, rattling, its crank turning through the 1.5 s warning; the lid flies open at
@@ -57,7 +47,7 @@ JACK_ID = "occultech_mirrored_magus_jack"
 PARTIAL = ("throw", "snap", "flinch")
 ZERO = (0, 0, 0)
 ONE = (1, 1, 1)
-RELEASE = {"throw": 0.55, "prism": 1.5, "curtsey": 0.9, "blink": 0.4, "snap": 0.5}
+RELEASE = {"throw": 0.6, "prism": 1.5, "curtsey": 1.0, "blink": 0.45, "snap": 0.6}
 JACK_RELEASE = {"pop": 1.5, "throw": 1.15}
 SPRING = 16.0 * jack.SCALE                     # the jack's spring at rest, in the shipped (half-size) rig
 
@@ -102,109 +92,237 @@ def into(deltas, keys):
     return {bone: {"rotation": rot(*[(t, scale3(v, w)) for t, w in keys])} for bone, v in deltas.items()}
 
 
-def magus_clips():
-    out = {}
-    idle_pose, _ = pose_deltas("idle")
-    # ---- idle: hunched (the idle pose), swaying, the head tilting, the points flopping
-    idle = {b: {"rotation": rot((0, v), (3.0, v))} for b, v in idle_pose.items()}
-    idle["torso"] = {"rotation": rot((0, (2, 0, 3)), (1.5, (4, 0, -3)), (3.0, (2, 0, 3)))}
-    idle["neck"] = {"rotation": rot((0, idle_pose["neck"]), (1.5, (6, 0, -10)), (3.0, idle_pose["neck"]))}
-    idle["hips"] = {"position": rot((0, ZERO), (0.75, (0, -0.6, 0)), (1.5, ZERO), (2.25, (0, -0.6, 0)), (3.0, ZERO))}
-    for k, (name, sign) in enumerate((("hat_left", 1), ("hat_right", -1), ("hat_back", 1))):
-        axis = 0 if name == "hat_back" else 2
+C, L, S = "catmullrom", "linear", "step"
+
+
+def track(*keys):
+    """Keys as (time, value, interpolation): holds (step), snaps (linear) and eases (catmullrom), mixed."""
+    return [(t, v, i) for t, v, i in keys]
+
+
+def jitter(base, t0, t1, amp, every=0.06, axis=0):
+    """A trembling hold: the value shaken back and forth from t0 to t1."""
+    out, t, k = [], t0, 0
+    while t < t1 - 1e-6:
+        v = list(base)
+        v[axis] += amp if k % 2 else -amp
+        out.append((round(t, 3), tuple(v), L))
+        t += every
+        k += 1
+    return out
+
+
+def flop(clip, length, amp, lag=0.12, beats=1):
+    """The hat's three points flopping, each segment lagging the one before (a whip)."""
+    for name, sign, axis in (("hat_left", 1, 2), ("hat_right", -1, 2), ("hat_back", 1, 0)):
         for j in range(3):
-            a = (6 + 3 * j) * sign
-            v1, v2 = [0, 0, 0], [0, 0, 0]
-            v1[axis], v2[axis] = a, -a * 0.6
-            off = 0.25 * j + 0.3 * k
-            idle[f"{name}_{j}"] = {"rotation": rot((0, ZERO), (0.75 + off, tuple(v1)), (2.25 + off, tuple(v2)),
-                                                   (3.0, ZERO))}
-    out["idle"] = (3.0, "loop", idle)
-    # ---- walk: a long-legged stalk
-    walk = {
-        "hips": {"position": rot((0, ZERO), (0.4, (0, 1.2, 0)), (0.8, ZERO), (1.2, (0, 1.2, 0)), (1.6, ZERO))},
-        "torso": {"rotation": rot((0, (-8, 4, 0)), (0.8, (-8, -4, 0)), (1.6, (-8, 4, 0)))},
-        "neck": {"rotation": rot((0, (6, 0, 6)), (0.8, (6, 0, -6)), (1.6, (6, 0, 6)))},
-        "leg_left": {"rotation": rot((0, (28, 0, 0)), (0.8, (-22, 0, 0)), (1.6, (28, 0, 0)))},
-        "shin_left": {"rotation": rot((0, (4, 0, 0)), (0.4, (-4, 0, 0)), (0.8, (2, 0, 0)), (1.2, (40, 0, 0)),
-                                      (1.6, (4, 0, 0)))},
-        "leg_right": {"rotation": rot((0, (-22, 0, 0)), (0.8, (28, 0, 0)), (1.6, (-22, 0, 0)))},
-        "shin_right": {"rotation": rot((0, (2, 0, 0)), (0.4, (40, 0, 0)), (0.8, (4, 0, 0)), (1.2, (-4, 0, 0)),
-                                       (1.6, (2, 0, 0)))},
-        "arm_left": {"rotation": rot((0, (-18, 0, -6)), (0.8, (20, 0, -6)), (1.6, (-18, 0, -6)))},
-        "arm_right": {"rotation": rot((0, (20, 0, 6)), (0.8, (-18, 0, 6)), (1.6, (20, 0, 6)))},
-        "hat_left_0": {"rotation": rot((0, (0, 0, 8)), (0.8, (0, 0, -4)), (1.6, (0, 0, 8)))},
-        "hat_right_0": {"rotation": rot((0, (0, 0, 4)), (0.8, (0, 0, -8)), (1.6, (0, 0, 4)))},
-        "hat_back_0": {"rotation": rot((0, (10, 0, 0)), (0.8, (4, 0, 0)), (1.6, (10, 0, 0)))},
+            keys = []
+            for i in range(4 * beats + 1):
+                t = length * i / (4 * beats)
+                v = [0, 0, 0]
+                v[axis] = sign * amp * (1 + 0.5 * j) * (1, 0.2, -0.8, 0.2)[i % 4]
+                keys.append((min(length, t + lag * j) if 0 < i < 4 * beats else t, tuple(v)))
+            clip.setdefault(f"{name}_{j}", {})["rotation"] = rot(*keys)
+
+
+def magus_clips():
+    """His clips, take 2 (the user: the first take was too stiff and robotic, not horror; the knees bent the wrong
+    way): a marionette that isn't quite alive. Long unnatural stillness broken by sudden jerks and snapped head tilts,
+    holds that last a beat too long, trembling, a limping lurch with a dragged foot, a bow too deep with his face still
+    staring up at you, a head that turns all the way round."""
+    out = {}
+    # ---- idle: hanging from his strings, swaying; the head snaps to a cocked tilt, holds, snaps the other way
+    idle = {
+        "hips": {"position": rot((0, (0, -0.8, 0)), (1.0, (0, -1.3, 0)), (2.0, (0, -0.8, 0)), (3.0, (0, -1.3, 0)),
+                                 (4.0, (0, -0.8, 0)))},
+        "torso": {"rotation": rot((0, (-10, 0, 4)), (2.0, (-8, 0, -4)), (4.0, (-10, 0, 4)))},
+        "neck": {"rotation": track((0, (8, 0, 14), C), (1.15, (8, 2, 16), L), (1.2, (4, 28, 42), S),
+                                   (1.9, (4, 28, 42), L), (1.97, (14, -12, -16), C), (2.9, (12, -8, -10), S),
+                                   (3.05, (12, -8, -4), C), (4.0, (8, 0, 14), C))},
+        "leg_left": {"rotation": rot((0, (6, 0, -2)), (4.0, (6, 0, -2)))},
+        "leg_right": {"rotation": rot((0, (6, 0, 2)), (4.0, (6, 0, 2)))},
+        "shin_left": {"rotation": rot((0, (-12, 0, 0)), (4.0, (-12, 0, 0)))},
+        "shin_right": {"rotation": rot((0, (-12, 0, 0)), (4.0, (-12, 0, 0)))},
+        "arm_left": {"rotation": rot((0, (4, 0, -4)), (1.0, (-6, 0, -2)), (2.0, (8, 0, -6)), (3.0, (-4, 0, -2)),
+                                     (4.0, (4, 0, -4)))},
+        "forearm_left": {"rotation": rot((0, (10, 0, 0)), (1.3, (2, 0, 0)), (2.3, (16, 0, 0)), (3.3, (4, 0, 0)),
+                                         (4.0, (10, 0, 0)))},
+        "arm_right": {"rotation": rot((0, (12, 0, 8)), (2.0, (6, 0, 10)), (4.0, (12, 0, 8)))},
+        "forearm_right": {"rotation": rot((0, (10, 0, 0)), (2.2, (18, 0, 0)), (4.0, (10, 0, 0)))},
     }
-    out["walk"] = (1.6, "loop", walk)
-    # ---- spawn: unfolding from the blink's fold, the curtsey, up
-    blink, blink_drop = pose_deltas("blink")
+    flop(idle, 4.0, 6)
+    out["idle"] = (4.0, "loop", idle)
+    # ---- walk: a marionette's limping lurch - the left leg yanked up high, the right foot dragged behind; the head
+    # held on its target while the body rolls under it, with a twitch every cycle
+    walk = {
+        "hips": {"position": rot((0, (0, -0.6, 0)), (0.35, (0, 2.2, 0)), (1.0, (0, -1.4, 0)), (1.5, (0, -0.8, 0)),
+                                 (2.0, (0, -0.6, 0))),
+                 "rotation": rot((0, (0, 8, -5)), (0.5, (0, 2, 7)), (1.0, (0, -8, 4)), (1.5, (0, -4, -6)),
+                                 (2.0, (0, 8, -5)))},
+        "torso": {"rotation": rot((0, (-18, -4, 6)), (0.5, (-22, 0, -8)), (1.0, (-16, 6, -4)), (1.5, (-20, 2, 7)),
+                                  (2.0, (-18, -4, 6)))},
+        "neck": {"rotation": track((0, (14, -4, 0), C), (0.5, (18, -2, 2), C), (1.0, (12, 4, -2), C),
+                                   (1.45, (12, 4, -2), L), (1.5, (8, 26, 30), S), (1.75, (8, 26, 30), L),
+                                   (1.82, (14, -4, 0), C), (2.0, (14, -4, 0), C))},
+        "leg_left": {"rotation": rot((0, (-22, 0, 0)), (0.35, (50, 0, -4)), (0.7, (30, 0, 0)), (1.0, (24, 0, 0)),
+                                     (2.0, (-22, 0, 0)))},
+        "shin_left": {"rotation": rot((0, (-10, 0, 0)), (0.22, (-80, 0, 0)), (0.55, (-34, 0, 0)), (0.8, (-4, 0, 0)),
+                                      (1.4, (-6, 0, 0)), (2.0, (-10, 0, 0)))},
+        "leg_right": {"rotation": rot((0, (26, 0, 0)), (1.0, (-24, 0, 4)), (1.6, (4, 0, 2)), (2.0, (26, 0, 0)))},
+        "shin_right": {"rotation": rot((0, (-4, 0, 0)), (1.0, (-12, 0, 0)), (1.3, (-28, 0, 0)), (1.7, (-14, 0, 0)),
+                                       (2.0, (-4, 0, 0)))},
+        "arm_left": {"rotation": rot((0, (-26, 0, -4)), (0.6, (-8, 0, -10)), (1.0, (14, 0, -4)), (1.6, (-4, 0, -8)),
+                                     (2.0, (-26, 0, -4)))},
+        "forearm_left": {"rotation": rot((0, (4, 0, 0)), (0.4, (30, 0, 0)), (1.2, (6, 0, 0)), (1.6, (26, 0, 0)),
+                                         (2.0, (4, 0, 0)))},
+        "arm_right": {"rotation": rot((0, (18, 0, 8)), (1.0, (-16, 0, 10)), (2.0, (18, 0, 8)))},
+        "forearm_right": {"rotation": rot((0, (20, 0, 0)), (0.5, (6, 0, 0)), (1.4, (28, 0, 0)), (2.0, (20, 0, 0)))},
+    }
+    flop(walk, 2.0, 10, lag=0.1, beats=2)
+    out["walk"] = (2.0, "loop", walk)
+    # ---- spawn: crumpled on the floor, pulled up by his strings in jerks - the body, the legs, the arms yanked
+    # overhead with the wrists dangling, the head last; it snaps sideways, holds, snaps upright; a too-deep bow
+    death, death_drop = pose_deltas("death")
     curtsey, curtsey_drop = pose_deltas("curtsey")
     spawn = {}
-    for b in set(blink) | set(curtsey):
-        spawn[b] = {"rotation": rot((0, blink.get(b, ZERO)), (0.6, blink.get(b, ZERO)), (1.3, curtsey.get(b, ZERO)),
-                                    (1.8, curtsey.get(b, ZERO)), (2.4, ZERO))}
-    spawn["hips"] = {"position": rot((0, (0, blink_drop - 30, 0)), (0.6, (0, blink_drop, 0)),
-                                     (1.3, (0, curtsey_drop, 0)), (1.8, (0, curtsey_drop, 0)), (2.4, ZERO)),
-                     "scale": rot((0, (0.4, 0.4, 0.4)), (0.6, ONE), (2.4, ONE))}
-    out["spawn"] = (2.4, "once", spawn)
-    # ---- throw: drawn back, flung out at the release, the follow-through
-    throw_pose, _ = pose_deltas("throw")
-    throw = into(throw_pose, ((0, 0), (0.3, -0.35), (0.45, 0.6), (RELEASE["throw"], 1.12), (0.75, 1.0), (1.2, 0)))
-    throw["cards"] = {"scale": rot((0, ONE), (RELEASE["throw"], ONE), (RELEASE["throw"] + 0.05, (0.2, 0.2, 0.2)),
-                                   (0.95, (0.2, 0.2, 0.2)), (1.2, ONE))}
-    out["throw"] = (1.2, "once", throw)
-    # ---- prism: the arms rising, trembling through the warning, the burst
-    prism_pose, _ = pose_deltas("prism")
-    prism = {}
+    lift = ((0, 1.0), (0.45, 1.0), (0.5, 0.55), (0.85, 0.55), (0.9, 0.2), (1.25, 0.2), (1.3, 0.0))
+    for b, v in death.items():
+        if b.startswith(("leg_", "shin_", "coat")):
+            spawn[b] = {"rotation": track(*[(t, scale3(v, w), L) for t, w in lift], (3.4, ZERO, C))}
+    tv = death.get("torso", ZERO)
+    spawn["torso"] = {"rotation": track(*[(t, scale3(tv, w), L) for t, w in lift], (2.3, ZERO, C),
+                                        (2.7, (-60, 0, 0), C), (3.0, (-60, 0, 0), C), (3.4, ZERO, C))}
+    spawn["hips"] = {"position": track((0, (0, death_drop, 0), L), (0.45, (0, death_drop, 0), L),
+                                       (0.5, (0, death_drop * 0.5 + 3, 0), C), (0.9, (0, 2.5, 0), L),
+                                       (1.3, (0, 1.5, 0), C), (2.3, (0, 1.5, 0), C), (2.6, ZERO, C),
+                                       (3.4, ZERO, C))}
+    for side, sx in (("left", -1), ("right", 1)):
+        a0, f0 = death.get(f"arm_{side}", ZERO), death.get(f"forearm_{side}", ZERO)
+        spawn[f"arm_{side}"] = {"rotation": track((0, a0, L), (1.3, a0, L), (1.38, (165, 0, sx * 18), C),
+                                                  (2.3, (160, 0, sx * 22), L), (2.45, (10, 0, sx * 6), C),
+                                                  (3.4, ZERO, C))}
+        spawn[f"forearm_{side}"] = {"rotation": track((0, f0, L), (1.3, f0, L), (1.38, (40, 0, 0), C),
+                                                      (2.3, (50, 0, 0), L), (2.45, (20, 0, 0), C), (3.4, ZERO, C))}
+    spawn["neck"] = {"rotation": track((0, death["neck"], L), (1.7, death["neck"], L), (1.75, (-10, 0, 72), S),
+                                       (2.3, (-10, 0, 72), L), (2.35, (6, 0, 0), C), (2.7, (40, 0, 0), C),
+                                       (3.0, (40, 0, 0), C), (3.4, ZERO, C))}
+    flop(spawn, 3.4, 12, lag=0.15, beats=2)
+    out["spawn"] = (3.4, "once", spawn)
+    # ---- throw: a slow, coiled wind-up, his head cocked after the arm; the whip; a twisted hold, trembling; a jerky
+    # return
+    tp, _ = pose_deltas("throw")
+    r = RELEASE["throw"]
+    throw = {}
+    for b, v in tp.items():
+        coiled = b.startswith(("arm_right", "torso", "hips"))
+        wind = (-0.45 * v[0], -0.6 * v[1], -0.3 * v[2]) if coiled else scale3(v, 0.3)
+        throw[b] = {"rotation": track((0, ZERO, C), (0.45, wind, L), (r, scale3(v, 1.15), L),
+                                      *jitter(scale3(v, 1.1), r + 0.04, 0.95, 1.5), (0.95, scale3(v, 1.0), S),
+                                      (1.05, scale3(v, 0.45), C), (1.4, ZERO, C))}
+    throw["neck"] = {"rotation": track((0, ZERO, C), (0.45, (0, -24, 26), L), (r, (-6, 40, -10), S),
+                                       (0.95, (-6, 40, -10), L), (1.0, (6, 30, 24), C), (1.4, ZERO, C))}
+    throw["cards"] = {"scale": rot((0, ONE), (r, ONE), (r + 0.05, (0.2, 0.2, 0.2)), (1.15, (0.2, 0.2, 0.2)),
+                                   (1.4, ONE))}
+    out["throw"] = (1.4, "once", throw)
+    # ---- prism: he rises off the floor, toes dangling, arms lifting slowly with the cards, his head lolled back and
+    # twitching; trembling all over through the warning; the burst snaps his face down at you; he drops
+    pp, _ = pose_deltas("prism")
     r = RELEASE["prism"]
-    for b, v in prism_pose.items():
-        tremble = [(0.5 + 0.2 * i, add(v, (1.5 if i % 2 else -1.5, 0, 0))) for i in range(1, 5)]
-        prism[b] = {"rotation": rot((0, ZERO), (0.5, v), *tremble, (r, scale3(v, 1.15)), (r + 0.15, v), (2.2, ZERO))}
-    out["prism"] = (2.2, "once", prism)
-    # ---- curtsey: the bow, the decoys at the release
-    curt = into(curtsey, ((0, 0), (0.6, 0.8), (RELEASE["curtsey"], 1.0), (1.3, 1.0), (1.8, 0)))
-    curt["hips"] = {"position": rot((0, ZERO), (RELEASE["curtsey"], (0, curtsey_drop, 0)), (1.3, (0, curtsey_drop, 0)),
-                                    (1.8, ZERO))}
-    out["curtsey"] = (1.8, "once", curt)
-    # ---- blink: folding in and shrinking to the teleport, unfolding where he lands
+    prism = {b: {"rotation": track((0, ZERO, C), (0.7, v, C), *jitter(v, 0.75, r, 2.0, 0.05),
+                                   (r, scale3(v, 1.15), L), (r + 0.12, scale3(v, 1.05), C), (2.0, scale3(v, 0.3), C),
+                                   (2.4, ZERO, C))}
+             for b, v in pp.items() if b != "neck"}
+    prism["neck"] = {"rotation": track((0, ZERO, C), (0.6, (40, 0, 8), C), (0.8, (40, 0, 8), L),
+                                       (0.84, (44, 10, -16), S), (1.1, (44, 10, -16), L), (1.14, (38, -12, 18), S),
+                                       (r, (38, -12, 18), L), (r + 0.06, (-18, 0, 0), C), (2.4, ZERO, C))}
+    prism["hips"] = {"position": rot((0, ZERO), (1.2, (0, 4.5, 0)), (r, (0, 5, 0)), (r + 0.25, ZERO),
+                                     (1.95, (0, -1.5, 0)), (2.4, ZERO))}
+    for side in ("left", "right"):
+        prism[f"leg_{side}"] = {"rotation": rot((0, ZERO), (1.0, (-8, 0, 0)), (r, (-10, 0, 0)),
+                                                (r + 0.25, (10, 0, 0)), (2.4, ZERO))}
+        prism[f"shin_{side}"] = {"rotation": rot((0, ZERO), (1.0, (-24, 0, 0)), (r, (-26, 0, 0)),
+                                                 (r + 0.4, (-36, 0, 0)), (2.4, ZERO))}
+    out["prism"] = (2.4, "once", prism)
+    # ---- curtsey: a bow far too deep, his face still turned up staring at you; a long hold, a twitch, a snap upright
+    r = RELEASE["curtsey"]
+    deep = dict(curtsey, torso=(-72, 0, 0), neck=(64, 0, 0))
+    curt = {b: {"rotation": track((0, ZERO, C), (0.7, scale3(v, 0.9), C), (r, v, C), (1.5, v, L),
+                                  (1.58, scale3(v, 0.15), C), (2.0, ZERO, C))} for b, v in deep.items()}
+    curt["neck"]["rotation"] = track((0, ZERO, C), (0.7, (56, 0, 0), C), (r, (64, 0, 0), L), (1.2, (64, 0, 0), L),
+                                     (1.24, (62, 18, 24), S), (1.5, (62, 18, 24), L), (1.58, (8, 0, 0), C),
+                                     (2.0, ZERO, C))
+    curt["hips"] = {"position": rot((0, ZERO), (r, (0, curtsey_drop - 1.5, 0)), (1.5, (0, curtsey_drop - 1.5, 0)),
+                                    (1.62, ZERO), (2.0, ZERO))}
+    out["curtsey"] = (2.0, "once", curt)
+    # ---- blink: he folds into a crouch as his head turns all the way round, shrinking to nothing; where he lands he
+    # unfolds with the head turning back the other way
+    blink, blink_drop = pose_deltas("blink")
     r = RELEASE["blink"]
-    bl = into(blink, ((0, 0), (r, 1.0), (0.8, 0)))
-    bl["hips"] = {"position": rot((0, ZERO), (r, (0, blink_drop, 0)), (0.8, ZERO)),
-                  "scale": rot((0, ONE), (r - 0.05, (0.5, 0.5, 0.5)), (r, (0.05, 0.05, 0.05)),
-                               (r + 0.05, (0.5, 0.5, 0.5)), (0.8, ONE))}
-    out["blink"] = (0.8, "once", bl)
-    # ---- laugh: the head thrown back, shaking
-    laugh_pose, _ = pose_deltas("laugh")
-    laugh = into(laugh_pose, ((0, 0), (0.25, 1.0), (1.1, 1.0), (1.4, 0)))
-    nv = laugh_pose["neck"]
-    laugh["neck"] = {"rotation": rot((0, ZERO), (0.25, nv), *[(0.25 + 0.12 * i, add(nv, (5 if i % 2 else -3, 0, 0)))
-                                                              for i in range(1, 7)], (1.1, nv), (1.4, ZERO))}
-    laugh["torso"] = {"rotation": rot((0, ZERO), (0.25, laugh_pose["torso"]),
-                                      *[(0.25 + 0.12 * i, add(laugh_pose["torso"], (3 if i % 2 else -2, 0, 0)))
-                                        for i in range(1, 7)], (1.1, laugh_pose["torso"]), (1.4, ZERO))}
-    out["laugh"] = (1.4, "once", laugh)
-    # ---- snap: the left hand raised, the snap
+    bl = into(blink, ((0, 0), (r, 1.0), (0.9, 0)))
+    bl["hi_head"] = {"rotation": track((0, ZERO, L), (r, (0, 180, 0), L), (r + 0.001, (0, -180, 0), L),
+                                       (0.9, ZERO, C))}
+    bl["hips"] = {"position": rot((0, ZERO), (r, (0, blink_drop, 0)), (0.9, ZERO)),
+                  "scale": rot((0, ONE), (r - 0.1, (0.6, 0.6, 0.6)), (r, (0.05, 0.05, 0.05)),
+                               (r + 0.1, (0.6, 0.6, 0.6)), (0.75, (1.06, 1.06, 1.06)), (0.9, ONE))}
+    out["blink"] = (0.9, "once", bl)
+    # ---- laugh: his head thrown back, convulsing - shoulders jerking, the head bobbing, a hand clutching his belly;
+    # it stops dead and his face snaps down to stare at you
+    lp, _ = pose_deltas("laugh")
+    laugh = {b: {"rotation": track((0, ZERO, C), (0.2, v, L), (1.3, v, L), (1.36, ZERO, C), (1.8, ZERO, C))}
+             for b, v in lp.items() if not b.startswith(("neck", "torso", "arm_", "forearm_"))}
+    laugh["neck"] = {"rotation": track((0, ZERO, C), (0.2, (36, 0, -10), L), *jitter((36, 0, -10), 0.24, 1.3, 7, 0.09),
+                                       (1.3, (-16, 0, 6), S), (1.55, (-16, 0, 6), C), (1.8, ZERO, C))}
+    laugh["torso"] = {"rotation": track((0, ZERO, C), (0.2, (14, 0, 0), L), *jitter((14, 0, 0), 0.24, 1.3, 5, 0.09),
+                                        (1.3, (-8, 0, 0), S), (1.55, (-8, 0, 0), C), (1.8, ZERO, C))}
+    laugh["arm_left"] = {"rotation": track((0, ZERO, C), (0.25, (44, 0, 34), C),
+                                           *jitter((44, 0, 34), 0.3, 1.3, 4, 0.09, axis=2), (1.8, ZERO, C))}
+    laugh["forearm_left"] = {"rotation": rot((0, ZERO), (0.25, (90, 0, 0)), (1.3, (90, 0, 0)), (1.8, ZERO))}
+    laugh["arm_right"] = {"rotation": track((0, ZERO, C), (0.25, (40, 0, -30), C),       # both hands clutch inwards
+                                            *jitter((40, 0, -30), 0.3, 1.3, 4, 0.09, axis=2), (1.8, ZERO, C))}
+    laugh["forearm_right"] = {"rotation": rot((0, ZERO), (0.25, (80, 0, 0)), (1.3, (80, 0, 0)), (1.8, ZERO))}
+    out["laugh"] = (1.8, "once", laugh)
+    # ---- snap: the left hand rising slowly, his head tilting after it; the snap jolts his whole body; his head jerks
+    # round to stare at you
     r = RELEASE["snap"]
-    snap = into(SNAP, ((0, 0), (0.35, 1.0), (r, 1.08), (0.7, 1.0), (1.0, 0)))
-    snap["forearm_left"] = {"rotation": rot((0, ZERO), (0.35, (40, 0, 0)), (r, (58, 0, 0)), (0.7, (40, 0, 0)),
-                                            (1.0, ZERO))}
-    out["snap"] = (1.0, "once", snap)
-    # ---- flinch
-    out["flinch"] = (0.4, "once", {
-        "torso": {"rotation": rot((0, ZERO), (0.08, (-10, 0, 4)), (0.4, ZERO))},
-        "neck": {"rotation": rot((0, ZERO), (0.1, (14, 0, -6)), (0.4, ZERO))},
-        "hat_left_0": {"rotation": rot((0, ZERO), (0.12, (0, 0, 14)), (0.4, ZERO))},
-        "hat_right_0": {"rotation": rot((0, ZERO), (0.12, (0, 0, -14)), (0.4, ZERO))}})
-    # ---- death: the strings cut
-    death_pose, death_drop = pose_deltas("death")
-    death = {b: {"rotation": rot((0, ZERO), (0.3, scale3(v, 0.25)), (0.9, scale3(v, 1.06)), (1.3, v), (2.6, v))}
-             for b, v in death_pose.items()}
-    death["hips"] = {"position": rot((0, ZERO), (0.3, (0, 1.0, 0)), (0.9, (0, death_drop, 0)),
-                                     (1.1, (0, death_drop + 1.2, 0)), (1.3, (0, death_drop, 0)),
-                                     (2.6, (0, death_drop, 0)))}
-    out["death"] = (2.6, "hold", death)
+    snap = into(SNAP, ((0, 0), (0.45, 0.9), (r, 1.08), (0.85, 1.0), (1.2, 0)))
+    snap["forearm_left"] = {"rotation": track((0, ZERO, C), (0.45, (36, 0, 0), C), (r, (64, 0, 0), L),
+                                              (r + 0.08, (40, 0, 0), C), (1.2, ZERO, C))}
+    snap["neck"] = {"rotation": track((0, ZERO, C), (0.45, (-4, -26, -30), C), (r, (-6, -30, -34), L),
+                                      (0.7, (-6, -30, -34), L), (0.74, (6, 6, 22), S), (1.0, (6, 6, 22), C),
+                                      (1.2, ZERO, C))}
+    snap["torso"] = {"rotation": track((0, ZERO, C), (0.45, (4, 8, 0), C), (r, (4, 8, 0), L),
+                                       (r + 0.05, (12, 0, 6), L), (r + 0.15, (2, 6, 0), C), (1.2, ZERO, C))}
+    out["snap"] = (1.2, "once", snap)
+    # ---- flinch: a violent jerk, the head snapped sideways; it turns back slowly, with one twitch
+    out["flinch"] = (0.6, "once", {
+        "torso": {"rotation": track((0, ZERO, L), (0.05, (-14, 6, 8), C), (0.6, ZERO, C))},
+        "neck": {"rotation": track((0, ZERO, L), (0.06, (-10, 34, -40), L), (0.3, (-8, 26, -30), S),
+                                   (0.36, (-6, 14, -18), C), (0.6, ZERO, C))},
+        "arm_left": {"rotation": track((0, ZERO, L), (0.06, (-20, 0, -24), C), (0.6, ZERO, C))},
+        "arm_right": {"rotation": track((0, ZERO, L), (0.06, (-14, 0, 26), C), (0.6, ZERO, C))},
+        "hat_left_0": {"rotation": rot((0, ZERO), (0.12, (0, 0, 22)), (0.6, ZERO))},
+        "hat_right_0": {"rotation": rot((0, ZERO), (0.12, (0, 0, -22)), (0.6, ZERO))}})
+    # ---- death: the strings jerk taut - arms flung out, head thrown back - then cut: he drops like dead weight into
+    # the slump; a pause; a last twitch of the arm, then of the head
+    tense = {"torso": (12, 0, 0), "neck": (34, 0, 0), "arm_left": (20, 0, -70), "arm_right": (20, 0, 70),
+             "forearm_left": ZERO, "forearm_right": ZERO}
+    death_c = {}
+    for b in set(death) | set(tense):
+        v = death.get(b, ZERO)
+        keys = [(0, ZERO, L), (0.12, tense.get(b, ZERO), L), (0.2, tense.get(b, ZERO), L),
+                (0.55, scale3(v, 1.08), C), (0.75, v, C)]
+        if b == "forearm_right":
+            keys += [(1.8, v, L), (1.85, add(v, (-30, 0, 0)), S), (1.95, add(v, (-30, 0, 0)), L), (2.0, v, C)]
+        if b == "neck":
+            v2 = add(v, (-12, 10, 14))
+            keys += [(2.2, v, L), (2.25, v2, S), (3.0, v2, C)]
+        else:
+            keys.append((3.0, v, C))
+        death_c[b] = {"rotation": track(*keys)}
+    death_c["hips"] = {"position": track((0, ZERO, L), (0.12, (0, 2.0, 0), L), (0.2, (0, 2.0, 0), L),
+                                         (0.55, (0, death_drop, 0), L), (0.65, (0, death_drop + 1.0, 0), C),
+                                         (0.75, (0, death_drop, 0), C), (3.0, (0, death_drop, 0), C))}
+    out["death"] = (3.0, "hold", death_c)
     return out
 
 

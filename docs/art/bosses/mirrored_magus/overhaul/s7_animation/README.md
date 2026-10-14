@@ -10,19 +10,29 @@ Eleven clips for the Magus on the session 5 rig, and five for the Jack-in-the-Bo
 
 ## The Magus (`occultech_mirrored_magus_rig`)
 
+**Take 2** (the user: the first take was too stiff and robotic, not horror, and the knees bent the wrong way). He moves
+like a marionette that isn't quite alive:
+- **Stillness and snaps:** long, unnatural stillness broken by sudden jerks. His head snaps to a cocked tilt and holds a
+  beat too long (held keys), then snaps back.
+- **Trembling:** he shakes through every warning and every hold.
+- **The walk:** a limping lurch. One leg is yanked up high, the other foot drags behind, and his head stays fixed on
+  its target while his body rolls under it.
+- **The knees:** a knee bends with a negative shin turn. Session 2's poses had them reversed (throw, curtsey, blink,
+  death) and are fixed. The blink is now a real crouch.
+
 | Clip | Length | Plays | What happens |
 |---|---|---|---|
-| idle | 3.0 s | loop | hunched, swaying from the hips, his head tilting side to side, the hat's points flopping |
-| walk | 1.6 s | loop | a long-legged stalk: high knees, the arms swinging loose, a bob on each step |
-| spawn | 2.4 s | once | unfolding out of himself (the blink's fold), rising into a deep curtsey, then up |
-| throw | 1.2 s | once | the card fan: the arm drawn back, flung out **at 0.55 s** (the cards leave his palm), the follow-through |
-| prism | 2.2 s | once | his arms rise with the cards overhead, trembling through the 30-tick warning; the burst **at 1.5 s** |
-| curtsey | 1.8 s | once | conjuring the decoys: the bow, the decoys appear **at 0.9 s** |
-| blink | 0.8 s | once | folding into himself and shrinking to nothing; the teleport **at 0.4 s**, unfolding where he lands |
-| laugh | 1.4 s | once | a decoy struck: his head thrown back, shaking with the laugh |
-| snap | 1.0 s | once | the jacks' summons: his left hand raised, the snap **at 0.5 s** |
-| flinch | 0.4 s | once | hit: a jolt, layered over whatever he's doing |
-| death | 2.6 s | hold | the strings cut: he crumples and sits slumped, his head lolling, the hat's points flopped down |
+| idle | 4.0 s | loop | hanging from his strings, knees soft, swaying, arms dangling like dead weight; his head snaps to a cocked tilt, holds, snaps the other way |
+| walk | 2.0 s | loop | the limping lurch above; a head twitch every cycle; the hat's points whipping |
+| spawn | 3.4 s | once | crumpled on the floor, pulled up by his strings in jerks: the body, the legs, the arms yanked overhead with the wrists dangling, the head last. It snaps sideways, holds, snaps upright, then a too-deep bow |
+| throw | 1.4 s | once | a slow, coiled wind-up with his head cocked after the arm; the whip **at 0.6 s** (the cards leave his palm); a twisted, trembling hold; a jerky return |
+| prism | 2.4 s | once | he rises off the floor, toes dangling, arms lifting slowly with the cards, his head lolled back and twitching, trembling through the 30-tick warning; the burst **at 1.5 s** snaps his face down at you, and he drops |
+| curtsey | 2.0 s | once | a bow far too deep with his face still turned up, staring at you; the decoys **at 1.0 s**; a long hold, a twitch, a snap upright |
+| blink | 0.9 s | once | folding into a crouch as his head turns all the way round, shrinking to nothing; the teleport **at 0.45 s**; he unfolds where he lands, the head turning back the other way |
+| laugh | 1.8 s | once | a decoy struck: head thrown back, convulsing, both hands clutching in, the head bobbing; it stops dead and his face snaps down to stare at you |
+| snap | 1.2 s | once | the jacks' summons: the left hand rising slowly, his head tilting after it; the snap **at 0.6 s** jolts his whole body; his head jerks round to stare at you |
+| flinch | 0.6 s | once | hit: a violent jerk, the head snapped sideways; it turns back slowly, with one twitch |
+| death | 3.0 s | hold | the strings jerk taut (arms flung out, head back), then cut: he drops like dead weight into the slump; a pause, a last twitch of the arm, then of the head |
 
 The throw, snap and flinch override only the bones they move, so the idle or walk goes on underneath.
 
@@ -50,11 +60,11 @@ The GIFs in `magus/gifs/` and `jack/gifs/` show each clip moving (flat zone colo
 
 ## For the fight code (session 8)
 - **Starting clips on time:** start each action clip early by its release time.
-  - **The card fan:** start `throw` 11 ticks before the cards are thrown.
+  - **The card fan:** start `throw` 12 ticks before the cards are thrown.
   - **The prism:** start `prism` as the 30-tick warning begins.
-  - **The decoys:** start `curtsey` 18 ticks before they spawn.
-  - **The blink:** start `blink` 8 ticks before the teleport.
-  - **The jacks:** start `snap` 10 ticks before they appear.
+  - **The decoys:** start `curtsey` 20 ticks before they spawn.
+  - **The blink:** start `blink` 9 ticks before the teleport.
+  - **The jacks:** start `snap` 12 ticks before they appear.
 - **A struck decoy:** it plays the shatter tint (session 6), then breaks apart. The real Magus plays `laugh`.
 - **Each jack's life:**
   - **Spawn:** it plays `pop` when it appears, and its 1.5 s crank is the telegraph.

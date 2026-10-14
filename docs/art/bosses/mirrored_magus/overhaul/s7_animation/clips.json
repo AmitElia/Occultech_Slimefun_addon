@@ -1,11 +1,11 @@
 {
   "release_seconds": {
     "magus": {
-      "throw": 0.55,
+      "throw": 0.6,
       "prism": 1.5,
-      "curtsey": 0.9,
-      "blink": 0.4,
-      "snap": 0.5
+      "curtsey": 1.0,
+      "blink": 0.45,
+      "snap": 0.6
     },
     "jack": {
       "pop": 1.5,
@@ -15,57 +15,57 @@
   "clips": {
     "magus": {
       "idle": {
-        "length": 3.0,
+        "length": 4.0,
         "loop": "loop",
-        "bones": 15
+        "bones": 20
       },
       "walk": {
-        "length": 1.6,
+        "length": 2.0,
         "loop": "loop",
-        "bones": 12
+        "bones": 20
       },
       "spawn": {
-        "length": 2.4,
+        "length": 3.4,
         "loop": "once",
-        "bones": 11
+        "bones": 21
       },
       "throw": {
-        "length": 1.2,
+        "length": 1.4,
         "loop": "once",
         "bones": 11
       },
       "prism": {
-        "length": 2.2,
+        "length": 2.4,
         "loop": "once",
-        "bones": 9
+        "bones": 14
       },
       "curtsey": {
-        "length": 1.8,
+        "length": 2.0,
         "loop": "once",
         "bones": 9
       },
       "blink": {
-        "length": 0.8,
+        "length": 0.9,
         "loop": "once",
-        "bones": 11
+        "bones": 12
       },
       "laugh": {
-        "length": 1.4,
+        "length": 1.8,
         "loop": "once",
-        "bones": 8
+        "bones": 9
       },
       "snap": {
-        "length": 1.0,
+        "length": 1.2,
         "loop": "once",
         "bones": 4
       },
       "flinch": {
-        "length": 0.4,
+        "length": 0.6,
         "loop": "once",
-        "bones": 4
+        "bones": 6
       },
       "death": {
-        "length": 2.6,
+        "length": 3.0,
         "loop": "hold",
         "bones": 17
       }

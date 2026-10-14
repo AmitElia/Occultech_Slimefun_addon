@@ -412,29 +412,30 @@ POSES = {
     "throw": ("the card fans: a twist and a flick, his right arm flung out at his target, the fan of cards in his palm, "
               "his left arm swung back", {
         "hips": (0, -20, 0), "torso": (2, -24, 0), "neck": (-4, 40, 8),
-        "leg_left": (16, 0, -8), "leg_right": (-14, 0, 8), "shin_right": (12, 0, 0),
+        "leg_left": (16, 0, -8), "leg_right": (-14, 0, 8), "shin_right": (-12, 0, 0),
         "arm_right": (88, 0, 18), "forearm_right": (6, 0, 0), "arm_left": (-34, 0, -26), "forearm_left": (20, 0, 0)}),
     "prism": ("the prism burst: his arms raised overhead, the fan of cards held up to gather the light", {
         "torso": (12, 0, 0), "neck": (22, 0, 0), "arm_left": (172, 0, -14), "forearm_left": (10, 0, 0),
         "arm_right": (150, 0, 26), "forearm_right": (30, 0, 0), "hat_left_0": (0, 0, 14), "hat_right_0": (0, 0, -14)}),
     "curtsey": ("conjuring the decoys: a deep courtly bow, one arm sweeping out", {
         "torso": (-40, 0, 0), "neck": (-10, 0, 0), "arm_right": (-30, 0, 70), "forearm_right": (0, 0, 20),
-        "arm_left": (30, 0, -10), "leg_right": (-20, 0, 0), "shin_right": (30, 0, 0), "leg_left": (12, 0, 0)}),
+        "arm_left": (30, 0, -10), "leg_right": (-20, 0, 0), "shin_right": (-30, 0, 0), "leg_left": (12, 0, 0)}),
     "blink": ("the blink: folding in on himself, arms wrapped, as he vanishes", {
         "torso": (-24, 0, 0), "neck": (-14, 0, 0), "arm_left": (60, 0, 50), "forearm_left": (0, 0, 70),
-        "arm_right": (60, 0, -50), "forearm_right": (0, 0, -70), "leg_left": (-30, 0, 0), "shin_left": (50, 0, 0),
-        "leg_right": (-30, 0, 0), "shin_right": (50, 0, 0)}),
+        "arm_right": (60, 0, -50), "forearm_right": (0, 0, -70), "leg_left": (40, 0, 0), "shin_left": (-70, 0, 0),
+        "leg_right": (40, 0, 0), "shin_right": (-70, 0, 0)}),
     "laugh": ("a wrong hit: the decoy shatters and he laughs, head thrown back", {
         "torso": (16, 0, 0), "neck": (28, 0, -10), "arm_left": (20, 0, -30), "arm_right": (40, 0, 40),
         "forearm_right": (60, 0, 0), "hat_left_0": (0, 0, 20), "hat_right_0": (0, 0, -20), "hat_back_0": (20, 0, 0)}),
     "death": ("death: the strings cut - he crumples where he stands and sits slumped, legs out before him, folded "
               "forward over them, his head lolling, his arms limp beside him, the hat's points flopped down", {
-        "leg_left": (90, 8, -10), "shin_left": (4, 0, 0), "leg_right": (90, -10, 12), "shin_right": (6, 0, 0),
+        "leg_left": (90, 8, -10), "shin_left": (-4, 0, 0), "leg_right": (90, -10, 12), "shin_right": (-6, 0, 0),
         "torso": (-38, 0, 14), "neck": (-34, 14, 32), "coat": (132, 0, 0),
         "arm_left": (78, 0, -20), "forearm_left": (110, 0, 0), "arm_right": (82, 0, 22), "forearm_right": (106, 0, 0),
         "hat_left_0": (0, 0, 20), "hat_left_1": (0, 0, 30), "hat_right_0": (0, 0, -10), "hat_right_1": (0, 0, -24),
         "hat_back_1": (24, 0, 0)}),
 }
+# knees bend with a negative shin turn (a positive one swings the foot forward)
 # the fan of cards is turned to a world orientation in the prism, whatever his arm does: held up, facing forward
 CARD_AIM = {"prism": lambda: rotation_matrix((0, 0, 180))}
 
