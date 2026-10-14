@@ -273,12 +273,6 @@ def mouth(head):
             head.box(name, (x, root + sign * body / 2, ZF - 0.9), (wide, body, 0.9), "teeth")
             head.box(f"{name}_tip", (x, root + sign * (body + wide * 0.12), ZF - 0.9), (wide * 0.7, wide * 0.7, 0.9),
                      "teeth", rotation=(0, 0, 45))
-    # the jaw (take 4e, the user: fewer shapes, matching the skull): one lower jaw under the head - a block as deep as
-    # the skull's front half, a little narrower than it, its lower edges bevelled at 45 degrees, a small square chin
-    head.box("jaw", (0, YH - 9.2, ZF + 3.0), (9, 2.6, 7), "face")
-    for sx in (-1, 1):
-        head.box(f"jaw_bevel_{sx}", (sx * 4.5, YH - 9.2, ZF + 3.0), (2.4, 2.4, 7), "face", rotation=(0, 0, 45))
-    head.box("chin", (0, YH - 10.6, ZF + 0.4), (3.6, 1.6, 2.6), "face")
     for sx in (-1, 1):
         head.box(f"mouth_cheek_{sx}", (sx * 4.6, YH - 1.5, ZF - 1.3), (3.6, 3, 2.4), "face")       # round, high
         head.box(f"cheek_round_{sx}", (sx * 6.0, YH - 2.9, ZF - 0.7), (2.2, 2.4, 1.8), "face")
@@ -313,8 +307,29 @@ MASKS = {"panels": mask_panels, "volto": mask_volto, "colombina": mask_colombina
          "clown": mask_clown}
 
 
+def clown_skull(head):
+    """The clown's head as a skull (take 4f, after blocky clown references: a broad cranium over a narrower lower face
+    set flush at the front, so the jaw is part of the head and not a block hung under it): the cranium as wide as the
+    illager's head down to his cheekbones; below it the lower face a step narrower, its front edges and the line under
+    it chamfered at 45 degrees (a turned square prism along each edge), a small chin at the front."""
+    head.box("head", (0, YH + 2.6, 0), (11, 10.8, 11), "skin")                  # the cranium
+    top, bottom = YH - 2.8, YH - 9.2
+    mid, tall = (top + bottom) / 2, top - bottom
+    head.box("head_lower", (0, mid, ZF + 5), (9, tall, 8), "skin")             # the lower face, set back 1
+    head.box("jaw_front", (0, (top + bottom + 1) / 2, ZF + 0.5), (7, tall - 1, 1), "skin")   # its front, flush
+    edge = math.sqrt(2)
+    for sx in (-1, 1):
+        head.box(f"jaw_edge_{sx}", (sx * 3.5, (top + bottom + 1) / 2, ZF + 1), (edge, tall - 1, edge), "face",
+                 rotation=(0, 45, 0))
+    head.box("jaw_under", (0, bottom + 1, ZF + 1), (7, edge, edge), "face", rotation=(45, 0, 0))
+    head.box("chin", (0, bottom + 0.4, ZF + 0.3), (3, 1.6, 1.8), "face")
+
+
 def head_parts(head):
-    head.box("head", (0, YH, 0), (11, 16, 11), "skin")
+    if MASK == "clown":
+        clown_skull(head)
+    else:
+        head.box("head", (0, YH, 0), (11, 16, 11), "skin")
     MASKS[MASK](head)
     eyes = head.group("glow_eyes", (0, YH + 2.2, ZF - 1))
     deep = MASK == "clown"                                 # the clown's sockets are deep: the glint sits far back

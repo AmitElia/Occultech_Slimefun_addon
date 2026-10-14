@@ -115,4 +115,12 @@ needed to be larger with wider wedges; the jaw needed fewer shapes, to match the
 - **The cards:** 6 x 9 instead of 4 x 6.
 - **The ruff:** larger (6 out from the neck instead of 5.2, 4 tall), its black and white wedges 2.4 wide instead of 1.
 
+**Take 4f** (the user: the jaw looked worse; look at good references and redo it). Blocky clown models (a Pennywise-style
+Blockbench clown) build the jaw as part of the skull: a broad cranium over a narrower lower face, flush at the front, not a
+block hung under the head. So the head is now two masses (`clown_skull`):
+- **The cranium:** as wide as the illager's head, down to the cheekbones.
+- **The lower face:** a step narrower (9 instead of 11) and set back at the sides and back like a jaw, its front flush with
+  the face. Its front edges and the line under it are chamfered at 45 degrees (a turned square prism along each edge),
+  with a small chin at the front. The block-and-bevels jaw under the head is gone.
+
 Regenerate with `python tools/art/bosses/magus_clown.py`.

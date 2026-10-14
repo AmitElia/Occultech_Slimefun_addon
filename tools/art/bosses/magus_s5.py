@@ -210,6 +210,9 @@ def paint_gold(cube, face, w, h, seed, ctx):
     return lv, over
 
 
+CLOWN_HEAD = ("head", "head_lower", "jaw_front")    # the clown's skull: painted as one head
+
+
 def paint_skin(cube, face, w, h, seed, ctx):
     lv, over = blank(cube, w, h)
     d = s4.density(cube)                                               # mottling at the base texel size, not finer
@@ -218,9 +221,9 @@ def paint_skin(cube, face, w, h, seed, ctx):
             lv[y, x] += clusters(seed, x // d, y // d, 160 if d == 1 else 60, 860 if d == 1 else 960, 2)
     if cube.name == "head" and face == "north" and s2.MASK == "colombina":
         paint_face_skin(lv, over, ctx["world"], seed)
-    if cube.name == "head" and face == "north" and s2.MASK == "clown":
+    if cube.name in CLOWN_HEAD and face == "north" and s2.MASK == "clown":
         paint_clown_head(lv, over, ctx["world"], seed)
-    if cube.name == "head" and face != "north" and s2.MASK == "clown":
+    if cube.name in CLOWN_HEAD and face != "north" and s2.MASK == "clown":
         for y in range(h):                                             # his whole head is white: it's his face
             for x in range(w):
                 over.append((y, x, "greasepaint", 3 if face in ("south", "down") else 4))
