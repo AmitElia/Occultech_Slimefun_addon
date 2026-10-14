@@ -1,4 +1,4 @@
-# Mirrored Magus - the Jack-in-the-Box (design, awaiting approval)
+# Mirrored Magus - the Jack-in-the-Box (design approved; built in sessions 7-8)
 
 A second mechanic beside his mirrored copies. The user's brief (2026-10-13): little pop-up box clowns with the colours
 and shape of his face and upper body but much less detail, on a spring, animated to shoot cards with a bopping
@@ -52,12 +52,8 @@ Study renders: `jack.png`, made by `python tools/art/bosses/magus_jack.py`.
   - **Bursting:** on its last hit it bursts.
   - **Lifetime:** it winds down after 15 s if left alone.
   - **Cap:** at most four jacks are alive.
-- **The mirror tie-in:**
-  - **A broken jack** shows a flash of white sparkle drifting towards the real Magus. This is a hint, not a guarantee:
-    it points at whichever body is real.
-  - **The decoy trade:** while the decoys are up, breaking jacks is how you find him, and hitting a decoy still makes you
-    glow and lets him blink.
-  - **The counterplay:** clear the jacks for the hint, or ignore them and dodge the cards while you hunt.
+- **No hint:** a jack is a plain damage-and-distraction add. Breaking one tells you nothing about which Magus
+  is real (the user, 2026-10-13); the counterplay is to clear them or dodge their cards while you hunt.
 - **Rules check (docs/boss-ideas.md):**
   - **Rule 1:** the jack is a plugin entity (display rig, interaction hitbox) removed when the fight ends. It places no
     blocks and the card breaks nothing.
@@ -70,6 +66,6 @@ Study renders: `jack.png`, made by `python tools/art/bosses/magus_jack.py`.
 - **Without Mythic/BetterModel:** the vanilla body is an item display of a
   player head painted like his face, on a jumping slime-block display, with the same hitbox and cards.
 
-## Open questions for the user
-- Keep the sparkle hint towards the real Magus when a jack breaks, or make the jacks a plain damage-and-distraction add?
-- Should the count scale with fighters, as above, or stay fixed at two?
+## Decided (the user, 2026-10-13)
+- No sparkle hint when a jack breaks: they are a plain damage-and-distraction add.
+- The count scales with fighters: two, plus one per extra fighter, up to four.
