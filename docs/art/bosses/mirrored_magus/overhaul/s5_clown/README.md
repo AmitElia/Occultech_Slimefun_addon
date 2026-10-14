@@ -88,4 +88,13 @@ wrong because it wrapped round blocky shapes, so the mouth is now built from blo
 256x1024, because the head's higher resolution covers more blocks. That's for the optimization pass once all the
 bosses are designed. Sessions 2 to 5 were regenerated.
 
+**Take 4c** (the user: the black below the lips looked odd, fix the cheeks; and the angled hair from before looked
+better):
+- **Under the lower lip:** white flesh now follows the lower lip's U down to the jaw, so the throat's black only shows
+  inside the mouth.
+- **The cheeks:** they round out high over the corners.
+- **The lips:** their ends are trimmed to tuck in under the cheeks.
+- **The hair:** the angled tufts are back, and more of them: five a side tilted out and down at different heights and
+  depths, and three angled down at the back.
+
 Regenerate with `python tools/art/bosses/magus_clown.py`.

@@ -245,8 +245,8 @@ def mouth(head):
     inside, real teeth, each a block with a pointed tip, crooked and uneven, fangs among them, hanging from the upper
     lip and rising from the lower, set back behind the lips' front; behind them a dark throat; a long jaw hanging
     below, its sides, the chin and the cheeks built round it."""
-    for upper, tag, cuts in ((True, "upper", (0.0, 2.2, 4.0, 5.3, 6.3)),
-                             (False, "lower", (0.0, 1.4, 2.6, 3.6, 4.5, 5.3, 6.0, 6.4))):
+    for upper, tag, cuts in ((True, "upper", (0.0, 2.2, 4.0, 5.2, 5.9)),
+                             (False, "lower", (0.0, 1.4, 2.6, 3.6, 4.5, 5.3, 5.9))):
         _lip(head, f"lip_{tag}_0", -cuts[1], cuts[1], upper)
         for i in range(1, len(cuts) - 1):
             for sx in (-1, 1):
@@ -270,9 +270,21 @@ def mouth(head):
             head.box(name, (x, root + sign * body / 2, ZF - 0.9), (wide, body, 0.9), "teeth")
             head.box(f"{name}_tip", (x, root + sign * (body + wide * 0.12), ZF - 0.9), (wide * 0.7, wide * 0.7, 0.9),
                      "teeth", rotation=(0, 0, 45))
+    # under the lower lip, white flesh following its U down to the jaw (take 4c: the throat's black showed below the
+    # lips where the U rises); cheeks rounding out over the corners, and the jaw's sides
+    low_cuts = (1.4, 2.6, 3.6, 4.5, 5.3, 6.2, 7.0)
+    for i in range(len(low_cuts) - 1):
+        a, b = low_cuts[i], low_cuts[i + 1]
+        top = min(mouth_edges(min(a, 6.2))[1], mouth_edges(min(b, 6.2))[1]) - 1.6 if a < 6.2 else YH - 2.4
+        bottom = YH - 10.2
+        if top - bottom > 0.4:
+            for sx in (-1, 1):
+                head.box(f"lower_cheek_{i}_{sx}", (sx * (a + b) / 2, (top + bottom) / 2, ZF - 0.9),
+                         (b - a + 0.3, top - bottom, 1.8), "face")
     for sx in (-1, 1):
-        head.box(f"mouth_cheek_{sx}", (sx * 5.4, YH - 2.4, ZF - 1.0), (3.2, 2.2, 2), "face")
-        head.box(f"jaw_side_{sx}", (sx * 6.7, YH - 7.4, ZF - 0.2), (2.2, 8, 1.6), "face", rotation=(0, -sx * 22.5, 0))
+        head.box(f"mouth_cheek_{sx}", (sx * 5.0, YH - 1.7, ZF - 1.3), (3.8, 3, 2.4), "face")       # round, high
+        head.box(f"cheek_round_{sx}", (sx * 6.5, YH - 3.0, ZF - 0.7), (2.2, 2.4, 1.8), "face")
+        head.box(f"jaw_side_{sx}", (sx * 7.0, YH - 7.4, ZF + 0.2), (2, 8, 1.6), "face", rotation=(0, -sx * 22.5, 0))
     head.box("jaw", (0, YH - 11.0, ZF - 0.4), (11, 2.4, 2.2), "face")
     head.box("chin", (0, YH - 12.6, ZF - 0.3), (6, 1.6, 1.8), "face")
 
@@ -292,14 +304,14 @@ def mask_clown(head):
     head.box("nose_round_x", (0, YH - 0.4, ZF - 2.2), (4.4, 2.4, 2.6), "rednose")
     head.box("nose_round_y", (0, YH - 0.4, ZF - 2.2), (2.4, 4.4, 2.6), "rednose")
     mouth(head)
-    # a full ring of wild hair under his hat (the user: more), radiating out round his sides and back in two rows
-    for row, y in enumerate((YH + 6.6, YH + 4.2)):
-        for k in range(9):
-            a = -100 + k * 25 + row * 12
-            r = 7.6 - row * 0.4
-            yaw_box(head, f"hair_{row}_{k}", (math.sin(math.radians(a)) * r, y - (k % 2) * 0.8,
-                                              math.cos(math.radians(a)) * r * 0.9 + 0.6), (2.6, 2.4, 5.4), "hair",
-                    round(a / 22.5) * 22.5)
+    # wild tufts of hair under his hat, angled out and down (the user preferred the first clown's angled tufts to the
+    # ring - and more of them): five a side at different heights and depths, three angled down at the back
+    for sx in (-1, 1):
+        for k, (dy, dz, ang) in enumerate(((6.6, -2.6, 22.5), (5.0, -0.6, 45), (6.4, 1.4, 22.5), (4.4, 3.0, 45),
+                                           (5.9, 4.6, 22.5))):
+            head.box(f"hair_{sx}_{k}", (sx * 7.4, YH + dy, dz), (5, 2.2, 2.4), "hair", rotation=(0, 0, -sx * ang))
+    for k, x in enumerate((-3.2, 0.0, 3.2)):
+        head.box(f"hair_back_{k}", (x, YH + 5.4 - (k % 2) * 1.2, 7.2), (2.6, 2.2, 5), "hair", rotation=(22.5, 0, 0))
 
 MASKS = {"panels": mask_panels, "volto": mask_volto, "colombina": mask_colombina, "comedy": mask_comedy,
          "clown": mask_clown}
