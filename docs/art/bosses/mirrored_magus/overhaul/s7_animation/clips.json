@@ -8,7 +8,7 @@
       "snap": 0.6
     },
     "jack": {
-      "pop": 1.5,
+      "rise": 1.5,
       "throw": 1.15
     }
   },
@@ -71,12 +71,12 @@
       }
     },
     "jack": {
-      "pop": {
+      "rise": {
         "length": 2.0,
         "loop": "once",
         "bones": 7
       },
-      "bop": {
+      "idle": {
         "length": 0.6,
         "loop": "loop",
         "bones": 7
@@ -91,8 +91,13 @@
         "loop": "hold",
         "bones": 6
       },
-      "death": {
-        "length": 0.9,
+      "hit": {
+        "length": 0.3,
+        "loop": "once",
+        "bones": 3
+      },
+      "shatter": {
+        "length": 0.7,
         "loop": "hold",
         "bones": 5
       }

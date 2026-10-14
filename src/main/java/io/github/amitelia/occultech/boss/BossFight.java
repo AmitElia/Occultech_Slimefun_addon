@@ -252,6 +252,33 @@ public final class BossFight {
             onBreak.run();
         }
 
+        /** Plays a clip on the object's model (cosmetic; nothing without a model). */
+        public void animate(String clip) {
+            if (prop != null) {
+                prop.animate(clip);
+            }
+        }
+
+        /** Tints the named bones of the object's model (see {@link Prop#tint}). */
+        public void tint(int rgb, String... parts) {
+            if (prop != null) {
+                prop.tint(rgb, parts);
+            }
+        }
+
+        /**
+         * Retires the object without breaking it (e.g. a Jack-in-the-Box winding down): its hitbox goes at once, so it
+         * can't be hit any more, and its model plays {@code clip} for {@code ticks} before it goes too.
+         */
+        public void retire(String clip, long ticks) {
+            if (prop != null) {
+                prop.animate(clip);
+                Prop retiring = prop;
+                Bukkit.getScheduler().runTaskLater(service.plugin(), retiring::remove, ticks);
+            }
+            discard();
+        }
+
         /** Remove without triggering the break callback (e.g. an egg sac that hatched). */
         public void remove() {
             if (prop != null) {
@@ -378,6 +405,24 @@ public final class BossFight {
             return null;
         }
         T entity = service.body().spawn("", type, at, e -> {
+            prepare(e);
+            setup.accept(e);
+        });
+        extras.add(entity);
+        return entity;
+    }
+
+    /**
+     * Spawns an extra mob that wears the boss's own look (the Mirrored Magus's reflections): its Mythic carrier is
+     * {@code OCCULTECH_<BOSS>_<PART>}, which wears the boss's model; without one it is a plain {@code type}. It counts
+     * as an extra mob (the cap, no drops, removed at the end), or null when the cap is reached.
+     */
+    @Nullable
+    public <T extends LivingEntity> T spawnLookalike(String part, Class<T> type, Location at, Consumer<T> setup) {
+        if (liveAdds() >= MAX_ADDS) {
+            return null;
+        }
+        T entity = service.body().spawn(spec.id() + "_" + part, type, at, e -> {
             prepare(e);
             setup.accept(e);
         });

@@ -967,6 +967,24 @@ final class SelfTest {
                 && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
                 carrier == null ? "no carrier" : "scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue());
         }
+        if ("MIRRORED_MAGUS".equals(bossId) && currentFight.usesMythicBody()
+            && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_mirrored_magus")) {
+            LivingEntity carrier = currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+            check("The Mirrored Magus has one BetterModel tracker", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(carrier, "occultech_mirrored_magus"),
+                carrier == null ? "no carrier" : io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier));
+            check("The Mirrored Magus's model has its hitbox", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_mirrored_magus"),
+                "no hitbox entity");
+            check("The Mirrored Magus's Mythic carrier stays unscaled and holds nothing under the model", carrier != null
+                && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001
+                && carrier.getEquipment() != null && carrier.getEquipment().getItemInMainHand().getType().isAir(),
+                carrier == null ? "no carrier" : "scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue()
+                    + ", holding " + carrier.getEquipment().getItemInMainHand().getType());
+            check("The Jack-in-the-Box model is loaded",
+                io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_mirrored_magus_jack"), "missing");
+        }
         if ("WITCH_COVEN".equals(bossId) && currentFight.usesMythicBody()
             && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
             && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_witch_coven_cauldron")) {

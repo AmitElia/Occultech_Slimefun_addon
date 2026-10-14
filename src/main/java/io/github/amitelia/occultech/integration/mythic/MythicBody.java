@@ -76,7 +76,7 @@ public final class MythicBody implements BossBody {
         io.github.amitelia.occultech.core.ClearLagGuard.protect(entity);
         // the model goes on now, not a moment later from the mob's onSpawn skill, and the vanilla body is hidden at once:
         // otherwise the plain spider or skeleton shows for about a second before the model replaces it
-        String model = "occultech_" + id.toLowerCase(java.util.Locale.ROOT);
+        String model = modelFor(id);
         if (plugin.getServer().getPluginManager().isPluginEnabled("BetterModel") && BetterModelVisuals.available(model)) {
             entity.setInvisible(true);
             if (BetterModelVisuals.count(entity, model) == 0) {
@@ -84,6 +84,15 @@ public final class MythicBody implements BossBody {
             }
         }
         return entity;
+    }
+
+    /**
+     * The model a carrier wears: {@code occultech_<id>}, except that a {@code <BOSS>_DECOY} carrier wears its boss's own
+     * model (the Mirrored Magus's reflections must look exactly like him).
+     */
+    static String modelFor(String id) {
+        String model = "occultech_" + id.toLowerCase(java.util.Locale.ROOT);
+        return model.endsWith("_decoy") ? model.substring(0, model.length() - "_decoy".length()) : model;
     }
 
     @Override

@@ -9,13 +9,16 @@ The Magus (`occultech_mirrored_magus_rig`), take 2 - a marionette that isn't qui
 each clip): idle 4.0 s loop, walk 2.0 s loop, spawn 3.4 s, throw 1.4 s (release 0.6), prism 2.4 s (1.5), curtsey 2.0 s
 (1.0), blink 0.9 s (0.45), laugh 1.8 s, snap 1.2 s (0.6), flinch 0.6 s, death 3.0 s hold.
 
-The Jack-in-the-Box (`occultech_mirrored_magus_jack`, its own model, built at half size):
-  pop      once 2.0 s   the box shut, rattling, its crank turning through the 1.5 s warning; the lid flies open at
-                        1.5 s and the clown shoots up past full stretch, wobbling to a stop
-  bop      loop 0.6 s   the spring squashing and stretching, the clown nodding, the hat flopping
+The Jack-in-the-Box (`occultech_mirrored_magus_jack`, its own model, built at half size). Its clips carry the names
+the fight engine plays on a fight object's model (session 8):
+  rise     once 2.0 s   the pop: the box shut, rattling, its crank turning through the 1.5 s warning; the lid flies
+                        open at 1.5 s and the clown shoots up past full stretch, wobbling to a stop
+  idle     loop 0.6 s   the bop: the spring squashing and stretching, the clown nodding, the hat flopping (BetterModel
+                        falls back to it after every other clip)
   throw    once 1.5 s   three bops winding up, a big stretch back, the flick at 1.15 s (the card leaves his hand)
+  hit      once 0.3 s   a jolt
   wind     hold 1.4 s   the wind-down: the spring sags, the clown droops into the box, the lid slams shut
-  death    hold 0.9 s   broken: the head pops off the spring, the spring goes limp, the box bursts
+  shatter  hold 0.7 s   broken: the head pops off the spring, the spring goes limp, the box bursts
 
 The action clips key only the bones they move, so with BetterModel's override the idle or bop keeps playing under
 them. The jack's clown rides the spring's top: the spring is scaled in y and the body moved with its top, so the clown
@@ -48,7 +51,7 @@ PARTIAL = ("throw", "snap", "flinch")
 ZERO = (0, 0, 0)
 ONE = (1, 1, 1)
 RELEASE = {"throw": 0.6, "prism": 1.5, "curtsey": 1.0, "blink": 0.45, "snap": 0.6}
-JACK_RELEASE = {"pop": 1.5, "throw": 1.15}
+JACK_RELEASE = {"rise": 1.5, "throw": 1.15}
 SPRING = 16.0 * jack.SCALE                     # the jack's spring at rest, in the shipped (half-size) rig
 
 
@@ -338,11 +341,12 @@ def jack_clips():
     out = {}
     closed = (-135, 0, 0)                      # the lid shut: from standing open (tilted back) down over the box
     hidden = (0.01, 0.01, 0.01)
-    # ---- pop: shut, rattling, cranked; the lid flies open, the clown shoots up and wobbles
-    r = JACK_RELEASE["pop"]
+    # ---- rise (the pop): shut, rattling, cranked; the lid flies open, the clown shoots up and wobbles. Named for the
+    # engine: a fight object's model plays `rise` when it appears, `hit` per hit and `shatter` when broken
+    r = JACK_RELEASE["rise"]
     sp, body_pos = spring_keys((0, 0.05), (r, 0.05), (r + 0.1, 1.35), (r + 0.22, 0.82), (r + 0.34, 1.1),
                                (r + 0.5, 1.0))
-    out["pop"] = (2.0, "once", {
+    out["rise"] = (2.0, "once", {
         "jack_box": {"rotation": lin(*[(0.1 * i, (0, 0, (3 if i % 2 else -3) if i < 15 else 0)) for i in range(16)],
                                      (2.0, ZERO)),
                      "scale": rot((0, ONE), (r - 0.05, (1.06, 0.92, 1.06)), (r + 0.08, (0.95, 1.08, 0.95)),
@@ -359,12 +363,12 @@ def jack_clips():
         "hat_right": {"rotation": rot((0, ZERO), (r + 0.15, (0, 0, 24)), (r + 0.3, (0, 0, -14)), (2.0, ZERO))},
     })
 
-    # ---- bop: the idle bounce
+    # ---- idle (the bop): the bounce, BetterModel's default loop, which it falls back to after every other clip
     def bop(t0, low=0.7, high=1.12, length=0.6):
         q = length / 4
         return [(t0, 1.0), (t0 + q, low), (t0 + 2.2 * q, high), (t0 + length, 1.0)]
     sp, body_pos = spring_keys(*bop(0))
-    out["bop"] = (0.6, "loop", {
+    out["idle"] = (0.6, "loop", {
         "spring": sp,
         "body": {"position": body_pos, "rotation": rot((0, ZERO), (0.15, (14, 0, 0)), (0.33, (-6, 0, 0)), (0.6, ZERO))},
         "hi_head": {"rotation": rot((0, ZERO), (0.18, (8, 0, 4)), (0.36, (-4, 0, -2)), (0.6, ZERO))},
@@ -400,17 +404,24 @@ def jack_clips():
         "hat_right": {"rotation": rot((0, ZERO), (0.8, (0, 0, 30)), (1.4, (0, 0, 30)))},
         "lid": {"rotation": rot((0, ZERO), (1.1, ZERO), (1.28, closed), (1.32, add(closed, (6, 0, 0))), (1.4, closed))},
     })
-    # ---- death: the head pops off, the spring goes limp, the box bursts
-    sp, body_pos = spring_keys((0, 1.0), (0.1, 1.3), (0.4, 0.6), (0.9, 0.6))
-    sp["rotation"] = rot((0, ZERO), (0.15, (0, 0, -10)), (0.5, (0, 0, 34)), (0.9, (0, 0, 34)))
-    out["death"] = (0.9, "hold", {
+    # ---- hit: a jolt - the spring squashed, the clown knocked back
+    sp, body_pos = spring_keys((0, 1.0), (0.06, 0.72), (0.16, 1.14), (0.3, 1.0))
+    out["hit"] = (0.3, "once", {
         "spring": sp,
-        "body": {"position": body_pos, "rotation": rot((0, ZERO), (0.5, (40, 0, 30)), (0.9, (40, 0, 30)))},
-        "hi_head": {"position": rot((0, ZERO), (0.25, (0, 14, 0)), (0.5, (0, 22, 0))),
-                    "rotation": lin((0, ZERO), (0.5, (0, 0, 220))),
-                    "scale": rot((0, ONE), (0.4, ONE), (0.5, hidden), (0.9, hidden), interp="linear")},
-        "jack_box": {"scale": rot((0, ONE), (0.55, ONE), (0.68, (1.25, 1.25, 1.25)), (0.8, hidden), (0.9, hidden))},
-        "lid": {"rotation": rot((0, ZERO), (0.6, (30, 0, 0)), (0.9, (30, 0, 0)))},
+        "body": {"position": body_pos, "rotation": rot((0, ZERO), (0.06, (-20, 0, 8)), (0.18, (8, 0, -4)), (0.3, ZERO))},
+        "hi_head": {"rotation": rot((0, ZERO), (0.08, (-14, 0, -12)), (0.3, ZERO))},
+    })
+    # ---- shatter (broken): the head pops off, the spring goes limp, the box bursts; 0.7 s, then the engine removes it
+    sp, body_pos = spring_keys((0, 1.0), (0.08, 1.3), (0.3, 0.6), (0.7, 0.6))
+    sp["rotation"] = rot((0, ZERO), (0.12, (0, 0, -10)), (0.38, (0, 0, 34)), (0.7, (0, 0, 34)))
+    out["shatter"] = (0.7, "hold", {
+        "spring": sp,
+        "body": {"position": body_pos, "rotation": rot((0, ZERO), (0.38, (40, 0, 30)), (0.7, (40, 0, 30)))},
+        "hi_head": {"position": rot((0, ZERO), (0.2, (0, 14, 0)), (0.38, (0, 22, 0))),
+                    "rotation": lin((0, ZERO), (0.38, (0, 0, 220))),
+                    "scale": rot((0, ONE), (0.3, ONE), (0.38, hidden), (0.7, hidden), interp="linear")},
+        "jack_box": {"scale": rot((0, ONE), (0.42, ONE), (0.52, (1.25, 1.25, 1.25)), (0.62, hidden), (0.7, hidden))},
+        "lid": {"rotation": rot((0, ZERO), (0.45, (30, 0, 0)), (0.7, (30, 0, 0)))},
     })
     return out
 

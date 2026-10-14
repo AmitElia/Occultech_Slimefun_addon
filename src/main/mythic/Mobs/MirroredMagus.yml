@@ -1,0 +1,49 @@
+# The Mirrored Magus's body: the tall horror clown magician (a white greasepaint face with a red nose, a gaping grin of
+# nasty teeth, a floppy three-pointed jester's hat with bells, a black-and-white harlequin suit and ruff, a fan of
+# playing cards in his palm), on an illusioner carrier. Occultech still decides every attack, deals all damage
+# (MirroredMagus.java) and hands out loot. Health is the solo value; Occultech multiplies it for the group after the
+# spawn.
+OCCULTECH_MIRRORED_MAGUS:
+  Type: ILLUSIONER
+  Display: '&9Mirrored Magus'
+  Health: 220
+  Damage: 6
+  Armor: 0
+  Options:
+    # Occultech rebuilds the body from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    KnockbackResistance: 0.3
+    FollowRange: 32
+    AlwaysShowName: true
+  Drops: []
+  # The carrier stays at normal size and the model is drawn as authored (about 6.5 blocks to the tips of his hat); its
+  # ob_hitbox bone covers his legs, body and head and passes hits on to the carrier. idle, walk, spawn and death play
+  # by themselves; the rest come from MirroredMagus.java (Skills/MirroredMagus.yml).
+  Skills:
+  - model{m=occultech_mirrored_magus} @self ~onSpawn
+  - bodyrotation{mh=35;mnh=-35;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=MIRRORED_MAGUS_DEATH} @self ~onDeath
+
+# His reflections: the same model, the same gestures (MirroredMagus.java plays every one on them with him), one hit to
+# shatter. Occultech wears his model on them at once (a _DECOY carrier wears its boss's model), so no frame shows them
+# different, and removes a shattered one at once.
+OCCULTECH_MIRRORED_MAGUS_DECOY:
+  Type: ILLUSIONER
+  Display: '&9Mirrored Magus'
+  Health: 1
+  Damage: 0
+  Armor: 0
+  Options:
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    FollowRange: 32
+    AlwaysShowName: true
+  Drops: []
+  Skills:
+  - model{m=occultech_mirrored_magus} @self ~onSpawn
+  - bodyrotation{mh=35;mnh=-35;rde=0;rdu=3} @self ~onSpawn

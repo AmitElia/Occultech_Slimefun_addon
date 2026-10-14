@@ -385,7 +385,42 @@ def build(name):
     return model
 
 
+_BUILD = build                     # his own builder (session 8's jack study swaps `build` out while it paints)
+_NUDGES = {}
+
+
 def finish(model):
+    """Whole-texel sizes, the cards flat, and the flicker fix (session 8): no two faces share a plane (they z-fight in
+    game; the teeth's tips shared their bodies' front and back). The smaller part of each clash moves a fraction of a
+    texel off the plane (the Witch Coven's resolver); the nudges are found once in the rest pose and kept per cube, so
+    every pose gets the same model, and sizes don't change, so the texture layout doesn't either. The jack (a model
+    with a `spring` bone) gets its own nudges."""
+    _finish_base(model)
+    kind = "jack" if any(g.name == "spring" for g in model.groups) else "magus"
+    if kind not in _NUDGES:
+        _NUDGES[kind] = {}
+        if kind == "jack":
+            from bosses import magus_jack
+            rest = magus_jack.build()
+        else:
+            rest = _BUILD("nudge_rest")
+        _finish_base(rest)
+        if kind == "jack":                         # the jack ships at half size: resolve it at that size
+            magus_jack.settle(rest)
+        from bosses.coven_s2 import _resolve
+        nudges = {}
+        _resolve(rest, nudges)
+        if kind == "jack":                         # back to the frame it's built in (settle scales them again)
+            nudges = {k: v / magus_jack.SCALE for k, v in nudges.items()}
+        _NUDGES[kind] = nudges
+    by_name = {c.name: c for c in model.cubes}
+    for name, d in _NUDGES[kind].items():
+        if name in by_name:
+            c = by_name[name]
+            c.frm, c.to, c.origin = [(np.array(v) + d).tolist() for v in (c.frm, c.to, c.origin)]
+
+
+def _finish_base(model):
     v2.snap(model)
     for c in model.cubes:                                  # the cards stay flat planes (snapping makes them 1 thick)
         if c.name.startswith("card_"):
