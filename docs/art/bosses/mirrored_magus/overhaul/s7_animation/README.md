@@ -40,6 +40,9 @@ The throw, snap and flinch override only the bones they move, so the idle or wal
 
 ## The Jack-in-the-Box (`occultech_mirrored_magus_jack`)
 
+Its clips carry the names the fight engine plays on a fight object's model (session 8): `rise` when it appears,
+`hit` per hit, `shatter` when broken; `idle` is BetterModel's default loop.
+
 Its own model, built at half size and set on the ground: about 100 cubes on 12 bones, painted with the Magus's
 painters, with a hitbox round the whole jack.
 - **The spring:** the clown's body is a sibling of the spring, not its child. Each clip scales the spring in y and
@@ -47,11 +50,12 @@ painters, with a hitbox round the whole jack.
 
 | Clip | Length | Plays | What happens |
 |---|---|---|---|
-| pop | 2.0 s | once | the box shut, rattling, its crank turning through the 1.5 s warning; the lid flies open **at 1.5 s** and the clown shoots up past full stretch, wobbling to a stop |
-| bop | 0.6 s | loop | the spring squashing and stretching, the clown nodding, the hat flopping, the arms bouncing |
+| rise (the pop) | 2.0 s | once | the box shut, rattling, its crank turning through the 1.5 s warning; the lid flies open **at 1.5 s** and the clown shoots up past full stretch, wobbling to a stop |
+| idle (the bop) | 0.6 s | loop | the spring squashing and stretching, the clown nodding, the hat flopping, the arms bouncing |
 | throw | 1.5 s | once | three bops winding up, a big stretch back, the flick **at 1.15 s** (the card leaves his hand) |
 | wind | 1.4 s | hold | the wind-down: the spring sags, the clown droops into the box, the lid slams shut |
-| death | 0.9 s | hold | broken: the head pops off the spring and spins away, the spring goes limp, the box bursts |
+| hit | 0.3 s | once | a jolt: the spring squashed, the clown knocked back |
+| shatter | 0.7 s | hold | broken: the head pops off the spring and spins away, the spring goes limp, the box bursts |
 
 ![Key frames of the jack's clips](jack/keyframes.png)
 
