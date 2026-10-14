@@ -231,9 +231,12 @@ def hitbox_bounds(model):
 POSES = {
     "idle": ("idle: hunched, his head tilted, the bow hanging", {
         "neck": (4, 0, 14), "arm_left": (8, 0, -6), "arm_right": (10, 0, 8), "forearm_right": (8, 0, 0)}),
-    "draw": ("the arrow fans: the bow drawn, his mask turned to the shot", {
-        "torso": (4, -20, 0), "neck": (0, 18, 4), "arm_left": (90, 20, -6), "forearm_left": (0, 0, 0),
-        "arm_right": (84, -38, 18), "forearm_right": (70, 0, 0),
+    "draw": ("the arrow fans: side-on to his target, the bow arm straight out, the string drawn to his cheek with the "
+             "elbow high and back, his mask turned to sight along the arrow", {
+        "hips": (0, -62, 0), "torso": (6, -14, -6), "neck": (-4, 70, 6),
+        "leg_left": (16, 0, -10), "shin_left": (6, 0, 0), "leg_right": (-16, 0, 8), "shin_right": (14, 0, 0),
+        "arm_left": (0, 0, -84), "forearm_left": (0, 0, -4),
+        "arm_right": (0, -10, 110), "forearm_right": (0, 0, 138),
         "bowstring_upper": (-25, 0, 0), "bowstring_lower": (25, 0, 0)}),
     "prism": ("the prism burst: the bow raised overhead, the crystal gathering the light", {
         "torso": (12, 0, 0), "neck": (22, 0, 0), "arm_left": (172, 0, -14), "forearm_left": (10, 0, 0),
@@ -248,16 +251,19 @@ POSES = {
     "laugh": ("a wrong hit: the decoy shatters and he laughs, head thrown back", {
         "torso": (16, 0, 0), "neck": (28, 0, -10), "arm_left": (20, 0, -30), "arm_right": (40, 0, 40),
         "forearm_right": (60, 0, 0), "hat_left_0": (0, 0, 20), "hat_right_0": (0, 0, -20), "hat_back_0": (20, 0, 0)}),
-    "death": ("death: the strings cut - knees buckling, folding forward", {
-        "hips": (0, 0, 0), "torso": (-60, 0, 10), "neck": (-30, 0, 20), "arm_left": (-10, 0, -10),
-        "arm_right": (-20, 0, 14), "leg_left": (-70, 0, 0), "shin_left": (110, 0, 0), "leg_right": (-80, 0, 0),
-        "shin_right": (115, 0, 0), "hat_left_1": (0, 0, 30), "hat_right_1": (0, 0, -30)}),
+    "death": ("death: the strings cut - he crumples where he stands and sits slumped, legs out before him, folded "
+              "forward over them, his head lolling, his arms limp beside him, the hat's points flopped down", {
+        "leg_left": (90, 8, -10), "shin_left": (4, 0, 0), "leg_right": (90, -10, 12), "shin_right": (6, 0, 0),
+        "torso": (-38, 0, 14), "neck": (-34, 14, 32), "coat": (132, 0, 0),
+        "arm_left": (78, 0, -20), "forearm_left": (110, 0, 0), "arm_right": (82, 0, 22), "forearm_right": (106, 0, 0),
+        "hat_left_0": (0, 0, 20), "hat_left_1": (0, 0, 30), "hat_right_0": (0, 0, -10), "hat_right_1": (0, 0, -24),
+        "hat_back_1": (24, 0, 0)}),
 }
-DROP = {"blink": 10, "death": 22}            # how far the hips sink (crouching, kneeling)
 # the bow is turned to a world orientation in these poses, whatever his arm does: upright and facing the shot when he
 # draws; held flat overhead, its belly up, for the prism (columns: where the bow's own x, y, z axes point)
-BOW_AIM = {"draw": lambda: rotation_matrix((0, -20, 0)),
-           "prism": lambda: np.column_stack([(0, 0, -1.0), (1.0, 0, 0), (0, -1.0, 0)])}
+BOW_AIM = {"draw": lambda: rotation_matrix((0, 0, 0)),
+           "prism": lambda: np.column_stack([(0, 0, -1.0), (1.0, 0, 0), (0, -1.0, 0)]),
+           "death": lambda: np.column_stack([(0, 0, -1.0), (1.0, 0, 0), (0, -1.0, 0)])}    # dropped, lying flat
 
 
 def pose(model, key):
@@ -267,14 +273,14 @@ def pose(model, key):
     if key in BOW_AIM:
         from bosses.unbound_s2 import aim
         aim(group(model, "glow_bow"), BOW_AIM[key]())
-    d = DROP.get(key, 0)
-    if d:
-        for g in model.groups:
-            g.origin[1] -= d
-        for c in model.cubes:
-            c.frm[1] -= d
-            c.to[1] -= d
-            c.origin[1] -= d
+    # whatever the pose, he stands (or kneels, or lies) on the floor: the lowest point is set down at 0
+    d = float(model.bounds()[0][1])
+    for g in model.groups:
+        g.origin[1] -= d
+    for c in model.cubes:
+        c.frm[1] -= d
+        c.to[1] -= d
+        c.origin[1] -= d
 
 
 def parts_list(model):

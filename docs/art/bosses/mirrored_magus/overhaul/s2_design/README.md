@@ -46,13 +46,20 @@ draws, and held flat overhead for the prism.
 
 ## Key poses
 
+**Take 2 of the draw and the death:** the user found them weird and robotic. Every pose is also now set down on
+the floor, so the death rests on the ground instead of floating.
+
+
 - **Idle:** hunched, his head tilted, the bow hanging.
-- **Draw** (the arrow fans): the bow drawn and upright, his mask turned to the shot.
+- **Draw** (the arrow fans): an archer's stance. He stands side-on to his target with his feet planted, the
+  bow arm straight out, and the string drawn back past his cheek with the elbow high. His mask turns to sight
+  along the arrow.
 - **Prism:** the bow raised flat overhead, the crystal gathering the light.
 - **Curtsey** (conjuring the decoys): a deep courtly bow, one arm sweeping out.
 - **Blink:** folding in on himself as he vanishes.
 - **Laugh** (a wrong hit shatters a decoy): head thrown back.
-- **Death:** the strings cut, knees buckling, folding forward.
+- **Death:** the strings cut. He crumples where he stands into a heap on the floor: legs out, slumped forward
+  over them, his head lolling, his arms limp, the hat's points flopped down, the bow dropped flat beside him.
 
 ![Idle, draw, prism, curtsey](poses_1.png)
 
