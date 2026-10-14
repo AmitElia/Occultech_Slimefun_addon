@@ -162,15 +162,14 @@ def bow(fore):
 
 def head_parts(head):
     head.box("head", (0, YH, 0), (11, 16, 11), "skin")
-    head.box("nose", (0, YH - 5, -7), (3, 6, 3), "nose")
-    head.box("mask_centre", (0, YH - 0.5, ZF - 0.8), (6, 18, 1), "porcelain")
+    head.box("mask_centre", (0, YH - 0.5, ZF - 0.8), (8, 18, 1), "porcelain")      # wide enough for the grin
     for sx in (-1, 1):
-        head.box(f"mask_side_{sx}", (sx * 4.8, YH - 0.5, ZF + 0.2), (4, 16, 1), "porcelain", rotation=(0, -sx * 22.5, 0))
+        head.box(f"mask_side_{sx}", (sx * 5.6, YH - 0.5, ZF + 0.4), (3, 16, 1), "porcelain", rotation=(0, -sx * 22.5, 0))
         head.box(f"mask_socket_{sx}", (sx * 3.1, YH + 2.2, ZF - 1.15), (4, 2, 1), "socket", rotation=(0, 0, -sx * 22.5))
         head.box(f"mask_cheek_{sx}", (sx * 3.4, YH - 2.2, ZF - 1.7), (3, 2, 1), "porcelain", rotation=(0, 0, sx * 22.5))
     head.box("mask_brow", (0, YH + 4.4, ZF - 1.9), (10, 2, 2), "porcelain")
     head.box("mask_peak", (0, YH + 7.4, ZF - 1.1), (2, 3, 1), "porcelain", rotation=(0, 0, 45))
-    head.box("mask_nose", (0, YH - 4.6, -8.1), (4, 8, 4), "porcelain")
+    head.box("mask_nose", (0, YH - 2.8, -7.2), (3, 6, 3), "porcelain")             # short and sharp: room below it
     head.box("mask_chin", (0, YH - 10, ZF - 0.6), (3, 3, 1), "porcelain", rotation=(0, 0, 45))
     eyes = head.group("glow_eyes", (0, YH + 2.2, ZF - 1))
     for sx in (-1, 1):                                     # a cold glint deep in each socket

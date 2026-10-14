@@ -63,7 +63,10 @@ def zone_for(cube):
 
 
 def twin(name):
-    """A left part's right twin: legs, arms, fingers and the hat are built mirrored by name."""
+    """A left part's right twin: arms, fingers and the hat are built mirrored by name. His legs are split black and
+    white by side (session 5), so they keep their own texture."""
+    if name.startswith(("thigh_", "shin_")):
+        return name
     return name.replace("_left", "_right").replace("_-1", "_1")
 
 
