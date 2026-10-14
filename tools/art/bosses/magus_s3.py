@@ -30,8 +30,8 @@ from bosses import magus_s2 as s2, volley_crone_s2 as v2, volley_crone_s3 as v3 
 OUT = ROOT / "docs/art/bosses/mirrored_magus/overhaul/s3_rig"
 SERVER_MODELS = ROOT / "run/plugins/BetterModel/models"
 MODEL_ID = "occultech_mirrored_magus_rig"
-GLOWING = ("crystal", "eye_glint", "string")
-INTENDED_TAGS = {"hi_head": {"hi"}, "glow_bow": {"glow"}, "glow_eyes": {"glow"}, "ob_hitbox": {"ob"}}
+GLOWING = ("eye_glint",)
+INTENDED_TAGS = {"hi_head": {"hi"}, "glow_eyes": {"glow"}, "ob_hitbox": {"ob"}}
 
 
 def pose_table():

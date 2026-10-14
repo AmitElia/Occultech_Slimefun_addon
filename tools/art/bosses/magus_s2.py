@@ -6,7 +6,8 @@ judge the mask again once it's textured) rebuilt as a rig:
   sways), the collar (two bones: the petals pointing straight out and those pointing diagonally), both arms
   (upper and forearm), the neck, `hi_head` (head, mask, hat), the hat's three points in three bones each (they flop),
   the crystal bow in his left hand and its string in two halves (the draw pulls them);
-- the glow on its own bones: `glow_bow` (the crystal bow, the tier's cyan light) and `glow_eyes` (a cold glint deep
+- the glow on its own bone, `glow_eyes` (his eyes; the crystal bow of the first takes became a fan of playing cards,
+  `cards`) - `glow_eyes` (a cold glint deep
   in each of the mask's sockets);
 - four of him are on the field at once (the real one and three decoys, all identical), so he stays lean: every cube is
   axis-aligned or turned once by 22.5 or 45 degrees (no cube costs an extra display), and the curves come from bones;
@@ -32,7 +33,9 @@ from bosskit import sheet  # noqa: E402
 from bosses import magus_take4 as t4, volley_crone_s2 as v2, volley_crone_s3 as v3  # noqa: E402
 
 OUT = ROOT / "docs/art/bosses/mirrored_magus/overhaul/s2_design"
-PALETTE = dict(t4.PALETTE, hitbox=(220, 60, 60), eye_glint=(150, 240, 255))
+PALETTE = dict(t4.PALETTE, hitbox=(220, 60, 60), eye_glint=(150, 240, 255), card=(238, 232, 220),
+               face=(230, 226, 216), lips=(150, 14, 28), teeth=(214, 200, 160), rednose=(196, 24, 36),
+               hair=(96, 16, 28))
 HIP = 46.0
 SH = HIP + 18                      # the shoulders
 NECK = HIP + 22
@@ -135,27 +138,22 @@ def arms(torso):
                      rotation=(0, 0, spread))
             fore.box(f"claw_{side}_{j}", (sx * 7.6 + dx * 1.3 + (spread / 22.5) * 1.6, SH - 50, -1.4), (1, 3, 1),
                      "claw", rotation=(-22.5, 0, 0))
-    bow(group(torso.model, "forearm_left"))
+    cards(group(torso.model, "forearm_right"))
 
 
-def bow(fore):
-    """The crystal bow in his left hand: an arc of jagged shards turned 0, 22.5 or 45 degrees (one turn each), a few
-    splinters jutting out; the string in two halves on their own bones (the draw pulls them back)."""
-    gx, gy, gz = -7.6, SH - 40, 0
-    g = fore.group("glow_bow", (gx, gy, gz))
-    pts = [(-21, -4.5), (-15, -1.5), (-8, 0), (0, 0.5), (8, 0), (15, -1.5), (21, -4.5)]    # (along y, along -z)
-    angles = (45, 22.5, 0, 0, -22.5, -45)
-    sizes = (2.5, 3.5, 4, 4, 3.5, 2.5)
-    for k in range(6):
-        (y0, z0), (y1, z1) = pts[k], pts[k + 1]
-        g.box(f"bow_shard_{k}", (gx, gy + (y0 + y1) / 2, gz - 3 - (z0 + z1) / 2), (sizes[k], abs(y1 - y0) + 1.5,
-              sizes[k]), "crystal" if k % 2 else "crystal_dark", rotation=(angles[k], 0, 0))
-    for k, (y, ln) in enumerate(((-12, 4), (5, 5), (17, 3.5))):
-        g.box(f"bow_splinter_{k}", (gx, gy + y, gz - 6.5), (1.2, 1.2, ln), "crystal", rotation=(22.5 * (1 if y > 0 else -1), 0, 0))
-    for half, sign in (("upper", 1), ("lower", -1)):
-        tip = (gx, gy + sign * 21, gz + 1.5)
-        s = g.group(f"bowstring_{half}", tip)
-        s.box(f"string_{half}", (gx, gy + sign * 10.5, gz + 1.5), (0.4, 21, 0.4), "string")
+CARD = (4, 6)              # a card's width and height (it's a flat plane)
+
+
+def cards(fore):
+    """His weapon (the user, 2026-10-13: in place of the crystal bow): a spread hand of playing cards fanned in his right
+    palm, thrown in fans instead of arrows. Five cards, each a flat plane, fanned by 22.5 degrees about the palm; their
+    faces and backs are painted (session 5), at the head's resolution."""
+    px, py, pz = 7.6, SH - 39.5, -0.6
+    g = fore.group("cards", (px, py, pz))
+    w, h = CARD
+    for k, angle in enumerate((-45, -22.5, 0, 22.5, 45)):
+        z = pz - 0.3 - k * 0.25                            # each card just in front of the last
+        g.box(f"card_{k}", (px, py - h / 2 + 0.6, z), (w, h, 0), "card", rotation=(0, 0, angle), origin=(px, py, z))
 
 
 # ---- the head ----------------------------------------------------------------------------------------------------------
@@ -222,23 +220,27 @@ def mask_clown(head):
     the diamonds through his eyes, the smeared lipstick and the drips are painted (session 5)."""
     for sx in (-1, 1):
         head.box(f"brow_{sx}", (sx * 2.9, YH + 4.4, ZF - 1.1), (5.4, 2.4, 2.2), "face", rotation=(0, 0, sx * 22.5))
-        head.box(f"cheekbone_{sx}", (sx * 3.6, YH - 1.2, ZF - 1.3), (4, 3, 2.6), "face")
-        head.box(f"cheek_{sx}", (sx * 4.5, YH - 3.4, ZF - 0.9), (2.6, 2, 1.8), "face")
+        head.box(f"cheekbone_{sx}", (sx * 3.8, YH - 1.0, ZF - 1.4), (3.6, 2.6, 2.4), "face")
     head.box("brow_furrow", (0, YH + 3.4, ZF - 0.9), (2, 2, 1.8), "face")
     head.box("nose_bridge", (0, YH + 1.8, ZF - 0.6), (2, 3, 1.2), "face")
     head.box("nose", (0, YH - 0.4, ZF - 2.4), (3.4, 3.4, 3.4), "rednose")
     head.box("nose_round_x", (0, YH - 0.4, ZF - 2.2), (4.4, 2.4, 2.6), "rednose")
     head.box("nose_round_y", (0, YH - 0.4, ZF - 2.2), (2.4, 4.4, 2.6), "rednose")
-    # the grin is painted (take 2: the lips built cube by cube and the cube teeth looked blocky and busy): a low muzzle
-    # under the nose carries it, the cheeks its curling corners
-    head.box("muzzle", (0, YH - 6.2, ZF - 0.5), (11, 6, 1), "face")
-    head.box("chin", (0, YH - 9.2, ZF - 0.6), (4, 3, 2), "face")
-    head.box("chin_point", (0, YH - 10.6, ZF - 0.6), (2.4, 2.4, 1.6), "face", rotation=(0, 0, 45))
-    # wild tufts of hair sticking out from under the hat
+    # take 3 (the user: the chin looked odd, it should read as his own face, not a mask): no plate - his lower face is
+    # a jaw, its sides bevelled round the corners of his face, a rounded chin under it; the grin is painted across it
+    head.box("jaw", (0, YH - 5.6, ZF - 0.6), (10, 7, 1.4), "face")
     for sx in (-1, 1):
-        for k, (dy, dz, ang) in enumerate(((6.4, -1.5, 22.5), (4.8, 1.0, 45), (6.0, 3.4, 22.5))):
-            head.box(f"hair_{sx}_{k}", (sx * 7.4, YH + dy, dz), (5, 2.2, 2.6), "hair", rotation=(0, 0, -sx * ang))
-
+        head.box(f"jaw_side_{sx}", (sx * 5.6, YH - 5.4, ZF + 0.2), (2, 7, 1.4), "face", rotation=(0, -sx * 22.5, 0))
+    head.box("chin", (0, YH - 9.6, ZF - 0.4), (6, 2, 1.6), "face")
+    head.box("chin_tip", (0, YH - 10.8, ZF - 0.2), (3, 1, 1.4), "face")
+    # a full ring of wild hair under his hat (the user: more), radiating out round his sides and back in two rows
+    for row, y in enumerate((YH + 6.6, YH + 4.2)):
+        for k in range(9):
+            a = -100 + k * 25 + row * 12
+            r = 7.6 - row * 0.4
+            yaw_box(head, f"hair_{row}_{k}", (math.sin(math.radians(a)) * r, y - (k % 2) * 0.8,
+                                              math.cos(math.radians(a)) * r * 0.9 + 0.6), (2.6, 2.4, 5.4), "hair",
+                    round(a / 22.5) * 22.5)
 
 MASKS = {"panels": mask_panels, "volto": mask_volto, "colombina": mask_colombina, "comedy": mask_comedy,
          "clown": mask_clown}
@@ -292,6 +294,10 @@ def build(name):
 
 def finish(model):
     v2.snap(model)
+    for c in model.cubes:                                  # the cards stay flat planes (snapping makes them 1 thick)
+        if c.name.startswith("card_"):
+            mid = (c.frm[2] + c.to[2]) / 2
+            c.frm[2] = c.to[2] = mid
 
 
 def hitbox_bounds(model):
@@ -308,16 +314,14 @@ def hitbox_bounds(model):
 # turns added to the rest per bone: (x, y, z)
 
 POSES = {
-    "idle": ("idle: hunched, his head tilted, the bow hanging", {
+    "idle": ("idle: hunched, his head tilted, the fan of cards hanging from his right hand", {
         "neck": (4, 0, 14), "arm_left": (8, 0, -6), "arm_right": (10, 0, 8), "forearm_right": (8, 0, 0)}),
-    "draw": ("the arrow fans: side-on to his target, the bow arm straight out, the string drawn to his cheek with the "
-             "elbow high and back, his mask turned to sight along the arrow", {
-        "hips": (0, -62, 0), "torso": (6, -14, -6), "neck": (-4, 70, 6),
-        "leg_left": (16, 0, -10), "shin_left": (6, 0, 0), "leg_right": (-16, 0, 8), "shin_right": (14, 0, 0),
-        "arm_left": (0, 0, -84), "forearm_left": (0, 0, -4),
-        "arm_right": (0, -10, 110), "forearm_right": (0, 0, 138),
-        "bowstring_upper": (-25, 0, 0), "bowstring_lower": (25, 0, 0)}),
-    "prism": ("the prism burst: the bow raised overhead, the crystal gathering the light", {
+    "throw": ("the card fans: a twist and a flick, his right arm flung out at his target, the fan of cards in his palm, "
+              "his left arm swung back", {
+        "hips": (0, -20, 0), "torso": (2, -24, 0), "neck": (-4, 40, 8),
+        "leg_left": (16, 0, -8), "leg_right": (-14, 0, 8), "shin_right": (12, 0, 0),
+        "arm_right": (88, 0, 18), "forearm_right": (6, 0, 0), "arm_left": (-34, 0, -26), "forearm_left": (20, 0, 0)}),
+    "prism": ("the prism burst: his arms raised overhead, the fan of cards held up to gather the light", {
         "torso": (12, 0, 0), "neck": (22, 0, 0), "arm_left": (172, 0, -14), "forearm_left": (10, 0, 0),
         "arm_right": (150, 0, 26), "forearm_right": (30, 0, 0), "hat_left_0": (0, 0, 14), "hat_right_0": (0, 0, -14)}),
     "curtsey": ("conjuring the decoys: a deep courtly bow, one arm sweeping out", {
@@ -338,20 +342,17 @@ POSES = {
         "hat_left_0": (0, 0, 20), "hat_left_1": (0, 0, 30), "hat_right_0": (0, 0, -10), "hat_right_1": (0, 0, -24),
         "hat_back_1": (24, 0, 0)}),
 }
-# the bow is turned to a world orientation in these poses, whatever his arm does: upright and facing the shot when he
-# draws; held flat overhead, its belly up, for the prism (columns: where the bow's own x, y, z axes point)
-BOW_AIM = {"draw": lambda: rotation_matrix((0, 0, 0)),
-           "prism": lambda: np.column_stack([(0, 0, -1.0), (1.0, 0, 0), (0, -1.0, 0)]),
-           "death": lambda: np.column_stack([(0, 0, -1.0), (1.0, 0, 0), (0, -1.0, 0)])}    # dropped, lying flat
+# the fan of cards is turned to a world orientation in the prism, whatever his arm does: held up, facing forward
+CARD_AIM = {"prism": lambda: rotation_matrix((0, 0, 180))}
 
 
 def pose(model, key):
     for bone, r in POSES[key][1].items():
         g = group(model, bone)
         g.rotation = [g.rotation[i] + r[i] for i in range(3)]
-    if key in BOW_AIM:
+    if key in CARD_AIM:
         from bosses.unbound_s2 import aim
-        aim(group(model, "glow_bow"), BOW_AIM[key]())
+        aim(group(model, "cards"), CARD_AIM[key]())
     # whatever the pose, he stands (or kneels, or lies) on the floor: the lowest point is set down at 0
     d = float(model.bounds()[0][1])
     for g in model.groups:

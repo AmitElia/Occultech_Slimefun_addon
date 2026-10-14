@@ -65,6 +65,11 @@ RAMP = {
     "rednose": mk((70, 6, 12), (196, 24, 36), (255, 140, 140), 7),
     "hair": mk((28, 4, 10), (96, 16, 28), (160, 50, 60), 7),
     "mouth": [(18, 2, 6), (40, 6, 12)],
+    "card": mk((150, 140, 128), (238, 232, 220), (255, 252, 246), 7),
+    "card_back": mk((40, 4, 10), (120, 16, 30), (180, 50, 60), 7),
+    "rot": [(54, 40, 20), (92, 70, 34), (140, 112, 60)],                       # stained, rotting teeth
+    "gum": [(60, 6, 14), (110, 20, 30)],
+    "makeup": mk((90, 10, 20), (186, 30, 44), (226, 90, 96), 7),            # the clown's red mouth paint
     "sclera": [(180, 120, 110), (232, 226, 210)],                                          # the grin's line, the cracks
     "stain": [(96, 24, 30), (120, 40, 44)],
 }
@@ -72,7 +77,7 @@ ZONE = {"black": ("black", 4), "white": ("white", 4), "crimson": ("crimson", 4),
         "skin": ("skin", 4), "nose": ("nose", 3), "porcelain": ("porcelain", 4), "socket": ("socket", 1),
         "leg": ("leg", 3), "claw": ("claw", 3), "crystal": ("crystal", 3), "crystal_dark": ("crystal_dark", 3),
         "string": ("string", 1), "eye_glint": ("eye_glint", 1), "face": ("face", 4), "lips": ("lips", 3),
-        "teeth": ("teeth", 3), "rednose": ("rednose", 3), "hair": ("hair", 3)}
+        "teeth": ("teeth", 3), "rednose": ("rednose", 3), "hair": ("hair", 3), "card": ("card", 3)}
 GLOWING = s4.GLOWING
 DIAMOND_PARTS = ("coat_", "chest_", "ribs_", "upper_", "fore_", "thigh_", "shin_")
 
@@ -207,19 +212,18 @@ def paint_gold(cube, face, w, h, seed, ctx):
 
 def paint_skin(cube, face, w, h, seed, ctx):
     lv, over = blank(cube, w, h)
+    d = s4.density(cube)                                               # mottling at the base texel size, not finer
     for y in range(h):
         for x in range(w):
-            lv[y, x] += clusters(seed, x, y, 160, 860, 2)
+            lv[y, x] += clusters(seed, x // d, y // d, 160 if d == 1 else 60, 860 if d == 1 else 960, 2)
     if cube.name == "head" and face == "north" and s2.MASK == "colombina":
         paint_face_skin(lv, over, ctx["world"], seed)
     if cube.name == "head" and face == "north" and s2.MASK == "clown":
         paint_clown_head(lv, over, ctx["world"], seed)
-    if cube.name == "head" and face in ("east", "west") and s2.MASK == "clown":
-        world = ctx["world"]
-        for y in range(h):                                             # the greasepaint wraps round his cheeks
+    if cube.name == "head" and face != "north" and s2.MASK == "clown":
+        for y in range(h):                                             # his whole head is white: it's his face
             for x in range(w):
-                if world[y, x][2] < -1.5 + (noise(seed, 0, y, 1) % 3) * 0.6:
-                    over.append((y, x, "greasepaint", 4))
+                over.append((y, x, "greasepaint", 3 if face in ("south", "down") else 4))
     return lv, over
 
 
@@ -333,34 +337,56 @@ def in_mouth(px, py):
     return abs(px) < 6 and abs(py - c) < half
 
 
-def near_socket(px, py):
-    """0 outside, else how deep into the dark of a socket (1 at its heart)."""
-    best = 0.0
-    for sx in (-1, 1):
-        r = math.hypot((px - sx * 3.1) / 2.4, (py - (YH + 2.2)) / 1.9)
-        best = max(best, 1 - r)
-    return best
+def _h(k, salt):
+    """A steady pseudo-random 0..1 per tooth."""
+    return noise(9001 + salt, int(k), 0, 1) / 999
 
 
 def grin(px, py):
-    """What the painted grin is at a world point (take 2, at the head's resolution): 'lip', 'tooth', 'gum', 'mouth' or
-    None. Thick lips round an open mouth stretched up into his cheeks; pointed teeth in rows along both lips, gaps
-    between them, longer fangs at the corners; the dark mouth behind."""
+    """What the face is at a world point round his mouth (take 3): the clown's red mouth paint stretched wide up into
+    his cheeks; inside it his real mouth, its lips dark crimson, packed with nasty teeth - crooked, uneven, stained,
+    some broken off or missing, longer fangs among them - over bleeding gums, a darker second row behind, the black
+    throat between. Returns a paint (ramp, shade) or None."""
     c, half = s2.mouth_curve(px)
-    if abs(px) > 6.3:
+    if abs(px) > 6.8:
+        return None
+    d = py - c
+    if abs(px) < 6.4 and abs(d) < half + 1.35 and not abs(d) < half:
+        return ("lips", 2) if abs(d) < half + 0.3 else ("makeup", 3 + (abs(d) > half + 1.0))
+    if not abs(d) < half:
         return None
     up, low = c + half, c - half
-    if up <= py < up + 0.7 or low - 0.7 < py <= low:
-        return "lip"
-    if not (low < py < up):
-        return None
-    k = round(px / 0.75)
-    tooth_x = abs(px - k * 0.75)                    # 0 at a tooth's middle, 0.375 at the gap
-    fang = abs(abs(k * 0.75) - 3.4) < 0.4
-    reach = (1.5 if fang else 0.85) * (1 - tooth_x / 0.4)          # pointed: longest at the middle
-    if tooth_x < 0.32 and (up - py < reach or py - low < reach * 0.75):
-        return "gum" if (up - py < 0.12 or py - low < 0.12) else "tooth"
-    return "mouth"
+    # the front teeth: one per 0.62 along the mouth, each its own width, length, lean and stain
+    k = round(px / 0.62)
+    cx = k * 0.62 + (_h(k, 1) - 0.5) * 0.18
+    wide = 0.18 + 0.14 * _h(k, 2)
+    for top, sign, salt in ((up, -1, 0), (low, 1, 5)):
+        missing = _h(k, 3 + salt) > 0.86
+        if missing:
+            continue
+        fang = _h(k, 4 + salt) > 0.78
+        length = (1.35 if fang else 0.45 + 0.6 * _h(k, 6 + salt)) * (0.75 if sign > 0 else 1)
+        along = (py - top) * sign                           # how far from the gum into the mouth
+        lean = (_h(k, 7 + salt) - 0.5) * 0.5 * along        # crooked
+        taper = 1 - along / max(0.01, length)               # pointed: narrower towards the tip
+        if 0 <= along < length and abs(px - cx - lean) < wide * (0.35 + 0.65 * taper):
+            if along < 0.14:
+                return ("gum", 1)
+            stain = _h(k, 8 + salt)
+            if along > length * 0.7 and stain > 0.5 or stain > 0.85:
+                return ("rot", 1 if stain > 0.7 else 2)      # brown at the tips, or rotten through
+            return ("teeth", 3 + (abs(px - cx - lean) < wide * 0.3))
+        if along < 0.14:
+            return ("gum", 0)                               # bleeding gums between them
+    # the second row, behind and between the first
+    k2 = round((px - 0.31) / 0.62)
+    cx2 = k2 * 0.62 + 0.31
+    for top, sign in ((up, -1), (low, 1)):
+        along = (py - top) * sign
+        length2 = 0.3 + 0.35 * _h(k2, 11)
+        if 0.1 < along < length2 + 0.1 and abs(px - cx2) < 0.12 * (1 - along / (length2 + 0.1)) + 0.05:
+            return ("rot", 0)
+    return ("mouth", 0)
 
 
 def near_socket(px, py):
@@ -380,14 +406,14 @@ def paint_clown_head(lv, over, world, seed):
             px, py, pz = world[y, x]
             g = grin(px, py)
             if g:
-                over.append((y, x) + GRIN_PAINT[g])
+                over.append((y, x) + g)
             elif near_socket(px, py) > 0.12:
                 over.append((y, x, "ink", 0))
             else:
                 over.append((y, x, "greasepaint", 4))
 
 
-GRIN_PAINT = {"lip": ("lips", 4), "tooth": ("teeth", 4), "gum": ("lips", 1), "mouth": ("mouth", 0)}
+
 
 
 def paint_face_paint(cube, face, w, h, seed, ctx):
@@ -405,7 +431,7 @@ def paint_face_paint(cube, face, w, h, seed, ctx):
                 continue
             g = grin(px, py)
             if g:
-                over.append((y, x) + GRIN_PAINT[g])
+                over.append((y, x) + g)
                 continue
             for sx in (-1, 1):
                 ex, ey = sx * 3.1, YH + 2.2
@@ -492,12 +518,68 @@ def paint_eye(cube, face, w, h, seed, ctx):
     return lv, over
 
 
+SUITS = ("spade", "heart", "diamond", "club", "joker")
+
+
+def _suit(name, u, v):
+    """Whether a card's (u, v) in 0..1 falls in its suit's mark (drawn big in the middle) - and its colour."""
+    du, dv = u - 0.5, v - 0.5
+    if name == "diamond":
+        return abs(du) / 0.24 + abs(dv) / 0.3 < 1, "makeup"
+    if name == "heart":
+        lobes = math.hypot(du + 0.11, dv + 0.08) < 0.13 or math.hypot(du - 0.11, dv + 0.08) < 0.13
+        return lobes or (-0.1 < dv < 0.22 and abs(du) < 0.23 * (0.22 - dv) / 0.32), "makeup"
+    if name == "spade":
+        lobes = math.hypot(du + 0.11, dv - 0.06) < 0.13 or math.hypot(du - 0.11, dv - 0.06) < 0.13
+        point = -0.24 < dv < 0.08 and abs(du) < 0.23 * (dv + 0.24) / 0.32
+        return lobes or point or (0.08 < dv < 0.26 and abs(du) < 0.04), "ink"
+    if name == "club":
+        blobs = (math.hypot(du, dv + 0.1) < 0.1 or math.hypot(du - 0.11, dv + 0.02) < 0.1
+                 or math.hypot(du + 0.11, dv + 0.02) < 0.1)
+        return blobs or (0.0 < dv < 0.24 and abs(du) < 0.04), "ink"
+    # the joker: a grinning jester's face
+    face = math.hypot(du, (dv - 0.04) * 0.9) < 0.2
+    grin = 0.06 < dv < 0.14 and abs(du) < 0.13 and dv > 0.06 + 0.4 * du * du
+    return (face and not grin) or (-0.34 < dv < -0.16 and abs(du) < 0.2 - (dv + 0.34)), "makeup" if face else "ink"
+
+
+def paint_card(cube, face, w, h, seed, ctx):
+    """A playing card: on its face (towards his target) a white card, a thin border, its suit drawn big - spade, heart,
+    diamond, club, and a grinning joker; on its back crimson with a black diamond lattice and a gold border."""
+    k = int(cube.name.split("_")[1])
+    lv = np.full((h, w), 3, int)
+    over = []
+    back = face == "south"
+    for y in range(h):
+        for x in range(w):
+            u, v = (x + 0.5) / w, (y + 0.5) / h
+            edge = min(x, y, w - 1 - x, h - 1 - y)
+            if back:
+                if edge < 1:
+                    over.append((y, x, "gold", 3))
+                else:
+                    a, b = (x + y) // 4, (x - y + 64) // 4
+                    over.append((y, x, "card_back", 3) if (a + b) % 2 else (y, x, "ink", 1))
+                continue
+            if edge < 1:
+                lv[y, x] = 1                                           # the card's thin dark edge
+                continue
+            inside, ramp = _suit(SUITS[k], u, v)
+            if inside:
+                over.append((y, x, ramp, 3 if ramp == "makeup" else 0))
+            elif (u < 0.22 and v < 0.18) or (u > 0.78 and v > 0.82):
+                if (x + y) % 2 == 0:
+                    over.append((y, x, "makeup" if SUITS[k] in ("heart", "diamond", "joker") else "ink", 2))  # an index
+    return lv, over
+
+
 def painter_for(cube):
     return {"black": paint_cloth, "white": paint_cloth, "leg": paint_cloth, "crimson": paint_crimson,
             "gold": paint_gold, "skin": paint_skin, "nose": paint_skin, "porcelain": paint_porcelain,
             "socket": paint_socket, "claw": paint_claw, "crystal": paint_crystal, "crystal_dark": paint_crystal,
             "string": paint_plain, "eye_glint": paint_eye, "face": paint_face_paint, "lips": paint_lips,
-            "teeth": paint_teeth, "rednose": paint_rednose, "hair": paint_hair}[s4.zone_for(cube)]
+            "teeth": paint_teeth, "rednose": paint_rednose, "hair": paint_hair,
+            "card": paint_card}[s4.zone_for(cube)]
 
 
 def paint_face(model, i, face, w, h, solids):

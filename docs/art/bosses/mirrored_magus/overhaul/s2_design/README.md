@@ -6,6 +6,10 @@ it's textured (session 5).
 
 ![Design lock: three-quarter, front, side, back, the hitbox](design.png)
 
+> **Later changes (session 5):** the crystal bow became a fan of playing cards in his right palm (bone `cards`), the
+> draw pose became the throw, and his face became a sculpted horror clown's (`mask_clown`). See
+> [../s5_clown](../s5_clown/README.md). The text below describes the design lock as it was.
+
 ## Size and hitbox
 
 - **Model:** about 5.4 blocks to the top of his head and 6.8 to the hat's peak.

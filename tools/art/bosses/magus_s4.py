@@ -52,15 +52,13 @@ ZONES = {
     "socket": (10, 8, 14),
     "leg": (118, 92, 112),           # grey plum, lighter than the coat: the diamonds are painted over it
     "claw": (40, 34, 40),
-    "crystal": (150, 230, 250),
-    "crystal_dark": (90, 160, 210),
-    "string": (230, 240, 255),
+    "card": (238, 232, 220),          # the playing cards (faces and backs painted in session 5)
     "eye_glint": (150, 240, 255),
 }
-GLOWING = ("crystal", "string", "eye_glint")
+GLOWING = ("eye_glint",)
 NEIGHBOURS = [("black", "white"), ("black", "crimson"), ("white", "crimson"), ("porcelain", "skin"),
               ("porcelain", "socket"), ("leg", "black"), ("leg", "crimson"), ("skin", "claw"), ("crimson", "gold"),
-              ("black", "gold"), ("crystal", "crystal_dark"), ("skin", "black"), ("face", "lips"),
+              ("black", "gold"), ("card", "skin"), ("skin", "black"), ("face", "lips"),
               ("face", "rednose"), ("teeth", "lips"), ("face", "hair"), ("face", "skin")]
 
 
@@ -69,7 +67,7 @@ HEAD_DENSITY = 4          # texels per model unit on his head and face (the user
 
 def density(cube):
     """Texels per model unit: 4 on his head, his face and his eyes (64 per block), 1 everywhere else (vanilla's 16)."""
-    return HEAD_DENSITY if cube.group.name in ("hi_head", "glow_eyes") else 1
+    return HEAD_DENSITY if cube.group.name in ("hi_head", "glow_eyes", "cards") else 1
 
 
 def zone_for(cube):
@@ -79,7 +77,7 @@ def zone_for(cube):
 def twin(name):
     """A left part's right twin: arms, fingers and the hat are built mirrored by name. His legs are split black and
     white by side (session 5), so they keep their own texture."""
-    if name.startswith(("thigh_", "shin_", "eye_")):            # the eyes each look a little inward
+    if name.startswith(("thigh_", "shin_", "eye_", "card_")):            # the eyes each look a little inward
         return name
     return name.replace("_left", "_right").replace("_-1", "_1")
 
@@ -172,7 +170,7 @@ def render_all(model, bb, atlas_path, out):
     render(model, bb, atlas_path, out, VIEWS, player_at=(2.2, 1.2))
     draw = s2.build("draw_view")
     s2.finish(draw)
-    s2.pose(draw, "draw")
+    s2.pose(draw, "throw")
     render(draw, bb, atlas_path, out, DRAW, player_at=(2.2, 1.2))
 
 

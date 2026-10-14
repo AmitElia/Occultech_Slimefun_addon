@@ -35,4 +35,34 @@ request.
 the teeth looked weird, and the head's resolution should go up): the lips built cube by cube and the cube teeth were
 replaced by the painted grin; the eyes became illager eyes; and the head got its higher resolution. 157 cubes.
 
+## Take 3
+
+The user's notes: the chin looked odd; it should be his actual face, not a mask; the mouth should be full of actual
+nasty-looking teeth; the smile should sit properly on the face, with the chin and cheeks designed round it with the
+makeup; more hair. They also changed his weapon.
+
+- **His own face:**
+  - **The head:** his whole head is in white greasepaint now, not grey with a white front.
+  - **The lower face:** the flat muzzle plate and the pointed chin are gone. His lower face is a jaw, its sides
+    bevelled round the corners of his face, with a rounded chin under it.
+  - **The cheekbones** frame the grin.
+- **The makeup and the mouth:**
+  - **Makeup:** a big red clown's mouth is painted wide across his face and up into his cheeks.
+  - **Mouth:** inside the makeup is his real mouth, with dark crimson lips round a black throat.
+  - **Teeth:** the mouth is packed with nasty teeth. Each one has its own width, length and crooked lean. They're
+    yellowed, brown at the tips or rotten through, some broken off or missing, with fangs among them. They sit over
+    bleeding gums, with a darker second row behind.
+  - **Drips:** a red drip runs from each corner.
+- **The hair:** a full ring of wild crimson tufts in two rows, round his sides and back under the hat.
+- **His weapon: a hand of playing cards** (the user: in place of the crystal bow; he throws them out instead of
+  arrows).
+  - **The fan:** five cards fanned in his right palm, each a flat plane, painted at the head's resolution.
+  - **Faces:** a spade, a heart, a diamond, a club and a grinning joker, with corner indices.
+  - **Backs:** crimson with a black diamond lattice and a gold border.
+  - **Poses:** the bow's draw pose became the throw (a twist and a flick, his arm flung out at the target), and the
+    prism holds the fan up overhead.
+  - **In the fight:** throwing the cards in place of his arrows is for session 8.
+- **Counts:** 163 cubes, 25 displays (the bow's three bones are gone). Sessions 2 to 5 were regenerated with the face
+  and the cards.
+
 Regenerate with `python tools/art/bosses/magus_clown.py`.

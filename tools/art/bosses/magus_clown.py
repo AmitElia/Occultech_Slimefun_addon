@@ -24,11 +24,11 @@ VIEWS = [
     {"name": "face_34", "location": (3.4, 4, 5.4), "target": (0, -0.2, 5.05), "scale": 1.65, "player": False},
     {"name": "face_side", "location": (5, 0.6, 5.1), "target": (0, -0.3, 5.05), "scale": 1.6, "player": False},
     {"name": "face_below", "location": (1.5, 4, 3.6), "target": (0, -0.2, 5.0), "scale": 1.8, "player": False},
-    {"name": "front", "location": (0, 12, 3.6), "target": (0, 0, 3.6), "scale": 8.4, "player": False},
+    {"name": "cards", "location": (1.6, 4.5, 2.0), "target": (0.48, 0, 1.45), "scale": 1.1, "player": False},
     {"name": "hero", "location": (6, 8, 4.6), "target": (0, 0, 3.8), "scale": 8.6, "player": True},
 ]
 LABELS = {"face": "his face", "face_34": "three-quarter", "face_side": "side", "face_below": "from a player's eye",
-          "front": "front", "hero": "hero"}
+          "front": "front", "hero": "hero", "cards": "his cards"}
 
 
 def main():
