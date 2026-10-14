@@ -98,7 +98,7 @@ def collar(torso):
     h = HIP
     for i in range(16):
         a = math.radians(i * 22.5)
-        yaw_box(torso, f"ruff_{i}", (math.sin(a) * 5.2, h + 21.5, math.cos(a) * 4.4), (1, 3, 5),
+        yaw_box(torso, f"ruff_{i}", (math.sin(a) * 6.0, h + 21.8, math.cos(a) * 5.2), (2.4, 4, 6.4),
                 "white" if i % 2 else "black", i * 22.5)
     cardinal = torso.group("collar", (0, h + 21, 0.4))
     diagonal = torso.group("collar_diagonal", (0, h + 21, 0.4), (0, 45, 0))
@@ -141,7 +141,7 @@ def arms(torso):
     cards(group(torso.model, "forearm_right"))
 
 
-CARD = (4, 6)              # a card's width and height (it's a flat plane)
+CARD = (6, 9)              # a card's width and height (it's a flat plane)
 
 
 def cards(fore):
@@ -256,7 +256,6 @@ def mouth(head):
             for sx in (-1, 1):
                 a, b = sorted((sx * cuts[i], sx * cuts[i + 1]))
                 _lip(head, f"lip_{tag}_{i}_{sx}", a, b, upper)
-    head.box("throat", (0, YH - 5.4, ZF + 0.3), (10, 4.8, 0.8), "throat")      # the dark behind the teeth
     for row, (upper, xs) in enumerate(((True, [-3.8, -2.95, -2.1, -1.15, -0.25, 0.65, 1.5, 2.4, 3.3]),
                                        (False, [-3.1, -2.3, -1.5, -0.65, 0.25, 1.1, 1.9, 2.7]))):
         for k, x in enumerate(xs):
@@ -274,23 +273,12 @@ def mouth(head):
             head.box(name, (x, root + sign * body / 2, ZF - 0.9), (wide, body, 0.9), "teeth")
             head.box(f"{name}_tip", (x, root + sign * (body + wide * 0.12), ZF - 0.9), (wide * 0.7, wide * 0.7, 0.9),
                      "teeth", rotation=(0, 0, 45))
-    # the jaw: angled blocks narrowing in a V from below his cheeks to a small chin
-    head.box("jaw", (0, YH - 9.4, ZF - 0.6), (4, 2, 2), "face")
+    # the jaw (take 4e, the user: fewer shapes, matching the skull): one lower jaw under the head - a block as deep as
+    # the skull's front half, a little narrower than it, its lower edges bevelled at 45 degrees, a small square chin
+    head.box("jaw", (0, YH - 9.2, ZF + 3.0), (9, 2.6, 7), "face")
     for sx in (-1, 1):
-        head.box(f"jaw_mid_{sx}", (sx * 3.2, YH - 8.7, ZF - 0.5), (3.6, 2, 1.9), "face", rotation=(0, 0, sx * 22.5))
-        head.box(f"jaw_corner_{sx}", (sx * 5.3, YH - 6.9, ZF - 0.3), (3, 2, 1.7), "face", rotation=(0, 0, sx * 45))
-        head.box(f"jaw_side_{sx}", (sx * 6.1, YH - 4.8, ZF - 0.1), (2, 3.2, 1.6), "face", rotation=(0, -sx * 22.5, 0))
-    head.box("chin", (0, YH - 10.6, ZF - 0.5), (2.6, 1.4, 1.6), "face")
-    # under the lower lip, white flesh following its U down to the jaw (the throat's black shows only in the mouth)
-    low_cuts = (1.1, 2.1, 3.0, 3.8, 4.4, 5.0)
-    for i in range(len(low_cuts) - 1):
-        a, b = low_cuts[i], low_cuts[i + 1]
-        top = min(mouth_edges(a)[1], mouth_edges(b)[1]) - 1.4
-        bottom = YH - 8.6 + 0.45 * a
-        if top - bottom > 0.4:
-            for sx in (-1, 1):
-                head.box(f"lower_cheek_{i}_{sx}", (sx * (a + b) / 2, (top + bottom) / 2, ZF - 0.9),
-                         (b - a + 0.3, top - bottom, 1.8), "face")
+        head.box(f"jaw_bevel_{sx}", (sx * 4.5, YH - 9.2, ZF + 3.0), (2.4, 2.4, 7), "face", rotation=(0, 0, 45))
+    head.box("chin", (0, YH - 10.6, ZF + 0.4), (3.6, 1.6, 2.6), "face")
     for sx in (-1, 1):
         head.box(f"mouth_cheek_{sx}", (sx * 4.6, YH - 1.5, ZF - 1.3), (3.6, 3, 2.4), "face")       # round, high
         head.box(f"cheek_round_{sx}", (sx * 6.0, YH - 2.9, ZF - 0.7), (2.2, 2.4, 1.8), "face")
@@ -303,9 +291,10 @@ def mask_clown(head):
     uneven teeth, longer fangs at the corners; a long pointed chin; wild tufts of hair under his hat. The greasepaint,
     the diamonds through his eyes, the smeared lipstick and the drips are painted (session 5)."""
     for sx in (-1, 1):
-        head.box(f"brow_{sx}", (sx * 2.9, YH + 4.4, ZF - 1.1), (5.4, 2.4, 2.2), "face", rotation=(0, 0, sx * 22.5))
+        head.box(f"brow_{sx}", (sx * 2.7, YH + 4.5, ZF - 0.9), (5, 1.6, 1.8), "face", rotation=(0, 0, sx * 22.5))
+        head.box(f"brow_tail_{sx}", (sx * 5.4, YH + 5.2, ZF - 0.6), (1.8, 1.2, 1.2), "face", rotation=(0, 0, sx * 45))
         head.box(f"cheekbone_{sx}", (sx * 3.8, YH - 1.0, ZF - 1.4), (3.6, 2.6, 2.4), "face")
-    head.box("brow_furrow", (0, YH + 3.4, ZF - 0.9), (2, 2, 1.8), "face")
+    head.box("brow_furrow", (0, YH + 3.5, ZF - 0.7), (1.6, 1.6, 1.4), "face")
     head.box("nose_bridge", (0, YH + 1.8, ZF - 0.6), (2, 3, 1.2), "face")
     head.box("nose", (0, YH - 0.4, ZF - 2.4), (3.4, 3.4, 3.4), "rednose")
     head.box("nose_round_x", (0, YH - 0.4, ZF - 2.2), (4.4, 2.4, 2.6), "rednose")

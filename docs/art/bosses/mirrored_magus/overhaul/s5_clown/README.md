@@ -105,4 +105,14 @@ little smaller mouth):
   degrees, the sides beside the chin 22.5) down to a small chin, just below the head.
 - **The neck:** thicker (4 instead of 3) and white like his face, so it doesn't read as a grey stalk under a white head.
 
+**Take 4e** (the user: the brows looked odd, especially under them above the eyes; the cards were too small; the ruff
+needed to be larger with wider wedges; the jaw needed fewer shapes, to match the skull):
+- **The brows:** slimmer, with a short tapering tail at each outer end. The socket's black is no longer painted in steps
+  across their fronts; their undersides are black, the shadow falling into the sockets.
+- **The jaw:** one lower jaw under the head, as deep as the skull's front half and a little narrower, its lower edges
+  bevelled at 45 degrees, with a small square chin. The V of blocks and the flesh fillers under the lip are gone, and so
+  is the throat plate whose edge showed black under the lips (the mouth's dark is painted only inside the opening).
+- **The cards:** 6 x 9 instead of 4 x 6.
+- **The ruff:** larger (6 out from the neck instead of 5.2, 4 tall), its black and white wedges 2.4 wide instead of 1.
+
 Regenerate with `python tools/art/bosses/magus_clown.py`.
