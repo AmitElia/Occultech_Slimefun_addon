@@ -274,8 +274,41 @@ def mouth(head):
             head.box(f"{name}_tip", (x, root + sign * (body + wide * 0.12), ZF - 0.9), (wide * 0.7, wide * 0.7, 0.9),
                      "teeth", rotation=(0, 0, 45))
     for sx in (-1, 1):
-        head.box(f"mouth_cheek_{sx}", (sx * 4.6, YH - 1.5, ZF - 1.3), (3.6, 3, 2.4), "face")       # round, high
-        head.box(f"cheek_round_{sx}", (sx * 6.0, YH - 2.9, ZF - 0.7), (2.2, 2.4, 1.8), "face")
+        # the cheek (take 4g): a smooth plane under each eye, and over the grin's corner an apple pushed up by it
+        head.box(f"cheekbone_{sx}", (sx * 3.4, YH + 0.0, ZF - 0.5), (3.6, 2.4, 1.0), "face")
+        head.box(f"mouth_cheek_{sx}", (sx * 5.0, YH - 0.4, ZF - 0.8), (3.4, 2.6, 1.6), "face", rotation=(0, 0, sx * 22.5))
+    jaw(head)
+
+
+JAW = (0.0, 1.8, 3.4, 4.6, 5.5)    # where the jaw's segments break, out from the chin
+
+
+def jaw_line(x):
+    """The jaw's lower edge at x (take 4g): a narrow, round U from the chin up past the grin's corners."""
+    return YH - 10.2 + 0.27 * x * x
+
+
+def jaw(head):
+    """The jaw (take 4g, after Pennywise sculpts and block-built clown faces: a round, narrow jaw curving under the
+    grin to a pronounced chin): one continuous U of blocks whose lower edges follow jaw_line, each turned to a free
+    angle and running back under the head as a volume; at its bottom a chin jutting forward and down, its front edge
+    rounded by a turned prism."""
+    thick, z0, z1 = 2.4, ZF - 1.0, ZF + 3.0
+    for i in range(len(JAW) - 1):
+        a, b = JAW[i], JAW[i + 1]
+        ya, yb = jaw_line(a), jaw_line(b)
+        angle = _snap_angle(math.degrees(math.atan2(yb - ya, b - a)))
+        length = math.hypot(b - a, yb - ya) + 0.8
+        nx, ny = -math.sin(math.radians(angle)), math.cos(math.radians(angle))
+        for sx in ((1,) if a == 0 else (-1, 1)):
+            xm, ym = sx * (a + b) / 2 if a else 0.0, (ya + yb) / 2
+            ex = (-nx if sx < 0 else nx) * thick / 2
+            if a == 0:
+                xm, ex, length, angle = 0.0, 0.0, 2 * b + 0.4, 0
+            head.box(f"jaw_{i}_{sx}", (xm + ex, ym + ny * thick / 2, (z0 + z1) / 2), (length, thick, z1 - z0), "face",
+                     rotation=(0, 0, sx * angle))
+    head.box("chin", (0, YH - 10.3, ZF - 1.7), (3.6, 2.6, 2.4), "face")
+    head.box("chin_round", (0, YH - 11.6, ZF - 1.9), (3.6, 1.4, 1.4), "face", rotation=(45, 0, 0))
 
 
 def mask_clown(head):
@@ -287,7 +320,6 @@ def mask_clown(head):
     for sx in (-1, 1):
         head.box(f"brow_{sx}", (sx * 2.7, YH + 4.5, ZF - 0.9), (5, 1.6, 1.8), "face", rotation=(0, 0, sx * 22.5))
         head.box(f"brow_tail_{sx}", (sx * 5.4, YH + 5.2, ZF - 0.6), (1.8, 1.2, 1.2), "face", rotation=(0, 0, sx * 45))
-        head.box(f"cheekbone_{sx}", (sx * 3.8, YH - 1.0, ZF - 1.4), (3.6, 2.6, 2.4), "face")
     head.box("brow_furrow", (0, YH + 3.5, ZF - 0.7), (1.6, 1.6, 1.4), "face")
     head.box("nose_bridge", (0, YH + 1.8, ZF - 0.6), (2, 3, 1.2), "face")
     head.box("nose", (0, YH - 0.4, ZF - 2.4), (3.4, 3.4, 3.4), "rednose")
@@ -307,29 +339,8 @@ MASKS = {"panels": mask_panels, "volto": mask_volto, "colombina": mask_colombina
          "clown": mask_clown}
 
 
-def clown_skull(head):
-    """The clown's head as a skull (take 4f, after blocky clown references: a broad cranium over a narrower lower face
-    set flush at the front, so the jaw is part of the head and not a block hung under it): the cranium as wide as the
-    illager's head down to his cheekbones; below it the lower face a step narrower, its front edges and the line under
-    it chamfered at 45 degrees (a turned square prism along each edge), a small chin at the front."""
-    head.box("head", (0, YH + 2.6, 0), (11, 10.8, 11), "skin")                  # the cranium
-    top, bottom = YH - 2.8, YH - 9.2
-    mid, tall = (top + bottom) / 2, top - bottom
-    head.box("head_lower", (0, mid, ZF + 5), (9, tall, 8), "skin")             # the lower face, set back 1
-    head.box("jaw_front", (0, (top + bottom + 1) / 2, ZF + 0.5), (7, tall - 1, 1), "skin")   # its front, flush
-    edge = math.sqrt(2)
-    for sx in (-1, 1):
-        head.box(f"jaw_edge_{sx}", (sx * 3.5, (top + bottom + 1) / 2, ZF + 1), (edge, tall - 1, edge), "face",
-                 rotation=(0, 45, 0))
-    head.box("jaw_under", (0, bottom + 1, ZF + 1), (7, edge, edge), "face", rotation=(45, 0, 0))
-    head.box("chin", (0, bottom + 0.4, ZF + 0.3), (3, 1.6, 1.8), "face")
-
-
 def head_parts(head):
-    if MASK == "clown":
-        clown_skull(head)
-    else:
-        head.box("head", (0, YH, 0), (11, 16, 11), "skin")
+    head.box("head", (0, YH, 0), (11, 16, 11), "skin")
     MASKS[MASK](head)
     eyes = head.group("glow_eyes", (0, YH + 2.2, ZF - 1))
     deep = MASK == "clown"                                 # the clown's sockets are deep: the glint sits far back

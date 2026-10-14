@@ -210,9 +210,6 @@ def paint_gold(cube, face, w, h, seed, ctx):
     return lv, over
 
 
-CLOWN_HEAD = ("head", "head_lower", "jaw_front")    # the clown's skull: painted as one head
-
-
 def paint_skin(cube, face, w, h, seed, ctx):
     lv, over = blank(cube, w, h)
     d = s4.density(cube)                                               # mottling at the base texel size, not finer
@@ -221,9 +218,9 @@ def paint_skin(cube, face, w, h, seed, ctx):
             lv[y, x] += clusters(seed, x // d, y // d, 160 if d == 1 else 60, 860 if d == 1 else 960, 2)
     if cube.name == "head" and face == "north" and s2.MASK == "colombina":
         paint_face_skin(lv, over, ctx["world"], seed)
-    if cube.name in CLOWN_HEAD and face == "north" and s2.MASK == "clown":
+    if cube.name == "head" and face == "north" and s2.MASK == "clown":
         paint_clown_head(lv, over, ctx["world"], seed)
-    if cube.name in CLOWN_HEAD and face != "north" and s2.MASK == "clown":
+    if cube.name == "head" and face != "north" and s2.MASK == "clown":
         for y in range(h):                                             # his whole head is white: it's his face
             for x in range(w):
                 over.append((y, x, "greasepaint", 3 if face in ("south", "down") else 4))
@@ -443,12 +440,6 @@ def paint_face_paint(cube, face, w, h, seed, ctx):
                     over.append((y, x, "ink", 0))                      # a black diamond down from each eye
             if near_socket(px, py) > 0.12 and not n.startswith(("chin", "jaw")):
                 over.append((y, x, "ink", 0 if near_socket(px, py) > 0.3 else 1))
-            if n.startswith("mouth_cheek"):
-                c, half = s2.mouth_curve(px)
-                if abs(py - c) < half + 1.6:
-                    over.append((y, x, "makeup", 3))                   # the clown's red spreading past his lips
-                if abs(abs(px) - (s2.MOUTH_W + 0.4)) < 0.25 and py < c:
-                    over.append((y, x, "lips", 2))                     # a drip down from each corner
     return lv, over
 
 
