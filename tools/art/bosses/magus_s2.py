@@ -35,7 +35,7 @@ from bosses import magus_take4 as t4, volley_crone_s2 as v2, volley_crone_s3 as 
 OUT = ROOT / "docs/art/bosses/mirrored_magus/overhaul/s2_design"
 PALETTE = dict(t4.PALETTE, hitbox=(220, 60, 60), eye_glint=(150, 240, 255), card=(238, 232, 220),
                face=(230, 226, 216), lips=(150, 14, 28), teeth=(214, 200, 160), rednose=(196, 24, 36),
-               hair=(96, 16, 28))
+               hair=(96, 16, 28), throat=(30, 4, 10))
 HIP = 46.0
 SH = HIP + 18                      # the shoulders
 NECK = HIP + 22
@@ -206,10 +206,75 @@ def mask_comedy(head):
     head.box("mask_nose", (0, YH - 0.8, ZF - 1.6), (2, 4, 2), "porcelain")
 
 
+def mouth_edges(x):
+    """The gaping grin's edges at x: the upper lip's gentle curve and the lower lip's deep U, meeting at the corners up
+    in his cheeks (take 4b: a big mouth)."""
+    return YH - 4.2 + 0.07 * x * x, YH - 9.0 + 0.195 * x * x
+
+
 def mouth_curve(x):
-    """The grin: its centre line and half-height at x - wide open in the middle, closing as it curls up into the
-    cheeks."""
-    return YH - 6.2 + 0.11 * x * x, max(0.0, 1.8 * (1 - (x / 6.0) ** 2))
+    """The grin's centre line and half-height at x (from its edges)."""
+    x = max(-6.2, min(6.2, x))
+    up, low = mouth_edges(x)
+    return (up + low) / 2, max(0.0, (up - low) / 2)
+
+
+def _snap_angle(a):
+    """The nearest turn that costs no display: 0, 22.5 or 45 degrees either way."""
+    return min((-45, -22.5, 0, 22.5, 45), key=lambda s: abs(s - a))
+
+
+def _lip(head, name, x0, x1, upper):
+    """One segment of a lip, from x0 to x1 along the grin, turned to follow it (snapped to a free angle), sitting just
+    outside the opening."""
+    def edge(x):
+        up, low = mouth_edges(x)
+        return up if upper else low
+    ya, yb = edge(x0), edge(x1)
+    angle = _snap_angle(math.degrees(math.atan2(yb - ya, x1 - x0)))
+    length = math.hypot(x1 - x0, yb - ya) + 1.1
+    xm, ym = (x0 + x1) / 2, (ya + yb) / 2
+    off = 0.9 if upper else -0.9
+    nx, ny = -math.sin(math.radians(angle)), math.cos(math.radians(angle))
+    head.box(name, (xm + nx * off, ym + ny * off, ZF - 1.4), (length, 1.9, 2.4), "lips", rotation=(0, 0, angle))
+
+
+def mouth(head):
+    """His mouth, built (take 4: the painted grin wrapped round blocky shapes and read as a texture on a mask): a big
+    gaping grin - a gently curved upper lip, a deep U of a lower lip, thick and red, in segments turned along it;
+    inside, real teeth, each a block with a pointed tip, crooked and uneven, fangs among them, hanging from the upper
+    lip and rising from the lower, set back behind the lips' front; behind them a dark throat; a long jaw hanging
+    below, its sides, the chin and the cheeks built round it."""
+    for upper, tag, cuts in ((True, "upper", (0.0, 2.2, 4.0, 5.3, 6.3)),
+                             (False, "lower", (0.0, 1.4, 2.6, 3.6, 4.5, 5.3, 6.0, 6.4))):
+        _lip(head, f"lip_{tag}_0", -cuts[1], cuts[1], upper)
+        for i in range(1, len(cuts) - 1):
+            for sx in (-1, 1):
+                a, b = sorted((sx * cuts[i], sx * cuts[i + 1]))
+                _lip(head, f"lip_{tag}_{i}_{sx}", a, b, upper)
+    head.box("throat", (0, YH - 6.2, ZF + 0.3), (12.4, 8, 0.8), "throat")      # the dark behind the teeth
+    for row, (upper, xs) in enumerate(((True, [-4.8, -3.7, -2.6, -1.4, -0.3, 0.8, 1.9, 3.0, 4.1]),
+                                       (False, [-3.9, -2.9, -1.9, -0.8, 0.3, 1.4, 2.4, 3.4]))):
+        for k, x in enumerate(xs):
+            up, low = mouth_edges(x)
+            gap = up - low
+            if gap < 1.4:
+                continue
+            fang = (abs(x - 3.0) < 0.2 or abs(x + 2.6) < 0.2) if upper else abs(abs(x) - 2.9) < 0.3
+            length = (0.5 if fang else 0.24 + 0.12 * ((k * 7 + row * 3) % 5) / 4) * gap
+            wide = 0.9 if fang else 0.65 + 0.3 * ((k * 5 + row) % 3) / 2
+            root = up if upper else low
+            sign = -1 if upper else 1
+            body = max(0.35, length - wide * 0.45)
+            name = f"tooth_{'upper' if upper else 'lower'}_{k}"
+            head.box(name, (x, root + sign * body / 2, ZF - 0.9), (wide, body, 0.9), "teeth")
+            head.box(f"{name}_tip", (x, root + sign * (body + wide * 0.12), ZF - 0.9), (wide * 0.7, wide * 0.7, 0.9),
+                     "teeth", rotation=(0, 0, 45))
+    for sx in (-1, 1):
+        head.box(f"mouth_cheek_{sx}", (sx * 5.4, YH - 2.4, ZF - 1.0), (3.2, 2.2, 2), "face")
+        head.box(f"jaw_side_{sx}", (sx * 6.7, YH - 7.4, ZF - 0.2), (2.2, 8, 1.6), "face", rotation=(0, -sx * 22.5, 0))
+    head.box("jaw", (0, YH - 11.0, ZF - 0.4), (11, 2.4, 2.2), "face")
+    head.box("chin", (0, YH - 12.6, ZF - 0.3), (6, 1.6, 1.8), "face")
 
 
 def mask_clown(head):
@@ -226,13 +291,7 @@ def mask_clown(head):
     head.box("nose", (0, YH - 0.4, ZF - 2.4), (3.4, 3.4, 3.4), "rednose")
     head.box("nose_round_x", (0, YH - 0.4, ZF - 2.2), (4.4, 2.4, 2.6), "rednose")
     head.box("nose_round_y", (0, YH - 0.4, ZF - 2.2), (2.4, 4.4, 2.6), "rednose")
-    # take 3 (the user: the chin looked odd, it should read as his own face, not a mask): no plate - his lower face is
-    # a jaw, its sides bevelled round the corners of his face, a rounded chin under it; the grin is painted across it
-    head.box("jaw", (0, YH - 5.6, ZF - 0.6), (10, 7, 1.4), "face")
-    for sx in (-1, 1):
-        head.box(f"jaw_side_{sx}", (sx * 5.6, YH - 5.4, ZF + 0.2), (2, 7, 1.4), "face", rotation=(0, -sx * 22.5, 0))
-    head.box("chin", (0, YH - 9.6, ZF - 0.4), (6, 2, 1.6), "face")
-    head.box("chin_tip", (0, YH - 10.8, ZF - 0.2), (3, 1, 1.4), "face")
+    mouth(head)
     # a full ring of wild hair under his hat (the user: more), radiating out round his sides and back in two rows
     for row, y in enumerate((YH + 6.6, YH + 4.2)):
         for k in range(9):

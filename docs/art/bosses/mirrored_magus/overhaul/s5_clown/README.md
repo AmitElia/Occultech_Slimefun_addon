@@ -65,4 +65,27 @@ makeup; more hair. They also changed his weapon.
 - **Counts:** 163 cubes, 25 displays (the bow's three bones are gone). Sessions 2 to 5 were regenerated with the face
   and the cards.
 
+## Take 4: the mouth, built
+
+The user: make the mouth an actual big mouth with actual teeth, not a texture on a mask. The painted grin looked
+wrong because it wrapped round blocky shapes, so the mouth is now built from blocks shaped round it
+(`magus_s2.mouth`):
+- **The grin:** a big gaping grin with a gently curved upper lip and a deep U of a lower lip, meeting at the corners
+  up in his cheeks.
+- **The lips:** thick red lips, each a few segments turned along the grin by free angles, overlapping so the curve
+  stays whole.
+- **The teeth:** real teeth inside, each a block with a pointed tip (a turned square), of its own width and length.
+  - **Rows:** they hang from the upper lip and rise from the lower, set back behind the lips' front.
+  - **Fangs:** among them.
+  - **Paint:** yellowed, brown at the gum, some rotten through.
+- **The throat:** a dark block behind the teeth.
+- **Round the mouth:** a long jaw hanging below, with its sides bevelled, the chin under it, and the cheeks above the
+  corners.
+- **The paint:** each block gets its own plain paint (glossy lips, teeth, white greasepaint with the clown's red
+  spreading past the lips onto the cheeks and jaw), so nothing wraps round corners.
+
+**Counts:** 219 cubes and still 25 displays (every lip segment is turned by a free angle). The atlas is now
+256x1024, because the head's higher resolution covers more blocks. That's for the optimization pass once all the
+bosses are designed. Sessions 2 to 5 were regenerated.
+
 Regenerate with `python tools/art/bosses/magus_clown.py`.

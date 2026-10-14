@@ -48,6 +48,7 @@ ZONES = {
     "lips": (150, 14, 28),
     "teeth": (214, 200, 160),        # yellowed
     "rednose": (196, 24, 36),
+    "throat": (30, 4, 10),
     "hair": (96, 16, 28),
     "socket": (10, 8, 14),
     "leg": (118, 92, 112),           # grey plum, lighter than the coat: the diamonds are painted over it
