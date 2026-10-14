@@ -6,7 +6,7 @@ head at his head's height, so his face paint (magus_s5) lands on it unchanged - 
 with the Magus's painters and renders it popped up, mid-bop and throwing, beside a player for size.
 
 The rig (bones): `jack_box` (the box, fixed), `lid` (hinged at the back), `crank`, `spring` (scaled in y by the
-bop), `body` (rides the spring's top: chest, ruff, arms), `hi_head` (his face, nodding), `glow_eyes`, `arm_left`,
+bop), `body` (a sibling of the spring, moved with its top so the clown isn't squashed with it: chest, ruff, arms), `hi_head` (his face, nodding), `glow_eyes`, `arm_left`,
 `arm_right`, `cards`, `hat_left`, `hat_right`.
 
 Run from the repository root: python tools/art/bosses/magus_jack.py
@@ -145,7 +145,7 @@ def build(stretch=16.0, nod=0.0, throw=False):
     box_parts(jack, base)
     s = jack.group("spring", (0, base + BOX, 0))
     spring(s, base + BOX, HEAD_LOW - CHEST)
-    body = s.group("body", (0, HEAD_LOW - CHEST, 0), (nod, 0, 0))
+    body = jack.group("body", (0, HEAD_LOW - CHEST, 0), (nod, 0, 0))     # beside the spring: it rides its top
     upper_body(body, throw)
     head = body.group("hi_head", (0, HEAD_LOW, 0), (nod * 0.5, 0, 0))
     face(head)
