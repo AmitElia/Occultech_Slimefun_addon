@@ -57,13 +57,21 @@ RAMP = {
     "crystal_dark": mk((30, 70, 120), (90, 160, 210), (180, 230, 250), 7),
     "string": [(160, 190, 210), (230, 240, 255), (255, 255, 255)],
     "eye_glint": [(90, 200, 230), (150, 240, 255), (240, 255, 255)],
-    "ink": [(8, 6, 10), (26, 16, 22)],                                          # the grin's line, the cracks
+    "ink": [(8, 6, 10), (26, 16, 22)],
+    "face": mk((120, 112, 104), (230, 226, 216), (252, 250, 244), 9),
+    "greasepaint": mk((120, 112, 104), (230, 226, 216), (252, 250, 244), 9),
+    "lips": mk((40, 4, 10), (150, 14, 28), (220, 80, 86), 7),
+    "teeth": mk((110, 98, 70), (234, 226, 198), (252, 250, 236), 7),
+    "rednose": mk((70, 6, 12), (196, 24, 36), (255, 140, 140), 7),
+    "hair": mk((28, 4, 10), (96, 16, 28), (160, 50, 60), 7),
+    "mouth": [(18, 2, 6), (40, 6, 12)],                                          # the grin's line, the cracks
     "stain": [(96, 24, 30), (120, 40, 44)],
 }
 ZONE = {"black": ("black", 4), "white": ("white", 4), "crimson": ("crimson", 4), "gold": ("gold", 3),
         "skin": ("skin", 4), "nose": ("nose", 3), "porcelain": ("porcelain", 4), "socket": ("socket", 1),
         "leg": ("leg", 3), "claw": ("claw", 3), "crystal": ("crystal", 3), "crystal_dark": ("crystal_dark", 3),
-        "string": ("string", 1), "eye_glint": ("eye_glint", 1)}
+        "string": ("string", 1), "eye_glint": ("eye_glint", 1), "face": ("face", 4), "lips": ("lips", 3),
+        "teeth": ("teeth", 3), "rednose": ("rednose", 3), "hair": ("hair", 3)}
 GLOWING = s4.GLOWING
 DIAMOND_PARTS = ("coat_", "chest_", "ribs_", "upper_", "fore_", "thigh_", "shin_")
 
@@ -187,6 +195,14 @@ def paint_skin(cube, face, w, h, seed, ctx):
             lv[y, x] += clusters(seed, x, y, 160, 860, 2)
     if cube.name == "head" and face == "north" and s2.MASK == "colombina":
         paint_face_skin(lv, over, ctx["world"], seed)
+    if cube.name == "head" and face == "north" and s2.MASK == "clown":
+        paint_clown_head(lv, over, ctx["world"], seed)
+    if cube.name == "head" and face in ("east", "west") and s2.MASK == "clown":
+        world = ctx["world"]
+        for y in range(h):                                             # the greasepaint wraps round his cheeks
+            for x in range(w):
+                if world[y, x][2] < -1.5 + (noise(seed, 0, y, 1) % 3) * 0.6:
+                    over.append((y, x, "greasepaint", 4))
     return lv, over
 
 
@@ -295,11 +311,119 @@ def paint_plain(cube, face, w, h, seed, ctx):
     return blank(cube, w, h)
 
 
+def in_mouth(px, py):
+    c, half = s2.mouth_curve(px)
+    return abs(px) < 6 and abs(py - c) < half
+
+
+def near_socket(px, py):
+    """0 outside, else how deep into the dark of a socket (1 at its heart)."""
+    best = 0.0
+    for sx in (-1, 1):
+        r = math.hypot((px - sx * 3.1) / 2.4, (py - (YH + 2.2)) / 1.9)
+        best = max(best, 1 - r)
+    return best
+
+
+def paint_clown_head(lv, over, world, seed):
+    """The head's own front, behind his sculpted face: white greasepaint, black in the deep sockets (smudged at their
+    edges), the dark red-black inside his mouth."""
+    h, w = lv.shape
+    for y in range(h):
+        for x in range(w):
+            px, py, pz = world[y, x]
+            if in_mouth(px, py):
+                over.append((y, x, "mouth", 0 if noise(seed, x, y, 1) > 300 else 1))
+            elif near_socket(px, py) > 0:
+                d = near_socket(px, py)
+                over.append((y, x, "ink", 0 if d > 0.35 else 1))
+            else:
+                over.append((y, x, "greasepaint", 4))
+
+
+def paint_face_paint(cube, face, w, h, seed, ctx):
+    """White greasepaint, cracked (craquelure) and greyed in the creases; black diamonds slashing up and down through
+    his eyes; the sockets' black smudged out onto the brow and cheeks; lipstick smeared past his lips; red drips
+    running from the corners of his grin down to his chin."""
+    lv, over = blank(cube, w, h)
+    world, normal = ctx["world"], ctx["normal"]
+    front = normal[2] < -0.5
+    for y in range(h):
+        for x in range(w):
+            if noise(seed + 3, x, y, 1) > 955:
+                lv[y, x] -= 2                                          # the cracked greasepaint
+            px, py, pz = world[y, x]
+            if not front:
+                continue
+            for sx in (-1, 1):
+                ex, ey = sx * 3.1, YH + 2.2
+                if not cube.name.startswith("brow") and abs(px - ex) / 1.3 + abs(py - (ey - 1.4)) / 3.6 < 1.0                         and py < ey - 1.0:
+                    over.append((y, x, "ink", 0))                      # a black diamond running down from each eye
+            if near_socket(px, py) > 0.08 and not cube.name.startswith("chin"):
+                over.append((y, x, "ink", 1))                          # the sockets' black, smudged onto the brow
+            c, half = s2.mouth_curve(px)
+            if abs(px) < 6.4 and abs(abs(py - c) - half - 1.3) < 0.55:
+                over.append((y, x, "lips", 2))                         # lipstick smeared past the lips
+            for sx in (-1, 1):
+                cx = sx * 4.9
+                cy, _ = s2.mouth_curve(cx)
+                if abs(px - cx) < 0.5 and cy - 6.5 < py < cy - 0.4:
+                    over.append((y, x, "lips", 2))                     # a drip from each corner of the grin
+    return lv, over
+
+
+def paint_lips(cube, face, w, h, seed, ctx):
+    lv, over = blank(cube, w, h)
+    for y in range(h):
+        for x in range(w):
+            lv[y, x] += clusters(seed, x, y, 250, 820, 1)
+    if face not in ("up", "down"):
+        lv[0, :] += 1
+    return lv, over
+
+
+def paint_teeth(cube, face, w, h, seed, ctx):
+    lv, over = blank(cube, w, h)
+    world = ctx["world"]
+    lo, hi = cube.corners()[:, 1].min(), cube.corners()[:, 1].max()
+    upper = cube.name.startswith("tooth_upper")
+    for y in range(h):
+        for x in range(w):
+            py = world[y, x][1]
+            root = (hi - py) < 0.6 if upper else (py - lo) < 0.6
+            lv[y, x] += -2 if root else (1 if noise(seed, x, y, 1) > 700 else 0)
+    return lv, over
+
+
+def paint_rednose(cube, face, w, h, seed, ctx):
+    """A glossy red ball: a highlight up and to the left, darker underneath, a crack across it."""
+    lv, over = blank(cube, w, h)
+    if face == "down":
+        lv -= 2
+    elif face in ("north", "up"):
+        for y in range(h):
+            for x in range(w):
+                if x < w * 0.4 and y < h * 0.4:
+                    lv[y, x] += 2
+                if face == "north" and abs(x - y * 0.7 - w * 0.4) < 0.5:
+                    lv[y, x] -= 3                                      # the crack
+    return lv, over
+
+
+def paint_hair(cube, face, w, h, seed, ctx):
+    lv, over = blank(cube, w, h)
+    for y in range(h):
+        for x in range(w):
+            lv[y, x] += (1 if (x + noise(seed, 0, y, 1) % 3) % 3 == 0 else -1 if x % 4 == 2 else 0)
+    return lv, over
+
+
 def painter_for(cube):
     return {"black": paint_cloth, "white": paint_cloth, "leg": paint_cloth, "crimson": paint_crimson,
             "gold": paint_gold, "skin": paint_skin, "nose": paint_skin, "porcelain": paint_porcelain,
             "socket": paint_socket, "claw": paint_claw, "crystal": paint_crystal, "crystal_dark": paint_crystal,
-            "string": paint_plain, "eye_glint": paint_plain}[s4.zone_for(cube)]
+            "string": paint_plain, "eye_glint": paint_plain, "face": paint_face_paint, "lips": paint_lips,
+            "teeth": paint_teeth, "rednose": paint_rednose, "hair": paint_hair}[s4.zone_for(cube)]
 
 
 def paint_face(model, i, face, w, h, solids):

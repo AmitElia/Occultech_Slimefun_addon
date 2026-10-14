@@ -163,7 +163,7 @@ def bow(fore):
 # The mask (session 5: the user loves the body, arms, legs and hat, and disliked the panelled porcelain mask entirely;
 # three new masks are studied on the same body - s5_masks). Each sits in front of the face (its front 1.1 texels out,
 # just behind the eye glints), its features painted in session 5.
-MASK = "volto"
+MASK = "clown"
 
 
 def mask_panels(head):
@@ -208,15 +208,61 @@ def mask_comedy(head):
     head.box("mask_nose", (0, YH - 0.8, ZF - 1.6), (2, 4, 2), "porcelain")
 
 
-MASKS = {"panels": mask_panels, "volto": mask_volto, "colombina": mask_colombina, "comedy": mask_comedy}
+def mouth_curve(x):
+    """The grin: its centre line and half-height at x - wide open in the middle, closing as it curls up into the
+    cheeks."""
+    return YH - 6.2 + 0.11 * x * x, max(0.0, 1.8 * (1 - (x / 6.0) ** 2))
+
+
+def mask_clown(head):
+    """No mask: his own face, a horror clown's, sculpted in depth out from the illager's head. A heavy brow pinched
+    down into a glare; deep sockets behind it with his cold eyes glinting far back; high cheekbones pushing up into the
+    grin; a bulbous red nose; a huge grin stretched up into his cheeks, thick lips round an open dark mouth, rows of
+    uneven teeth, longer fangs at the corners; a long pointed chin; wild tufts of hair under his hat. The greasepaint,
+    the diamonds through his eyes, the smeared lipstick and the drips are painted (session 5)."""
+    for sx in (-1, 1):
+        head.box(f"brow_{sx}", (sx * 2.9, YH + 4.4, ZF - 1.1), (5.4, 2.4, 2.2), "face", rotation=(0, 0, sx * 22.5))
+        head.box(f"cheekbone_{sx}", (sx * 3.6, YH - 1.2, ZF - 1.3), (4, 3, 2.6), "face")
+        head.box(f"cheek_{sx}", (sx * 4.5, YH - 3.4, ZF - 0.9), (2.6, 2, 1.8), "face")
+    head.box("brow_furrow", (0, YH + 3.4, ZF - 0.9), (2, 2, 1.8), "face")
+    head.box("nose_bridge", (0, YH + 1.8, ZF - 0.6), (2, 3, 1.2), "face")
+    head.box("nose", (0, YH - 0.4, ZF - 2.4), (3.4, 3.4, 3.4), "rednose")
+    head.box("nose_round_x", (0, YH - 0.4, ZF - 2.2), (4.4, 2.4, 2.6), "rednose")
+    head.box("nose_round_y", (0, YH - 0.4, ZF - 2.2), (2.4, 4.4, 2.6), "rednose")
+    # the lips, cube by cube along the grin; teeth hanging from the upper lip and rising from the lower, recessed
+    # behind the lips' front; fangs at the corners
+    for i in range(12):
+        x = -5.5 + i
+        c, half = mouth_curve(x)
+        head.box(f"lip_upper_{i}", (x, c + half + 0.6, ZF - 0.8), (1.2, 1.4, 1.6), "lips")
+        head.box(f"lip_lower_{i}", (x, c - half - 0.6, ZF - 0.8), (1.2, 1.4, 1.6), "lips")
+        if half > 0.5:
+            fang = abs(abs(x) - 3.5) < 0.6
+            up = min(2 * half - 0.4, (2.4 if fang else 1.0 + (i * 7 % 5) * 0.25))
+            head.box(f"tooth_upper_{i}", (x, c + half - up / 2, ZF - 0.4), (0.8, up, 0.8), "teeth")
+            low = min(2 * half - up - 0.2, 0.8 + (i * 3 % 4) * 0.2)
+            if low > 0.3:
+                head.box(f"tooth_lower_{i}", (x, c - half + low / 2, ZF - 0.4), (0.8, low, 0.8), "teeth")
+    head.box("chin", (0, YH - 9.2, ZF - 0.6), (4, 3, 2), "face")
+    head.box("chin_point", (0, YH - 10.6, ZF - 0.6), (2.4, 2.4, 1.6), "face", rotation=(0, 0, 45))
+    # wild tufts of hair sticking out from under the hat
+    for sx in (-1, 1):
+        for k, (dy, dz, ang) in enumerate(((6.4, -1.5, 22.5), (4.8, 1.0, 45), (6.0, 3.4, 22.5))):
+            head.box(f"hair_{sx}_{k}", (sx * 7.4, YH + dy, dz), (5, 2.2, 2.6), "hair", rotation=(0, 0, -sx * ang))
+
+
+MASKS = {"panels": mask_panels, "volto": mask_volto, "colombina": mask_colombina, "comedy": mask_comedy,
+         "clown": mask_clown}
 
 
 def head_parts(head):
     head.box("head", (0, YH, 0), (11, 16, 11), "skin")
     MASKS[MASK](head)
     eyes = head.group("glow_eyes", (0, YH + 2.2, ZF - 1))
+    deep = MASK == "clown"                                 # the clown's sockets are deep: the glint sits far back
     for sx in (-1, 1):                                     # a cold glint deep in each socket
-        eyes.box(f"glint_{sx}", (sx * 3.1, YH + 2.2, ZF - 1.3), (1, 1, 0.4), "eye_glint")
+        eyes.box(f"glint_{sx}", (sx * 3.1, YH + 2.2, ZF - (0.3 if deep else 1.3)), (1.6 if deep else 1, 1, 0.4),
+                 "eye_glint")
     # the hat: band and cap on the head, three floppy points of three bones each (they flop)
     top = YH + 8
     head.box("hat_band", (0, top + 1.2, 0), (12, 3, 12), "crimson")

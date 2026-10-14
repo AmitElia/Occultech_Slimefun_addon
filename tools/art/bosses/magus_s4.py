@@ -44,6 +44,11 @@ ZONES = {
     "skin": (118, 124, 126),         # the illager's grey
     "nose": (100, 106, 108),
     "porcelain": (236, 230, 216),    # the mask
+    "face": (230, 226, 216),         # the clown's white greasepaint
+    "lips": (150, 14, 28),
+    "teeth": (214, 200, 160),        # yellowed
+    "rednose": (196, 24, 36),
+    "hair": (96, 16, 28),
     "socket": (10, 8, 14),
     "leg": (118, 92, 112),           # grey plum, lighter than the coat: the diamonds are painted over it
     "claw": (40, 34, 40),
@@ -55,7 +60,8 @@ ZONES = {
 GLOWING = ("crystal", "string", "eye_glint")
 NEIGHBOURS = [("black", "white"), ("black", "crimson"), ("white", "crimson"), ("porcelain", "skin"),
               ("porcelain", "socket"), ("leg", "black"), ("leg", "crimson"), ("skin", "claw"), ("crimson", "gold"),
-              ("black", "gold"), ("crystal", "crystal_dark"), ("skin", "black")]
+              ("black", "gold"), ("crystal", "crystal_dark"), ("skin", "black"), ("face", "lips"),
+              ("face", "rednose"), ("teeth", "lips"), ("face", "hair"), ("face", "skin")]
 
 
 def zone_for(cube):
