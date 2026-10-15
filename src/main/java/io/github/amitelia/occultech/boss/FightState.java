@@ -11,13 +11,24 @@ import javax.annotation.Nullable;
 /**
  * What a running fight needs to come back after a restart or crash (Session P3): which boss, how far along, each main
  * boss's health (in spawn order; 0 = already dead), the group size it was scaled for, who summoned it, and who has fought
- * it so far (damage and presence, for loot). Adds, hazards and breakable objects are not kept: they come back fresh.
+ * it so far (damage and presence, for loot), and what the behavior can't rebuild from health (its {@code data}: a
+ * one-time revival used, a part destroyed). Adds, hazards and breakable objects are not kept: they come back fresh.
  * Stored as one line in the altar's block data; pure Java, so it is unit tested.
  */
 public record FightState(String bossId, int elapsed, List<Double> health, int playersAtStart, @Nullable UUID summoner,
-    Map<UUID, Double> damage, Map<UUID, Integer> presence) {
+    Map<UUID, Double> damage, Map<UUID, Integer> presence, String data) {
 
     private static final String VERSION = "1";
+
+    public FightState {
+        data = data == null ? "" : data.replace('|', '/');
+    }
+
+    /** A state without behavior data (and as saved before there was any). */
+    public FightState(String bossId, int elapsed, List<Double> health, int playersAtStart, @Nullable UUID summoner,
+        Map<UUID, Double> damage, Map<UUID, Integer> presence) {
+        this(bossId, elapsed, health, playersAtStart, summoner, damage, presence, "");
+    }
 
     @Nonnull
     public String format() {
@@ -32,6 +43,9 @@ public record FightState(String bossId, int elapsed, List<Double> health, int pl
                 .append(String.format(java.util.Locale.ROOT, "%.2f", damage.getOrDefault(player, 0.0))).append(':')
                 .append(presence.getOrDefault(player, 0));
             first = false;
+        }
+        if (!data.isEmpty()) {
+            out.append('|').append(data);
         }
         return out.toString();
     }
@@ -54,7 +68,7 @@ public record FightState(String bossId, int elapsed, List<Double> health, int pl
         }
         try {
             String[] parts = line.split("\\|", -1);
-            if (parts.length != 7 || !VERSION.equals(parts[0]) || parts[1].isEmpty()) {
+            if ((parts.length != 7 && parts.length != 8) || !VERSION.equals(parts[0]) || parts[1].isEmpty()) {
                 return null;
             }
             List<Double> health = new ArrayList<>();
@@ -79,7 +93,7 @@ public record FightState(String bossId, int elapsed, List<Double> health, int pl
                 presence.put(player, Integer.parseInt(kv[2]));
             }
             return new FightState(io.github.amitelia.occultech.core.BossIds.current(parts[1]), Math.max(0, Integer.parseInt(parts[2])), health, Math.max(1, Integer.parseInt(parts[4])),
-                summoner, damage, presence);
+                summoner, damage, presence, parts.length == 8 ? parts[7] : "");
         } catch (RuntimeException e) {
             return null;
         }

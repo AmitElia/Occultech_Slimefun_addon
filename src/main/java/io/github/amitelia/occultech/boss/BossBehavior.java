@@ -47,6 +47,22 @@ public abstract class BossBehavior {
         return damage;
     }
 
+    /** Adjust damage an extra mob of this fight takes from a player; 0 or less cancels the hit (e.g. a dodge). */
+    public double modifyAddDamage(LivingEntity add, Player player, double damage) {
+        return damage;
+    }
+
+    /**
+     * What this fight has been through that health can't show (a one-time revival, a part destroyed), saved with the
+     * fight so a resumed fight doesn't hand it back. Plain text without {@code |}; empty when there is nothing.
+     */
+    public String saveData() {
+        return "";
+    }
+
+    /** Takes up {@link #saveData()} after a resumed fight's fresh spawn. */
+    public void restoreData(String data) {}
+
     /** Whether the engine may teleport the boss next to a player who can't be reached. Off for ranged bosses. */
     /**
      * The least time (ticks) between two vanilla melee hits from one of this fight's creatures; 0 = vanilla pace (about

@@ -1,0 +1,98 @@
+{
+  "bones_with_cubes": 18,
+  "cubes": 307,
+  "displays": 95,
+  "flicker_pairs": 0,
+  "pivots_to_check": [
+    "ring",
+    "glow_ring",
+    "glow_runes",
+    "glow_eyes"
+  ],
+  "tags": {
+    "glow_ring": [
+      "glow"
+    ],
+    "glow_runes": [
+      "glow"
+    ],
+    "hi_head": [
+      "hi"
+    ],
+    "glow_eyes": [
+      "glow"
+    ],
+    "ob_hitbox": [
+      "ob"
+    ]
+  },
+  "unintended_tags": {},
+  "hitbox_blocks": [
+    3.25,
+    6.25,
+    3.75
+  ],
+  "displays_per_bone": {
+    "ring": 21,
+    "hi_head": 21,
+    "throne": 20,
+    "torso": 17,
+    "hand_right": 2,
+    "hand_left": 2,
+    "glow_ring": 1,
+    "glow_runes": 1,
+    "body": 1,
+    "thigh_right": 1,
+    "shin_right": 1,
+    "thigh_left": 1,
+    "shin_left": 1,
+    "glow_eyes": 1,
+    "arm_right": 1,
+    "forearm_right": 1,
+    "arm_left": 1,
+    "forearm_left": 1
+  },
+  "animations": [
+    "rest",
+    "line",
+    "ring",
+    "spiral",
+    "burst",
+    "fold",
+    "caught",
+    "risen",
+    "death"
+  ],
+  "hand": {
+    "bones_with_cubes": 3,
+    "cubes": 21,
+    "displays": 4,
+    "flicker_pairs": 0,
+    "pivots_to_check": [
+      "glow_eye",
+      "glow_circle"
+    ],
+    "tags": {
+      "glow_eye": [
+        "glow"
+      ],
+      "glow_circle": [
+        "glow"
+      ],
+      "ob_hitbox": [
+        "ob"
+      ]
+    },
+    "unintended_tags": {},
+    "hitbox_blocks": [
+      1.12,
+      2.44,
+      0.62
+    ],
+    "displays_per_bone": {
+      "hand": 2,
+      "glow_eye": 1,
+      "glow_circle": 1
+    }
+  }
+}

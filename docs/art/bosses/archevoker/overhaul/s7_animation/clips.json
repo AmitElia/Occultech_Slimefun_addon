@@ -1,0 +1,108 @@
+{
+  "contact_seconds": {
+    "line": 1.0,
+    "ring": 1.0,
+    "spiral": 1.0,
+    "burst": 0.75,
+    "risen_cast": 1.0
+  },
+  "priest": {
+    "idle": {
+      "length": 8.0,
+      "loop": "loop",
+      "bones": 7
+    },
+    "idle_fold": {
+      "length": 4.0,
+      "loop": "once",
+      "bones": 9
+    },
+    "walk": {
+      "length": 2.0,
+      "loop": "loop",
+      "bones": 3
+    },
+    "spawn": {
+      "length": 2.6,
+      "loop": "once",
+      "bones": 3
+    },
+    "line": {
+      "length": 1.6,
+      "loop": "once",
+      "bones": 13
+    },
+    "ring": {
+      "length": 1.6,
+      "loop": "once",
+      "bones": 10
+    },
+    "spiral": {
+      "length": 1.6,
+      "loop": "once",
+      "bones": 6
+    },
+    "burst": {
+      "length": 1.2,
+      "loop": "once",
+      "bones": 13
+    },
+    "hand_lost": {
+      "length": 1.0,
+      "loop": "once",
+      "bones": 9
+    },
+    "caught": {
+      "length": 2.6,
+      "loop": "once",
+      "bones": 13
+    },
+    "rise": {
+      "length": 2.0,
+      "loop": "hold",
+      "bones": 13
+    },
+    "risen_idle": {
+      "length": 3.0,
+      "loop": "loop",
+      "bones": 14
+    },
+    "risen_cast": {
+      "length": 1.6,
+      "loop": "once",
+      "bones": 13
+    },
+    "flinch": {
+      "length": 0.4,
+      "loop": "once",
+      "bones": 4
+    },
+    "death": {
+      "length": 3.0,
+      "loop": "hold",
+      "bones": 13
+    }
+  },
+  "hand": {
+    "idle": {
+      "length": 3.0,
+      "loop": "loop"
+    },
+    "tell": {
+      "length": 1.0,
+      "loop": "hold"
+    },
+    "hit": {
+      "length": 0.3,
+      "loop": "once"
+    },
+    "spawn": {
+      "length": 1.0,
+      "loop": "once"
+    },
+    "death": {
+      "length": 1.5,
+      "loop": "hold"
+    }
+  }
+}

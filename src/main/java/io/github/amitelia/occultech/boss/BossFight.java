@@ -668,7 +668,8 @@ public final class BossFight {
             AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
             health.add(boss.isDead() || !bosses.contains(boss) || max == null ? 0 : boss.getHealth() / max.getValue());
         }
-        return new FightState(spec.id(), elapsed, health, playersAtStart, summoner, new HashMap<>(damage), new HashMap<>(presence));
+        return new FightState(spec.id(), elapsed, health, playersAtStart, summoner, new HashMap<>(damage), new HashMap<>(presence),
+            behavior.saveData());
     }
 
     void setPlayersAtStart(int players) {
@@ -694,6 +695,7 @@ public final class BossFight {
                 boss.setHealth(Math.max(1, Math.min(max.getValue(), fraction * max.getValue())));
             }
         }
+        behavior.restoreData(state.data());
         service.hooks().saveState(altar, state().format());
     }
 
@@ -943,8 +945,13 @@ public final class BossFight {
     }
 
     /** A player hurt one of the fight's other creatures (an add, a mount): it counts towards their share. */
-    void onAddDamagedByPlayer(LivingEntity add, Player player, double amount) {
-        support.merge(player.getUniqueId(), Math.max(0, Math.min(amount, add.getHealth())), Double::sum);
+    /** A player hit an extra mob: the behavior may change or cancel the hit (0 or less); what lands earns a share. */
+    double onAddDamagedByPlayer(LivingEntity add, Player player, double amount) {
+        double modified = behavior.modifyAddDamage(add, player, amount);
+        if (modified > 0) {
+            support.merge(player.getUniqueId(), Math.max(0, Math.min(modified, add.getHealth())), Double::sum);
+        }
+        return modified;
     }
 
     /** A player struck a breakable fight object: it counts towards their share. */

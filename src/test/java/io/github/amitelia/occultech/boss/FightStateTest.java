@@ -34,6 +34,22 @@ class FightStateTest {
     }
 
     @Test
+    void behaviorDataRoundTrips() {
+        FightState state = new FightState("ARCHEVOKER", 300, List.of(0.4), 2, null, Map.of(), Map.of(),
+            "revived=1;cyan=0;purple=1");
+        FightState back = FightState.parse(state.format());
+        assertEquals("revived=1;cyan=0;purple=1", back.data());
+        assertEquals(List.of(0.4), back.health());
+    }
+
+    @Test
+    void savedBeforeBehaviorDataStillReads() {
+        FightState back = FightState.parse("1|VOLLEY|20|1.0000|1|-|");
+        assertEquals("VOLLEY", back.bossId());
+        assertEquals("", back.data());
+    }
+
+    @Test
     void unreadableIsNull() {
         assertNull(FightState.parse(null));
         assertNull(FightState.parse(""));

@@ -999,6 +999,39 @@ final class SelfTest {
             check("The Jack-in-the-Box model is loaded",
                 io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_masquerade_jack"), "missing");
         }
+        if ("ARCHEVOKER".equals(bossId) && !currentFight.bosses().isEmpty()) {
+            LivingEntity carrier = currentFight.bosses().get(0);
+            java.util.List<org.bukkit.entity.Vex> hands = carrier.getWorld()
+                .getNearbyEntitiesByType(org.bukkit.entity.Vex.class, carrier.getLocation(), 16).stream()
+                .filter(io.github.amitelia.occultech.core.Keys::isSummoned).toList();
+            check("The Archevoker raises his two casting hands", hands.size() == 2, hands.size() + " hands");
+            check("The Archevoker's carrier has no mind of its own (no vexes, no fangs of its own)",
+                carrier instanceof org.bukkit.entity.Mob mob && org.bukkit.Bukkit.getMobGoals().getAllGoals(mob).isEmpty(),
+                carrier instanceof org.bukkit.entity.Mob mob ? org.bukkit.Bukkit.getMobGoals().getAllGoals(mob).size() + " goals" : "not a mob");
+            if (currentFight.usesMythicBody() && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_archevoker")) {
+                check("The Archevoker has one BetterModel tracker",
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(carrier, "occultech_archevoker"),
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier));
+                check("The Archevoker's model has its hitbox",
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_archevoker"),
+                    "no hitbox entity");
+                check("The Archevoker's carrier is an unscaled evoker under the model", carrier instanceof org.bukkit.entity.Evoker
+                    && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
+                    carrier.getType() + ", scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue());
+                java.util.Set<String> worn = new java.util.HashSet<>();
+                for (org.bukkit.entity.Vex hand : hands) {
+                    for (String glow : List.of("cyan", "purple")) {
+                        String model = "occultech_archevoker_hand_" + glow;
+                        if (io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(hand, model)
+                            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(hand, model)) {
+                            worn.add(glow);
+                        }
+                    }
+                }
+                check("Each casting hand wears its own model with its hitbox (cyan, purple)", worn.size() == 2, String.valueOf(worn));
+            }
+        }
         if ("WITCH_COVEN".equals(bossId) && currentFight.usesMythicBody()
             && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
             && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_witch_coven_cauldron")) {

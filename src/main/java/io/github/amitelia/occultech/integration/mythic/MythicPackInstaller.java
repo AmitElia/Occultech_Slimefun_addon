@@ -25,14 +25,16 @@ public final class MythicPackInstaller {
         "Mobs/TheUnbound.yml", "Skills/TheUnbound.yml",
         "Mobs/NightMatriarch.yml", "Skills/NightMatriarch.yml",
         "Mobs/Masquerade.yml", "Skills/Masquerade.yml",
-        "Mobs/MireMonarch.yml", "Skills/MireMonarch.yml"
+        "Mobs/MireMonarch.yml", "Skills/MireMonarch.yml",
+        "Mobs/Archevoker.yml", "Skills/Archevoker.yml"
     };
     private static final String[] MODELS = {
         "occultech_volley.bbmodel", "occultech_volley_ward.bbmodel", "occultech_brood_mother.bbmodel",
         "occultech_witch_coven_cauldron.bbmodel", "occultech_witch_coven_bottles.bbmodel", "occultech_witch_coven_pot.bbmodel",
         "occultech_the_unbound.bbmodel", "occultech_night_matriarch.bbmodel",
         "occultech_masquerade.bbmodel", "occultech_masquerade_jack.bbmodel",
-        "occultech_mire_monarch.bbmodel"
+        "occultech_mire_monarch.bbmodel",
+        "occultech_archevoker.bbmodel", "occultech_archevoker_hand_cyan.bbmodel", "occultech_archevoker_hand_purple.bbmodel"
     };
     private static final String STAMP = ".occultech-installed.properties";
 

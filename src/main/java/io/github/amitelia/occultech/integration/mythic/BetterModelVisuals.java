@@ -56,6 +56,13 @@ public final class BetterModelVisuals {
             }
 
             @Override
+            public void showPart(String part) {
+                if (!tracker.isClosed()) {
+                    tracker.update(TrackerUpdateAction.togglePart(true), bone -> bone.name().name().equals(part));
+                }
+            }
+
+            @Override
             public void tint(int rgb, String... parts) {
                 java.util.List<String> names = java.util.List.of(parts);
                 if (!tracker.isClosed()) {

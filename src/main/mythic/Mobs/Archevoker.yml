@@ -1,0 +1,64 @@
+# The Archevoker's body: an illager dark priest in a hood on a floating woodland-mansion throne, a ring of small
+# gilded hands turning behind it. Occultech still decides every attack and every step, deals all damage
+# (Archevoker.java) and hands out loot. Health is the solo value; Occultech multiplies it for the group after the spawn.
+# The carrier is an evoker with its own mind taken away (no vexes, no fangs of its own); invisible, it draws nothing.
+OCCULTECH_ARCHEVOKER:
+  Type: EVOKER
+  Display: '&5Archevoker'
+  Health: 700
+  Damage: 0
+  Armor: 0
+  Options:
+    # Occultech rebuilds the body from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    KnockbackResistance: 0.8
+    MovementSpeed: 0.3
+    FollowRange: 32
+    AlwaysShowName: true
+  Drops: []
+  # The carrier stays at normal size and the model is drawn as authored (the throne floats half a block up, the ring's
+  # top 8.9 blocks); its ob_hitbox bone covers him and the throne's seat and back, never the ring. idle, walk, spawn and
+  # death play by themselves; the rest come from Archevoker.java (Skills/Archevoker.yml).
+  Skills:
+  - model{m=occultech_archevoker} @self ~onSpawn
+  - bodyrotation{mh=30;mnh=-30;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=ARCHEVOKER_DEATH} @self ~onDeath
+
+# His two casting hands, his totems: killable, evasive. Archevoker.java flies them (the carrier's own mind is off) and
+# decides when they draw, dodge and die; a dead hand's model plays its death clip on a stand-in with the eyelid shut.
+OCCULTECH_ARCHEVOKER_HAND_CYAN:
+  Type: VEX
+  Display: '&bGilded Hand'
+  Health: 110
+  Damage: 0
+  Armor: 0
+  Options:
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    KnockbackResistance: 1
+    AlwaysShowName: false
+  Drops: []
+  Skills:
+  - model{m=occultech_archevoker_hand_cyan} @self ~onSpawn
+
+OCCULTECH_ARCHEVOKER_HAND_PURPLE:
+  Type: VEX
+  Display: '&dGilded Hand'
+  Health: 110
+  Damage: 0
+  Armor: 0
+  Options:
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    KnockbackResistance: 1
+    AlwaysShowName: false
+  Drops: []
+  Skills:
+  - model{m=occultech_archevoker_hand_purple} @self ~onSpawn

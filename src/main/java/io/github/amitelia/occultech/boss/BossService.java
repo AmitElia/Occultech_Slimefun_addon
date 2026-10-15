@@ -460,7 +460,12 @@ public final class BossService implements Listener {
         if (fight != null && fight.isBoss(victim) && victim instanceof LivingEntity boss) {
             e.setDamage(fight.onBossDamagedByPlayer(boss, player, e.getDamage()));
         } else if (fight != null && victim instanceof LivingEntity add) {
-            fight.onAddDamagedByPlayer(add, player, e.getDamage());   // fighting the adds earns a share too
+            double modified = fight.onAddDamagedByPlayer(add, player, e.getDamage());   // fighting the adds earns a share too
+            if (modified <= 0) {
+                e.setCancelled(true);
+            } else {
+                e.setDamage(modified);
+            }
         }
     }
 

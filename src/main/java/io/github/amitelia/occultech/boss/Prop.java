@@ -11,6 +11,9 @@ public interface Prop {
 
     void hidePart(String part);
 
+    /** Shows a bone that starts hidden (a part swap). */
+    default void showPart(String part) {}
+
     void remove();
 
     /** Tints the named bones (BetterModel names, tag prefix dropped: {@code glow_brew} is {@code brew}). */
