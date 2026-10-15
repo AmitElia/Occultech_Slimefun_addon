@@ -66,6 +66,8 @@ public final class Masquerade extends BossBehavior {
     /** His walking pace: a long stride (the walk clip covers about 3 blocks a second). */
     private static final double SPEED = 0.3;
     private static final int FAN_INTERVAL = 60;
+    /** BetterModel's red hit flash (ticks). */
+    private static final int HIT_FLASH = 10;
     /** The throw clip's wind-up: the cards leave his palm this long after it starts. */
     private static final int FAN_WINDUP = 12;
     private static final double CARD_SPEED = 1.3;
@@ -111,6 +113,10 @@ public final class Masquerade extends BossBehavior {
     /** Until this tick he is in the middle of a gesture (a prism, a bow, a snap, a blink): no card fan starts. */
     private int busyUntil;
     private int lastFlinch = -100;
+    /** The tick he was last hit (BetterModel's red hit flash lasts 10 ticks from the first hit of a run). */
+    private int lastHit = -100;
+    /** Until this tick his eyes are flared (a tell: the prism, the snap, the laugh). */
+    private int eyesFlaredUntil;
     private int ticks;
 
     public Masquerade(BossFight fight) {
@@ -231,6 +237,9 @@ public final class Masquerade extends BossBehavior {
 
         attack(fight.elapsed());
         jacks();
+        if (every(60)) {
+            cleanTint();
+        }
 
         if (fight.elapsed() == 100 || every(DECOY_INTERVAL)) {
             conjure();
@@ -351,6 +360,7 @@ public final class Masquerade extends BossBehavior {
     private void snap() {
         busyUntil = Math.max(busyUntil, ticks + 24);
         perform("SNAP", null);
+        eyesFlaredUntil = Math.max(eyesFlaredUntil, ticks + 34);
         later(SNAP_WINDUP, () -> {
             if (!magus.isValid()) {
                 return;
@@ -501,10 +511,29 @@ public final class Masquerade extends BossBehavior {
 
     @Override
     public void onDamagedBy(LivingEntity boss, Player player, double damage) {
-        if (boss == magus && ticks - lastFlinch > 12 && ticks >= busyUntil) {
+        if (boss != magus) {
+            return;
+        }
+        lastHit = ticks;
+        later(HIT_FLASH + 4, this::cleanTint);
+        if (ticks - lastFlinch > 12 && ticks >= busyUntil) {
             lastFlinch = ticks;
             act(magus, "FLINCH", null);
         }
+    }
+
+    /**
+     * Puts his tints right once a hit flash is over: every bone untinted, then his eyes (flared or calm, once: no delayed re-tint that could land on a flare). BetterModel's
+     * flash restores each bone's previous tint when it ends, and a tint that lands during it (an eye flaring) records
+     * the red as that previous tint, so he could stay red. Skipped while a flash may still be running; the newest
+     * hit's own clean follows it.
+     */
+    private void cleanTint() {
+        if (!mythic() || !magus.isValid() || ticks - lastHit < HIT_FLASH + 2) {
+            return;
+        }
+        act(magus, "UNTINT", null);
+        act(magus, ticks < eyesFlaredUntil ? "EYES_TELL" : "STATE_CALM", null);
     }
 
     @Override
@@ -526,6 +555,7 @@ public final class Masquerade extends BossBehavior {
             killer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0));
             killer.sendMessage(ChatColor.GRAY + "You shattered a reflection - the Masquerade sees you!");
             act(magus, "LAUGH", killer);
+            eyesFlaredUntil = Math.max(eyesFlaredUntil, ticks + 28);
             busyUntil = Math.max(busyUntil, ticks + 20);
             later(16, this::blink);
         }
@@ -562,6 +592,7 @@ public final class Masquerade extends BossBehavior {
                 busyUntil = Math.max(busyUntil, ticks + PRISM_WARNING + 10);
                 fight.telegraph(prismAt, PRISM_RADIUS, PRISM_WARNING, PRISM_COLOR);
                 perform("PRISM", marked);
+                eyesFlaredUntil = ticks + 44;
             }
         }
         if (prismStrike >= 0 && now >= prismStrike) {

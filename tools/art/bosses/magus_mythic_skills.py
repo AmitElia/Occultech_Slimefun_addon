@@ -24,9 +24,9 @@ def eyes(colour):
     return [f"  - tint{{m={M};p=glow_eyes;c={colour}}} @self"]
 
 
-def every_bone(colour):
+def every_bone(colour, but=()):
     s2.MASK = "clown"
-    bones = [g.name for g in s2.build("bones").groups]
+    bones = [g.name for g in s2.build("bones").groups if g.name not in but]
     return [f"  - tint{{m={M};p={bone};c={colour}}} @self" for bone in bones]
 
 
@@ -56,6 +56,12 @@ def skills():
     out += ["  - delay 12", "  - sound{s=block.note_block.hat;v=2;p=1.6} @self"] + eyes(TINTS["TELL"])
     out += ["  - delay 20"] + eyes(TINTS["CALM"]) + ["  - delay 12"] + eyes(TINTS["CALM"])
     out += ["MASQUERADE_FLINCH:", "  Skills:"] + state("flinch")
+    # the clean tint, run by Masquerade.java once BetterModel's hit flash is over: the flash restores each bone's
+    # previous tint when it ends, and a tint that lands during it records the red as that previous tint - so the
+    # model could stay red. Every bone back to untinted, then the eyes (EYES_TELL or EYES_CALM, once).
+    out += ["MASQUERADE_UNTINT:", "  Skills:"] + every_bone("FFFFFF", but=("glow_eyes",))
+    out += ["MASQUERADE_EYES_TELL:", "  Skills:"] + eyes(TINTS["TELL"])
+    out += ["MASQUERADE_EYES_CALM:", "  Skills:"] + eyes(TINTS["CALM"])
     out += ["MASQUERADE_SHATTER:", "  Skills:"] + every_bone(TINTS["SHATTER"])
     out += ["MASQUERADE_DEATH:", "  Skills:"] + state("death") + eyes(TINTS["DEAD"])
     out += ["  - sound{s=entity.illusioner.death;v=1.6;p=0.6} @self",

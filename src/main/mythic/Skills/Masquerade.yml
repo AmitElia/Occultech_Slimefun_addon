@@ -56,6 +56,39 @@ MASQUERADE_SNAP:
 MASQUERADE_FLINCH:
   Skills:
   - state{m=occultech_masquerade;s=flinch} @self
+MASQUERADE_UNTINT:
+  Skills:
+  - tint{m=occultech_masquerade;p=hips;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=leg_left;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=shin_left;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=leg_right;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=shin_right;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=torso;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=coat;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=collar;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=collar_diagonal;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=arm_left;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=forearm_left;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=arm_right;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=forearm_right;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=cards;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=neck;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=hi_head;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=hat_left_0;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=hat_left_1;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=hat_left_2;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=hat_right_0;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=hat_right_1;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=hat_right_2;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=hat_back_0;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=hat_back_1;c=FFFFFF} @self
+  - tint{m=occultech_masquerade;p=hat_back_2;c=FFFFFF} @self
+MASQUERADE_EYES_TELL:
+  Skills:
+  - tint{m=occultech_masquerade;p=glow_eyes;c=FFFFFF} @self
+MASQUERADE_EYES_CALM:
+  Skills:
+  - tint{m=occultech_masquerade;p=glow_eyes;c=78848E} @self
 MASQUERADE_SHATTER:
   Skills:
   - tint{m=occultech_masquerade;p=hips;c=AAE1FF} @self

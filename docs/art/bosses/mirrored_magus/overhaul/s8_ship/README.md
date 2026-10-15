@@ -31,11 +31,12 @@ The ship script refuses to ship a model in which two faces share a plane, since 
 - **Mythic:**
   - `src/main/mythic/Mobs/Masquerade.yml`: two carriers, both pillagers (see the fixes below). `OCCULTECH_MASQUERADE` is him;
     `OCCULTECH_MASQUERADE_DECOY` is his reflections, with the same model and 1 health.
-  - `Skills/Masquerade.yml`: 10 cosmetic skills (`tools/art/bosses/magus_mythic_skills.py`).
+  - `Skills/Masquerade.yml`: 13 cosmetic skills (`tools/art/bosses/magus_mythic_skills.py`); take 3 added
+    `UNTINT`, `EYES_TELL` and `EYES_CALM`.
 - **The card:** `occultech:magus_card`, a resource-pack item model (`tools/art/bosses/magus_fx_items.py`): a white
   playing card with a red diamond, carried by every thrown card.
-- **The pack:** sha1 `c309f4de`. BetterModel's output for the ten shipped models is merged in, and the jar carries the
-  same zip.
+- **The pack:** sha1 `57abff76` (built with the Elder of Ash, and carrying take 3's models; was `c309f4de`).
+  BetterModel's output for the shipped models is merged in, and the jar carries the same zip.
 
 ## Fixes after the first in-game test (2026-10-14)
 
@@ -53,6 +54,24 @@ the player, the cards didn't leave his hand, and the Jack-in-the-Boxes showed on
   the clown never appeared. It now waits below the floor, under the shut box, and shoots up on the pop; the wind-down
   drops it back below. No clip scales anything below a third any more: his blink shrinks to a third, and the thrown
   cards in his palm to a third.
+
+## Take 3: fixes (2026-10-14)
+
+- **He could stay red after a hit.** BetterModel's hit flash tints every bone red for 10 ticks, then restores each
+  bone's previous tint. A tint that lands during the flash (his eyes flaring for the prism, the snap or the laugh)
+  records the red as that previous tint, so he stayed red. Now:
+  - a clean tint runs once the flash is over: every bone back to untinted (`UNTINT`), then his eyes, flared or calm
+    (`EYES_TELL` or `EYES_CALM`), once, with no delayed re-tint that could land on a new flare;
+  - it waits until no flash can still be running (the newest hit's clean follows it), and it also runs every 3 s as a
+    safety net.
+- **He could walk round shrunk after a blink.** The blink shrank him to a third, and a blink cut off (by the teleport,
+  or by another clip) left the scale on his bones. Now:
+  - the blink uses no scale at all: he folds into a crouch and sinks into the floor as his head turns all the way
+    round, and rises back out of it where he lands;
+  - his `idle` and `walk` loops key every bone and channel that any other clip moves, at rest. A clip that is cut off
+    can no longer leave any bone posed; the jack's `idle` does the same.
+- **Tested:** the self-test passes with them (562/0, run with the Elder of Ash's ship). The hit flash and the blink
+  only show in a real fight, so they're in the list below.
 
 ## How the fight uses them (Masquerade.java)
 
@@ -123,8 +142,8 @@ balance bands put a telegraphed tier-1 projectile at 12-30%, and 16 graded 10%.
 ## In game
 
 1. Push the pack repository (`occultech_texture_pack_v1.0`) and the addon repository.
-2. Restart your server with the run-server script, so it gets the new jar (pack sha1 `c309f4de`).
-3. Summon the Mirrored Magus at a tier 1 circle, or use `/occultech showcase`.
+2. Restart your server with the run-server script, so it gets the new jar (pack sha1 `57abff76`).
+3. Summon the Masquerade at a tier 1 circle, or use `/occultech showcase`.
 
 Please check:
 - **His look and motion:** the idle sway and head snaps, the limping walk.
@@ -133,3 +152,4 @@ Please check:
   flashes and shatters, and he laughs and blinks.
 - **The jacks:** at 10 s, the crank and tune, the pop, the bop, the throw; break one in 3 hits, or watch one wind down
   after 15 s.
+- **Take 3:** he never stays red after being hit, even mid-flare; he never walks round shrunk or posed after a blink.

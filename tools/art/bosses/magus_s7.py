@@ -259,16 +259,16 @@ def magus_clips():
     curt["hips"] = {"position": rot((0, ZERO), (r, (0, curtsey_drop - 1.5, 0)), (1.5, (0, curtsey_drop - 1.5, 0)),
                                     (1.62, ZERO), (2.0, ZERO))}
     out["curtsey"] = (2.0, "once", curt)
-    # ---- blink: he folds into a crouch as his head turns all the way round, shrinking to nothing; where he lands he
-    # unfolds with the head turning back the other way
+    # ---- blink: he folds into a crouch as his head turns all the way round, sinking into the floor; where he lands he
+    # rises out of it and unfolds, the head turning back the other way. No scale (take 3: an interrupted blink left
+    # him shrunk; a scale left behind by a cut-off clip stays on the bone)
     blink, blink_drop = pose_deltas("blink")
     r = RELEASE["blink"]
     bl = into(blink, ((0, 0), (r, 1.0), (0.9, 0)))
     bl["hi_head"] = {"rotation": track((0, ZERO, L), (r, (0, 180, 0), L), (r + 0.001, (0, -180, 0), L),
                                        (0.9, ZERO, C))}
-    bl["hips"] = {"position": rot((0, ZERO), (r, (0, blink_drop, 0)), (0.9, ZERO)),
-                  "scale": rot((0, ONE), (r - 0.1, (0.6, 0.6, 0.6)), (r, (0.3, 0.3, 0.3)),
-                               (r + 0.1, (0.6, 0.6, 0.6)), (0.75, (1.06, 1.06, 1.06)), (0.9, ONE))}
+    bl["hips"] = {"position": track((0, ZERO, C), (r - 0.15, (0, blink_drop, 0), L), (r, (0, -110, 0), L),
+                                    (r + 0.001, (0, -110, 0), L), (r + 0.25, (0, blink_drop, 0), C), (0.9, ZERO, C))}
     out["blink"] = (0.9, "once", bl)
     # ---- laugh: his head thrown back, convulsing - shoulders jerking, the head bobbing, a hand clutching his belly;
     # it stops dead and his face snaps down to stare at you
@@ -328,6 +328,20 @@ def magus_clips():
                                          (0.55, (0, death_drop, 0), L), (0.65, (0, death_drop + 1.0, 0), C),
                                          (0.75, (0, death_drop, 0), C), (3.0, (0, death_drop, 0), C))}
     out["death"] = (3.0, "hold", death_c)
+    return settle_loops(out)
+
+
+def settle_loops(out, loops=("idle", "walk")):
+    """The base loops key every bone and channel any other clip moves, at rest where they don't animate it: a one-off
+    clip that is cut off (by a teleport, or another clip) leaves its last value on any bone nothing else keys - he
+    walked round shrunk after a blink (take 3). The loops now reset everything."""
+    used = {(bone, ch) for _, _, bones in out.values() for bone, chans in bones.items() for ch in chans}
+    rest = {"rotation": ZERO, "position": ZERO, "scale": ONE}
+    for name in loops:
+        length, mode, bones = out[name]
+        for bone, ch in sorted(used):
+            if ch not in bones.get(bone, {}):
+                bones.setdefault(bone, {})[ch] = [(0, rest[ch], "linear"), (length, rest[ch], "linear")]
     return out
 
 
@@ -426,7 +440,7 @@ def jack_clips():
         "jack_box": {"scale": rot((0, ONE), (0.42, ONE), (0.52, (1.25, 1.25, 1.25)), (0.7, (0.9, 0.9, 0.9)))},
         "lid": {"rotation": rot((0, ZERO), (0.45, (30, 0, 0)), (0.7, (30, 0, 0)))},
     })
-    return out
+    return settle_loops(out, ("idle",))
 
 
 # ---- export and previews ----------------------------------------------------------------------------------------------
