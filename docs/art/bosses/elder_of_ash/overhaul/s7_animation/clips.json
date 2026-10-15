@@ -1,0 +1,64 @@
+{
+  "contact_seconds": {
+    "land": 0.0,
+    "tongue": 1.25,
+    "blow": 0.9
+  },
+  "clips": {
+    "idle": {
+      "length": 4.0,
+      "loop": "loop",
+      "bones": 10
+    },
+    "walk": {
+      "length": 2.0,
+      "loop": "loop",
+      "bones": 10
+    },
+    "spawn": {
+      "length": 2.6,
+      "loop": "once",
+      "bones": 7
+    },
+    "coil": {
+      "length": 1.5,
+      "loop": "hold",
+      "bones": 12
+    },
+    "leap": {
+      "length": 0.4,
+      "loop": "hold",
+      "bones": 14
+    },
+    "land": {
+      "length": 1.0,
+      "loop": "once",
+      "bones": 13
+    },
+    "tongue": {
+      "length": 1.9,
+      "loop": "once",
+      "bones": 10
+    },
+    "erupt": {
+      "length": 2.2,
+      "loop": "once",
+      "bones": 12
+    },
+    "blow": {
+      "length": 2.0,
+      "loop": "once",
+      "bones": 12
+    },
+    "flinch": {
+      "length": 0.4,
+      "loop": "once",
+      "bones": 8
+    },
+    "death": {
+      "length": 3.0,
+      "loop": "hold",
+      "bones": 14
+    }
+  }
+}

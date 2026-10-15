@@ -27,7 +27,7 @@ Rule: a lesser summon should cost about 1-5% of that tier's circle; a major summ
 | Brood Mother | 0 | lesser | SPIDER | Brood Silk (3) | 18 | 2.5% | ok |
 | Volley | 0 | lesser | SKELETON | Fletcher's Quill (3) | 32 | 4.5% | ok |
 | Witch Coven | 0 | lesser | 3x WITCH | Coven Brew Base (3) | 15 | 2.1% | ok |
-| Mire Monarch | 0 | major | SLIME | Sovereign Gel (3) | 66 | 9.2% | 3.1× lesser |
+| Mire Monarch | 0 | major | MAGMA_CUBE | Sovereign Gel (3) | 66 | 9.2% | 3.1× lesser |
 | The Unbound | 1 | lesser | VINDICATOR | Frenzied Edge (3) | 111 | 2.2% | ok |
 | Night Matriarch | 1 | lesser | PHANTOM | Dusk Membrane (3) | 114 | 2.3% | ok |
 | Masquerade | 1 | lesser | ILLUSIONER | Mirror Dust (3) | 112 | 2.2% | ok |
@@ -67,7 +67,7 @@ Rule: a lesser summon should cost about 1-5% of that tier's circle; a major summ
 | **Coven Brew Base** | boss_drop | drop: Witch Coven | - | - | 5 | - | - | Protective charms |
 | **Brood Egg** | labor | drop: Brood Mother | - | - | 120 | - | - | Never hatches. Spins 1 String every 20s into its store (9 slots); right-click to collect. Cargo and Networks can pull from it |
 | **Sovereign Gel** | boss_drop | drop: Mire Monarch | - | - | 22 | - | - | GATE -> tier 1 (Bound Altar, Servitor Shrine, tier-1 capstones) |
-| **Sovereign's Catalyst** | catalyst | Ritual (circle 0): center mc:SLIME_BLOCK, 1× BROOD_SILK, 1× FLETCHERS_QUILL, 1× COVEN_BREW_BASE, 4× GRAVE_SALT | 15 | 1 Brood Silk, 1 Coven Brew Base, 1 Fletcher's Quill | 37 | 1 Brood Mother, 1 Volley, 1 Witch Coven | 3 | Summons the Mire Monarch |
+| **Sovereign's Catalyst** | catalyst | Ritual (circle 0): center mc:SLIME_BLOCK, 1× BROOD_SILK, 1× FLETCHERS_QUILL, 1× COVEN_BREW_BASE, 4× GRAVE_SALT | 15 | 1 Brood Silk, 1 Coven Brew Base, 1 Fletcher's Quill | 37 | 1 Brood Mother, 1 Volley, 1 Witch Coven | 3 | Summons the Elder of Ash |
 | **Binding Thread** | material | Enhanced Crafting Table: 2× BROOD_SILK, 4× mc:STRING, 1× OCCULT_INK → 4 | 3 | 0.5 Brood Silk | 6 | 1 Brood Mother | 16 | Charms, contracts and harnesses |
 | **Quillshot Bow** | weapon | Magic Workbench: 1× mc:BOW, 3× FLETCHERS_QUILL, 2× WARDED_SILVER, 2× BINDING_THREAD, 1× INITIATES_SIGIL | 109 | 1 Brood Silk, 3 Fletcher's Quill | 147 | 1 Volley, 1 Brood Mother | 25 | Fires a 3-arrow burst on full draw (uses 1 arrow). Durability 600, repair: Fletcher's Quill |
 | **Warding Charm** | charm | Magic Workbench: 3× COVEN_BREW_BASE, 2× BINDING_THREAD, 2× WARDED_SILVER, 1× sf:COMMON_TALISMAN, 1× OCCULT_INK | 54 | 1 Brood Silk, 3 Coven Brew Base | 75 | 1 Witch Coven, 1 Brood Mother | 24 | In inventory: -15% damage from summoned creatures |

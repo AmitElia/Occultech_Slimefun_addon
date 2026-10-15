@@ -177,6 +177,9 @@ public final class ContentRegistrar {
                 }
             });
 
+            if (boss.name() != null) {
+                BOSS_NAMES.put(boss.id(), boss.name());
+            }
             BossSpec spec = new BossSpec(boss.id(), title(boss.id()), boss.tier(), major, ItemKeys.slimefunId(boss.drop()), boss.drops(),
                 ARENA_RADIUS_BASE + 2.0 * boss.tier(), major ? 900 : 600, Map.copyOf(bonus), Map.copyOf(mobDrops), boss.xp());
 
@@ -537,7 +540,14 @@ public final class ContentRegistrar {
         };
     }
 
+    /** Bosses whose display name isn't their id in words (recipes.yml's {@code name}), filled as they register. */
+    private static final Map<String, String> BOSS_NAMES = new java.util.concurrent.ConcurrentHashMap<>();
+
     public static String title(String id) {
+        String named = BOSS_NAMES.get(id);
+        if (named != null) {
+            return named;
+        }
         StringBuilder out = new StringBuilder();
         for (String word : id.split("_")) {
             out.append(out.isEmpty() ? "" : " ").append(word.charAt(0)).append(word.substring(1).toLowerCase());

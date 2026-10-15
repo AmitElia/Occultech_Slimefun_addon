@@ -104,6 +104,67 @@ for polygon, mat_idx, uv_coords in zip(mesh.polygons, face_mats, uv_faces):
     for loop_idx, uv in zip(polygon.loop_indices, uv_coords):
         uv_layer.data[loop_idx].uv = uv
 
+# optional effect sprites (smoke puffs, embers, lava bombs): plain boxes in model coordinates, each with a colour, an
+# alpha (see-through smoke) and an emit flag (glowing embers), drawn in a mesh of their own
+_fx_mats = {}
+
+
+def fx_material(color, alpha, emit):
+    key = (tuple(round(c, 3) for c in color), round(alpha, 2), bool(emit))
+    if key in _fx_mats:
+        return _fx_mats[key]
+    mat = bpy.data.materials.new("fx %d" % len(_fx_mats))
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    if emit:
+        bsdf.inputs["Base Color"].default_value = (0, 0, 0, 1)
+        bsdf.inputs["Emission"].default_value = (*color, 1)
+        bsdf.inputs["Emission Strength"].default_value = 2.2
+    else:
+        bsdf.inputs["Base Color"].default_value = (*color, 1)
+        bsdf.inputs["Roughness"].default_value = 1.0
+        bsdf.inputs["Specular"].default_value = 0.0
+    bsdf.inputs["Alpha"].default_value = alpha
+    if alpha < 1:
+        mat.blend_method = "BLEND"
+        mat.shadow_method = "NONE"
+        mat.show_transparent_back = False
+    _fx_mats[key] = mat
+    return mat
+
+
+if job.get("fx"):
+    fverts, ffaces, fmats, mats_list = [], [], [], []
+    for sprite in job["fx"]:
+        start = len(fverts)
+        fverts += [to_blender(p) for p in sprite["corners"]]
+        m = fx_material(sprite["color"], sprite.get("alpha", 1.0), sprite.get("emit", False))
+        if m not in mats_list:
+            mats_list.append(m)
+        for indices in QUADS.values():
+            ffaces.append(tuple(start + i for i in indices))
+            fmats.append(mats_list.index(m))
+    fmesh = bpy.data.meshes.new("fx sprites")
+    fmesh.from_pydata(fverts, [], ffaces)
+    fmesh.update()
+    fobj = bpy.data.objects.new("fx sprites", fmesh)
+    scene.collection.objects.link(fobj)
+    for m in mats_list:
+        fmesh.materials.append(m)
+    for polygon, mi in zip(fmesh.polygons, fmats):
+        polygon.material_index = mi
+    bpy.context.view_layer.objects.active = fobj
+    fobj.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.mesh.normals_make_consistent(inside=False)
+    bpy.ops.object.mode_set(mode="OBJECT")
+    fobj.select_set(False)
+    scene.eevee.use_bloom = True
+    scene.eevee.bloom_intensity = 0.06
+    scene.eevee.bloom_threshold = 1.2
+
+
 def plain_material(name, color, metallic=0.0):
     mat = bpy.data.materials.new(name)
     mat.diffuse_color = (*color, 1)
@@ -179,11 +240,16 @@ scene.view_settings.gamma = 1
 scene.camera.data.type = "ORTHO"
 
 
-def render(name, location, target, scale, show_player, res=(1200, 900)):
+def render(name, location, target, scale, show_player, res=(1200, 900), lens=None):
     scene.render.resolution_x, scene.render.resolution_y = res
     camera.location = location
     camera.rotation_euler = (Vector(target) - camera.location).to_track_quat("-Z", "Y").to_euler()
-    camera_data.ortho_scale = scale
+    if lens:                                        # a perspective hero shot
+        camera_data.type = "PERSP"
+        camera_data.lens = lens
+    else:
+        camera_data.type = "ORTHO"
+        camera_data.ortho_scale = scale
     for player in players:
         player.hide_render = not show_player
     scene.render.filepath = f"{job['out']}/{name}.png"
@@ -196,5 +262,5 @@ for v in job.get("views", [
         {"name": "textured_front", "location": (0, 10, 3.4), "target": (0, 0, 2.15), "scale": 7.5, "player": False},
         {"name": "textured_player_eye", "location": (-3.4, 7.2, 1.62), "target": (0, 0, 2.25), "scale": 7.5,
          "player": False}]):
-    render(v["name"], v["location"], v["target"], v["scale"], v["player"], tuple(v.get("res", (1200, 900))))
+    render(v["name"], v["location"], v["target"], v["scale"], v["player"], tuple(v.get("res", (1200, 900))), v.get("lens"))
 print("TEXTURED_RENDER_DONE")

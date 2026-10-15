@@ -45,8 +45,9 @@ public final class ItemCatalog {
     /**
      * @param mobDrops vanilla item key to {min, max} per contributor
      */
+    /** {@code name}: the boss's display name when it isn't its id in words (the Elder of Ash keeps the id MIRE_MONARCH). */
     public record BossDef(String id, int tier, String kind, String base, String drop, int drops, @Nullable String catalyst, Map<String, Integer> offerings,
-        Map<String, int[]> mobDrops, int xp) {}
+        Map<String, int[]> mobDrops, int xp, @Nullable String name) {}
 
     private final Map<Integer, TierDef> tiers;
     private final Map<String, ItemDef> items;
@@ -95,7 +96,7 @@ public final class ItemCatalog {
             Map<String, Object> b = map(v);
             bosses.put(id, new BossDef(id, integer(b.get("tier"), 0), str(b.get("kind")), str(b.get("base")), str(b.get("drop")),
                 integer(b.get("drops"), 1), (String) b.get("catalyst"), amounts(b.get("offerings")), ranges(b.get("mob_drops")),
-                integer(b.get("xp"), 0)));
+                integer(b.get("xp"), 0), (String) b.get("name")));
         });
 
         return new ItemCatalog(Collections.unmodifiableMap(tiers), Collections.unmodifiableMap(items),

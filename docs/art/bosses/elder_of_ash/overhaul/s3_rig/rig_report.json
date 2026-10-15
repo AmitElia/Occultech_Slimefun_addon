@@ -1,0 +1,93 @@
+{
+  "bones": 29,
+  "bones_with_cubes": 27,
+  "cubes": 326,
+  "displays": 250,
+  "flicker_pairs": 0,
+  "pivots_to_check": [
+    "cone_blown",
+    "glow_lava",
+    "glow_lava_cap",
+    "brows",
+    "glow_eye",
+    "foot_left",
+    "foot_right"
+  ],
+  "tags": {
+    "glow_lava": [
+      "glow"
+    ],
+    "hi_head": [
+      "hi"
+    ],
+    "glow_crater": [
+      "glow"
+    ],
+    "glow_lava_cap": [
+      "glow"
+    ],
+    "glow_crater_blown": [
+      "glow"
+    ],
+    "glow_eye": [
+      "glow"
+    ],
+    "glow_pipe": [
+      "glow"
+    ],
+    "ob_hitbox": [
+      "ob"
+    ]
+  },
+  "unintended_tags": {
+    "glow_lava_cap": [
+      "glow"
+    ],
+    "glow_crater_blown": [
+      "glow"
+    ]
+  },
+  "hitbox_blocks": [
+    8.25,
+    4.69,
+    6.88
+  ],
+  "displays_per_bone": {
+    "glow_lava": 65,
+    "volcano": 62,
+    "cone_cap": 22,
+    "glow_lava_cap": 15,
+    "cone_blown": 11,
+    "body": 9,
+    "hand_left": 9,
+    "hand_right": 9,
+    "brows": 8,
+    "foot_left": 7,
+    "foot_right": 7,
+    "pipe": 5,
+    "arm_left": 2,
+    "thigh_left": 2,
+    "arm_right": 2,
+    "thigh_right": 2,
+    "forearm_left": 2,
+    "forearm_right": 2,
+    "hi_head": 1,
+    "glow_crater": 1,
+    "glow_crater_blown": 1,
+    "jaw": 1,
+    "tongue": 1,
+    "glow_eye": 1,
+    "glow_pipe": 1,
+    "shin_left": 1,
+    "shin_right": 1
+  },
+  "animations": [
+    "idle",
+    "coil",
+    "leap",
+    "slam",
+    "tongue",
+    "erupt",
+    "death"
+  ]
+}

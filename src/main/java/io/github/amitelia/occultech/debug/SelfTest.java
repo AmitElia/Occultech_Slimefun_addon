@@ -953,6 +953,20 @@ final class SelfTest {
                 carrier == null ? "no carrier" : "scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue()
                     + ", holding " + carrier.getEquipment().getItemInMainHand().getType());
         }
+        if ("MIRE_MONARCH".equals(bossId) && currentFight.usesMythicBody()
+            && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_mire_monarch")) {
+            LivingEntity carrier = currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+            check("The Elder of Ash has one BetterModel tracker", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(carrier, "occultech_mire_monarch"),
+                carrier == null ? "no carrier" : io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier));
+            check("The Elder of Ash's model has its hitbox", carrier != null
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_mire_monarch"),
+                "no hitbox entity");
+            check("The Elder of Ash's carrier is an unscaled magma cube under the model", carrier instanceof org.bukkit.entity.MagmaCube
+                && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
+                carrier == null ? "no carrier" : carrier.getType() + ", scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue());
+        }
         if ("NIGHT_MATRIARCH".equals(bossId) && currentFight.usesMythicBody()
             && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
             && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_night_matriarch")) {
@@ -1081,7 +1095,8 @@ final class SelfTest {
         check(name + " drops no vanilla loot", dropped.isEmpty(), dropped.size() + " items on the ground: "
             + dropped.stream().map(i -> i.getItemStack().getType() + "x" + i.getItemStack().getAmount()).distinct().limit(6).toList());
         // superflat worlds spawn wild slimes, so only count slimes that appeared during the fight
-        long slimes = nearby().stream().filter(e -> e instanceof Slime && !slimesBefore.contains(e.getUniqueId()) && !Keys.isSummoned(e)).count();
+        long slimes = nearby().stream().filter(e -> e instanceof org.bukkit.entity.AbstractCubeMob && !slimesBefore.contains(e.getUniqueId())
+            && !Keys.isSummoned(e)).count();                  // slimes and magma cubes (the Elder of Ash's spawn)
         check(name + " leaves no split slimes", slimes == 0, slimes + " new slimes");
         nearby().stream().filter(e -> e instanceof Item).forEach(Entity::remove);
         currentFight = null;
@@ -2293,7 +2308,8 @@ final class SelfTest {
     // ------------------------------------------------------------------ helpers
 
     private void snapshotSlimes() {
-        slimesBefore = nearby().stream().filter(e -> e instanceof Slime).map(Entity::getUniqueId).collect(java.util.stream.Collectors.toSet());
+        slimesBefore = nearby().stream().filter(e -> e instanceof org.bukkit.entity.AbstractCubeMob).map(Entity::getUniqueId)
+            .collect(java.util.stream.Collectors.toSet());
     }
 
     private void fill(RitualRecipe recipe) {

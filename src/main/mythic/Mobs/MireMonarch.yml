@@ -1,0 +1,28 @@
+# The Elder of Ash's body: the elder toad sage with a volcano growing out of its back, on a magma cube carrier (its
+# bounces flame, not slime). Occultech still decides every attack, deals all damage (MireMonarch.java) and hands out
+# loot. Health is the solo value; Occultech multiplies it for the group after the spawn. The id stays MIRE_MONARCH.
+OCCULTECH_MIRE_MONARCH:
+  Type: MAGMA_CUBE
+  Display: '&6The Elder of Ash'
+  Health: 600
+  Damage: 7
+  Armor: 0
+  Options:
+    # Occultech rebuilds the body from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    PreventSlimeSplit: true
+    MovementSpeed: 0.30
+    KnockbackResistance: 0.8
+    FollowRange: 32
+    AlwaysShowName: true
+  Drops: []
+  # The carrier stays at normal size and the model is drawn as authored (9 blocks across, the crater 6.6 up); its
+  # ob_hitbox bone covers his body, head, haunches and the volcano's foot and passes hits on to the carrier. idle,
+  # walk, spawn and death play by themselves; the rest are his skills (Skills/MireMonarch.yml).
+  Skills:
+  - model{m=occultech_mire_monarch} @self ~onSpawn
+  - bodyrotation{mh=30;mnh=-30;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=MIRE_MONARCH_DEATH} @self ~onDeath
