@@ -13,8 +13,10 @@ Timed to MireMonarch.java:
                          glaring up at the target, trembling; the volcano flares white (a tint, session 6)
   leap      0.4 s hold   the jump (the server throws him): arms reaching, hind legs thrown back, held in the air
   land      1.0 s once   the landing: contact at 0 s (the shockwave), a heavy splayed squash, back up
-  tongue    1.9 s once   the tongue (TONGUE_WARNING 25 ticks): he lowers his head and glares down the lane, the throat
-                         swells, the jaw cracks, and at 1.25 s the tongue shoots out 5 blocks and snaps back
+  tongue    3.2 s once   the tongue (TONGUE_AIM 20 + TONGUE_LOCK 15 ticks): he lowers his head and glares at his target
+                         while the server turns him with it (1 s); at the lock the jaw drops and hangs open, the throat
+                         swelling; at 1.75 s the tongue shoots out 5 blocks dead level, stays out 0.6 s (the plugin draws it
+                         on down the lane), snaps back, and the mouth closes
   erupt     2.2 s once   at 66%: a crouch, then head thrown back, jaw wide, as the volcano throws the magma cubes
   blow      2.0 s once   at 33%: a shudder, then the blast at 0.9 s (the cap is swapped for the blown top then)
   flinch    0.4 s once   hit: a jolt, the brows up (layered over whatever he's doing)
@@ -42,7 +44,7 @@ RIG = ROOT / "docs/art/bosses/elder_of_ash/overhaul/s6_variants" / f"{s3.MODEL_I
 P = {k: v[1] for k, v in s2.POSES.items()}
 REST = {"plant": True}
 OVERRIDE = ("coil", "leap", "land", "tongue", "erupt", "blow", "flinch")
-CONTACT = {"land": 0.0, "tongue": 1.25, "blow": 0.9}          # seconds into the clip: the shockwave, the lash, the blast
+CONTACT = {"land": 0.0, "tongue": 1.75, "blow": 0.9}          # seconds into the clip: the shockwave, the lash, the blast
 
 
 def spec(base, **changes):
@@ -67,9 +69,13 @@ def clips():
     slam_deep = spec(slam, y=slam["y"] - 3, head=-10)
     glare = spec(REST, head=-5, brows=-1.5, y=-2)
     swell = spec(glare, jaw=-3, y=-2.5)
-    crack = spec(glare, jaw=-10)
-    lash = spec(P["tongue"], brows=-1.0)
-    snap = spec(lash, jaw=-12, tongue=24)
+    gape = spec(glare, jaw=-16, brows=-2, y=-2.5)
+    gape_wide = spec(gape, jaw=-22, head=-3)
+    # the lash: the tongue level (its pitch in the head undoes the head's), straight down the lane
+    lash = spec(P["tongue"], brows=-1.0, head=-3, tongue_tilt=3)
+    lash_hold = spec(lash, head=-2, tongue_tilt=2)
+    snap = spec(lash, jaw=-18, tongue=20)
+    agape = spec(glare, jaw=-14, brows=-1)
     crouch = spec(REST, y=-6, head=-8, arm=(0, 0, -12))
     erupt = P["erupt"]
     howl = spec(erupt, head=26, jaw=-28)
@@ -91,8 +97,9 @@ def clips():
                                (1.05, tremble(-1.5)), (1.25, tremble(2)), (1.5, coil_deep)]),
         "leap": (0.4, "hold", [(0, coil_deep), (0.12, spec(leap, head=-2)), (0.4, leap)]),
         "land": (1.0, "once", [(0, slam), (0.1, slam_deep), (0.4, slam), (0.75, spec(REST, y=-3)), (1.0, REST)]),
-        "tongue": (1.9, "once", [(0, REST), (0.3, glare), (0.8, swell), (1.05, glare), (1.2, crack), (1.25, lash),
-                                 (1.45, lash), (1.65, snap), (1.9, REST)]),
+        "tongue": (3.2, "once", [(0, REST), (0.3, glare), (0.7, swell), (1.0, glare), (1.15, gape), (1.6, gape_wide),
+                                 (1.75, lash), (2.05, lash_hold), (2.35, lash), (2.55, snap), (2.8, agape),
+                                 (3.2, REST)]),
         "erupt": (2.2, "once", [(0, REST), (0.4, crouch), (0.9, erupt), (1.3, howl), (1.8, erupt), (2.2, REST)]),
         "blow": (2.0, "once", [(0, REST), (0.3, shudder(0)), (0.5, shudder(4)), (0.65, shudder(-3)), (0.8, shudder(4)),
                                (0.9, blast), (1.4, blast), (2.0, REST)]),
@@ -148,7 +155,7 @@ def tracks(clip, rest_rot):
     channel("brows", lambda sp: (0.0, float(sp.get("brows", 0)), 0.0))
 
     def tongue(sp):
-        a = math.radians(sp.get("jaw", 0) * 0.5)
+        a = math.radians(sp.get("tongue_tilt", sp.get("jaw", 0) * 0.5))      # as ash_s2.pose tilts it
         t = sp.get("tongue", 0)
         return (0.0, math.sin(a) * t, -math.cos(a) * t)
     channel("tongue", tongue)

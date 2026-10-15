@@ -221,7 +221,7 @@ def plant(model, bone, axis, sub, sign=1):
 
 #   y: raise (+) or drop (-) the whole toad; tilt: pitch of the whole toad (+ nose up); head, jaw: pitch (+ up);
 #   arm / thigh: (x, y, z) of the left side, mirrored for the right; plant: put hands and feet back on the ground;
-#   tongue: how far it slides out of the mouth; brows: lift
+#   tongue: how far it slides out of the mouth; tongue_tilt: its pitch in the head (default half the jaw's); brows: lift
 POSES = {
     "idle": ("idle: still, heavy, the pipe smoking", {}),
     "coil": ("the coil before the leap: sunk low, elbows up, glaring up at the target",
@@ -254,7 +254,8 @@ def pose(model, spec):
     pipe = group(model, "pipe")
     pipe.rotation = [-spec.get("jaw", 0) * 1.5 - min(0, spec.get("head", 0) + spec.get("tilt", 0)) + 3,
                      pipe.rotation[1], pipe.rotation[2]]
-    tilt = spec.get("jaw", 0) * 0.5                       # the tongue comes out of the middle of the open mouth
+    # the tongue comes out of the middle of the open mouth; tongue_tilt overrides it (the lash: level, straight ahead)
+    tilt = spec.get("tongue_tilt", spec.get("jaw", 0) * 0.5)
     group(model, "tongue").rotation = [tilt, 0, 0]
     if spec.get("tongue"):                                # slid out along itself; its root stays at the back of the mouth
         for c in cubes_in(model, group(model, "tongue")):

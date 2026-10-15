@@ -76,16 +76,43 @@ volcano should):
 - **Drops:** the mob drops are magma cream and the odd magma block, instead of slime balls.
 - **Unchanged:** the boss drop (Sovereign Gel) and the catalyst keep their ids and look; their redesign comes later.
 
+## Fixes after the first fight (2026-10-15)
+
+- **Purple-black cubes on the hind legs:** each shin's thin beam ran the full 35 units from knee to ankle, past the
+  client's item-model limit (-16..32), so the client drew it as a missing model. It now starts a third of the way down
+  (`ash_s1.hind_leg`); every generated model is checked against the limit.
+- **Facing and movement:** the magma cube's own AI is off (no goals, unaware: physics and its touch damage stay). The
+  script crawls him after the nearest fighter, easing in, stepping up single blocks and stopping 5 blocks short (his
+  head's reach), and turns him at most 6 degrees a tick, so he always faces whoever he's after.
+- **The leap:** the server now flies him on a real arc (16-28 ticks, higher the further he goes) and puts him down on
+  the marked spot; the landing splashes lava pools round him.
+- **The tongue:** he tracks his target for 1 s, turning with them; then locks on (the lane shows, the jaw drops and hangs
+  open, 0.75 s); at 1.75 s the tongue shoots out dead level and stays out 0.6 s, the plugin drawing it on straight down
+  the lane (pink, a glowing tip that rides the caught player in), then it snaps back and the mouth closes. The clip is
+  3.2 s.
+- **Volcanic rocks:** magma blocks (block displays, tumbling, trailing fire) lobbed from the crater in high arcs at the
+  fighters, each landing spot ringed for the whole flight; they burst (7 damage in the ring) and leave a lava pool.
+  2 every 2.5 s in stage one, 3 every 1.5 s from the eruption, 4 every 1.25 s once the top is blown; the blast throws
+  six more.
+- **Two stages, two colours:** the lava is orange until the eruption at 2/3 and deep red from then on (the blown top
+  stays deep red); the coil no longer flares. From the eruption: a faster crawl, the tongue every 8 s, more rocks, lava
+  pools behind him every 5 s (3 s once blown), a scorched, flaming ring round him, flames off his flanks, a fountain of
+  flame and red sparks from the crater.
+- **Ground lava:** pools bubble and spit while they last (at most 14 at once); embers pop round him even in stage one.
+- **Ash Frogs instead of the magma spawn:** the eruption throws three magma clods to the arena's edge; each bursts into a
+  warm frog three times a frog's size (60 health, 6 armour, no knockback) that hops back to the altar and heals him 6%.
+
 ## The pack
 
-**sha1 `57abff76`.** BetterModel's output for the eleven shipped models (278 assets of the Elder's) is merged in, the
+**sha1 `69cb0cd6`** (after the fixes; first shipped as `57abff76`). BetterModel's output for the eleven shipped models (278 assets of the Elder's) is merged in, the
 pack is copied into the pack repository's local clone, and the jar carries the same zip. The new jar is in both
 servers' plugin folders. The session review rig was taken out of your server's BetterModel models; the shipped model
 replaces it.
 
 ## Tests
 
-- **Self-test with Mythic and BetterModel (server b): 562 passed, 0 failed.** New checks:
+- **Self-test with Mythic and BetterModel (server b): 568 passed, 0 failed** after the fixes (562/0 at the first ship). The
+  volcanic rock grades in tier 0's area band at 7 damage (6 graded 11%, under the band). New checks at the first ship:
   - the Elder of Ash has one BetterModel tracker;
   - his model has its hitbox;
   - his carrier is an unscaled magma cube.

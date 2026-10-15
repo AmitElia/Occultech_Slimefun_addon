@@ -4,11 +4,12 @@ His variants are the volcano's stages. The lava (the streams, the crater) is pai
 BetterModel's per-bone tint multiplies a stage colour into it, so there is no texture swap. The tinted bones are
 `glow_lava`, `glow_lava_cap` (the streams' tops, on the cap), `glow_crater` and
 `glow_crater_blown`:
-  dormant   (255, 104, 34)    above 2/3 health: deep orange-red, slow
-  awake     (255, 160, 50)    below 2/3 (after the eruption that throws the magma cubes): bright orange
-  blown     (255, 236, 150)   below 1/3: white-hot yellow; the cap is blown off: `cone_cap` hidden, `cone_blown`
-                              shown (broken stumps leaning out round a crater twice as wide, lava welling in it)
-  coil      (255, 255, 255)   the leap's 1.5 s warning, at any stage: the lava flares to its painted white heat
+  dormant   (255, 140, 30)    above 2/3 health: orange
+  awake     (190, 25, 10)     below 2/3 (after the eruption that throws the Ash Frogs): deep red, the fight's second
+                              and far more dangerous stage
+  blown     (176, 20, 8)      below 1/3: deep red still (the colour changes only between the two stages); the cap
+                              is blown off: `cone_cap` hidden, `cone_blown` shown (broken stumps leaning out round a
+                              crater twice as wide, lava welling in it)
   dead      (60, 46, 42)      it cools to dark crust as he dies (the eyes too)
 
 Readability is checked at night (light level ~4: everything but the full-bright lava, crater, eyes and ember dims)
@@ -31,8 +32,7 @@ from bosskit import sheet  # noqa: E402
 from bosses import ash_s3 as s3, ash_s4 as s4, ash_s5 as s5, volley_crone_s4 as v4  # noqa: E402
 
 OUT = ROOT / "docs/art/bosses/elder_of_ash/overhaul/s6_variants"
-STAGES = {"dormant": (255, 104, 34), "awake": (255, 160, 50), "blown": (255, 236, 150), "coil": (255, 255, 255),
-          "dead": (60, 46, 42)}
+STAGES = {"dormant": (255, 140, 30), "awake": (190, 25, 10), "blown": (176, 20, 8), "dead": (60, 46, 42)}
 BLOWN = {"blown"}                            # the stages with the cap blown off
 LAVA_ZONES = ("lava", "lava_hot")
 TINT_BONES = ("glow_lava", "glow_lava_cap", "glow_crater", "glow_crater_blown")
@@ -150,9 +150,9 @@ def main():
         render(model, bb, atlas_path, blown, OUT / "renders" / name)
         print(name, "rendered")
     labels = {"dormant": "dormant (above 2/3)", "awake": "awake (below 2/3)", "blown": "blown (below 1/3): the top gone",
-              "coil": "coil: the leap's warning", "dead": "dead: cooled",
+              "dead": "dead: cooled",
               "night_dormant": "night, dormant", "night_blown": "night, blown", "hit": "red hit flash (awake)"}
-    order = ["dormant", "awake", "blown", "coil", "dead"]
+    order = ["dormant", "awake", "blown", "dead"]
     contact_sheet(order, labels, "volcano", OUT / "stages_volcano.png", "The Elder of Ash - the volcano's stages, close up")
     contact_sheet(order, labels, "hero", OUT / "stages_hero.png", "The Elder of Ash - the volcano's stages")
     contact_sheet(["night_dormant", "night_blown", "hit"], labels, "player_eye", OUT / "readability.png",

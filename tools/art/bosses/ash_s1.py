@@ -147,7 +147,11 @@ def hind_leg(root, sd):
     leg.box(f"hip_{sd}_round", hip, (21.6, 23, 23), "flank", rotation=(45, 0, 0))       # an octagon from the side
     taper(leg, f"thigh_{sd}", hip, knee, [(0.35, 21), (0.65, 17), (1.0, 13)], "flank")
     leg.box(f"knee_{sd}", knee, (13, 12, 12), "flank")
-    taper(leg, f"shin_{sd}", knee, ankle, [(0.5, 10), (1.0, 8)], "limb")
+    # the shin's thin beam starts a third of the way down: one beam the full 35 long breaks the client's item-model
+    # limit (-16..32) and draws as a purple-black missing model in game
+    taper(leg, f"shin_{sd}", knee, ankle, [(0.5, 10)], "limb")
+    mid = tuple(knee[k] + (ankle[k] - knee[k]) * 0.3 for k in range(3))
+    beam(leg, f"shin_{sd}_1", mid, ankle, 8, "limb", 8)
     leg.box(f"foot_{sd}", (sd * 58, 2.0, 18), (12, 4, 32), "toe")
     for i, yaw in enumerate((-20, 6, 32)):
         finger(leg, f"toe_{sd}_{i}", (sd * 58 + sd * (i - 1) * 3.5, 2.0, 3), sd * yaw, 13)
