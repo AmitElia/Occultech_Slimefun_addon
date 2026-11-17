@@ -1,0 +1,159 @@
+# The Orrery's skills (mob in ../Mobs/Orrery.yml).
+#
+# Three BetterModel models on the one stand: the sun and the planets (orrery), the shooting stars (orrery_meteors) and
+# the comet (orrery_comet). BetterModel plays one clip per model at a time (a clip started later takes every bone of
+# its model), so each of these is its own model.
+# The planets' clip is the orrery model's idle: BetterModel plays it by itself, from the moment the model is made and
+# again whenever BetterModel rebuilds the model (it does when the mob loads after a restart or with its chunk, after
+# the mob's own load skills ran). The rest (the sun facing the viewer, full light, the hidden shooting stars and comet)
+# is put back by ORRERY_REFRESH every 2 s.
+
+# ---- placing ---------------------------------------------------------------------------------------------------------
+# The egg drops the stand on the clicked block; the sun floats in the block space above it, its centre 0.75 up (the
+# model's origin is the sun's centre; a little above the block's middle so the corona clears the floor).
+ORRERY_PLACE:
+  Skills:
+  - teleport @selflocation{centered=true;y=0.75}
+  - delay 1
+  - skill{s=ORRERY_SETUP}
+
+# st=false: BetterModel's sight trace stops animating a model for a player who looks at it from straight above.
+ORRERY_SETUP:
+  Skills:
+  - setvariable{var=caster.orrery_meteor;value=0;type=INTEGER} @self
+  - setvariable{var=caster.orrery_comet;value=0;type=INTEGER} @self
+  - model{m=orrery;st=false} @self
+  - model{m=orrery_meteors;st=false} @self
+  - model{m=orrery_comet;st=false} @self
+  - skill{s=ORRERY_REFRESH}
+
+# The sun's two discs face the viewer (only the sun: it sits at the model's origin, so turning it to the camera
+# doesn't move it); every part is lit fully, day or night; the shooting stars and the comet stay hidden while they
+# aren't flying. None of it restarts a clip.
+ORRERY_REFRESH:
+  Skills:
+  - delay 2
+  - billboard{m=orrery;p=sun;bb=center} @self
+  - brightness{m=orrery;b=15;s=15} @self
+  - brightness{m=orrery_meteors;b=15;s=15} @self
+  - brightness{m=orrery_comet;b=15;s=15} @self
+  - skill{s=ORRERY_HIDE_METEORS}
+  - skill{s=ORRERY_HIDE_COMET}
+ORRERY_HIDE_METEORS:
+  Conditions:
+  - variableequals{var=caster.orrery_meteor;value=0} true
+  Skills:
+  - partvisibility{m=orrery_meteors;p=meteor_1;v=false} @self
+  - partvisibility{m=orrery_meteors;p=meteor_2;v=false} @self
+  - partvisibility{m=orrery_meteors;p=meteor_3;v=false} @self
+  - partvisibility{m=orrery_meteors;p=meteor_4;v=false} @self
+  - partvisibility{m=orrery_meteors;p=meteor_5;v=false} @self
+  - partvisibility{m=orrery_meteors;p=meteor_6;v=false} @self
+# (a part name matches one bone exactly; children=true takes the comet's tail along with its head)
+ORRERY_HIDE_COMET:
+  Conditions:
+  - variableequals{var=caster.orrery_comet;value=0} true
+  Skills:
+  - partvisibility{m=orrery_comet;p=comet;children=true;v=false} @self
+
+# ---- picking up ------------------------------------------------------------------------------------------------------
+# Like breaking a block: a punch on the sun (or sneak + right-click) gives the player the egg back and the Orrery
+# goes. The model's click box passes both on to the stand. A plain right-click does nothing.
+ORRERY_CLICKED:
+  Skills:
+  - cancelevent
+  - skill{s=ORRERY_SNEAK_PICKUP}
+ORRERY_SNEAK_PICKUP:
+  TargetConditions:
+  - crouching true
+  Skills:
+  - skill{s=ORRERY_PICKUP}
+# Nothing hurts it (fire, explosions, mobs: the damage is cancelled); a player's punch picks it up.
+ORRERY_HURT:
+  Skills:
+  - cancelevent
+  - skill{s=ORRERY_PICKUP}
+ORRERY_PICKUP:
+  TargetConditions:
+  - isplayer true
+  Skills:
+  - command{c="mm eggs give <target.name> ORRERY 1"}
+  - sound{s=block.amethyst_block.break;v=0.8;p=1.4} @self
+  - remove @self
+
+# The click box is an entity of its own (BetterModel hitbox: an armour stand and an interaction). Entity clearers
+# remove those (ClearLaggEnhanced clears interactions and armour stands): the Orrery could then no longer be picked
+# up. CLE_PROTECTED is the tag ClearLaggEnhanced spares; tagged a few ticks after the model is made and every minute.
+ORRERY_PROTECT:
+  Skills:
+  - delay 10
+  - command{c="minecraft:tag <caster.uuid> add CLE_PROTECTED"} @self
+  - command{c="minecraft:execute at <caster.uuid> run tag @e[type=minecraft:interaction,distance=..3] add CLE_PROTECTED"} @self
+  - command{c="minecraft:execute at <caster.uuid> run tag @e[type=minecraft:armor_stand,distance=..3] add CLE_PROTECTED"} @self
+
+# ---- shooting stars and the comet ------------------------------------------------------------------------------------
+# Each is shown, played once and hidden again when its clip ends; while it flies, ORRERY_REFRESH leaves it alone.
+# One shooting star at a time (they share a model).
+ORRERY_METEOR:
+  Cooldown: 1
+  Conditions:
+  - variableequals{var=caster.orrery_meteor;value=0} true
+  Skills:
+  - randomskill{s=ORRERY_METEOR_1,ORRERY_METEOR_2,ORRERY_METEOR_3,ORRERY_METEOR_4,ORRERY_METEOR_5,ORRERY_METEOR_6}
+ORRERY_METEOR_1:
+  Skills:
+  - setvariable{var=caster.orrery_meteor;value=1;type=INTEGER} @self
+  - partvisibility{m=orrery_meteors;p=meteor_1;v=true} @self
+  - state{m=orrery_meteors;s=meteor_1;li=0;lo=0} @self
+  - delay 16
+  - skill{s=ORRERY_METEOR_LANDED}
+ORRERY_METEOR_2:
+  Skills:
+  - setvariable{var=caster.orrery_meteor;value=1;type=INTEGER} @self
+  - partvisibility{m=orrery_meteors;p=meteor_2;v=true} @self
+  - state{m=orrery_meteors;s=meteor_2;li=0;lo=0} @self
+  - delay 17
+  - skill{s=ORRERY_METEOR_LANDED}
+ORRERY_METEOR_3:
+  Skills:
+  - setvariable{var=caster.orrery_meteor;value=1;type=INTEGER} @self
+  - partvisibility{m=orrery_meteors;p=meteor_3;v=true} @self
+  - state{m=orrery_meteors;s=meteor_3;li=0;lo=0} @self
+  - delay 17
+  - skill{s=ORRERY_METEOR_LANDED}
+ORRERY_METEOR_4:
+  Skills:
+  - setvariable{var=caster.orrery_meteor;value=1;type=INTEGER} @self
+  - partvisibility{m=orrery_meteors;p=meteor_4;v=true} @self
+  - state{m=orrery_meteors;s=meteor_4;li=0;lo=0} @self
+  - delay 16
+  - skill{s=ORRERY_METEOR_LANDED}
+ORRERY_METEOR_5:
+  Skills:
+  - setvariable{var=caster.orrery_meteor;value=1;type=INTEGER} @self
+  - partvisibility{m=orrery_meteors;p=meteor_5;v=true} @self
+  - state{m=orrery_meteors;s=meteor_5;li=0;lo=0} @self
+  - delay 14
+  - skill{s=ORRERY_METEOR_LANDED}
+ORRERY_METEOR_6:
+  Skills:
+  - setvariable{var=caster.orrery_meteor;value=1;type=INTEGER} @self
+  - partvisibility{m=orrery_meteors;p=meteor_6;v=true} @self
+  - state{m=orrery_meteors;s=meteor_6;li=0;lo=0} @self
+  - delay 17
+  - skill{s=ORRERY_METEOR_LANDED}
+ORRERY_METEOR_LANDED:
+  Skills:
+  - setvariable{var=caster.orrery_meteor;value=0;type=INTEGER} @self
+  - skill{s=ORRERY_HIDE_METEORS}
+
+# One pass of the comet (13.3 s): in from far out, round the sun with its tail growing, back out.
+ORRERY_COMET:
+  Cooldown: 20
+  Skills:
+  - setvariable{var=caster.orrery_comet;value=1;type=INTEGER} @self
+  - partvisibility{m=orrery_comet;p=comet;children=true;v=true} @self
+  - state{m=orrery_comet;s=comet;li=0;lo=0} @self
+  - delay 266
+  - setvariable{var=caster.orrery_comet;value=0;type=INTEGER} @self
+  - skill{s=ORRERY_HIDE_COMET}

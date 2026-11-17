@@ -1,0 +1,45 @@
+# The Volcano Toad: a pig wearing the toad model (BetterModel volcano_toad_mount).
+# BetterModel hides the pig and turns the model with the pig's body (the skills play every clip: stand, waddle, leap,
+# landing): from the pig's AI (it wanders, looks around) when nobody rides it, from the rider's keys when someone
+# does. A camel can't carry it: on a camel BetterModel draws this model collapsed and never animates it (tested side by side with a pig).
+# Riding is BetterModel's: a right-click anywhere on the toad seats the player on the saddle (the model's seat bone)
+# and the rider steers with WASD, jumps with space and gets off with sneak. The pig's own handling of clicks (saddle,
+# feeding) is switched off.
+# Spawn: /mm mobs spawn VOLCANO_TOAD_MOUNT
+VOLCANO_TOAD_MOUNT:
+  Type: PIG
+  Display: '&6Volcano Toad'
+  Health: 40
+  Options:
+    Silent: true
+    Invincible: true
+    Despawn: false
+    PreventOtherDrops: true
+    PreventRenaming: true
+    PreventLeashing: true
+    KnockbackResistance: 1
+    # walking speed, ridden and wandering (pig default 0.25, the boss 0.30): ridden, 3.6 blocks a second. The waddle's
+    # stride (0.6 s) is made for that speed: change one and the planted feet slide
+    MovementSpeed: 0.30
+  # walks up full blocks without jumping (a top-level key, not under Options)
+  StepHeight: 1.0
+  Skills:
+  - model{m=volcano_toad_mount} @self ~onSpawn
+  # how far the head turns to look before the body follows; the body turns within a tick (a rider steers it)
+  - bodyrotation{mh=30;mnh=-30;rde=0;rdu=1} @self ~onSpawn
+  # a frog's jump with a rider: jump strength 0.85 (the pig's 0.42 plus 0.43), about 4.5 blocks up (0.42 is about
+  # 1.25). It never takes fall damage (Invincible), nor does its rider. Mythic's own mechanic, not /attribute (a
+  # console command prints a line every time it runs)
+  - attributeModifier{attr=JUMP_STRENGTH;op=ADD_NUMBER;amount=0.43;name=volcano_toad_jump} @self ~onSpawn
+  - skill{s=VOLCANO_TOAD_SETUP} @self ~onSpawn
+  - skill{s=VOLCANO_TOAD_SETUP} @self ~onLoad
+  - skill{s=VOLCANO_TOAD_PROTECT} @self ~onSpawn
+  - skill{s=VOLCANO_TOAD_PROTECT} @self ~onLoad
+  - skill{s=VOLCANO_TOAD_PROTECT} @self ~onTimer:1200
+  - skill{s=VOLCANO_TOAD_STAND} @self ~onTimer:1200
+  - skill{s=VOLCANO_TOAD_CLICKED} @trigger ~onInteract
+  - skill{s=VOLCANO_TOAD_AIR_TICK} @self ~onTimer:1
+  - skill{s=VOLCANO_TOAD_GAIT_TICK} @self ~onTimer:2
+  - skill{s=VOLCANO_TOAD_STEPS} @self ~onTimer:8
+  - skill{s=VOLCANO_TOAD_SMOKE} @self ~onTimer:6
+  - skill{s=VOLCANO_TOAD_CROAK} @self ~onTimer:200

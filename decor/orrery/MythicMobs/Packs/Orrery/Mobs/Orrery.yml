@@ -1,0 +1,35 @@
+# The Orrery: a sun the size of a block with the solar system turning around it (BetterModel model orrery, made by
+# tools/art/decor/orrery.py). A cow carries the model: frozen (no AI, no gravity, silent) and hidden by BetterModel. It
+# must not be Invisible (BetterModel's follow-mob-invisibility, on by default, would hide the model too), and it must be
+# a mob that can be hurt: BetterModel passes a punch on its click box to the carrier as damage, and a marker armour
+# stand ignores all damage, so nothing would happen. Every hurt is cancelled (ORRERY_HURT); a player's punch picks it up.
+# Place: use the spawn egg (/mm eggs give <player> ORRERY) on a block: the sun floats in the block space above it.
+# Pick up: punch the sun (or sneak + right-click it); you get the egg back.
+ORRERY:
+  Type: COW
+  Display: '&6Orrery'
+  Health: 20
+  Options:
+    NoAI: true
+    NoGravity: true
+    Silent: true
+    Despawn: false
+    Persistent: true
+    PreventOtherDrops: true
+    PreventRenaming: true
+    PreventLeashing: true
+    Collidable: false
+    KnockbackResistance: 1
+  Skills:
+  - skill{s=ORRERY_PLACE} @self ~onSpawn
+  - skill{s=ORRERY_SETUP} @self ~onLoad
+  - skill{s=ORRERY_REFRESH} @self ~onTimer:40
+  - skill{s=ORRERY_PROTECT} @self ~onSpawn
+  - skill{s=ORRERY_PROTECT} @self ~onLoad
+  - skill{s=ORRERY_PROTECT} @self ~onTimer:1200
+  - skill{s=ORRERY_CLICKED} @trigger ~onInteract
+  - skill{s=ORRERY_HURT} @trigger ~onDamaged
+  # a shooting star about every 3 s on average, at random (one of six paths)
+  - skill{s=ORRERY_METEOR} @self ~onTimer:30 0.45
+  # the comet: a pass of 13 s about every minute and a half
+  - skill{s=ORRERY_COMET} @self ~onTimer:200 0.25

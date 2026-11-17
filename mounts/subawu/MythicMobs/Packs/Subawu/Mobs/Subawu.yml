@@ -1,0 +1,47 @@
+# The Subawu: a pig wearing the truck model (BetterModel subawu_mount), made like the Volcano Toad. BetterModel hides
+# the pig and turns the model with its body; the skills play the clips (park, drive) and the engine.
+# The pig's own AI is cleared: a parked truck stays where it was left and never wanders. Riding is BetterModel's: a
+# right-click anywhere on the truck seats the player in the driver's seat (the model's seat bone, on the right); the
+# driver steers by looking (the truck turns to face where they look, so they always face forward), drives with
+# W/S/A/D, toots the horn with space and gets out with sneak. No jumping; it drives up full blocks.
+# Spawn: /mm mobs spawn SUBAWU_MOUNT
+SUBAWU_MOUNT:
+  Type: PIG
+  Display: '&fSubawu'
+  Health: 40
+  Options:
+    Silent: true
+    Invincible: true
+    Despawn: false
+    PreventOtherDrops: true
+    PreventRenaming: true
+    PreventLeashing: true
+    KnockbackResistance: 1
+    # driving speed (ridden, 12 blocks a second per point: 0.75 is 9 blocks a second, a sprinting player 5.6). The drive
+    # clip's wheels are made for it (SPEED in tools/art/mounts/subawu_mount.py): change it and the wheels slide or spin
+    MovementSpeed: 0.75
+  # drives up full blocks (a top-level key, not under Options)
+  StepHeight: 1.0
+  AIGoalSelectors:
+  - clear
+  AITargetSelectors:
+  - clear
+  Skills:
+  - model{m=subawu_mount} @self ~onSpawn
+  # how far the head turns before the body follows; the body turns within a tick (the driver steers it)
+  - bodyrotation{mh=30;mnh=-30;rde=0;rdu=1} @self ~onSpawn
+  # no jumping (space is the horn): jump strength times 0. Mythic's own mechanic, not /attribute (a console command
+  # prints a line every time it runs)
+  - attributeModifier{attr=JUMP_STRENGTH;op=MULTIPLY_SCALAR_1;amount=-1;name=subawu_no_jump} @self ~onSpawn
+  - skill{s=SUBAWU_SETUP} @self ~onSpawn
+  - skill{s=SUBAWU_SETUP} @self ~onLoad
+  - skill{s=SUBAWU_PROTECT} @self ~onSpawn
+  - skill{s=SUBAWU_PROTECT} @self ~onLoad
+  - skill{s=SUBAWU_PROTECT} @self ~onTimer:1200
+  - skill{s=SUBAWU_PARK} @self ~onTimer:1200
+  - skill{s=SUBAWU_CLICKED} @trigger ~onInteract
+  - skill{s=SUBAWU_GAIT_TICK} @self ~onTimer:2
+  - skill{s=SUBAWU_ENGINE_HUM} @self ~onTimer:40
+  - skill{s=SUBAWU_ENGINE_RUMBLE} @self ~onTimer:36
+  - skill{s=SUBAWU_EXHAUST} @self ~onTimer:8
+  - skill{s=SUBAWU_HORN_CHECK} @self ~onTimer:2

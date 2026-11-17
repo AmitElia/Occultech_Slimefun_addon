@@ -1,0 +1,353 @@
+# The Subawu's skills (mob in ../Mobs/Subawu.yml).
+
+# ---- riding ----------------------------------------------------------------------------------------------------------
+# Six seats: the driver's (p_seat, on the right of the cab), a passenger's beside it (p_seat2) and four in the bed
+# (p_seat3-6, two rows of two). Any right-click on the truck (the model's click box passes clicks on to the pig)
+# cancels the pig's own handling (saddle, feeding) and, without sneaking, seats the player: in the driver's seat when
+# it is free (the engine starts), else in the first free passenger's seat (cab first, then the bed; nobody when all
+# are full). BetterModel's walk controller drives the pig from the driver's keys
+# only; sneak gets anyone out; when the driver gets out the passengers do too (SUBAWU_DRIVER_GONE), and anyone can then
+# take the wheel.
+# Each player remembers the truck they drive (sub_drives: the truck's uuid, "none" as a passenger). Who sits where is
+# counted by SUBAWU_SEATS, not by BetterModel's modelhaspassenger: that one keeps counting a rider who got out (until
+# they leave the server), so the seat would stay taken and the engine would keep running.
+# The passengers' seats are tried first, and only while the driver's is taken: once they have seated someone the
+# driver's test still sees a driver, so nobody is seated twice.
+SUBAWU_CLICKED:
+  Skills:
+  - cancelevent
+  - skill{s=SUBAWU_SEATS} @self
+  - skill{s=SUBAWU_MOUNT_PASSENGER}
+  - skill{s=SUBAWU_MOUNT_DRIVER}
+# A passenger takes the first free seat: the cab's, then the bed's front row, then its back row. BetterModel counts a
+# seat as taken only while its rider can steer, so a passenger's seat always looks free to mountmodel (it would seat
+# everyone on seat2, on top of each other): the truck keeps count itself (sub_takenN, from SUBAWU_SEATS). The first try
+# that seats the player ends the others (the player is then mounted). Nobody is seated when all five are taken.
+SUBAWU_MOUNT_PASSENGER:
+  Conditions:
+  - variableequals{var=caster.sub_driven;value=1} true
+  TargetConditions:
+  - isplayer true
+  - crouching false
+  - mounted false
+  Skills:
+  - skill{s=SUBAWU_SEAT2_TRY}
+  - skill{s=SUBAWU_SEAT3_TRY}
+  - skill{s=SUBAWU_SEAT4_TRY}
+  - skill{s=SUBAWU_SEAT5_TRY}
+  - skill{s=SUBAWU_SEAT6_TRY}
+SUBAWU_SEAT2_TRY:
+  Conditions:
+  - variableequals{var=caster.sub_taken2;value=1} false
+  TargetConditions:
+  - mounted false
+  Skills:
+  - mountmodel{mid=subawu_mount;seat=seat2;drive=false;mode=walking}
+  - setvariable{var=caster.sub_taken2;value=1;type=INTEGER} @self
+  - setvariable{var=target.sub_rides;value=<caster.uuid>;type=STRING}
+  - setvariable{var=target.sub_seat;value=2;type=INTEGER}
+  - setvariable{var=target.sub_drives;value=none;type=STRING}
+  - sound{s=block.iron_door.close;v=0.6;p=1.4} @self
+SUBAWU_SEAT3_TRY:
+  Conditions:
+  - variableequals{var=caster.sub_taken3;value=1} false
+  TargetConditions:
+  - mounted false
+  Skills:
+  - mountmodel{mid=subawu_mount;seat=seat3;drive=false;mode=walking}
+  - setvariable{var=caster.sub_taken3;value=1;type=INTEGER} @self
+  - setvariable{var=target.sub_rides;value=<caster.uuid>;type=STRING}
+  - setvariable{var=target.sub_seat;value=3;type=INTEGER}
+  - setvariable{var=target.sub_drives;value=none;type=STRING}
+  - sound{s=block.iron_door.close;v=0.6;p=1.4} @self
+SUBAWU_SEAT4_TRY:
+  Conditions:
+  - variableequals{var=caster.sub_taken4;value=1} false
+  TargetConditions:
+  - mounted false
+  Skills:
+  - mountmodel{mid=subawu_mount;seat=seat4;drive=false;mode=walking}
+  - setvariable{var=caster.sub_taken4;value=1;type=INTEGER} @self
+  - setvariable{var=target.sub_rides;value=<caster.uuid>;type=STRING}
+  - setvariable{var=target.sub_seat;value=4;type=INTEGER}
+  - setvariable{var=target.sub_drives;value=none;type=STRING}
+  - sound{s=block.iron_door.close;v=0.6;p=1.4} @self
+SUBAWU_SEAT5_TRY:
+  Conditions:
+  - variableequals{var=caster.sub_taken5;value=1} false
+  TargetConditions:
+  - mounted false
+  Skills:
+  - mountmodel{mid=subawu_mount;seat=seat5;drive=false;mode=walking}
+  - setvariable{var=caster.sub_taken5;value=1;type=INTEGER} @self
+  - setvariable{var=target.sub_rides;value=<caster.uuid>;type=STRING}
+  - setvariable{var=target.sub_seat;value=5;type=INTEGER}
+  - setvariable{var=target.sub_drives;value=none;type=STRING}
+  - sound{s=block.iron_door.close;v=0.6;p=1.4} @self
+SUBAWU_SEAT6_TRY:
+  Conditions:
+  - variableequals{var=caster.sub_taken6;value=1} false
+  TargetConditions:
+  - mounted false
+  Skills:
+  - mountmodel{mid=subawu_mount;seat=seat6;drive=false;mode=walking}
+  - setvariable{var=caster.sub_taken6;value=1;type=INTEGER} @self
+  - setvariable{var=target.sub_rides;value=<caster.uuid>;type=STRING}
+  - setvariable{var=target.sub_seat;value=6;type=INTEGER}
+  - setvariable{var=target.sub_drives;value=none;type=STRING}
+  - sound{s=block.iron_door.close;v=0.6;p=1.4} @self
+SUBAWU_MOUNT_DRIVER:
+  Conditions:
+  - variableequals{var=caster.sub_driven;value=1} false
+  TargetConditions:
+  - isplayer true
+  - crouching false
+  - mounted false
+  Skills:
+  - mountmodel{mid=subawu_mount;seat=seat;drive=true;mode=walking}
+  - setvariable{var=target.sub_drives;value=<caster.uuid>;type=STRING}
+  - setvariable{var=target.sub_rides;value=<caster.uuid>;type=STRING}
+  - setvariable{var=target.sub_seat;value=1;type=INTEGER}
+  - sound{s=block.piston.extend;v=0.8;p=0.6} @self
+  - sound{s=entity.minecart.riding;v=0.6;p=1.3} @self
+  - delay 6
+  - sound{s=entity.bee.loop;v=0.7;p=0.6} @self
+  - particle{p=campfire_cosy_smoke;a=4;hs=0.1;vs=0.05;s=0.02;y=0.3;fo=-2.2;so=0.6} @self
+
+# Who is in the truck: every seated player within 2.2 blocks of the pig (the farthest seat, the back of the bed, is 1.7
+# from it) who sat down in this truck (sub_rides: the truck's uuid, sub_seat: 1 the driver's, 2-6 the passengers').
+# sub_driven / sub_carried: a driver / any passenger aboard; sub_takenN: seat N taken. Players remember the truck they
+# last sat in, so one who got out (not mounted) or sits in another truck (another uuid) doesn't count. Run on every
+# click and every 2 ticks (SUBAWU_GAIT_TICK).
+SUBAWU_SEATS:
+  Skills:
+  - setvariable{var=caster.sub_driven;value=0;type=INTEGER} @self
+  - setvariable{var=caster.sub_carried;value=0;type=INTEGER} @self
+  - setvariable{var=caster.sub_taken2;value=0;type=INTEGER} @self
+  - setvariable{var=caster.sub_taken3;value=0;type=INTEGER} @self
+  - setvariable{var=caster.sub_taken4;value=0;type=INTEGER} @self
+  - setvariable{var=caster.sub_taken5;value=0;type=INTEGER} @self
+  - setvariable{var=caster.sub_taken6;value=0;type=INTEGER} @self
+  - skill{s=SUBAWU_SEAT_DRIVER} @PlayersInRadius{r=2.2}
+  - skill{s=SUBAWU_SEAT_PASSENGER} @PlayersInRadius{r=2.2}
+  - skill{s=SUBAWU_DRIVER_GONE} @self
+SUBAWU_SEAT_DRIVER:
+  TargetConditions:
+  - mounted true
+  - stringequals{val1=<target.var.sub_drives>;val2=<caster.uuid>} true
+  Skills:
+  - setvariable{var=caster.sub_driven;value=1;type=INTEGER} @self
+SUBAWU_SEAT_PASSENGER:
+  TargetConditions:
+  - mounted true
+  - stringequals{val1=<target.var.sub_rides>;val2=<caster.uuid>} true
+  - stringequals{val1=<target.var.sub_drives>;val2=<caster.uuid>} false
+  Skills:
+  - setvariable{var=caster.sub_carried;value=1;type=INTEGER} @self
+  - skill{s=SUBAWU_TAKEN2}
+  - skill{s=SUBAWU_TAKEN3}
+  - skill{s=SUBAWU_TAKEN4}
+  - skill{s=SUBAWU_TAKEN5}
+  - skill{s=SUBAWU_TAKEN6}
+SUBAWU_TAKEN2:
+  TargetConditions:
+  - variableequals{var=target.sub_seat;value=2} true
+  Skills:
+  - setvariable{var=caster.sub_taken2;value=1;type=INTEGER} @self
+SUBAWU_TAKEN3:
+  TargetConditions:
+  - variableequals{var=target.sub_seat;value=3} true
+  Skills:
+  - setvariable{var=caster.sub_taken3;value=1;type=INTEGER} @self
+SUBAWU_TAKEN4:
+  TargetConditions:
+  - variableequals{var=target.sub_seat;value=4} true
+  Skills:
+  - setvariable{var=caster.sub_taken4;value=1;type=INTEGER} @self
+SUBAWU_TAKEN5:
+  TargetConditions:
+  - variableequals{var=target.sub_seat;value=5} true
+  Skills:
+  - setvariable{var=caster.sub_taken5;value=1;type=INTEGER} @self
+SUBAWU_TAKEN6:
+  TargetConditions:
+  - variableequals{var=target.sub_seat;value=6} true
+  Skills:
+  - setvariable{var=caster.sub_taken6;value=1;type=INTEGER} @self
+# The driver got out and left passengers: they get out too. With only passengers' seats taken BetterModel keeps moving
+# the pig by itself (it rolled away at full speed, even at speed 0), so a truck never carries passengers without a
+# driver.
+SUBAWU_DRIVER_GONE:
+  Conditions:
+  - variableequals{var=caster.sub_driven;value=1} false
+  - variableequals{var=caster.sub_carried;value=1} true
+  Skills:
+  - dismountallmodel{seat=seat2,seat3,seat4,seat5,seat6} @self
+
+# The model's click box and seat are entities of their own (BetterModel hitboxes: an armour stand and an interaction
+# each). Entity clearers remove those (ClearLaggEnhanced clears interactions and armour stands): the truck can then no
+# longer be clicked or driven. CLE_PROTECTED is the tag ClearLaggEnhanced spares; the hitboxes are tagged a few ticks
+# after the model is made, and again every minute in case BetterModel remade them.
+# Mythic's own tag mechanic, not /tag: a console command prints a line every time it runs.
+SUBAWU_PROTECT:
+  Skills:
+  - delay 10
+  - addtag{tag=CLE_PROTECTED} @self
+  - skill{s=SUBAWU_PROTECT_HITBOX} @EntitiesInRadius{r=8;livingonly=false;targetarmorstands=true;targetinvulnerable=true;targetmarkers=true}
+SUBAWU_PROTECT_HITBOX:
+  TargetConditions:
+  - entitytype{types=INTERACTION,ARMOR_STAND} true
+  Skills:
+  - addtag{tag=CLE_PROTECTED}
+
+# ---- animations ------------------------------------------------------------------------------------------------------
+# Both clips are played from here, by priority: park (the engine idling) always, under everything (0); drive while the
+# truck moves (1: it moved more than 0.06 blocks in 2 ticks), the wheels rolling. Neither has one of BetterModel's own
+# names (idle, walk): BetterModel plays those by itself, each only while its own test of the mob passes, and under a
+# driver that test flickers, restarting the clip each time (the Volcano Toad's waddle jittered from it).
+SUBAWU_SETUP:
+  Skills:
+  - setvariable{var=caster.sub_gait;value=0;type=INTEGER} @self
+  - setvariable{var=caster.sub_still;value=0;type=INTEGER} @self
+  - setvariable{var=caster.sub_yaw;value=0;type=FLOAT} @self
+  - setvariable{var=caster.sub_now;value=0;type=FLOAT} @self
+  - setvariable{var=caster.sub_driven;value=0;type=INTEGER} @self
+  - setvariable{var=caster.sub_carried;value=0;type=INTEGER} @self
+  - settrackedlocation @selflocation
+  - skill{s=SUBAWU_PARK} @self
+# a tick after the model is made; again every minute, in case the model was made again (/bm reload)
+SUBAWU_PARK:
+  Skills:
+  - delay 2
+  - state{m=subawu_mount;s=park;p=0;li=4;lo=4} @self
+
+SUBAWU_GAIT_TICK:
+  Skills:
+  - skill{s=SUBAWU_SEATS} @self
+  - skill{s=SUBAWU_MOVING} @self
+  - skill{s=SUBAWU_DRIVE} @self
+  - skill{s=SUBAWU_STILL} @self
+  - skill{s=SUBAWU_TURN} @self
+  - settrackedlocation @selflocation
+SUBAWU_MOVING:
+  Conditions:
+  - distancefromtrackedlocation{d=>0.06} true
+  Skills:
+  - setvariable{var=caster.sub_still;value=0;type=INTEGER} @self
+SUBAWU_DRIVE:
+  Conditions:
+  - distancefromtrackedlocation{d=>0.06} true
+  - variableequals{var=caster.sub_gait;value=1} false
+  Skills:
+  - state{m=subawu_mount;s=drive;p=1;li=3;lo=4} @self
+  - setvariable{var=caster.sub_gait;value=1;type=INTEGER} @self
+# it stops only after 3 still checks in a row (6 ticks): one short check no longer stops the wheels and restarts them
+SUBAWU_STILL:
+  Conditions:
+  - distancefromtrackedlocation{d=>0.06} false
+  - variableequals{var=caster.sub_gait;value=1} true
+  Skills:
+  - variableadd{var=caster.sub_still;amount=1} @self
+  - skill{s=SUBAWU_STOP} @self
+SUBAWU_STOP:
+  Conditions:
+  - variableequals{var=caster.sub_still;value=3} true
+  Skills:
+  - state{m=subawu_mount;s=drive;remove=true} @self
+  - setvariable{var=caster.sub_gait;value=0;type=INTEGER} @self
+  - setvariable{var=caster.sub_still;value=0;type=INTEGER} @self
+
+# ---- drifting --------------------------------------------------------------------------------------------------------
+# How far the truck turned since the last check (2 ticks); turning hard while driving (more than 14 degrees, 140 a
+# second) squeals the tyres and smokes the rear wheels. The yaw wraps at +-180, so both bands count.
+# The heading is the driver's: BetterModel turns the model to where the driver looks and leaves the pig's own yaw
+# alone. The driver is the seated player near the pig who drives this truck (sub_drives), found as in SUBAWU_SEATS.
+SUBAWU_TURN:
+  # not before SUBAWU_SETUP has made the variables (the first ticks after a spawn): the math would warn
+  Conditions:
+  - variableisset{var=caster.sub_yaw} true
+  Skills:
+  - skill{s=SUBAWU_TURN_READ} @PlayersInRadius{r=2.2}
+  - setvariable{var=caster.sub_turn;value="<caster.var.sub_now> - <caster.var.sub_yaw>";type=FLOAT} @self
+  - setvariable{var=caster.sub_yaw;value=<caster.var.sub_now>;type=FLOAT} @self
+  - skill{s=SUBAWU_TURN_RIGHT} @self
+  - skill{s=SUBAWU_TURN_LEFT} @self
+SUBAWU_TURN_READ:
+  TargetConditions:
+  - mounted true
+  - stringequals{val1=<target.var.sub_drives>;val2=<caster.uuid>} true
+  Skills:
+  - setvariable{var=caster.sub_now;value=<target.l.yaw>;type=FLOAT} @self
+SUBAWU_TURN_RIGHT:
+  Conditions:
+  - variableequals{var=caster.sub_gait;value=1} true
+  - variableinrange{var=caster.sub_turn;range=14to346} true
+  Skills:
+  - skill{s=SUBAWU_DRIFT} @self
+SUBAWU_TURN_LEFT:
+  Conditions:
+  - variableequals{var=caster.sub_gait;value=1} true
+  - variableinrange{var=caster.sub_turn;range=-346to-14} true
+  Skills:
+  - skill{s=SUBAWU_DRIFT} @self
+SUBAWU_DRIFT:
+  Cooldown: 0.4
+  Skills:
+  - sound{s=block.grindstone.use;v=0.8;p=1.7} @self
+  - sound{s=entity.breeze.slide;v=0.9;p=1.3} @self
+  - particle{p=campfire_cosy_smoke;a=3;hs=0.3;vs=0.05;s=0.02;y=0.15} @modelpart{m=subawu_mount;p=wheels_rear}
+  - particle{p=cloud;a=6;hs=0.5;vs=0.05;s=0.03;y=0.1} @modelpart{m=subawu_mount;p=wheels_rear}
+
+# ---- engine ----------------------------------------------------------------------------------------------------------
+# Only while someone is in the driver's seat (a passenger alone doesn't start it). The hum (a slowed bee's buzz) runs all the time, deeper when parked;
+# the rumble (a minecart's rolling, about 2 s long) only while driving.
+SUBAWU_ENGINE_HUM:
+  Conditions:
+  - variableequals{var=caster.sub_driven;value=1} true
+  Skills:
+  - skill{s=SUBAWU_HUM_PARKED} @self
+  - skill{s=SUBAWU_HUM_DRIVING} @self
+SUBAWU_HUM_PARKED:
+  Conditions:
+  - variableequals{var=caster.sub_gait;value=1} false
+  Skills:
+  - sound{s=entity.bee.loop;v=0.6;p=0.55} @self
+SUBAWU_HUM_DRIVING:
+  Conditions:
+  - variableequals{var=caster.sub_gait;value=1} true
+  Skills:
+  - sound{s=entity.bee.loop;v=0.8;p=0.85} @self
+SUBAWU_ENGINE_RUMBLE:
+  Conditions:
+  - variableequals{var=caster.sub_driven;value=1} true
+  - variableequals{var=caster.sub_gait;value=1} true
+  Skills:
+  - sound{s=entity.minecart.riding;v=0.7;p=0.9} @self
+# a puff from the exhaust (behind the bed, on the driver's side) while the engine runs
+SUBAWU_EXHAUST:
+  Conditions:
+  - variableequals{var=caster.sub_driven;value=1} true
+  Skills:
+  - particle{p=smoke;a=2;hs=0.05;vs=0.03;s=0.01;y=0.3;fo=-2.2;so=0.6} @self
+
+# ---- horn ------------------------------------------------------------------------------------------------------------
+# The driver's jump key toots the horn: toot toot, two short honks (a didgeridoo note for the honk, a chiptune blip
+# for the brassy edge). Held down it toots again every 0.8 s. Only the driver's jump key, found as for drifting (the
+# passenger's space does nothing).
+SUBAWU_HORN_CHECK:
+  Skills:
+  - skill{s=SUBAWU_HORN} @PlayersInRadius{r=2.2}
+SUBAWU_HORN:
+  Cooldown: 0.8
+  TargetConditions:
+  - mounted true
+  - stringequals{val1=<target.var.sub_drives>;val2=<caster.uuid>} true
+  - input{key=jump} true
+  Skills:
+  - skill{s=SUBAWU_TOOT} @self
+  - delay 5
+  - skill{s=SUBAWU_TOOT} @self
+SUBAWU_TOOT:
+  Skills:
+  - sound{s=block.note_block.didgeridoo;v=2;p=1.6} @self
+  - sound{s=block.note_block.bit;v=0.7;p=1.19} @self

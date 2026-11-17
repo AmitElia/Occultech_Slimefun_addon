@@ -1,0 +1,153 @@
+# The Volcano Toad's skills (mob in ../Mobs/VolcanoToadMount.yml).
+
+# ---- riding ----------------------------------------------------------------------------------------------------------
+# Any right-click on the toad (the model's click box passes clicks on to the camel) cancels the camel's own handling
+# (vanilla riding, feeding, its inventory) and, without sneaking, seats the player on the saddle. BetterModel's walk
+# controller then moves the camel from the rider's keys; sneak gets off.
+VOLCANO_TOAD_CLICKED:
+  Skills:
+  - cancelevent
+  - skill{s=VOLCANO_TOAD_MOUNT_RIDER}
+VOLCANO_TOAD_MOUNT_RIDER:
+  TargetConditions:
+  - isplayer true
+  - crouching false
+  Skills:
+  - mountmodel{mid=volcano_toad_mount;seat=seat;drive=true;mode=walking}
+  - sound{s=entity.frog.ambient;v=1;p=0.5} @self
+
+# The model's click box and seat are entities of their own (BetterModel hitboxes: an armour stand and an interaction
+# each). Entity clearers remove those (ClearLaggEnhanced clears interactions and armour stands): the toad can then no
+# longer be clicked or mounted (the rider is put straight back down). CLE_PROTECTED is the tag ClearLaggEnhanced spares;
+# the hitboxes are tagged a few ticks after the model is made, and again every minute in case BetterModel remade them.
+# Mythic's own tag mechanic, not /tag: a console command prints a line every time it runs.
+VOLCANO_TOAD_PROTECT:
+  Skills:
+  - delay 10
+  - addtag{tag=CLE_PROTECTED} @self
+  - skill{s=VOLCANO_TOAD_PROTECT_HITBOX} @EntitiesInRadius{r=8;livingonly=false;targetarmorstands=true;targetinvulnerable=true;targetmarkers=true}
+VOLCANO_TOAD_PROTECT_HITBOX:
+  TargetConditions:
+  - entitytype{types=INTERACTION,ARMOR_STAND} true
+  Skills:
+  - addtag{tag=CLE_PROTECTED}
+
+# ---- animations ------------------------------------------------------------------------------------------------------
+# Every clip is played from here, by priority: stand (the idle) always, under it all (0); waddle while it moves on the
+# ground (1: it moved more than 0.06 blocks in 2 ticks, ridden or wandering alike); leap once it has been off the
+# ground for 2 ticks (a jump, or a drop) and land when it touches down again (2).
+# None of the clips has one of BetterModel's own names (idle, walk): BetterModel plays those by itself, each only
+# while its own test of the mob passes (standing, walking). Under a rider that test flickers (after a jump it keeps
+# flickering), and every time a bone goes over to another clip and back, BetterModel starts that clip again from its
+# first frame: the waddle jittered.
+# "On the ground" is measured (altitude: 1.0 standing on a block), not the mob's on-ground flag: while a rider steers,
+# BetterModel moves the mob in a way that leaves that flag false the whole time it moves, even on flat ground.
+
+VOLCANO_TOAD_SETUP:
+  Skills:
+  - setvariable{var=caster.toad_air;value=0;type=INTEGER} @self
+  - setvariable{var=caster.toad_gait;value=0;type=INTEGER} @self
+  - setvariable{var=caster.toad_still;value=0;type=INTEGER} @self
+  - settrackedlocation @selflocation
+  - skill{s=VOLCANO_TOAD_STAND} @self
+# a tick after the model is made; again every minute, in case the model was made again (/bm reload)
+VOLCANO_TOAD_STAND:
+  Skills:
+  - delay 2
+  - state{m=volcano_toad_mount;s=stand;p=0;li=10;lo=10} @self
+
+VOLCANO_TOAD_GAIT_TICK:
+  Skills:
+  - skill{s=VOLCANO_TOAD_MOVING} @self
+  - skill{s=VOLCANO_TOAD_WADDLE} @self
+  - skill{s=VOLCANO_TOAD_STILL} @self
+  - settrackedlocation @selflocation
+VOLCANO_TOAD_MOVING:
+  Conditions:
+  - distancefromtrackedlocation{d=>0.06} true
+  Skills:
+  - setvariable{var=caster.toad_still;value=0;type=INTEGER} @self
+VOLCANO_TOAD_WADDLE:
+  Conditions:
+  - altitude{a=<1.2} true
+  - distancefromtrackedlocation{d=>0.06} true
+  - variableequals{var=caster.toad_gait;value=1} false
+  Skills:
+  - state{m=volcano_toad_mount;s=waddle;p=1;li=2;lo=3} @self
+  - setvariable{var=caster.toad_gait;value=1;type=INTEGER} @self
+# it stops only after 3 still checks in a row (6 ticks): one short check (the mob paused a tick, or the check ran
+# early) no longer stops the waddle and restarts it from its first frame
+VOLCANO_TOAD_STILL:
+  Conditions:
+  - distancefromtrackedlocation{d=>0.06} false
+  - variableequals{var=caster.toad_gait;value=1} true
+  Skills:
+  - variableadd{var=caster.toad_still;amount=1} @self
+  - skill{s=VOLCANO_TOAD_STOP} @self
+VOLCANO_TOAD_STOP:
+  Conditions:
+  - variableequals{var=caster.toad_still;value=3} true
+  Skills:
+  - state{m=volcano_toad_mount;s=waddle;remove=true} @self
+  - setvariable{var=caster.toad_gait;value=0;type=INTEGER} @self
+  - setvariable{var=caster.toad_still;value=0;type=INTEGER} @self
+
+VOLCANO_TOAD_AIR_TICK:
+  Skills:
+  - skill{s=VOLCANO_TOAD_GROUNDED} @self
+  - skill{s=VOLCANO_TOAD_AIRBORNE} @self
+VOLCANO_TOAD_GROUNDED:
+  Conditions:
+  - altitude{a=<1.2} true
+  Skills:
+  - skill{s=VOLCANO_TOAD_LAND} @self
+  - setvariable{var=caster.toad_air;value=0;type=INTEGER} @self
+VOLCANO_TOAD_AIRBORNE:
+  Conditions:
+  - altitude{a=<1.2} false
+  Skills:
+  - variableadd{var=caster.toad_air;amount=1} @self
+  - skill{s=VOLCANO_TOAD_LEAP} @self
+VOLCANO_TOAD_LEAP:
+  Conditions:
+  - variableequals{var=caster.toad_air;value=2} true
+  Skills:
+  - state{m=volcano_toad_mount;s=waddle;remove=true} @self
+  - setvariable{var=caster.toad_gait;value=0;type=INTEGER} @self
+  - state{m=volcano_toad_mount;s=land;remove=true} @self
+  - state{m=volcano_toad_mount;s=leap;p=2} @self
+  - sound{s=entity.frog.long_jump;v=1.2;p=0.6} @self
+  - particle{p=campfire_cosy_smoke;a=6;hs=0.6;vs=0.1;s=0.02;y=0.2} @self
+VOLCANO_TOAD_LAND:
+  Conditions:
+  - variableequals{var=caster.toad_air;value=0} false
+  - variableequals{var=caster.toad_air;value=1} false
+  Skills:
+  - state{m=volcano_toad_mount;s=leap;remove=true} @self
+  - state{m=volcano_toad_mount;s=land;p=2} @self
+  - sound{s=entity.frog.step;v=1.5;p=0.5} @self
+  - sound{s=entity.ravager.step;v=0.8;p=0.8} @self
+  - particle{p=campfire_cosy_smoke;a=12;hs=1.2;vs=0.1;s=0.03;y=0.1} @self
+
+# footsteps while it waddles
+VOLCANO_TOAD_STEPS:
+  Conditions:
+  - altitude{a=<1.2} true
+  - variableequals{var=caster.toad_gait;value=1} true
+  Skills:
+  - sound{s=entity.frog.step;v=1;p=0.6} @self
+  - particle{p=block;m=dirt;a=4;hs=0.8;vs=0.05;s=0.1;y=0.1} @self
+
+VOLCANO_TOAD_CROAK:
+  Conditions:
+  - chance{c=0.5} true
+  Skills:
+  - sound{s=entity.frog.ambient;v=1;p=0.5} @self
+
+# the volcano smokes and steams, the pipe smoulders, now and then the crater spits a spark
+VOLCANO_TOAD_SMOKE:
+  Skills:
+  - particle{p=campfire_cosy_smoke;a=1;hs=0.15;vs=0.05;s=0.02} @modelpart{m=volcano_toad_mount;p=glow_crater}
+  - particle{p=white_smoke;a=3;hs=0.2;vs=0.1;s=0.03} @modelpart{m=volcano_toad_mount;p=glow_crater}
+  - particle{p=smoke;a=2;hs=0.05;vs=0.05;s=0.01} @modelpart{m=volcano_toad_mount;p=glow_pipe}
+  - particle{p=lava;a=1;hs=0.1;vs=0.1;s=0;chance=0.15} @modelpart{m=volcano_toad_mount;p=glow_crater}
