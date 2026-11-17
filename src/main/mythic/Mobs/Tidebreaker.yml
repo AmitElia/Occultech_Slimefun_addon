@@ -1,0 +1,46 @@
+# The Tidebreaker's two bodies. Occultech still decides every attack and every glide, deals all damage
+# (Tidebreaker.java) and hands out loot. Health is the solo value; Occultech multiplies it for the group after the spawn.
+# The drowned, the only part that can be hurt: a Viking with a zombie's face and little barnacles, standing in the bow.
+OCCULTECH_TIDEBREAKER:
+  Type: DROWNED
+  Display: '&9Tidebreaker'
+  Health: 300
+  Damage: 0
+  Armor: 0
+  Options:
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    PreventSunburn: true
+    KnockbackResistance: 1
+    FollowRange: 32
+    Silent: true
+    AlwaysShowName: true
+  Drops: []
+  Skills:
+  - model{m=occultech_tidebreaker} @self ~onSpawn
+  - bodyrotation{mh=55;mnh=-55;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=TIDEBREAKER_DEATH} @self ~onDeath
+
+# The carrier of the nautilus and the longship's bow: an invisible pig, which draws nothing. It is
+# invulnerable and swims where Tidebreaker.java sends it.
+OCCULTECH_TIDEBREAKER_MOUNT:
+  Type: PIG
+  Display: '&9Tide Mount'
+  Health: 100
+  Damage: 0
+  Armor: 0
+  Options:
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    KnockbackResistance: 1
+    Silent: true
+    AlwaysShowName: false
+  Drops: []
+  Skills:
+  - model{m=occultech_tidebreaker_mount} @self ~onSpawn
+  - bodyrotation{mh=30;mnh=-30;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=TIDEBREAKER_MOUNT_STATE_CALM} @self ~onSpawn

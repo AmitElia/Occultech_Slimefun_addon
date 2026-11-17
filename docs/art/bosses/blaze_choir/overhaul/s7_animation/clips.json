@@ -1,0 +1,44 @@
+{
+  "contact_seconds": {
+    "strike": 0.5,
+    "chorus": 1.5
+  },
+  "clips": {
+    "idle": {
+      "length": 3.0,
+      "loop": "loop"
+    },
+    "spawn": {
+      "length": 2.0,
+      "loop": "once"
+    },
+    "strike": {
+      "length": 0.8,
+      "loop": "once"
+    },
+    "shield": {
+      "length": 0.6,
+      "loop": "hold"
+    },
+    "unshield": {
+      "length": 0.6,
+      "loop": "once"
+    },
+    "chorus": {
+      "length": 2.0,
+      "loop": "once"
+    },
+    "last": {
+      "length": 1.0,
+      "loop": "loop"
+    },
+    "flinch": {
+      "length": 0.4,
+      "loop": "once"
+    },
+    "death": {
+      "length": 2.5,
+      "loop": "hold"
+    }
+  }
+}

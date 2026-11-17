@@ -201,6 +201,10 @@ final class SelfTest {
             then(0, () -> summonTier1(bossId));
             then(60, () -> checkFightRunning(bossId));
             then(0, () -> checkMovement(bossId));
+            if (bossId.equals("ABYSSAL_WARDEN")) {
+                then(0, this::woundWardenToAThird);
+                then(20, this::wardenHandOut);
+            }
             if (bossId.equals("BLAZE_CHOIR")) {
                 then(0, this::killAllButOneSinger);
                 then(15, this::lastSingerBare);
@@ -1032,6 +1036,47 @@ final class SelfTest {
                 check("Each casting hand wears its own model with its hitbox (cyan, purple)", worn.size() == 2, String.valueOf(worn));
             }
         }
+        if ("ABYSSAL_WARDEN".equals(bossId) && !currentFight.bosses().isEmpty()) {
+            LivingEntity carrier = currentFight.bosses().get(0);
+            check("The Abyssal Warden's carrier has no mind of its own (no laser, no flopping)",
+                carrier instanceof org.bukkit.entity.Mob mob && org.bukkit.Bukkit.getMobGoals().getAllGoals(mob).isEmpty(),
+                carrier instanceof org.bukkit.entity.Mob mob ? org.bukkit.Bukkit.getMobGoals().getAllGoals(mob).size() + " goals" : "not a mob");
+            if (currentFight.usesMythicBody() && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+                && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_abyssal_warden")) {
+                check("The Abyssal Warden has one BetterModel tracker",
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.attached(carrier, "occultech_abyssal_warden"),
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier));
+                check("The Abyssal Warden's model has its hitbox",
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_abyssal_warden"),
+                    "no hitbox entity");
+                check("The Abyssal Warden's carrier is an unscaled, invisible guardian under the model",
+                    carrier instanceof org.bukkit.entity.Guardian && carrier.isInvisible()
+                        && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
+                    carrier.getType() + ", scale " + carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue()
+                        + ", invisible " + carrier.isInvisible());
+            }
+        }
+        if ("BLAZE_CHOIR".equals(bossId) && currentFight.usesMythicBody()
+            && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_blaze_choir_soprano")) {
+            // three singers, three instruments: each carrier wears its own singer's model, once, unscaled
+            java.util.Set<String> worn = new java.util.HashSet<>();
+            boolean each = currentFight.bosses().size() == 3;
+            for (LivingEntity singer : currentFight.bosses()) {
+                int models = 0;
+                for (String voice : List.of("soprano", "alto", "bass")) {
+                    long n = io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.count(singer, "occultech_blaze_choir_" + voice);
+                    if (n > 0) {
+                        models += (int) n;
+                        worn.add(voice);
+                    }
+                }
+                each &= models == 1 && Math.abs(singer.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001;
+            }
+            check("each Blaze Choir singer wears one instrument's model, unscaled", each,
+                currentFight.bosses().stream().map(io.github.amitelia.occultech.integration.mythic.BetterModelVisuals::trackerNames).toList().toString());
+            check("the choir's three singers are three different models", worn.size() == 3, "worn " + worn);
+        }
         if ("WITCH_COVEN".equals(bossId) && currentFight.usesMythicBody()
             && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
             && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_witch_coven_cauldron")) {
@@ -1461,6 +1506,23 @@ final class SelfTest {
         }
     }
 
+    /** Drops the Warden to 30% health: on its next step its side window bursts and the hand comes out (phase 3). */
+    private void woundWardenToAThird() {
+        if (currentFight == null || currentFight.bosses().isEmpty()) {
+            return;
+        }
+        LivingEntity warden = currentFight.bosses().get(0);
+        warden.setHealth(warden.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue() * 0.3);
+    }
+
+    private void wardenHandOut() {
+        if (currentFight == null || currentFight.bosses().isEmpty()) {
+            return;
+        }
+        check("At a third the Abyssal Warden's hand bursts out (phase 3)", currentFight.behavior().phase() == 3,
+            "phase " + currentFight.behavior().phase() + ", health " + String.format("%.2f", currentFight.healthFraction()));
+    }
+
     /** Scripted movement really moves (needs mobs ticking without players: activation range 0 on the test server). */
     private void checkMovement(String bossId) {
         if (currentFight == null || currentFight.bosses().isEmpty()) {
@@ -1475,7 +1537,7 @@ final class SelfTest {
             case "BLAZE_CHOIR" -> {
                 boolean orbiting = currentFight.bosses().stream().allMatch(b -> {
                     double d = Math.hypot(b.getLocation().getX() - center.getX(), b.getLocation().getZ() - center.getZ());
-                    return d > 3.5 && d < 6.5 && b.getLocation().getY() > center.getY() + 1;
+                    return d > 3.5 && d < 6.5 && b.getLocation().getY() > center.getY() + 0.3;   // the modelled singers fly at 1
                 });
                 check("Blaze Choir circles the altar in the air", orbiting, "positions off the orbit");
             }

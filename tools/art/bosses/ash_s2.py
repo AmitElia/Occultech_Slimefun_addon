@@ -242,7 +242,7 @@ POSES = {
 
 def pose(model, spec):
     base, head = group(model, "base"), group(model, "hi_head")
-    base.rotation = [spec.get("tilt", 0), 0, 0]
+    base.rotation = [spec.get("tilt", 0), spec.get("yaw", 0), spec.get("roll", 0)]   # yaw, roll: the mount's waddle
     head.rotation = [spec.get("head", 0), spec.get("turn", 0), 0]
     group(model, "jaw").rotation = [spec.get("jaw", 0), 0, 0]
     for sd, side in SIDES.items():

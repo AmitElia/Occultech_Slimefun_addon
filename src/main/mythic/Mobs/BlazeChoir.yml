@@ -1,0 +1,75 @@
+# The Blaze Choir's three bodies: each singer's model on an invisible blaze. Occultech decides every orbit, shield,
+# fireball and chorus, deals all damage (BlazeChoir.java) and hands out loot. Health is the solo value;
+# Occultech multiplies it for the group after the spawn.
+
+OCCULTECH_BLAZE_CHOIR_SOPRANO:
+  Type: BLAZE
+  Display: '&6Blaze Choir &7(Soprano)'
+  Health: 110
+  Damage: 0
+  Armor: 0
+  Options:
+    # Occultech rebuilds the choir from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    KnockbackResistance: 1
+    FollowRange: 32
+    Silent: true
+    AlwaysShowName: true
+  Drops: []
+  Skills:
+  - model{m=occultech_blaze_choir_soprano} @self ~onSpawn
+  - state{m=occultech_blaze_choir_soprano;s=spawn} @self ~onSpawn
+  - bodyrotation{mh=40;mnh=-40;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=BLAZE_CHOIR_SOPRANO_STATE_CALM} @self ~onSpawn
+  - skill{s=BLAZE_CHOIR_SOPRANO_DEATH} @self ~onDeath
+
+OCCULTECH_BLAZE_CHOIR_ALTO:
+  Type: BLAZE
+  Display: '&6Blaze Choir &7(Alto)'
+  Health: 110
+  Damage: 0
+  Armor: 0
+  Options:
+    # Occultech rebuilds the choir from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    KnockbackResistance: 1
+    FollowRange: 32
+    Silent: true
+    AlwaysShowName: true
+  Drops: []
+  Skills:
+  - model{m=occultech_blaze_choir_alto} @self ~onSpawn
+  - state{m=occultech_blaze_choir_alto;s=spawn} @self ~onSpawn
+  - bodyrotation{mh=40;mnh=-40;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=BLAZE_CHOIR_ALTO_STATE_CALM} @self ~onSpawn
+  - skill{s=BLAZE_CHOIR_ALTO_DEATH} @self ~onDeath
+
+OCCULTECH_BLAZE_CHOIR_BASS:
+  Type: BLAZE
+  Display: '&6Blaze Choir &7(Bass)'
+  Health: 110
+  Damage: 0
+  Armor: 0
+  Options:
+    # Occultech rebuilds the choir from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    KnockbackResistance: 1
+    FollowRange: 32
+    Silent: true
+    AlwaysShowName: true
+  Drops: []
+  Skills:
+  - model{m=occultech_blaze_choir_bass} @self ~onSpawn
+  - state{m=occultech_blaze_choir_bass;s=spawn} @self ~onSpawn
+  - bodyrotation{mh=40;mnh=-40;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=BLAZE_CHOIR_BASS_STATE_CALM} @self ~onSpawn
+  - skill{s=BLAZE_CHOIR_BASS_DEATH} @self ~onDeath

@@ -62,7 +62,7 @@ def vocto(g, name, c, w, h, d, mat, cham=0.3):
                   (ch * math.sqrt(2), h - 0.5, ch / math.sqrt(2)), mat, rotation=(0, 45 * sx * sz, 0))
 
 
-def ring_panels(g, name, top_y, bot_y, top_r, bot_r, mat, n=8, t=2.5, fill=1.12, start=22.5):
+def ring_panels(g, name, top_y, bot_y, top_r, bot_r, mat, n=8, t=2.5, fill=1.12, start=22.5, cx=0.0, cz=0.0):
     """A flared or tapered skirt of n tilted panels round the y axis: planar, never stepped."""
     h = top_y - bot_y
     tilt = math.degrees(math.atan2(bot_r - top_r, h))
@@ -72,7 +72,7 @@ def ring_panels(g, name, top_y, bot_y, top_r, bot_r, mat, n=8, t=2.5, fill=1.12,
     for i in range(n):
         a = start + 360 * i / n
         ar = math.radians(a)
-        g.box(f"{name}_{i}", (rm * math.sin(ar), (top_y + bot_y) / 2, rm * math.cos(ar)), (width, slant, t), mat,
+        g.box(f"{name}_{i}", (cx + rm * math.sin(ar), (top_y + bot_y) / 2, cz + rm * math.cos(ar)), (width, slant, t), mat,
               rotation=(-tilt, a, 0))
 
 

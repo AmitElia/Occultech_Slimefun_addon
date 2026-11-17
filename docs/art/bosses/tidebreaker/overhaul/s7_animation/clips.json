@@ -1,0 +1,61 @@
+{
+  "contact_seconds": {
+    "ram_tell": 1.0,
+    "throw": 0.7,
+    "thrust": 0.25
+  },
+  "lowest_y": {
+    "idle": -5.5,
+    "walk": -2.2,
+    "spawn": -58.2,
+    "ram_tell": -5.5,
+    "ram": -2.2,
+    "winded": -6.1,
+    "throw": -6.3,
+    "thrust": -5.5,
+    "flinch": -5.5,
+    "death": -13.3
+  },
+  "clips": {
+    "idle": {
+      "length": 4.0,
+      "loop": "loop"
+    },
+    "walk": {
+      "length": 2.0,
+      "loop": "loop"
+    },
+    "spawn": {
+      "length": 2.6,
+      "loop": "once"
+    },
+    "ram_tell": {
+      "length": 1.0,
+      "loop": "once"
+    },
+    "ram": {
+      "length": 1.25,
+      "loop": "once"
+    },
+    "winded": {
+      "length": 2.0,
+      "loop": "once"
+    },
+    "throw": {
+      "length": 1.2,
+      "loop": "once"
+    },
+    "thrust": {
+      "length": 0.6,
+      "loop": "once"
+    },
+    "flinch": {
+      "length": 0.4,
+      "loop": "once"
+    },
+    "death": {
+      "length": 3.0,
+      "loop": "hold"
+    }
+  }
+}

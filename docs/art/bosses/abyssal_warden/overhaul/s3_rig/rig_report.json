@@ -1,0 +1,96 @@
+{
+  "bones_with_cubes": 35,
+  "cubes": 470,
+  "displays": 73,
+  "displays_at_spawn": 31,
+  "flicker_pairs": 0,
+  "pivots_to_check": [
+    "body",
+    "hull_col0",
+    "hull_col1",
+    "hull_col2",
+    "hull_col3",
+    "hull_col4",
+    "hull_col5",
+    "hull_col6",
+    "hull_col7",
+    "hull_col8",
+    "hull_col9",
+    "hull_col10",
+    "hull_col11",
+    "window_r",
+    "glow_iris",
+    "spray",
+    "window_r_burst",
+    "tendrils_even",
+    "tendrils_odd",
+    "kelp"
+  ],
+  "tags": {
+    "glow_iris": [
+      "glow"
+    ],
+    "ob_hitbox": [
+      "ob"
+    ]
+  },
+  "unintended_tags": {},
+  "hitbox_blocks": [
+    4.25,
+    4.25,
+    4.25
+  ],
+  "displays_per_bone": {
+    "hand": 19,
+    "window_r_burst": 13,
+    "spray": 4,
+    "arm": 3,
+    "forearm": 3,
+    "growth": 2,
+    "body": 1,
+    "hull_col0": 1,
+    "hull_col1": 1,
+    "hull_col2": 1,
+    "hull_col3": 1,
+    "hull_col4": 1,
+    "hull_col5": 1,
+    "hull_col6": 1,
+    "hull_col7": 1,
+    "hull_col8": 1,
+    "hull_col9": 1,
+    "hull_col10": 1,
+    "hull_col11": 1,
+    "window_l": 1,
+    "window_r": 1,
+    "glow_iris": 1,
+    "pupil": 1,
+    "valve0": 1,
+    "valve1": 1,
+    "valve2": 1,
+    "valve3": 1,
+    "window_r_glass": 1,
+    "hose1": 1,
+    "hose2": 1,
+    "hose3": 1,
+    "hose4": 1,
+    "tendrils_even": 1,
+    "tendrils_odd": 1,
+    "kelp": 1
+  },
+  "animations": [
+    "idle",
+    "beam",
+    "lash",
+    "spikes",
+    "rest",
+    "burst",
+    "raised",
+    "slam",
+    "death"
+  ],
+  "review_models": {
+    "occultech_abyssal_warden_rig": "before 33%: the side window whole, the hand and the spray hidden",
+    "occultech_abyssal_warden_rig_spikes": "the spray jets shown (the spike burst)",
+    "occultech_abyssal_warden_rig_33": "from 33%: the side window burst, the hand out"
+  }
+}

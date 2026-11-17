@@ -1,0 +1,30 @@
+# The Abyssal Warden's body: the Lost Helmet, a round copper diving-helmet bowed forward, a slit eye crammed into its
+# window, flesh, tendrils and kelp growing from the open neck; from 33% a mutated hand out of the right side window.
+# Occultech still decides every attack and every glide, deals all damage (AbyssalWarden.java) and hands out loot.
+# Health is the solo value; Occultech multiplies it for the group after the spawn. The carrier is a guardian with its
+# own mind taken away (no laser of its own, no flopping); invisible, it draws nothing.
+OCCULTECH_ABYSSAL_WARDEN:
+  Type: GUARDIAN
+  Display: '&3Abyssal Warden'
+  Health: 270
+  Damage: 0
+  Armor: 0
+  Options:
+    # Occultech rebuilds the body from its saved fight state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    KnockbackResistance: 1
+    FollowRange: 32
+    Silent: true
+    AlwaysShowName: true
+  Drops: []
+  # The carrier stays at normal size and the model is drawn as authored (the hull 4.4 blocks across, the eye 3.8 up);
+  # its ob_hitbox bone covers the hull and passes hits on to the carrier. idle, walk, spawn and death play by
+  # themselves; the rest come from AbyssalWarden.java (Skills/AbyssalWarden.yml).
+  Skills:
+  - model{m=occultech_abyssal_warden} @self ~onSpawn
+  - bodyrotation{mh=30;mnh=-30;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=ABYSSAL_WARDEN_STATE_CALM} @self ~onSpawn
+  - skill{s=ABYSSAL_WARDEN_DEATH} @self ~onDeath

@@ -26,7 +26,10 @@ public final class MythicPackInstaller {
         "Mobs/NightMatriarch.yml", "Skills/NightMatriarch.yml",
         "Mobs/Masquerade.yml", "Skills/Masquerade.yml",
         "Mobs/MireMonarch.yml", "Skills/MireMonarch.yml",
-        "Mobs/Archevoker.yml", "Skills/Archevoker.yml"
+        "Mobs/Archevoker.yml", "Skills/Archevoker.yml",
+        "Mobs/AbyssalWarden.yml", "Skills/AbyssalWarden.yml",
+        "Mobs/Tidebreaker.yml", "Skills/Tidebreaker.yml",
+        "Mobs/BlazeChoir.yml", "Skills/BlazeChoir.yml"
     };
     private static final String[] MODELS = {
         "occultech_volley.bbmodel", "occultech_volley_ward.bbmodel", "occultech_brood_mother.bbmodel",
@@ -34,7 +37,10 @@ public final class MythicPackInstaller {
         "occultech_the_unbound.bbmodel", "occultech_night_matriarch.bbmodel",
         "occultech_masquerade.bbmodel", "occultech_masquerade_jack.bbmodel",
         "occultech_mire_monarch.bbmodel",
-        "occultech_archevoker.bbmodel", "occultech_archevoker_hand_cyan.bbmodel", "occultech_archevoker_hand_purple.bbmodel"
+        "occultech_archevoker.bbmodel", "occultech_archevoker_hand_cyan.bbmodel", "occultech_archevoker_hand_purple.bbmodel",
+        "occultech_abyssal_warden.bbmodel",
+        "occultech_tidebreaker.bbmodel", "occultech_tidebreaker_mount.bbmodel",
+        "occultech_blaze_choir_soprano.bbmodel", "occultech_blaze_choir_alto.bbmodel", "occultech_blaze_choir_bass.bbmodel"
     };
     private static final String STAMP = ".occultech-installed.properties";
 
