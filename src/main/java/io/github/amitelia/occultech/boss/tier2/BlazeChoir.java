@@ -58,11 +58,14 @@ public final class BlazeChoir extends BossBehavior {
     private static final Color FLAME = Color.fromRGB(255, 120, 30);
     private static final int DEAD = Color.fromRGB(44, 40, 40).asRGB();
 
-    /** The three singers: each one's body (the Mythic carrier OCCULTECH_BLAZE_CHOIR_<VOICE>), its glow bones and its mouth. */
+    /**
+     * The three singers: each one's body (the Mythic carrier OCCULTECH_BLAZE_CHOIR_<VOICE>), its glow bones and its mouth.
+     * The glow bones are named as BetterModel names them, tag prefix dropped ({@code glow_wisp} is {@code wisp}).
+     */
     private enum Voice {
-        SOPRANO("Soprano", 75 / 16.0, "glow_wisp", "glow_sail", "glow_mouth"),
-        ALTO("Alto", 62 / 16.0, "glow_ember", "glow_mouth"),
-        BASS("Bass", 56 / 16.0, "glow_wisp", "glow_clapper", "glow_mouth");
+        SOPRANO("Soprano", 75 / 16.0, "wisp", "sail", "mouth"),
+        ALTO("Alto", 62 / 16.0, "ember", "mouth"),
+        BASS("Bass", 56 / 16.0, "wisp", "clapper", "mouth");
 
         final String title;
         /** The mouth's height over the carrier's feet in blocks: the fireball leaves it. */

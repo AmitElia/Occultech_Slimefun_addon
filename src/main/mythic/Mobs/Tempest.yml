@@ -1,0 +1,27 @@
+# Tempest's body: the Shattered Seal model on an invisible blaze (a breeze would still draw its wind and eyes).
+# Occultech steers it, decides every volley, burst and squall, deals all damage (Tempest.java) and hands out loot.
+# Health is the solo value; Occultech multiplies it for the group after the spawn.
+
+OCCULTECH_TEMPEST:
+  Type: BLAZE
+  Display: '&bTempest'
+  Health: 300
+  Damage: 0
+  Armor: 0
+  Options:
+    # Occultech rebuilds the fight from its saved state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    KnockbackResistance: 1
+    FollowRange: 40
+    Silent: true
+    AlwaysShowName: true
+  Drops: []
+  Skills:
+  - model{m=occultech_tempest} @self ~onSpawn
+  - state{m=occultech_tempest;s=spawn} @self ~onSpawn
+  - bodyrotation{mh=40;mnh=-40;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=TEMPEST_STATE_CALM} @self ~onSpawn
+  - skill{s=TEMPEST_DEATH} @self ~onDeath

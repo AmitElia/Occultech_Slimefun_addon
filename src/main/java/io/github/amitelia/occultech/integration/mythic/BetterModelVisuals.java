@@ -141,6 +141,14 @@ public final class BetterModelVisuals {
             .orElse(false);
     }
 
+    /** How many hitbox entities the model's ob_/b_ bones have (a long body carries several). */
+    public static long hitboxCount(Entity entity, String modelId) {
+        return BetterModel.registry(entity.getUniqueId())
+            .map(registry -> registry.trackers().stream().filter(tracker -> tracker.renderer().name().equals(modelId))
+                .mapToLong(tracker -> tracker.bones().stream().filter(bone -> bone.getHitBox() != null).count()).sum())
+            .orElse(0L);
+    }
+
     /** Debug: each model on the entity, the lowest and highest bone and the head, relative to the entity's feet. */
     public static java.util.List<String> describe(Entity entity) {
         java.util.List<String> out = new java.util.ArrayList<>();

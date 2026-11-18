@@ -91,6 +91,11 @@ class Group:
 
     def world_matrix(self):
         own = pivot_matrix(self.origin, self.rotation)
+        scale = getattr(self, "scale", None)   # pose previews only (an animation's scale key); never exported
+        if scale is not None and any(abs(s - 1) > 1e-9 for s in scale):
+            o = np.array(self.origin, float)
+            own[:3, :3] = own[:3, :3] @ np.diag(scale)
+            own[:3, 3] = o - own[:3, :3] @ o
         return own if self.parent is None else self.parent.world_matrix() @ own
 
 

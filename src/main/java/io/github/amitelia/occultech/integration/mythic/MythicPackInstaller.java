@@ -29,7 +29,9 @@ public final class MythicPackInstaller {
         "Mobs/Archevoker.yml", "Skills/Archevoker.yml",
         "Mobs/AbyssalWarden.yml", "Skills/AbyssalWarden.yml",
         "Mobs/Tidebreaker.yml", "Skills/Tidebreaker.yml",
-        "Mobs/BlazeChoir.yml", "Skills/BlazeChoir.yml"
+        "Mobs/BlazeChoir.yml", "Skills/BlazeChoir.yml",
+        "Mobs/Tempest.yml", "Skills/Tempest.yml",
+        "Mobs/DrownedElder.yml", "Skills/DrownedElder.yml"
     };
     private static final String[] MODELS = {
         "occultech_volley.bbmodel", "occultech_volley_ward.bbmodel", "occultech_brood_mother.bbmodel",
@@ -40,7 +42,9 @@ public final class MythicPackInstaller {
         "occultech_archevoker.bbmodel", "occultech_archevoker_hand_cyan.bbmodel", "occultech_archevoker_hand_purple.bbmodel",
         "occultech_abyssal_warden.bbmodel",
         "occultech_tidebreaker.bbmodel", "occultech_tidebreaker_mount.bbmodel",
-        "occultech_blaze_choir_soprano.bbmodel", "occultech_blaze_choir_alto.bbmodel", "occultech_blaze_choir_bass.bbmodel"
+        "occultech_blaze_choir_soprano.bbmodel", "occultech_blaze_choir_alto.bbmodel", "occultech_blaze_choir_bass.bbmodel",
+        "occultech_tempest.bbmodel",
+        "occultech_drowned_elder.bbmodel"
     };
     private static final String STAMP = ".occultech-installed.properties";
 

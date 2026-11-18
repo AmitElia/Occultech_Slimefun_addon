@@ -1,0 +1,27 @@
+# The Drowned Elder's body: the Abyssal Serpent model on an invisible elder guardian at the floor.
+# Occultech steers it, decides every beam, stare, shed and surge, deals all damage (DrownedElder.java) and hands
+# out loot. Health is the solo value; Occultech multiplies it for the group after the spawn.
+
+OCCULTECH_DROWNED_ELDER:
+  Type: ELDER_GUARDIAN
+  Display: '&5Drowned Elder'
+  Health: 500
+  Damage: 0
+  Armor: 0
+  Options:
+    # Occultech rebuilds the fight from its saved state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    KnockbackResistance: 1
+    FollowRange: 40
+    Silent: true
+    AlwaysShowName: true
+  Drops: []
+  Skills:
+  - model{m=occultech_drowned_elder} @self ~onSpawn
+  - state{m=occultech_drowned_elder;s=spawn} @self ~onSpawn
+  - bodyrotation{mh=10;mnh=-10;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=DROWNED_ELDER_STATE_CALM} @self ~onSpawn
+  - skill{s=DROWNED_ELDER_DEATH} @self ~onDeath

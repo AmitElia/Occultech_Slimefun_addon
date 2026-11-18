@@ -1,0 +1,59 @@
+{
+  "contact_seconds": {
+    "volley": 0.7,
+    "burst": 1.0,
+    "split": 1.0
+  },
+  "clips": {
+    "idle": {
+      "length": 4.0,
+      "loop": "loop",
+      "lowest_y": 1.0
+    },
+    "squall": {
+      "length": 2.0,
+      "loop": "loop",
+      "lowest_y": 1.0
+    },
+    "spawn": {
+      "length": 2.6,
+      "loop": "once",
+      "lowest_y": 0.8
+    },
+    "volley": {
+      "length": 1.4,
+      "loop": "once",
+      "lowest_y": 1.0
+    },
+    "burst": {
+      "length": 1.2,
+      "loop": "hold",
+      "lowest_y": 0.8
+    },
+    "spent": {
+      "length": 1.5,
+      "loop": "hold",
+      "lowest_y": 0.2
+    },
+    "recover": {
+      "length": 0.8,
+      "loop": "once",
+      "lowest_y": 0.2
+    },
+    "split": {
+      "length": 2.4,
+      "loop": "once",
+      "lowest_y": 1.0
+    },
+    "flinch": {
+      "length": 0.4,
+      "loop": "once",
+      "lowest_y": 1.0
+    },
+    "death": {
+      "length": 3.0,
+      "loop": "hold",
+      "lowest_y": -1.5
+    }
+  }
+}

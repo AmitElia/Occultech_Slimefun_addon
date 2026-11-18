@@ -1,0 +1,84 @@
+{
+  "contact_seconds": {
+    "spawn": 2.8,
+    "aim": 2.0,
+    "stare": 1.0,
+    "shed": 0.5,
+    "dive": 1.0,
+    "emerge": 1.4
+  },
+  "clips": {
+    "idle": {
+      "length": 3.2,
+      "loop": "loop",
+      "lowest_y": 25.9,
+      "largest_step_deg": 4.1,
+      "bone": "tail1",
+      "at": 1.2
+    },
+    "spawn": {
+      "length": 4.0,
+      "loop": "once",
+      "lowest_y": -346.7,
+      "largest_step_deg": 55.2,
+      "bone": "base",
+      "at": 1.3
+    },
+    "aim": {
+      "length": 2.6,
+      "loop": "once",
+      "lowest_y": 32.4,
+      "largest_step_deg": 23.4,
+      "bone": "gill2_right",
+      "at": 0.5
+    },
+    "stare": {
+      "length": 2.6,
+      "loop": "once",
+      "lowest_y": 38.1,
+      "largest_step_deg": 58.7,
+      "bone": "seg3",
+      "at": 0.55
+    },
+    "shed": {
+      "length": 1.2,
+      "loop": "once",
+      "lowest_y": 36.3,
+      "largest_step_deg": 23.6,
+      "bone": "seg0",
+      "at": 0.2
+    },
+    "dive": {
+      "length": 1.4,
+      "loop": "hold",
+      "lowest_y": -44.0,
+      "largest_step_deg": 66.4,
+      "bone": "tail0",
+      "at": 0.95
+    },
+    "emerge": {
+      "length": 2.6,
+      "loop": "once",
+      "lowest_y": -175.7,
+      "largest_step_deg": 49.8,
+      "bone": "base",
+      "at": 0.6
+    },
+    "flinch": {
+      "length": 0.5,
+      "loop": "once",
+      "lowest_y": 34.8,
+      "largest_step_deg": 26.5,
+      "bone": "seg0",
+      "at": 0.05
+    },
+    "death": {
+      "length": 3.4,
+      "loop": "hold",
+      "lowest_y": -2.9,
+      "largest_step_deg": 24.3,
+      "bone": "tail1",
+      "at": 0.9
+    }
+  }
+}

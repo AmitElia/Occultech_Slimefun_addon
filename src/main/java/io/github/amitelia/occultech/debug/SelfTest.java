@@ -1056,6 +1056,39 @@ final class SelfTest {
                         + ", invisible " + carrier.isInvisible());
             }
         }
+        if ("TEMPEST".equals(bossId) && currentFight.usesMythicBody()
+            && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_tempest")) {
+            LivingEntity carrier = currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+            if (carrier != null) {
+                check("Tempest wears the Shattered Seal once, with its hitbox",
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.count(carrier, "occultech_tempest") == 1
+                        && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_tempest"),
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier).toString());
+                // a breeze would still draw its wind and eyes under the model: its layers ignore invisibility
+                check("Tempest's carrier is an unscaled, invisible blaze, never a breeze",
+                    carrier instanceof org.bukkit.entity.Blaze && carrier.isInvisible()
+                        && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
+                    carrier.getType() + ", invisible " + carrier.isInvisible());
+            }
+        }
+        if ("DROWNED_ELDER".equals(bossId) && currentFight.usesMythicBody()
+            && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_drowned_elder")) {
+            LivingEntity carrier = currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+            if (carrier != null) {
+                long hitboxes = io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hitboxCount(carrier, "occultech_drowned_elder");
+                // the long body carries four hitboxes: the head and three that follow the swimming body
+                check("Drowned Elder wears the Abyssal Serpent once, with its four hitboxes",
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.count(carrier, "occultech_drowned_elder") == 1
+                        && hitboxes == 4,
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier) + ", hitboxes " + hitboxes);
+                check("Drowned Elder's carrier is an unscaled, invisible elder guardian",
+                    carrier instanceof org.bukkit.entity.ElderGuardian && carrier.isInvisible()
+                        && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
+                    carrier.getType() + ", invisible " + carrier.isInvisible());
+            }
+        }
         if ("BLAZE_CHOIR".equals(bossId) && currentFight.usesMythicBody()
             && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
             && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_blaze_choir_soprano")) {
