@@ -1,0 +1,31 @@
+# The Hollow Warlord's body: the Headsman model (a giant wither skeleton in battered blackstone plate, the
+# executioner's sword, three taken skulls over his head) on an invisible wither skeleton carrier that holds nothing.
+# Occultech steers it, decides every swing, sweep and call, deals all damage (HollowWarlord.java) and hands out
+# loot. Health is the solo value; Occultech multiplies it for the group after the spawn.
+
+OCCULTECH_HOLLOW_WARLORD:
+  Type: WITHER_SKELETON
+  Display: '&8Hollow Warlord'
+  Health: 330
+  Damage: 0
+  Armor: 0
+  Options:
+    # Occultech rebuilds the fight from its saved state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    MovementSpeed: 0.26
+    KnockbackResistance: 1
+    FollowRange: 48
+    AlwaysShowName: true
+  Drops: []
+  # The carrier stays at normal size; the model is drawn as authored (about 5.5 blocks to the top of his hat). Its
+  # ob_hitbox bone covers him and passes hits to the carrier. idle and walk play by themselves (idle_enraged once
+  # he enrages); the fight starts every other clip (Skills/HollowWarlord.yml).
+  Skills:
+  - model{m=occultech_hollow_warlord} @self ~onSpawn
+  - state{m=occultech_hollow_warlord;s=spawn} @self ~onSpawn
+  - bodyrotation{mh=35;mnh=-35;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=HOLLOW_WARLORD_CALM} @self ~onSpawn
+  - skill{s=HOLLOW_WARLORD_DEATH} @self ~onDeath

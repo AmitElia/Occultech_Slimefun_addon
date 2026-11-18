@@ -1089,6 +1089,25 @@ final class SelfTest {
                     carrier.getType() + ", invisible " + carrier.isInvisible());
             }
         }
+        if ("HOLLOW_WARLORD".equals(bossId) && currentFight.usesMythicBody()
+            && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_hollow_warlord")) {
+            LivingEntity carrier = currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+            if (carrier != null) {
+                check("Hollow Warlord wears the Headsman once, with its hitbox",
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.count(carrier, "occultech_hollow_warlord") == 1
+                        && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_hollow_warlord"),
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier).toString());
+                // the model draws his plate and sword: the carrier must wear and hold nothing, or it shows through
+                org.bukkit.inventory.EntityEquipment gear = carrier.getEquipment();
+                boolean bare = gear != null && gear.getItemInMainHand().getType().isAir()
+                    && java.util.Arrays.stream(gear.getArmorContents()).allMatch(i -> i == null || i.getType().isAir());
+                check("Hollow Warlord's carrier is an unscaled, invisible wither skeleton holding and wearing nothing",
+                    carrier instanceof org.bukkit.entity.WitherSkeleton && carrier.isInvisible() && bare
+                        && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
+                    carrier.getType() + ", invisible " + carrier.isInvisible() + ", bare " + bare);
+            }
+        }
         if ("BLAZE_CHOIR".equals(bossId) && currentFight.usesMythicBody()
             && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
             && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_blaze_choir_soprano")) {

@@ -1,0 +1,243 @@
+{
+  "contact_seconds": {
+    "windup": 1.0,
+    "sweep": 0.3,
+    "attack": 0.72,
+    "call": 0.9,
+    "enrage": 1.05,
+    "spawn": 3.0
+  },
+  "clips": {
+    "idle": {
+      "length": 4.0,
+      "loop": "loop",
+      "lowest_y": -0.0,
+      "clipping": {
+        "deepest": 0.0,
+        "what": "",
+        "at": 0.0
+      },
+      "largest_euler_step": 3.8,
+      "bone": "hi_head",
+      "at": 0.4,
+      "largest_true_step": 3.8,
+      "true_bone": "hi_head",
+      "true_at": 0.4,
+      "edge": {
+        "flat_share": 0.0,
+        "at": 0.0,
+        "speed": 0
+      }
+    },
+    "walk": {
+      "length": 1.6,
+      "loop": "loop",
+      "lowest_y": -0.0,
+      "clipping": {
+        "deepest": 0.0,
+        "what": "",
+        "at": 0.0
+      },
+      "largest_euler_step": 27.1,
+      "bone": "shin_right",
+      "at": 0.05,
+      "largest_true_step": 27.3,
+      "true_bone": "shin_right",
+      "true_at": 0.05,
+      "edge": {
+        "flat_share": 0.0,
+        "at": 0.0,
+        "speed": 0
+      }
+    },
+    "windup": {
+      "length": 1.0,
+      "loop": "hold",
+      "lowest_y": -0.0,
+      "clipping": {
+        "deepest": 2.6,
+        "what": "elbow_right in chest_r",
+        "at": 0.4
+      },
+      "largest_euler_step": 32.2,
+      "bone": "sword",
+      "at": 0.2,
+      "largest_true_step": 32.2,
+      "true_bone": "shin_left",
+      "true_at": 0.325,
+      "edge": {
+        "flat_share": 0.95,
+        "at": 0.075,
+        "speed": 213
+      }
+    },
+    "sweep": {
+      "length": 1.8,
+      "loop": "once",
+      "lowest_y": -0.0,
+      "clipping": {
+        "deepest": 1.5,
+        "what": "blade_low in pelvis",
+        "at": 1.45
+      },
+      "largest_euler_step": 53.6,
+      "bone": "forearm_right",
+      "at": 1.7,
+      "largest_true_step": 48.8,
+      "true_bone": "sword",
+      "true_at": 0.15,
+      "edge": {
+        "flat_share": 0.95,
+        "at": 1.725,
+        "speed": 306
+      }
+    },
+    "attack": {
+      "length": 1.5,
+      "loop": "once",
+      "lowest_y": -0.0,
+      "clipping": {
+        "deepest": 0.0,
+        "what": "",
+        "at": 0.0
+      },
+      "largest_euler_step": 46.8,
+      "bone": "forearm_right",
+      "at": 0.675,
+      "largest_true_step": 40.1,
+      "true_bone": "forearm_left",
+      "true_at": 0.55,
+      "edge": {
+        "flat_share": 0.94,
+        "at": 0.325,
+        "speed": 217
+      }
+    },
+    "call": {
+      "length": 2.2,
+      "loop": "once",
+      "lowest_y": -0.0,
+      "clipping": {
+        "deepest": 0.0,
+        "what": "",
+        "at": 0.0
+      },
+      "largest_euler_step": 37.4,
+      "bone": "arm_left",
+      "at": 1.475,
+      "largest_true_step": 33.4,
+      "true_bone": "forearm_left",
+      "true_at": 0.65,
+      "edge": {
+        "flat_share": 0.58,
+        "at": 0.3,
+        "speed": 180
+      }
+    },
+    "enrage": {
+      "length": 2.4,
+      "loop": "once",
+      "lowest_y": -1.5,
+      "clipping": {
+        "deepest": 1.6,
+        "what": "hand_right in rib4_r_front",
+        "at": 0.5
+      },
+      "largest_euler_step": 64.0,
+      "bone": "forearm_right",
+      "at": 0.55,
+      "largest_true_step": 52.6,
+      "true_bone": "sword",
+      "true_at": 0.5,
+      "edge": {
+        "flat_share": 0.9,
+        "at": 1.975,
+        "speed": 222
+      }
+    },
+    "idle_enraged": {
+      "length": 4.8,
+      "loop": "loop",
+      "lowest_y": -0.0,
+      "clipping": {
+        "deepest": 0.0,
+        "what": "",
+        "at": 0.0
+      },
+      "largest_euler_step": 5.9,
+      "bone": "shin_right",
+      "at": 3.0,
+      "largest_true_step": 6.5,
+      "true_bone": "shin_right",
+      "true_at": 3.7,
+      "edge": {
+        "flat_share": 0.0,
+        "at": 0.0,
+        "speed": 0
+      }
+    },
+    "flinch": {
+      "length": 0.5,
+      "loop": "once",
+      "lowest_y": -0.0,
+      "clipping": {
+        "deepest": 0.0,
+        "what": "",
+        "at": 0.0
+      },
+      "largest_euler_step": 7.6,
+      "bone": "shin_left",
+      "at": 0.05,
+      "largest_true_step": 7.8,
+      "true_bone": "shin_left",
+      "true_at": 0.05,
+      "edge": {
+        "flat_share": 0.0,
+        "at": 0.0,
+        "speed": 0
+      }
+    },
+    "spawn": {
+      "length": 3.4,
+      "loop": "once",
+      "lowest_y": -8.2,
+      "clipping": {
+        "deepest": 1.6,
+        "what": "hand_left in belt",
+        "at": 3.05
+      },
+      "largest_euler_step": 21.3,
+      "bone": "sword",
+      "at": 2.95,
+      "largest_true_step": 17.9,
+      "true_bone": "arm_right",
+      "true_at": 2.9,
+      "edge": {
+        "flat_share": 0.43,
+        "at": 2.85,
+        "speed": 169
+      }
+    },
+    "death": {
+      "length": 3.2,
+      "loop": "hold",
+      "lowest_y": -8.3,
+      "clipping": {
+        "deepest": 1.2,
+        "what": "gauntlet_left in rib0_l_front",
+        "at": 1.1
+      },
+      "largest_euler_step": 16.1,
+      "bone": "forearm_right",
+      "at": 1.4,
+      "largest_true_step": 18.5,
+      "true_bone": "forearm_right",
+      "true_at": 1.4,
+      "edge": {
+        "flat_share": 0.63,
+        "at": 1.4,
+        "speed": 182
+      }
+    }
+  }
+}

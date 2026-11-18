@@ -1,0 +1,126 @@
+{
+  "bones_with_cubes": 27,
+  "cubes": 135,
+  "displays": 72,
+  "flicker_pairs": 0,
+  "pivots_to_check": [
+    "pauldron_left",
+    "pauldron_right",
+    "glow_eyes",
+    "glow_brand",
+    "glow_skull_c",
+    "glow_skull_l",
+    "glow_skull_r"
+  ],
+  "tags": {
+    "hi_head": [
+      "hi"
+    ],
+    "glow_eyes": [
+      "glow"
+    ],
+    "glow_brand": [
+      "glow"
+    ],
+    "glow_skull_c": [
+      "glow"
+    ],
+    "glow_skull_l": [
+      "glow"
+    ],
+    "glow_skull_r": [
+      "glow"
+    ],
+    "ob_hitbox": [
+      "ob"
+    ]
+  },
+  "unintended_tags": {},
+  "hitbox_blocks": [
+    4.88,
+    5.5,
+    2.5
+  ],
+  "displays_per_bone": {
+    "torso": 31,
+    "hat": 9,
+    "pauldron_left": 4,
+    "pauldron_right": 4,
+    "sword": 2,
+    "hips": 1,
+    "tabard_front": 1,
+    "tabard_back": 1,
+    "leg_left": 1,
+    "shin_left": 1,
+    "foot_left": 1,
+    "leg_right": 1,
+    "shin_right": 1,
+    "foot_right": 1,
+    "hi_head": 1,
+    "glow_eyes": 1,
+    "arm_left": 1,
+    "forearm_left": 1,
+    "arm_right": 1,
+    "forearm_right": 1,
+    "glow_brand": 1,
+    "skull_c": 1,
+    "glow_skull_c": 1,
+    "skull_l": 1,
+    "glow_skull_l": 1,
+    "skull_r": 1,
+    "glow_skull_r": 1
+  },
+  "animations": [
+    "idle",
+    "walk",
+    "windup",
+    "sweep",
+    "enraged",
+    "death"
+  ],
+  "longest_cube": [
+    36.0,
+    "brand"
+  ],
+  "nudges": 31,
+  "position_keys": {
+    "idle": [
+      "hips",
+      "skull_c",
+      "skull_l",
+      "skull_r"
+    ],
+    "walk": [
+      "hips",
+      "skull_c",
+      "skull_l",
+      "skull_r"
+    ],
+    "windup": [
+      "hips",
+      "skull_c",
+      "skull_l",
+      "skull_r",
+      "sword"
+    ],
+    "sweep": [
+      "hips",
+      "skull_c",
+      "skull_l",
+      "skull_r"
+    ],
+    "enraged": [
+      "hips",
+      "skull_c",
+      "skull_l",
+      "skull_r"
+    ],
+    "death": [
+      "hips",
+      "skull_c",
+      "skull_l",
+      "skull_r",
+      "sword"
+    ]
+  }
+}
