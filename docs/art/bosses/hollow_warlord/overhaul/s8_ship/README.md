@@ -3,6 +3,9 @@
 Script: `tools/art/bosses/headsman_ship.py <client assets folder>` (after `headsman_s7.py`). Lit previews of every
 clip: [../s7_animation/lit/](../s7_animation/lit/).
 
+**Showcase:** [warlord_showcase.gif](warlord_showcase.gif), the fight in one take from one camera (spawn, idle, windup and
+sweep, the chop, the call, the enrage, the burning idle, death), made by `tools/art/bosses/headsman_showcase.py`.
+
 ## What shipped
 
 - **`src/main/models/occultech_hollow_warlord.bbmodel`:** the final rig from the session 7 clips with the session 6
