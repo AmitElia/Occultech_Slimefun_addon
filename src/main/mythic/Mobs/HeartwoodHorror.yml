@@ -1,0 +1,31 @@
+# The Heartwood Horror's body: the Crutch model (a hunched, tree-grown giant creaking on four stilt-thin limbs and a
+# crutch, an older creaking asleep in the resin womb of its chest, a creaking-heart lantern hanging from its brow)
+# on an invisible creaking carrier (an invisible creaking draws nothing, its eyes included). Occultech moves it,
+# decides every attack, deals all damage (HeartwoodHorror.java) and hands out loot. Health is the solo value;
+# Occultech multiplies it for the group after the spawn.
+
+OCCULTECH_HEARTWOOD_HORROR:
+  Type: CREAKING
+  Display: '&6Heartwood Horror'
+  Health: 320
+  Damage: 0
+  Armor: 0
+  Options:
+    # Occultech rebuilds the fight from its saved state; Mythic never restores it
+    Despawn: true
+    PreventOtherDrops: true
+    PreventMobKillDrops: true
+    PreventItemPickup: true
+    MovementSpeed: 0.2
+    KnockbackResistance: 1
+    FollowRange: 48
+    AlwaysShowName: true
+  Drops: []
+  # The carrier stays at normal size; the model is drawn as authored (about 7 blocks to the top of the hump). Its
+  # ob_hitbox bone covers the body and passes hits to the carrier. idle and walk play by themselves; the fight
+  # starts every other clip (Skills/HeartwoodHorror.yml).
+  Skills:
+  - model{m=occultech_heartwood_horror} @self ~onSpawn
+  - skill{s=HEARTWOOD_HORROR_SPAWN} @self ~onSpawn
+  - bodyrotation{mh=35;mnh=-35;rde=0;rdu=3} @self ~onSpawn
+  - skill{s=HEARTWOOD_HORROR_DEATH} @self ~onDeath

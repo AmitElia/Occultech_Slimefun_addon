@@ -32,7 +32,8 @@ public final class MythicPackInstaller {
         "Mobs/BlazeChoir.yml", "Skills/BlazeChoir.yml",
         "Mobs/Tempest.yml", "Skills/Tempest.yml",
         "Mobs/DrownedElder.yml", "Skills/DrownedElder.yml",
-        "Mobs/HollowWarlord.yml", "Skills/HollowWarlord.yml"
+        "Mobs/HollowWarlord.yml", "Skills/HollowWarlord.yml",
+        "Mobs/HeartwoodHorror.yml", "Skills/HeartwoodHorror.yml"
     };
     private static final String[] MODELS = {
         "occultech_volley.bbmodel", "occultech_volley_ward.bbmodel", "occultech_brood_mother.bbmodel",
@@ -46,7 +47,8 @@ public final class MythicPackInstaller {
         "occultech_blaze_choir_soprano.bbmodel", "occultech_blaze_choir_alto.bbmodel", "occultech_blaze_choir_bass.bbmodel",
         "occultech_tempest.bbmodel",
         "occultech_drowned_elder.bbmodel",
-        "occultech_hollow_warlord.bbmodel"
+        "occultech_hollow_warlord.bbmodel",
+        "occultech_heartwood_horror.bbmodel"
     };
     private static final String STAMP = ".occultech-installed.properties";
 

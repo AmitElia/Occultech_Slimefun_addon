@@ -1,0 +1,254 @@
+{
+  "idle": {
+    "length": 4.0,
+    "loop": "loop",
+    "contact": null,
+    "largest_step_deg": 9.3,
+    "step_bone": "arm_thin1",
+    "step_at": 2.7,
+    "interp_error_deg": 0.1,
+    "err_bone": "arm_thin1",
+    "err_at": 2.7,
+    "lowest": [
+      -1.1,
+      [
+        "leg_left2_bark",
+        1.2
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  },
+  "walk": {
+    "length": 2.0,
+    "loop": "loop",
+    "contact": null,
+    "largest_step_deg": 20.0,
+    "step_bone": "moss_crutch1",
+    "step_at": 0.15,
+    "interp_error_deg": 0.4,
+    "err_bone": "moss_crutch1",
+    "err_at": 0.1,
+    "lowest": [
+      -1.1,
+      [
+        "leg_left2_bark",
+        1.8
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  },
+  "spawn": {
+    "length": 4.2,
+    "loop": "once",
+    "contact": 2.8,
+    "largest_step_deg": 115.6,
+    "step_bone": "moss_back0",
+    "step_at": 2.75,
+    "interp_error_deg": 22.4,
+    "err_bone": "moss_back0",
+    "err_at": 2.9,
+    "lowest": [
+      -5.7,
+      [
+        "cage3",
+        0.25
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  },
+  "swipe": {
+    "length": 1.4,
+    "loop": "once",
+    "contact": 0.55,
+    "largest_step_deg": 91.6,
+    "step_bone": "arm_great4",
+    "step_at": 0.575,
+    "interp_error_deg": 21.1,
+    "err_bone": "hand_great",
+    "err_at": 0.575,
+    "lowest": [
+      -1.1,
+      [
+        "leg_left2_bark",
+        0.7
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  },
+  "lunge": {
+    "length": 1.2,
+    "loop": "once",
+    "contact": 0.3,
+    "largest_step_deg": 84.6,
+    "step_bone": "moss_great1",
+    "step_at": 0.325,
+    "interp_error_deg": 12.8,
+    "err_bone": "hand_great",
+    "err_at": 0.3,
+    "lowest": [
+      -1.6,
+      [
+        "leg_left2_bark",
+        0.6
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  },
+  "eruption": {
+    "length": 2.4,
+    "loop": "once",
+    "contact": 0.55,
+    "largest_step_deg": 64.6,
+    "step_bone": "moss_crutch1",
+    "step_at": 1.425,
+    "interp_error_deg": 4.2,
+    "err_bone": "moss_crutch1",
+    "err_at": 1.425,
+    "lowest": [
+      -1.2,
+      [
+        "leg_left2_bark",
+        1.4
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  },
+  "sap": {
+    "length": 2.6,
+    "loop": "once",
+    "contact": 1.75,
+    "largest_step_deg": 65.1,
+    "step_bone": "arm_lesser5",
+    "step_at": 2.15,
+    "interp_error_deg": 3.9,
+    "err_bone": "arm_lesser5",
+    "err_at": 2.15,
+    "lowest": [
+      -1.1,
+      [
+        "leg_left2_bark",
+        2.2
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  },
+  "slam": {
+    "length": 2.3,
+    "loop": "once",
+    "contact": 1.5,
+    "largest_step_deg": 96.7,
+    "step_bone": "arm_great4",
+    "step_at": 1.525,
+    "interp_error_deg": 9.2,
+    "err_bone": "arm_crutch4",
+    "err_at": 1.525,
+    "lowest": [
+      -3.1,
+      [
+        "tail",
+        1.7
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  },
+  "creak": {
+    "length": 1.0,
+    "loop": "once",
+    "contact": null,
+    "largest_step_deg": 60.0,
+    "step_bone": "arm_thin1",
+    "step_at": 0.05,
+    "interp_error_deg": 3.7,
+    "err_bone": "moss_crutch0",
+    "err_at": 0.45,
+    "lowest": [
+      -2.7,
+      [
+        "tail",
+        0.5
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  },
+  "twitch": {
+    "length": 0.5,
+    "loop": "once",
+    "contact": null,
+    "largest_step_deg": 26.2,
+    "step_bone": "moss_crutch0",
+    "step_at": 0.05,
+    "interp_error_deg": 1.5,
+    "err_bone": "arm_crutch0",
+    "err_at": 0.05,
+    "lowest": [
+      -1.0,
+      [
+        "leg_left2_bark",
+        0.5
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  },
+  "stagger": {
+    "length": 1.8,
+    "loop": "once",
+    "contact": null,
+    "largest_step_deg": 71.6,
+    "step_bone": "moss_back0",
+    "step_at": 0.2,
+    "interp_error_deg": 6.2,
+    "err_bone": "moss_back0",
+    "err_at": 0.2,
+    "lowest": [
+      -4.6,
+      [
+        "tail",
+        0.6
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  },
+  "death": {
+    "length": 3.6,
+    "loop": "hold",
+    "contact": null,
+    "largest_step_deg": 100.2,
+    "step_bone": "arm_great5",
+    "step_at": 2.625,
+    "interp_error_deg": 13.0,
+    "err_bone": "arm_great5",
+    "err_at": 2.625,
+    "lowest": [
+      -4.7,
+      [
+        "tail",
+        1.2
+      ]
+    ],
+    "collisions": 0,
+    "worst": [],
+    "pairs": {}
+  }
+}

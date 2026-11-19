@@ -1108,6 +1108,22 @@ final class SelfTest {
                     carrier.getType() + ", invisible " + carrier.isInvisible() + ", bare " + bare);
             }
         }
+        if ("HEARTWOOD_HORROR".equals(bossId) && currentFight.usesMythicBody()
+            && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
+            && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_heartwood_horror")) {
+            LivingEntity carrier = currentFight.bosses().isEmpty() ? null : currentFight.bosses().get(0);
+            if (carrier != null) {
+                check("Heartwood Horror wears the Crutch once, with its hitbox",
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.count(carrier, "occultech_heartwood_horror") == 1
+                        && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.hasHitbox(carrier, "occultech_heartwood_horror"),
+                    io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.trackerNames(carrier).toString());
+                // an invisible creaking draws nothing (its eyes included): the model is all that shows
+                check("Heartwood Horror's carrier is an unscaled, invisible creaking",
+                    carrier instanceof org.bukkit.entity.Creaking && carrier.isInvisible()
+                        && Math.abs(carrier.getAttribute(org.bukkit.attribute.Attribute.SCALE).getValue() - 1.0) < 0.001,
+                    carrier.getType() + ", invisible " + carrier.isInvisible());
+            }
+        }
         if ("BLAZE_CHOIR".equals(bossId) && currentFight.usesMythicBody()
             && plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")
             && io.github.amitelia.occultech.integration.mythic.BetterModelVisuals.available("occultech_blaze_choir_soprano")) {

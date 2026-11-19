@@ -63,6 +63,9 @@ def texture_material(name, emissive):
         mat.blend_method = "CLIP"
         mat.shadow_method = "CLIP"
     mat.node_tree.links.new(shader.outputs[0], output.inputs["Surface"])
+    if job.get("translucent"):        # half-clear texels drawn see-through (averaged over the render samples)
+        mat.blend_method = "HASHED"
+        mat.shadow_method = "HASHED"
     mat.use_backface_culling = True   # like Minecraft: a face shows from its front only (cards have one per side)
     return mat
 
