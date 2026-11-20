@@ -1,0 +1,80 @@
+{
+  "bones_with_cubes": 21,
+  "cubes": 289,
+  "displays": 142,
+  "flicker_pairs": 0,
+  "pivots_to_check": [
+    "glow_banner",
+    "glow_eyes"
+  ],
+  "tags": {
+    "glow_sigil": [
+      "glow"
+    ],
+    "glow_banner": [
+      "glow"
+    ],
+    "glow_eyes": [
+      "glow"
+    ]
+  },
+  "unintended_tags": {},
+  "displays_per_bone": {
+    "base": 77,
+    "neck": 16,
+    "head": 14,
+    "leg_fl_lower": 3,
+    "leg_fr_lower": 3,
+    "leg_hl_lower": 3,
+    "leg_hr_lower": 3,
+    "tail": 3,
+    "banner": 3,
+    "leg_fl_hoof": 2,
+    "leg_fr_hoof": 2,
+    "leg_hl_hoof": 2,
+    "leg_hr_hoof": 2,
+    "banner_cloth": 2,
+    "leg_fl": 1,
+    "leg_fr": 1,
+    "leg_hl": 1,
+    "leg_hr": 1,
+    "glow_sigil": 1,
+    "glow_banner": 1,
+    "glow_eyes": 1
+  },
+  "animations": [
+    "idle",
+    "charge",
+    "rear",
+    "stunned",
+    "sweep",
+    "throw"
+  ],
+  "nudges": 86,
+  "split": [
+    [
+      "banner_pole",
+      60.0,
+      2
+    ]
+  ],
+  "position_keys": {
+    "charge": [
+      "base"
+    ],
+    "rear": [
+      "base"
+    ],
+    "stunned": [
+      "base"
+    ],
+    "throw": [
+      "base"
+    ]
+  },
+  "scale_keys": {},
+  "longest_cube": [
+    28.5,
+    "saddle_cloth"
+  ]
+}

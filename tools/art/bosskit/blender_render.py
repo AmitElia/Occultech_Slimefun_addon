@@ -150,10 +150,15 @@ for v in job["views"]:
         yaw = math.radians(v.get("yaw", 35))
         dist = v.get("dist", span * 1.5)
         height = v.get("height", 1.62)
-        tz = v.get("target_z", (lo.z + hi.z) / 2)
-        loc = center + Vector((math.sin(yaw) * dist, math.cos(yaw) * dist, 0))
-        loc.z = height
-        look_at(loc, Vector((center.x, center.y, tz)))
+        if "target" in v:                                   # a close-up: aim at a point (Blockbench units)
+            t = to_blender(v["target"])
+            loc = t + Vector((math.sin(yaw) * dist, math.cos(yaw) * dist, height))
+            look_at(loc, t)
+        else:
+            tz = v.get("target_z", (lo.z + hi.z) / 2)
+            loc = center + Vector((math.sin(yaw) * dist, math.cos(yaw) * dist, 0))
+            loc.z = height
+            look_at(loc, Vector((center.x, center.y, tz)))
     if v["mode"] == "silhouette":
         shading.light = "FLAT"
         shading.color_type = "OBJECT"

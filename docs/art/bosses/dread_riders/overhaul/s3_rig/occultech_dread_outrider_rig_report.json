@@ -1,0 +1,71 @@
+{
+  "bones_with_cubes": 16,
+  "cubes": 138,
+  "displays": 80,
+  "flicker_pairs": 0,
+  "pivots_to_check": [
+    "glow_arrow"
+  ],
+  "tags": {
+    "hi_head": [
+      "hi"
+    ],
+    "glow_rune": [
+      "glow"
+    ],
+    "glow_arrow": [
+      "glow"
+    ],
+    "ob_hitbox": [
+      "ob"
+    ]
+  },
+  "unintended_tags": {},
+  "hitbox_blocks": [
+    1.88,
+    6.14,
+    1.88
+  ],
+  "displays_per_bone": {
+    "hi_head": 45,
+    "torso": 8,
+    "bow": 8,
+    "arm_left": 3,
+    "arm_right": 3,
+    "shin_left": 2,
+    "shin_right": 2,
+    "thigh_left": 1,
+    "thigh_right": 1,
+    "forearm_left": 1,
+    "forearm_right": 1,
+    "glow_rune": 1,
+    "string_upper": 1,
+    "string_lower": 1,
+    "arrow": 1,
+    "glow_arrow": 1
+  },
+  "animations": [
+    "idle",
+    "gallop",
+    "draw",
+    "rain",
+    "loose"
+  ],
+  "nudges": 36,
+  "split": [],
+  "position_keys": {},
+  "scale_keys": {
+    "draw": [
+      "string_lower",
+      "string_upper"
+    ],
+    "rain": [
+      "string_lower",
+      "string_upper"
+    ]
+  },
+  "longest_cube": [
+    29.25,
+    "arrow_shaft"
+  ]
+}

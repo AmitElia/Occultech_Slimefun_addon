@@ -1,0 +1,591 @@
+{
+ "vanguard/idle": {
+  "largest_euler_step": {
+   "mount": [
+    1.1,
+    "tail",
+    0.025
+   ],
+   "rider": [
+    0.2,
+    "hi_head",
+    0.625
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    1.1,
+    "tail",
+    0.025
+   ],
+   "rider": [
+    0.2,
+    "hi_head",
+    0.475
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "vanguard/walk": {
+  "largest_euler_step": {
+   "mount": [
+    32.6,
+    "leg_fl_hoof",
+    0.35
+   ],
+   "rider": [
+    0.3,
+    "rider",
+    0.3
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    32.6,
+    "leg_fl_hoof",
+    0.35
+   ],
+   "rider": [
+    0.3,
+    "rider",
+    0.3
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "vanguard/gallop": {
+  "largest_euler_step": {
+   "mount": [
+    36.9,
+    "leg_fr_hoof",
+    0.39
+   ],
+   "rider": [
+    1.6,
+    "rider",
+    0.3
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    36.9,
+    "leg_fr_hoof",
+    0.39
+   ],
+   "rider": [
+    1.6,
+    "rider",
+    0.3
+   ]
+  },
+  "mount_lowest_blocks": -0.01
+ },
+ "vanguard/flinch": {
+  "largest_euler_step": {
+   "mount": [
+    8.0,
+    "head",
+    0.0167
+   ],
+   "rider": [
+    4.6,
+    "torso",
+    0.0167
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    10.0,
+    "head",
+    0.0167
+   ],
+   "rider": [
+    4.6,
+    "torso",
+    0.0167
+   ]
+  },
+  "mount_lowest_blocks": 0.0
+ },
+ "vanguard/spawn": {
+  "largest_euler_step": {
+   "mount": [
+    29.1,
+    "leg_fr_lower",
+    0.525
+   ],
+   "rider": [
+    7.9,
+    "rider",
+    0.525
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    29.0,
+    "leg_fr_lower",
+    0.525
+   ],
+   "rider": [
+    7.9,
+    "rider",
+    0.525
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "vanguard/death": {
+  "largest_euler_step": {
+   "mount": [
+    9.7,
+    "leg_fr_lower",
+    0.25
+   ],
+   "rider": [
+    8.4,
+    "forearm_right",
+    0.275
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    9.7,
+    "leg_fr_lower",
+    0.275
+   ],
+   "rider": [
+    9.2,
+    "forearm_right",
+    0.275
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "vanguard/charge": {
+  "largest_euler_step": {
+   "mount": [
+    39.8,
+    "leg_fl_hoof",
+    0.2
+   ],
+   "rider": [
+    2.5,
+    "rider",
+    0.225
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    39.8,
+    "leg_fl_hoof",
+    0.2
+   ],
+   "rider": [
+    2.5,
+    "rider",
+    0.225
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "vanguard/rear": {
+  "largest_euler_step": {
+   "mount": [
+    37.8,
+    "leg_fr_lower",
+    0.2
+   ],
+   "rider": [
+    31.3,
+    "forearm_right",
+    0.225
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    37.8,
+    "leg_fr_lower",
+    0.2
+   ],
+   "rider": [
+    33.8,
+    "forearm_right",
+    0.225
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "vanguard/stunned": {
+  "largest_euler_step": {
+   "mount": [
+    34.6,
+    "leg_fl_lower",
+    0.025
+   ],
+   "rider": [
+    43.5,
+    "forearm_right",
+    0.025
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    34.6,
+    "leg_fl_lower",
+    0.025
+   ],
+   "rider": [
+    44.9,
+    "forearm_right",
+    0.025
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "vanguard/sweep": {
+  "largest_euler_step": {
+   "mount": [
+    0.0,
+    "",
+    0.0
+   ],
+   "rider": [
+    34.6,
+    "arm_right",
+    0.3333
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    0.0,
+    "",
+    0.0
+   ],
+   "rider": [
+    42.5,
+    "forearm_right",
+    0.3
+   ]
+  }
+ },
+ "vanguard/throw": {
+  "largest_euler_step": {
+   "mount": [
+    0.0,
+    "",
+    0.0
+   ],
+   "rider": [
+    69.1,
+    "forearm_right",
+    0.25
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    0.0,
+    "",
+    0.0
+   ],
+   "rider": [
+    39.8,
+    "forearm_right",
+    0.225
+   ]
+  }
+ },
+ "outrider/idle": {
+  "largest_euler_step": {
+   "mount": [
+    1.1,
+    "tail",
+    0.025
+   ],
+   "rider": [
+    0.2,
+    "hi_head",
+    0.625
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    1.1,
+    "tail",
+    0.025
+   ],
+   "rider": [
+    0.2,
+    "hi_head",
+    0.475
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "outrider/walk": {
+  "largest_euler_step": {
+   "mount": [
+    32.6,
+    "leg_fl_hoof",
+    0.35
+   ],
+   "rider": [
+    0.3,
+    "rider",
+    0.3
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    32.6,
+    "leg_fl_hoof",
+    0.35
+   ],
+   "rider": [
+    0.3,
+    "rider",
+    0.3
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "outrider/gallop": {
+  "largest_euler_step": {
+   "mount": [
+    36.9,
+    "leg_fr_hoof",
+    0.39
+   ],
+   "rider": [
+    1.6,
+    "rider",
+    0.3
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    36.9,
+    "leg_fr_hoof",
+    0.39
+   ],
+   "rider": [
+    1.6,
+    "rider",
+    0.3
+   ]
+  },
+  "mount_lowest_blocks": -0.01
+ },
+ "outrider/flinch": {
+  "largest_euler_step": {
+   "mount": [
+    8.0,
+    "head",
+    0.0167
+   ],
+   "rider": [
+    4.6,
+    "torso",
+    0.0167
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    10.0,
+    "head",
+    0.0167
+   ],
+   "rider": [
+    4.6,
+    "torso",
+    0.0167
+   ]
+  },
+  "mount_lowest_blocks": 0.0
+ },
+ "outrider/spawn": {
+  "largest_euler_step": {
+   "mount": [
+    29.1,
+    "leg_fr_lower",
+    0.525
+   ],
+   "rider": [
+    44.9,
+    "string_upper",
+    2.2
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    29.0,
+    "leg_fr_lower",
+    0.525
+   ],
+   "rider": [
+    57.8,
+    "string_upper",
+    2.2
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "outrider/death": {
+  "largest_euler_step": {
+   "mount": [
+    12.0,
+    "jaw",
+    1.025
+   ],
+   "rider": [
+    1.9,
+    "forearm_right",
+    2.05
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    12.0,
+    "jaw",
+    1.025
+   ],
+   "rider": [
+    2.0,
+    "forearm_right",
+    2.05
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "outrider/halt": {
+  "largest_euler_step": {
+   "mount": [
+    30.0,
+    "leg_fl_lower",
+    0.0292
+   ],
+   "rider": [
+    6.6,
+    "bow",
+    0.0292
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    30.0,
+    "leg_fl_lower",
+    0.0292
+   ],
+   "rider": [
+    6.8,
+    "bow",
+    0.0292
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "outrider/draw": {
+  "largest_euler_step": {
+   "mount": [
+    15.7,
+    "leg_fl_lower",
+    0.425
+   ],
+   "rider": [
+    60.3,
+    "forearm_right",
+    2.0
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    15.7,
+    "leg_fl_lower",
+    0.425
+   ],
+   "rider": [
+    70.4,
+    "forearm_right",
+    2.0
+   ]
+  },
+  "mount_lowest_blocks": -0.0
+ },
+ "outrider/snipe": {
+  "largest_euler_step": {
+   "mount": [
+    0.0,
+    "",
+    0.0
+   ],
+   "rider": [
+    64.9,
+    "forearm_right",
+    1.5
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    0.0,
+    "",
+    0.0
+   ],
+   "rider": [
+    70.4,
+    "forearm_right",
+    1.5
+   ]
+  }
+ },
+ "outrider/volley": {
+  "largest_euler_step": {
+   "mount": [
+    0.0,
+    "",
+    0.0
+   ],
+   "rider": [
+    71.6,
+    "forearm_right",
+    0.325
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    0.0,
+    "",
+    0.0
+   ],
+   "rider": [
+    92.3,
+    "forearm_right",
+    0.325
+   ]
+  }
+ },
+ "outrider/rain": {
+  "largest_euler_step": {
+   "mount": [
+    0.0,
+    "",
+    0.0
+   ],
+   "rider": [
+    79.0,
+    "forearm_right",
+    0.35
+   ]
+  },
+  "largest_true_step": {
+   "mount": [
+    0.0,
+    "",
+    0.0
+   ],
+   "rider": [
+    68.4,
+    "forearm_right",
+    0.35
+   ]
+  }
+ }
+}
